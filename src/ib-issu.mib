@@ -1,0 +1,695 @@
+-- ===========================================================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: ISSU MIB
+-- Reference:
+-- Version: V1.2
+-- History:
+--  Revision 1.0 2012-12-20 created by Wang Feng
+--               2013-4-20 modified by Zhu Liuxing
+--  Revision 1.1 2014-01-10 change ibIssuUpgradeImageIndex and
+--               ibIssuUpgradeImageURL range by z03030
+--  Revision 1.2 2018-04-08 change ibIssuUpgradeImageType by l07660
+-- ============================================================================================================
+
+IB-ISSU-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    DisplayString, RowStatus, TruthValue
+        FROM SNMPv2-TC;
+
+ibIssuUpgrade MODULE-IDENTITY
+    LAST-UPDATED "201301151536Z"        -- January 15, 2013 at 15:36 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB provides objects for upgrading images on modules in the
+        system, objects for showing the result of an upgrade operation,
+        and objects for showing the result of a test operation.
+
+        To perform an upgrade operation, a management application
+        must first read the ibIssuUpgradeImageTable table and use the
+        information in other tables, as explained below.  You can
+        configure a new image name for each image type as listed in
+        ibIssuUpgradeImageTable.  The system will use this image on the
+        particular module at the next reboot.
+
+        The management application used to perform an upgrade
+        operation must first check if an upgrade operation is already
+        in progress in the system.  This is done by reading the
+        ibIssuOpType ('none' indicates that
+        no other upgrade operation is in progress.  Any other value
+        indicates that an upgrade is already in progress and a new upgrade
+        operation is not allowed.  To start an 'install' operation,
+        the user must first perform a 'test' operation to examine the
+        version compatibility between the given set of images
+        and the running images.  Only if the result of the 'test'
+        operation is 'success' can the user proceed to do an install
+        operation.  The table ibIssuTestResultTable
+        provides the result of the 'test' operation performed by using ibIssuOpType.
+        The table ibIssuUpgradeResultTable provides the result of the 'install' operation
+        performed by using ibIssuOpType.
+        "
+    REVISION "201301151536Z"        -- January 15, 2013 at 15:36 GMT
+    DESCRIPTION
+        "Initial version of this MIB module.
+        Added ibIssuUpgradeImageTable ibIssuOp ibIssuCompatibleResult
+        ibIssuTestResultTable ibIssuUpgradeResultTable"
+    ::= { ibCommon 133 }
+
+--
+-- Node definitions
+--
+
+ibIssuUpgradeMibObjects OBJECT IDENTIFIER ::= { ibIssuUpgrade 1 }
+
+
+ibIssuUpgradeGroup OBJECT IDENTIFIER ::= { ibIssuUpgradeMibObjects 1 }
+
+
+ibIssuUpgradeImageTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbIssuUpgradeImageEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table listing the image variable types that
+        exist in the device."
+    ::= { ibIssuUpgradeGroup 1 }
+
+
+ibIssuUpgradeImageEntry OBJECT-TYPE
+    SYNTAX IbIssuUpgradeImageEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An ibIssuUpgradeImageEntry entry.  Each entry provides an
+        image variable type that exists in the device."
+    INDEX { ibIssuUpgradeImageIndex }
+    ::= { ibIssuUpgradeImageTable 1 }
+
+
+IbIssuUpgradeImageEntry ::=
+    SEQUENCE {
+        ibIssuUpgradeImageIndex
+            Integer32,
+        ibIssuUpgradeImageType
+            INTEGER,
+        ibIssuUpgradeImageURL
+            DisplayString,
+        ibIssuUpgradeImageRowStatus
+            RowStatus
+     }
+
+ibIssuUpgradeImageIndex OBJECT-TYPE
+    SYNTAX Integer32 (1..2147483647)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Index of each image."
+    ::= { ibIssuUpgradeImageEntry 1 }
+
+
+ibIssuUpgradeImageType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        boot(1),
+        system(2),
+        feature(3),
+        ipe(4),
+        patch(5)
+        }
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Types of images that the system can run.  The value of
+        this object has five image variable names:
+        'boot', 'system', 'feature', 'ipe' and 'patch'.  This table will then
+        list these five strings as follows:
+
+              ibIssuUpgradeImageType
+                  boot
+                  system
+                  feature
+                  IPE
+                  patch
+
+              The user can assign images (using ibIssuUpgradeImageURL)
+              to these variables and the system will use the assigned
+              images to boot."
+    ::= { ibIssuUpgradeImageEntry 2 }
+
+
+ibIssuUpgradeImageURL OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (1..127))
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "This object contains the path of the image
+        of this entity."
+    ::= { ibIssuUpgradeImageEntry 3 }
+
+
+ibIssuUpgradeImageRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Row-status of image table."
+    ::= { ibIssuUpgradeImageEntry 4 }
+
+
+ibIssuOp OBJECT IDENTIFIER ::= { ibIssuUpgradeGroup 2 }
+
+
+ibIssuOpType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        done(2),
+        test(3),
+        install(4),
+        rollback(5)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Command to be executed.
+        The 'test' command must be performed before the 'install'
+        command can be executed.  The 'install'
+        command is allowed only if a read of
+        this object returns 'test' and the value of object
+        ibIssuOpStatus is 'success'.
+
+        Command                 Remarks
+
+        none      If the user sets this object to 'none', the agent will return a success
+                  without performing an upgrade operation.
+        done      If this object returns any value other than
+                  'none', setting this to 'done' will do
+                  the required cleanup of the previous upgrade
+                  operation and get the system ready for a new
+                  upgrade operation.
+        test      Check the version compatibility and upgrade method
+                  for the given set of image files.
+        install   For all the image entities listed in the
+                  ibIssuUpgradeImageTable, perform the required
+                  upgrade operation listed in that table.
+        rollback  Abort the current 'install' operation and roll back
+                  to the previous version.
+          "
+    DEFVAL { none }
+    ::= { ibIssuOp 1 }
+
+
+ibIssuImageFileOverwrite OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "If you want to overwrite the existing file, set the value of
+        this object to enable.  Otherwise, set the value of this
+        object to disable."
+    DEFVAL { true }
+    ::= { ibIssuOp 2 }
+
+
+ibIssuOpTrapEnable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "If you want to enable the trap, set the value of
+        this object to enable.  Otherwise, set the value of this
+        object to disable."
+    DEFVAL { true }
+    ::= { ibIssuOp 3 }
+
+
+ibIssuOpStatus OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        failure(2),
+        inProgress(3),
+        success(4),
+        rollbackInProgress(5),
+        rollbackSuccess(6)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Status of the specified operation.
+        none                - No operation was performed.
+        failure             - Specified operation has failed.
+        inProgress          - Specified operation is in progress.
+        success             - Specified operation completed successfully.
+        rollbackInProgress     - Rollback operation is in progress.
+        rollbackSuccess        - Rollback operation completed successfully.
+          "
+    DEFVAL { none }
+    ::= { ibIssuOp 4 }
+
+
+ibIssuFailedReason OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..255))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Indicates the the cause of 'failure' state
+        of the object 'ibIssuOpStatus'.
+        This object would be a null string if the value of
+        'ibIssuOpStatus' is not 'failure'."
+    ::= { ibIssuOp 5 }
+
+
+ibIssuOpTimeCompleted OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..255))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Indicates the time when the upgrade operation was completed.
+        This object would be a null string if ibIssuOpType is
+        'none'. "
+    ::= { ibIssuOp 6 }
+
+
+ibIssuLastOpType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        done(2),
+        test(3),
+        install(4),
+        rollback(5)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the previous ibIssuOp value.
+        It will be updated after a new ibIssuOp is set and delivered
+        to the upgrade process.
+
+        Command                 Remarks
+
+        none      If the user sets this object to 'none', agent will return a success
+                  without performing an upgrade operation.
+        done      If this object returns any value other than
+                  'none', setting this to 'done' will do
+                  the required cleanup of the previous upgrade
+                  operation and get the system ready for a new
+                  upgrade operation.
+        test      Check the version compatibility and upgrade method
+                  for the given set of image files.
+        install   For all the image entities listed in the
+                  ibIssuUpgradeImageTable, perform the required
+                  upgrade operation listed in that table.
+        rollback  Abort the current install operation and roll back
+                  to the previous version.
+        "
+    DEFVAL { none }
+    ::= { ibIssuOp 7 }
+
+
+ibIssuLastOpStatus OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        failure(2),
+        inProgress(3),
+        success(4),
+        rollbackInProgress(5),
+        rollbackSuccess(6)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates previous ibIssuOpStatus value.
+        It will be updated after new ibIssuOp is set and delivered
+        to upgrade process.
+        none                - No operation was performed.
+        failure             - Specified operation has failed.
+        inProgress          - Specified operation is active.
+        success             - Specified operation completed successfully.
+        rollbackInProgress     - Rollback operation is in progress.
+        rollbackSuccess        - Rollback operation completed successfully.
+        "
+    DEFVAL { none }
+    ::= { ibIssuOp 8 }
+
+
+ibIssuLastOpFailedReason OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..255))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Indicates the cause of 'failure' state
+        of the object 'ibIssuOpStatus'.
+        This object would be a null string if the value of
+        'ibIssuOpStatus' is not 'failure'.
+        The value will be updated when new ibIssuOp is set
+        and delivered to the upgrade process."
+    ::= { ibIssuOp 9 }
+
+
+ibIssuLastOpTimeCompleted OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..255))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Indicates the previous ibIssuOpTimeCompleted value.
+        The value will be updated when new ibIssuOp is set
+        and delivered to the upgrade process."
+    ::= { ibIssuOp 10 }
+
+
+ibIssuUpgradeResultGroup OBJECT IDENTIFIER ::= { ibIssuUpgradeMibObjects 2 }
+
+
+ibIssuCompatibleResult OBJECT IDENTIFIER ::= { ibIssuUpgradeResultGroup 1 }
+
+
+ibIssuCompatibleResultStatus OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        inCompatible(2),
+        compatible(3),
+        failure(4)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Specifies whether the images provided in
+        ibIssuUpgradeImageTable are compatible with each other as
+        far as this module is concerned.
+        none            - No operation was performed.
+        inCompatible    - The images provided are compatible
+                          and can be run on this module.
+        compatible      - The images provided are incompatible
+                          and can be run on this module.
+        failure         - Failed to get the compatibility.
+        "
+    DEFVAL { none }
+    ::= { ibIssuCompatibleResult 1 }
+
+
+ibIssuCompatibleResultFailedReason OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..255))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Indicates the cause of 'failure' state
+        of the object 'ibIssuCompatibleResultStatus'.
+        This object would be a null string if the value of
+        'ibIssuCompatibleResultStatus' is not 'failure'."
+    ::= { ibIssuCompatibleResult 2 }
+
+
+ibIssuTestResultTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbIssuTestResultEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Shows the result of the test operation, from which you can
+        see the upgrade method."
+    ::= { ibIssuUpgradeResultGroup 2 }
+
+
+ibIssuTestResultEntry OBJECT-TYPE
+    SYNTAX IbIssuTestResultEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An ibIssuTestResultEntry entry.  Each entry provides the
+        test result of a card in the device."
+    INDEX { ibIssuTestResultIndex }
+    ::= { ibIssuTestResultTable 1 }
+
+
+IbIssuTestResultEntry ::=
+    SEQUENCE {
+        ibIssuTestResultIndex
+            Integer32,
+        ibIssuTestDeviceChassisID
+            Integer32,
+        ibIssuTestDeviceSlotID
+            Integer32,
+        ibIssuTestDeviceCpuID
+            Integer32,
+        ibIssuTestDeviceUpgradeWay
+            INTEGER
+     }
+
+ibIssuTestResultIndex OBJECT-TYPE
+    SYNTAX Integer32 (1..65535)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Internal index, not accessible."
+    ::= { ibIssuTestResultEntry 1 }
+
+
+ibIssuTestDeviceChassisID OBJECT-TYPE
+    SYNTAX Integer32 (0..255)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Chassis ID of the card."
+    ::= { ibIssuTestResultEntry 2 }
+
+
+ibIssuTestDeviceSlotID OBJECT-TYPE
+    SYNTAX Integer32 (0..255)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Slot ID of the card."
+    ::= { ibIssuTestResultEntry 3 }
+
+
+ibIssuTestDeviceCpuID OBJECT-TYPE
+    SYNTAX Integer32 (0..7)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "CPU ID of the card."
+    ::= { ibIssuTestResultEntry 4 }
+
+
+ibIssuTestDeviceUpgradeWay OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        reboot(2),
+        sequenceReboot(3),
+        issuReboot(4),
+        serviceUpgrade(5),
+        fileUpgrade(6),
+        incompatibleUpgrade(7)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Upgrade method of the device.
+        none                   - No operation was performed.
+        reboot                 - The upgrade method of this device is Reboot.
+        sequenceReboot         - The upgrade method of this device is SequenceReboot.
+        issuReboot             - The upgrade method of this device is IssuReboot.
+        serviceUpgrade         - The upgrade method of this device is ServiceReboot.
+        fileUpgrade            - The upgrade method of this device is FileReboot.
+        incompatibleUpgrade    - The upgrade method of this device is IncompatibleUpgrade.
+        "
+    DEFVAL { none }
+    ::= { ibIssuTestResultEntry 5 }
+
+
+ibIssuUpgradeResultTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbIssuUpgradeResultEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Shows the result of the install operation."
+    ::= { ibIssuUpgradeResultGroup 3 }
+
+
+ibIssuUpgradeResultEntry OBJECT-TYPE
+    SYNTAX IbIssuUpgradeResultEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An ibIssuUpgradeResultEntry entry.  Each entry provides the
+        upgrade result of a card in the device."
+    INDEX { ibIssuUpgradeResultIndex }
+    ::= { ibIssuUpgradeResultTable 1 }
+
+
+IbIssuUpgradeResultEntry ::=
+    SEQUENCE {
+        ibIssuUpgradeResultIndex
+            Integer32,
+        ibIssuUpgradeDeviceChassisID
+            Integer32,
+        ibIssuUpgradeDeviceSlotID
+            Integer32,
+        ibIssuUpgradeDeviceCpuID
+            Integer32,
+        ibIssuUpgradeState
+            INTEGER,
+        ibIssuDeviceUpgradeWay
+            INTEGER,
+        ibIssuUpgradeDeviceStatus
+            INTEGER,
+        ibIssuUpgradeFailedReason
+            DisplayString
+     }
+
+ibIssuUpgradeResultIndex OBJECT-TYPE
+    SYNTAX Integer32 (1..65535)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Internal Index, not accessible."
+    ::= { ibIssuUpgradeResultEntry 1 }
+
+
+ibIssuUpgradeDeviceChassisID OBJECT-TYPE
+    SYNTAX Integer32 (0..255)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Chassis ID of the card."
+    ::= { ibIssuUpgradeResultEntry 2 }
+
+
+ibIssuUpgradeDeviceSlotID OBJECT-TYPE
+    SYNTAX Integer32 (0..255)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Slot ID of the card."
+    ::= { ibIssuUpgradeResultEntry 3 }
+
+
+ibIssuUpgradeDeviceCpuID OBJECT-TYPE
+    SYNTAX Integer32 (0..7)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "CPU ID of the card."
+    ::= { ibIssuUpgradeResultEntry 4 }
+
+
+ibIssuUpgradeState OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        init(1),
+        loading(2),
+        loaded(3),
+        switching(4),
+        switchover(5),
+        committing(6),
+        committed(7),
+        rollbacking(8),
+        rollbacked(9)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Upgrade status of the device.
+        init           -The current status of the device is Init.
+        loading        -The current status of the device is Loading.
+        loaded         -The current status of the device is Loaded.
+        switching      -The current status of the device is Switching.
+        switchover     -The current status of the device is Switchover.
+        committing     -The current status of the device is Committing.
+        committed      -The current status of the device is Committed.
+        rollbacking    -The current status of the device is Rollbacking.
+        rollbacked     -The current status of the device is Rollbacked.
+        "
+    ::= { ibIssuUpgradeResultEntry 5 }
+
+
+ibIssuDeviceUpgradeWay OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        reboot(2),
+        sequenceReboot(3),
+        issuReboot(4),
+        serviceUpgrade(5),
+        fileUpgrade(6),
+        incompatibleUpgrade(7)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Upgrade method of the card.
+        none                   - No operation was performed.
+        reboot                 - The upgrade method of this device is Reboot.
+        sequenceReboot         - The upgrade method of this device is SequenceReboot.
+        issuReboot             - The upgrade method of this device is IssuReboot.
+        serviceUpgrade         - The upgrade method of this device is ServiceReboot.
+        fileUpgrade            - The upgrade method of this device is FileReboot.
+        incompatibleUpgrade    - The upgrade method of this device is IncompatibleUpgrade.
+        "
+    ::= { ibIssuUpgradeResultEntry 6 }
+
+
+ibIssuUpgradeDeviceStatus OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        waitingUpgrade(1),
+        inProcess(2),
+        success(3),
+        failure(4)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Upgrade status of the device."
+    ::= { ibIssuUpgradeResultEntry 7 }
+
+
+ibIssuUpgradeFailedReason OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..255))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Indicates the cause of 'failure' state
+        of the object 'ibIssuUpgradeDeviceStatus'.
+        This object would be a null string if the value of
+        'ibIssuCompatibleResultStatus' is not 'failure'."
+    ::= { ibIssuUpgradeResultEntry 8 }
+
+
+ibIssuUpgradeNotify OBJECT IDENTIFIER ::= { ibIssuUpgrade 2 }
+
+
+ibIssuUpgradeTrapPrefix OBJECT IDENTIFIER ::= { ibIssuUpgradeNotify 0 }
+
+
+ibIssuUpgradeOpCompletionNotify NOTIFICATION-TYPE
+    OBJECTS { ibIssuOpType, ibIssuOpStatus, ibIssuFailedReason, ibIssuOpTimeCompleted }
+    STATUS current
+    DESCRIPTION
+        "An ibIssuUpgradeOpCompletionNotify is sent at the
+        completion of upgrade operation denoted by
+        ibIssuOp object, if such a notification
+        was requested when the operation was initiated.
+        ibIssuOpType indicates the type of the
+        operation.  ibIssuOpStatus indicates the
+        result of the operation.  ibIssuFailedReason
+        indicates the operation failure reason.
+        ibIssuOpTimeCompleted indicates the time
+        when the operation was completed."
+    ::= { ibIssuUpgradeTrapPrefix 1 }
+
+
+
+END

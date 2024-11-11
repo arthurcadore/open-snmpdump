@@ -1,0 +1,539 @@
+--==============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: PPP Over Sonet MIB
+-- Reference:
+-- Version: V1.5
+-- History:
+--  V1.0 2004-10-28 created by fuzhenyu
+--  V1.1 2004-12-13 add notifications(9-13) under ibPosMIBNotifications by fuzhenyu.
+--  V1.2 2005-04-12 add ibPosFlagJ0Type, ibPosFlagJ1Type in ibPosParamTable by zhaotingqi.
+--  V1.3 2007-07-19 add ibPosNormalAlarm in ibPosMIBNotifications by chenfangchun
+--  V1.4 2010-05-19 modified by Tong Wei for TCA (Threshold Crossing Alarms)
+--                  add ibPosB1TCAThreshold, ibPosB2TCAThreshold, ibPosB3TCAThreshold,
+--                      ibPosB1TCAEnable, ibPosB2TCAEnable and ibPosB3TCAEnable
+--                      in ibPosParamTable
+--                  add ibPosB1TCAlarm, ibPosB2TCAlarm and ibPosB3TCAlarm
+--                      in ibPosMIBNotifications
+--  V1.5 2013-10-10 modify ibPosEncapsulation and ibPosMTU
+--                  in ibPosParamTable by chenzhouhui.  
+--  V1.6 2016-09-09 modify ibPosEncapsulation in ibPosParamTable by zhengwei.
+--==============================================================================
+IB-PPP-OVER-SONET-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ifIndex, ifDescr
+    FROM IF-MIB
+        Counter64, Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI
+        DisplayString, TruthValue
+    FROM SNMPv2-TC
+        ibCommon
+    FROM IB-OID-MIB;
+
+ibPos MODULE-IDENTITY
+    LAST-UPDATED "201609091700Z"        -- Sep 09, 2016  GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB manages POS(PPP Over Sonet)interfaces by providing
+        an operational table which controls parameters of each POS
+        interface and reports alarm conditions.
+        "
+    REVISION "201609091700Z"        -- Sep 09, 2016 at 17:00 GMT
+    DESCRIPTION "Update the version of this MIB module"
+    REVISION "201310101700Z"        -- Oct 10, 2013 at 17:00 GMT
+    DESCRIPTION "Update the version of this MIB module"
+    REVISION "201005191700Z"        -- May 19, 2010 at 17:00 GMT
+    DESCRIPTION "Update the version of this MIB module"
+    REVISION "200707191700Z"        -- Jul 19, 2007 at 17:00 GMT
+    DESCRIPTION "The initial version of this MIB module"
+    ::= { ibCommon 19 }
+
+ibPosMIBObjects OBJECT IDENTIFIER ::= { ibPos 1 }
+
+ibPosParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPosParamTableEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The pos parameter table."
+    ::= { ibPosMIBObjects 1 }
+
+ibPosParamTableEntry OBJECT-TYPE
+    SYNTAX      IbPosParamTableEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The entry of pos table."
+    INDEX
+        {
+            ifIndex
+        }
+    ::= { ibPosParamTable 1 }
+
+IbPosParamTableEntry ::= SEQUENCE
+    {
+        ibPosCRC                 INTEGER,
+        ibPosMTU                 Integer32,
+        ibPosScramble            TruthValue,
+        ibPosClockSource         INTEGER,
+        ibPosSdhFlagJ0           DisplayString,
+        ibPosSdhFlagJ1           DisplayString,
+        ibPosSonetFlagJ0         Integer32,
+        ibPosSonetFlagJ1         DisplayString,
+        ibPosFlagC2              Integer32,
+        ibPosFrameType           INTEGER,
+        ibPosBindVlanId          Integer32,
+        ibPosEncapsulation       INTEGER,
+        ibPoskeepaliveTimeout    Integer32,
+        ibPosBERthresholdSF      Integer32,
+        ibPosBERthresholdSD      Integer32,
+        ibPosB1Error             Counter64,
+        ibPosB2Error             Counter64,
+        ibPosB3Error             Counter64,
+        ibPosM1Error             Counter64,
+        ibPosG1Error             Counter64,
+        ibPosFlagJ0Type          INTEGER,
+        ibPosFlagJ1Type          INTEGER,
+        ibPosB1TCAThreshold      Integer32,
+        ibPosB2TCAThreshold      Integer32,
+        ibPosB3TCAThreshold      Integer32,
+        ibPosB1TCAEnable         INTEGER,
+        ibPosB2TCAEnable         INTEGER,
+        ibPosB3TCAEnable         INTEGER
+    }
+
+ibPosCRC OBJECT-TYPE
+    SYNTAX      INTEGER{crc32(1),crc16(2)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The length of CRC"
+    DEFVAL { crc32 }
+    ::={ ibPosParamTableEntry 1 }
+
+ibPosMTU OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Maximum Transfer Unit (MTU) of POS interface"
+    ::={ ibPosParamTableEntry 2 }
+
+ibPosScramble OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Scrambling is used to avoid continuous 0 or 1 in signals. This
+        object is to decide whether to scramble or not"
+    DEFVAL { true }
+    ::={ ibPosParamTableEntry 3 }
+
+ibPosClockSource OBJECT-TYPE
+    SYNTAX      INTEGER{system(1),line(2)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The value indicates the source of clock signal. System indicates
+        that clock signals are from device itself and line for clock signals
+        from remote"
+    DEFVAL { line }
+    ::={ ibPosParamTableEntry 4 }
+
+ibPosSdhFlagJ0 OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..15))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The section trace byte. This node is used when the frame type is sdh."
+    ::={ ibPosParamTableEntry 5 }
+
+ibPosSdhFlagJ1 OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..15))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The path trace byte. This node is used when the frame type is sdh."
+    ::={ ibPosParamTableEntry 6 }
+
+ibPosSonetFlagJ0 OBJECT-TYPE
+    SYNTAX      Integer32(0..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The section trace byte. This node is used when the frame type is sonet."
+    ::={ ibPosParamTableEntry 7 }
+
+ibPosSonetFlagJ1 OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..62))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The path trace byte. This node is used when the frame type is sonet."
+    ::={ ibPosParamTableEntry 8 }
+
+
+ibPosFlagC2 OBJECT-TYPE
+    SYNTAX      Integer32(0..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The parameter for the channel signal value of C2 byte"
+    DEFVAL { 22 }
+    ::={ ibPosParamTableEntry 9 }
+
+ibPosFrameType OBJECT-TYPE
+    SYNTAX      INTEGER{sdh(1),sonet(2)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The frame type that encapsulates the packet. Default frame type is
+        sdh(Synchronous Digital Hierarchy) It also can be configured using
+        sonet type(Synchronous Optical Network)."
+    DEFVAL      { sdh }
+    ::={ ibPosParamTableEntry 10 }
+
+ibPosBindVlanId OBJECT-TYPE
+    SYNTAX      Integer32(0..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The vlan that this pos port binds. The vlan can not include any other
+        port, otherwise error will be returned. If the vlan has a virtual
+        interface, the status of virtual interface will be up or down according
+        to the link status or this pos."
+    ::={ ibPosParamTableEntry 11 }
+
+ibPosEncapsulation OBJECT-TYPE
+    SYNTAX      INTEGER{ppp(1),hdlc(2),fr(3),mfr(4)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The type of encapsulation "
+    DEFVAL      { ppp }
+    ::={ ibPosParamTableEntry 12 }
+
+ibPoskeepaliveTimeout OBJECT-TYPE
+    SYNTAX      Integer32(0..32767)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The keeplive of ppp, hdlc, fr or mfr. It is the query interval of link status. Two
+        members of a link should have same keeplive. The default 0 prohibits
+        detecting status of link."
+    ::={ ibPosParamTableEntry 13 }
+
+ibPosBERthresholdSF OBJECT-TYPE
+    SYNTAX      Integer32(3..9)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The bit-error rate threshold for Signal Fault. SF threshold should
+        be greater than SD threshold."
+    DEFVAL      { 3 }
+    ::={ ibPosParamTableEntry 14 }
+
+ibPosBERthresholdSD OBJECT-TYPE
+    SYNTAX      Integer32(3..9)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The bit-error rate threshold for Signal Degrade. SD threshold should
+        be less than SF threshold."
+    DEFVAL      { 6 }
+    ::={ ibPosParamTableEntry 15 }
+
+ibPosB1Error OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Counter for SBIPE(Section Bit Interleave Parity Error)"
+    ::={ ibPosParamTableEntry 16 }
+
+ibPosB2Error OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Counter for LBIPE(Line Bit Interleave Parity Error)"
+    ::={ ibPosParamTableEntry 17 }
+
+ibPosB3Error OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Counter for PBIPE(Path Bit Interleave Parity Error)"
+    ::={ ibPosParamTableEntry 18 }
+
+ibPosM1Error OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "How many times does LREI(Line Remote Error Indication) occur"
+    ::={ ibPosParamTableEntry 19 }
+
+ibPosG1Error OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "How many times does PREI(Path Remote Error Indication) occur"
+    ::={ ibPosParamTableEntry 20 }
+
+ibPosFlagJ0Type OBJECT-TYPE
+    SYNTAX      INTEGER{sdh(1),sonet(2)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The frame type that encapsulates the flag J0. Default frame type is
+        sdh(Synchronous Digital Hierarchy). It also can be configured using
+        sonet(Synchronous Optical Network) type."
+    DEFVAL      { sdh }
+    ::={ ibPosParamTableEntry 21 }
+
+ibPosFlagJ1Type OBJECT-TYPE
+    SYNTAX      INTEGER{sdh(1),sonet(2)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The frame type that encapsulates the flag J1. Default frame type is
+        sdh(Synchronous Digital Hierarchy). It also can be configured using
+        sonet(Synchronous Optical Network) type."
+    DEFVAL      { sdh }
+    ::={ ibPosParamTableEntry 22 }
+
+ibPosB1TCAThreshold OBJECT-TYPE
+    SYNTAX  Integer32 (3..9)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Threshold for B1 TCA."
+    DEFVAL { 6 }
+    ::={ ibPosParamTableEntry 23 }
+
+ibPosB2TCAThreshold OBJECT-TYPE
+    SYNTAX  Integer32 (3..9)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Threshold for B2 TCA."
+    DEFVAL { 6 }
+    ::={ ibPosParamTableEntry 24 }
+
+ibPosB3TCAThreshold OBJECT-TYPE
+    SYNTAX  Integer32 (3..9)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Threshold for B3 TCA."
+    DEFVAL { 6 }
+    ::={ ibPosParamTableEntry 25 }
+
+ibPosB1TCAEnable OBJECT-TYPE
+    SYNTAX  INTEGER {
+            enable(1),
+            disable(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable traps of B1 TCA."
+    DEFVAL { enable }
+    ::={ ibPosParamTableEntry 26 }
+
+ibPosB2TCAEnable OBJECT-TYPE
+    SYNTAX  INTEGER {
+            enable(1),
+            disable(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable traps of B2 TCA."
+    DEFVAL { enable }
+    ::={ ibPosParamTableEntry 27 }
+
+ibPosB3TCAEnable OBJECT-TYPE
+    SYNTAX  INTEGER {
+            enable(1),
+            disable(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable traps of B3 TCA."
+    DEFVAL { enable }
+    ::={ ibPosParamTableEntry 28 }
+
+ibPosMIBNotificationsPrefix OBJECT IDENTIFIER ::= { ibPos 2 }
+ibPosMIBNotifications OBJECT IDENTIFIER ::= { ibPosMIBNotificationsPrefix 0 }
+
+ibPosLOSAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex
+        }
+    STATUS      current
+    DESCRIPTION
+        "Alarm indicates loss of signal"
+    ::={ ibPosMIBNotifications 1 }
+
+ibPosLOFAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex
+        }
+    STATUS      current
+    DESCRIPTION
+        "Alarm indicates loss of frame"
+    ::={ ibPosMIBNotifications 2 }
+
+ibPosOOFAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex
+        }
+    STATUS      current
+    DESCRIPTION
+        "Alarm indicates out of frame"
+    ::={ ibPosMIBNotifications 3 }
+
+ibPosLAISAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex
+        }
+    STATUS      current
+    DESCRIPTION
+        "Alarm when LAIS(Line  Alarm  Indication  Signal) arrives"
+    ::={ ibPosMIBNotifications 4 }
+
+ibPosLRDIAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex
+        }
+    STATUS      current
+    DESCRIPTION
+        "Alarm when LRDI(Line  Remote  Defect  Indication) arrives"
+    ::={ ibPosMIBNotifications 5 }
+
+ibPosPRDIAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex
+        }
+    STATUS      current
+    DESCRIPTION
+        "Alarm when PRDI(Path  Remote  Defect  Indication) arrives"
+    ::={ ibPosMIBNotifications 6 }
+
+ibPosPAISAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex
+        }
+    STATUS      current
+    DESCRIPTION
+        "Alarm when PAIS(Path  Alarm  Indication  Signal) arrives"
+    ::={ ibPosMIBNotifications 7 }
+
+ibPosLOPAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex
+        }
+    STATUS      current
+    DESCRIPTION
+        "Alarm indicates loss of pointer"
+    ::={ ibPosMIBNotifications 8 }
+
+ibPosSTIMAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex
+        }
+    STATUS      current
+    DESCRIPTION
+        "Alarm indicates inconsistency between sent and received J0 bytes."
+    ::={ ibPosMIBNotifications 9 }
+
+ibPosPTIMAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex
+        }
+    STATUS      current
+    DESCRIPTION
+        "Alarm indicates inconsistency between sent and received J1 bytes."
+    ::={ ibPosMIBNotifications 10 }
+
+ibPosPSLMAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex
+        }
+    STATUS      current
+    DESCRIPTION
+        "Alarm indicates a mismatched C2 byte."
+    ::={ ibPosMIBNotifications 11 }
+
+ibPosLSDAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex
+        }
+    STATUS      current
+    DESCRIPTION
+        "Alarm indicates that the B2 bit-error rate exceeds SD threshold."
+    ::={ ibPosMIBNotifications 12 }
+
+ibPosLSFAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex
+        }
+    STATUS      current
+    DESCRIPTION
+        "Alarm indicates that the B2 bit-error rate exceeds SF threshold."
+    ::={ ibPosMIBNotifications 13 }
+
+ibPosNormalAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex
+        }
+    STATUS      current
+    DESCRIPTION
+        "Alarm indicates that the Pos interface state returns normal."
+    ::={ ibPosMIBNotifications 14 }
+
+ibPosB1TCAlarm NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifDescr }
+    STATUS      current
+    DESCRIPTION
+        "Threshold crossing alarms for B1."
+    ::={ ibPosMIBNotifications 15 }
+
+ibPosB2TCAlarm NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifDescr }
+    STATUS      current
+    DESCRIPTION
+        "Threshold crossing alarms for B2."
+    ::={ ibPosMIBNotifications 16 }
+
+ibPosB3TCAlarm NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifDescr }
+    STATUS      current
+    DESCRIPTION
+        "Threshold crossing alarms for B3."
+    ::={ ibPosMIBNotifications 17 }
+
+END

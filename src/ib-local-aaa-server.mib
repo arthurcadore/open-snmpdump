@@ -1,0 +1,60 @@
+-- ==========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Local AAA Server mib
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 2013-07-06 created by yangxu 02965
+-- ==========================================================================
+IB-LOCAL-AAA-SERVER-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibLocAAASvr MODULE-IDENTITY
+    LAST-UPDATED "201307060945Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB provides the definition of the local AAA Server."
+    REVISION "201307060945Z"
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 141 }
+
+-- definition of textual conventions
+
+--
+-- nodes defined
+--
+
+ibLocAAASvrControl OBJECT IDENTIFIER ::= { ibLocAAASvr 1 }
+
+--
+-- tables defined
+--
+
+ibLocAAASvrTables OBJECT IDENTIFIER ::= { ibLocAAASvr 2 }
+
+--
+-- traps defined
+--
+
+ibLocAAASvrTrap OBJECT IDENTIFIER ::= { ibLocAAASvr 3 }
+
+ibLocAAASvrTrapPrex OBJECT IDENTIFIER ::= { ibLocAAASvrTrap 0 }
+
+ibLocAAASvrBillExportFailed NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+        "This trap is generated when local AAA bills
+        cannot be exported to a bill server."
+    ::= { ibLocAAASvrTrapPrex 1 }
+
+END

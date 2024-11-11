@@ -1,0 +1,1106 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- Description:  This MIB file is used for configuration of L2TP(Layer 2
+--               Tunneling Protocol).
+--               include :1.L2TP statistics information
+-- Reference:
+-- Version: V1.6
+-- History:
+-- V1.0 2013-07-05 created by yanbotao
+-- V1.1 2019-04-12 add ibL2tpStatTemporarySessions and ibL2tpTunnelTable by zhouduan
+-- V1.2 2019-11-21 add ibL2tpRemoteIpAddress ,ibL2tpRemoteTunnelID, ibL2tpRemotePort
+--                 add ibL2tpRemoteName, ibL2tpTunnelState by zhouduan
+-- V1.3 2020-09-05 add ibL2tpStatsMaxSessions by tanjidong
+-- V1.4 2021-09-01 add ibL2tpProtocolVersions, ibL2tpVendorName, ibL2tpFirmwareRev
+--                 add ibL2tpDrainingTunnels, ibL2tpAdminState, ibL2tpGroupConfigTable
+--                 add ibL2tpTunnelStatsTable by wangzhenjun
+-- V1.5 2021-11-01 add ibL2tpTunnelUpOrDown by fengshuxiang
+--      2021-11-23 add ibL2tpTUpOrDownSessCount by fengshuxiang
+-- V1.6 2022-06-16 add ibL2tpSessionFailTrapOid
+--                 add ibL2tpSessionFailTrap by wangzhenjun
+-- ============================================================================
+IB-L2TP-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Integer32, Counter32, Unsigned32, IpAddress, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, Gauge32
+        FROM SNMPv2-SMI
+    DisplayString, TruthValue, RowStatus
+        FROM SNMPv2-TC
+    SnmpAdminString
+        FROM SNMP-FRAMEWORK-MIB;
+
+ibL2tp MODULE-IDENTITY
+    LAST-UPDATED "202206160000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Add the trap of ibL2tpSessionFailTrap."
+    REVISION "202206160000Z"                -- June 16th, 2022 at 00:00 GMT
+    DESCRIPTION
+        "Add the node of ibL2tpTUpOrDownSessCount."
+    REVISION "202111230000Z"                -- November 23, 2021 at 00:00 GMT
+    DESCRIPTION
+        "Add the trap of ibL2tpTunnelUpOrDown."
+    REVISION "202111030000Z"                -- November 03, 2021 at 00:00 GMT
+    DESCRIPTION
+        "The old baseline."
+    REVISION "202109010000Z"
+    DESCRIPTION
+        "Add the objects of ibL2tpStatsMaxSessions."
+    REVISION "201911211452Z"                -- November 21, 2019 at 14:52 GMT
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 139 }
+
+--
+-- Node definitions
+--
+--
+-- Definitions of significant branches
+--
+ibL2tpObjects         OBJECT IDENTIFIER  ::= { ibL2tp 1 }
+ibL2tpScalar          OBJECT IDENTIFIER  ::= { ibL2tpObjects 1 }
+ibL2tpStats           OBJECT IDENTIFIER  ::= { ibL2tpScalar 1 }
+ibL2tpConfig          OBJECT IDENTIFIER  ::= { ibL2tpScalar 2 }
+
+--
+-- The L2TP Scalar Status and Statistics Group
+--
+
+ibL2tpStatsTotalTunnels OBJECT-TYPE
+    SYNTAX          Counter32
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "The total number of tunnels at the time of querying."
+    ::= { ibL2tpStats 1 }
+
+ibL2tpStatsTotalSessions OBJECT-TYPE
+    SYNTAX        Counter32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The total number of sessions at the time of querying."
+    ::= { ibL2tpStats 2 }
+
+ibL2tpSessionRate  OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The number of sessions that were created in the previous second."
+    ::= { ibL2tpStats 3 }
+
+ibL2tpStatsTemporarySessions  OBJECT-TYPE
+    SYNTAX        Unsigned32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The total number of temporary sessions at the time of querying."
+    ::= { ibL2tpStats 4 }
+
+ibL2tpStatsMaxSessions OBJECT-TYPE
+    SYNTAX        Unsigned32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The max number of sessions."
+    ::= { ibL2tpStats 5 }
+
+ibL2tpProtocolVersions    OBJECT-TYPE
+    SYNTAX          OCTET STRING (SIZE(0..256))
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "Vector of supported L2TP protocol version and
+        revision numbers. Supported versions are identified
+        via a two octet pairing where the first octet indicates
+        the version and the second octet contains the revision."
+    ::= { ibL2tpStats 6 }
+
+ibL2tpVendorName          OBJECT-TYPE
+    SYNTAX          SnmpAdminString (SIZE(0..256))
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object identifies the Vendor name of the L2TP
+        protocol stack."
+    ::= { ibL2tpStats 7 }
+
+ibL2tpFirmwareRev         OBJECT-TYPE
+    SYNTAX          Integer32
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object defines the firmware revision for the
+        L2TP protocol stack."
+    ::= { ibL2tpStats 8 }
+
+ibL2tpDrainingTunnels     OBJECT-TYPE
+    SYNTAX          TruthValue
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object indicates if the local L2TP is draining
+        off sessions from all tunnels."
+    ::= { ibL2tpStats 9 }
+
+--
+-- The L2TP Scalar Configuration
+--
+ibL2tpAdminState          OBJECT-TYPE
+    SYNTAX          INTEGER {
+                            enabled(1),
+                            disabled(2)
+                            }
+    MAX-ACCESS      read-write
+    STATUS          current
+    DESCRIPTION
+        "This object defines the administrative state of
+        the L2TP protocol. Setting this object to
+        'disabled' causes all tunnels to be immediately
+        disconnected and no further tunnels to be either
+        initiated or accepted."
+    DEFVAL { disabled }
+    ::= { ibL2tpConfig 1 }
+
+ibL2tpAging             OBJECT-TYPE
+    SYNTAX          Integer32 (1..3600)
+    UNITS           "seconds"
+    MAX-ACCESS      read-write
+    STATUS          current
+    DESCRIPTION
+        "This object defines the maximum timeout used by LAC to
+        lock the specified LNS."
+    DEFVAL { 300 }
+    ::= { ibL2tpConfig 2 }
+
+ibL2tpTunnel          OBJECT IDENTIFIER  ::= { ibL2tpObjects 2 }
+
+--
+-- The ibL2tpTunnelTable table
+--
+
+ibL2tpTunnelTable  OBJECT-TYPE
+    SYNTAX        SEQUENCE OF IbL2tpTunnelEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "A table containing L2tp tunnel specific variables
+        for this L2TP implementation."
+    ::= { ibL2tpTunnel 1 }
+
+ibL2tpTunnelEntry  OBJECT-TYPE
+    SYNTAX        IbL2tpTunnelEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "Basic information about a particular L2tp tunnel."
+    INDEX     { ibL2tpTunnelType, ibL2tpLocalIpAddress, ibL2tpLocalTunnelID }
+    ::= { ibL2tpTunnelTable 1 }
+
+IbL2tpTunnelEntry ::= SEQUENCE {
+    ibL2tpTunnelType
+        INTEGER,
+    ibL2tpLocalIpAddress
+        IpAddress,
+    ibL2tpLocalTunnelID
+        Unsigned32,
+    ibL2tpSessions
+        Unsigned32,
+    ibL2tpRemoteIpAddress
+        IpAddress,
+    ibL2tpRemoteTunnelID
+        Unsigned32,
+    ibL2tpRemotePort
+        Unsigned32,
+    ibL2tpRemoteName
+        DisplayString,
+    ibL2tpTunnelState
+        INTEGER
+    }
+
+ibL2tpTunnelType  OBJECT-TYPE
+    SYNTAX        INTEGER {
+        global(1),
+        instance(2)
+    }
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "The tunnel type, (1) global (2) instance."
+    ::= { ibL2tpTunnelEntry 1 }
+
+ibL2tpLocalIpAddress  OBJECT-TYPE
+    SYNTAX        IpAddress
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "The local tunnel IP address."
+    ::= { ibL2tpTunnelEntry 2 }
+
+ibL2tpLocalTunnelID  OBJECT-TYPE
+    SYNTAX        Unsigned32 (1..65535)
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "The local tunnel ID."
+    ::= { ibL2tpTunnelEntry 3 }
+
+ibL2tpSessions  OBJECT-TYPE
+    SYNTAX        Unsigned32 (0..4294967295)
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The total number of sessions at the time of querying."
+    ::= { ibL2tpTunnelEntry 4 }
+
+ibL2tpRemoteIpAddress  OBJECT-TYPE
+    SYNTAX        IpAddress
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The remote tunnel IP address."
+    ::= { ibL2tpTunnelEntry 5 }
+
+ibL2tpRemoteTunnelID  OBJECT-TYPE
+    SYNTAX        Unsigned32 (1..65535)
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The remote tunnel ID."
+    ::= { ibL2tpTunnelEntry 6 }
+
+ibL2tpRemotePort  OBJECT-TYPE
+    SYNTAX        Unsigned32 (0..65535)
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The remote tunnel port."
+    ::= { ibL2tpTunnelEntry 7 }
+
+ibL2tpRemoteName  OBJECT-TYPE
+    SYNTAX        DisplayString (SIZE (0..255))
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The remote tunnel name."
+    ::= { ibL2tpTunnelEntry 8 }
+
+ibL2tpTunnelState  OBJECT-TYPE
+    SYNTAX        INTEGER {
+        idle(0),
+        waitReply(1),
+        established(2),
+        stopping(3)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The current tunnel state, (0) idle (1) waitReply (2) established (3) stopping."
+    ::= { ibL2tpTunnelEntry 9 }
+
+ibL2tpGroup          OBJECT IDENTIFIER  ::= { ibL2tpObjects 3 }
+
+--
+-- The ibL2tpGroupConfigTable table
+--
+
+ibL2tpGroupConfigTable   OBJECT-TYPE
+    SYNTAX          SEQUENCE OF IbL2tpGroupConfigEntry
+    MAX-ACCESS      not-accessible
+    STATUS          current
+    DESCRIPTION
+        "The L2TP group configuration table."
+    ::= { ibL2tpGroup 1 }
+
+ibL2tpGroupConfigEntry   OBJECT-TYPE
+    SYNTAX          IbL2tpGroupConfigEntry
+    MAX-ACCESS      not-accessible
+    STATUS          current
+    DESCRIPTION
+        "A L2TP group configuration entry."
+    INDEX { ibL2tpGroupConfigGroupID }
+    ::= { ibL2tpGroupConfigTable 1 }
+
+IbL2tpGroupConfigEntry ::= SEQUENCE {
+    ibL2tpGroupConfigGroupID             Integer32,
+    ibL2tpGroupConfigDomainId            SnmpAdminString,
+    ibL2tpGroupConfigHelloInterval       Integer32,
+    ibL2tpGroupConfigIdleTimeout         Integer32,
+    ibL2tpGroupConfigCtrlRWS             Integer32,
+    ibL2tpGroupConfigCtrlMaxRetx         Integer32,
+    ibL2tpGroupConfigCtrlMaxRetxTO       Integer32,
+    ibL2tpGroupConfigAuthentication      TruthValue,
+    ibL2tpGroupConfigAvpHidden           TruthValue,
+    ibL2tpGroupConfigLoadsharing         TruthValue,
+    ibL2tpGroupConfigTunnelName          DisplayString,
+    ibL2tpGroupConfigPassword            DisplayString,
+    ibL2tpGroupConfigLnsIP1              IpAddress,
+    ibL2tpGroupConfigLnsWeight1          Integer32,
+    ibL2tpGroupConfigLnsIP2              IpAddress,
+    ibL2tpGroupConfigLnsWeight2          Integer32,
+    ibL2tpGroupConfigLnsIP3              IpAddress,
+    ibL2tpGroupConfigLnsWeight3          Integer32,
+    ibL2tpGroupConfigLnsIP4              IpAddress,
+    ibL2tpGroupConfigLnsWeight4          Integer32,
+    ibL2tpGroupConfigLnsIP5              IpAddress,
+    ibL2tpGroupConfigLnsWeight5          Integer32,
+    ibL2tpGroupConfigGroupName           DisplayString,
+    ibL2tpGroupConfigRemoteName          DisplayString,
+    ibL2tpGroupConfigForceChap           TruthValue,
+    ibL2tpGroupConfigForceLcp            TruthValue,
+    ibL2tpGroupConfigVTNumber            Integer32,
+    ibL2tpGroupConfigMode                INTEGER,
+    ibL2tpGroupConfigRowStatus           RowStatus
+    }
+
+ibL2tpGroupConfigGroupID OBJECT-TYPE
+    SYNTAX          Integer32 (1..65535)
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "The identifier of the L2TP group."
+    ::= { ibL2tpGroupConfigEntry 1 }
+
+ibL2tpGroupConfigDomainId OBJECT-TYPE
+    SYNTAX          SnmpAdminString (SIZE (0..80))
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The tunnel domain that this tunnel belongs
+        to. A LNS tunnel endpoint will typically inherit
+        this value from the endpoint domain table. A
+        LAC may be provided with this information during
+        tunnel setup. When a zero length string is returned
+        this tunnel does not belong to any particular
+        domain."
+    ::= { ibL2tpGroupConfigEntry 2 }
+
+ibL2tpGroupConfigHelloInterval OBJECT-TYPE
+    SYNTAX          Integer32  (60..1000)
+    UNITS           "seconds"
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "This object defines the interval in which Hello
+        (or keep-alive) packets are to be sent to the
+        tunnel peer. Modifications to this
+        object have immediate effect."
+    DEFVAL { 60 }
+    ::= { ibL2tpGroupConfigEntry 3 }
+
+ibL2tpGroupConfigIdleTimeout OBJECT-TYPE
+    SYNTAX          Integer32 (-1..86400)
+    UNITS           "seconds"
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "This object defines the period of time that an
+        established tunnel with no sessions will wait
+        before disconnecting the tunnel. A value of
+        zero indicates that the tunnel will disconnect
+        immediately after the last session disconnects.
+        A value of -1 leaves the tunnel up indefinitely.
+        Modifications to this object have immediate
+        effect."
+    DEFVAL { 0 }
+    ::= { ibL2tpGroupConfigEntry 4 }
+
+ibL2tpGroupConfigCtrlRWS OBJECT-TYPE
+    SYNTAX          Integer32 (1..5000)
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "This object defines the control channel receive
+        window size. It specifies the maximum number of
+        packets the tunnel peer can send without waiting
+        for an acknowledgement from this peer. This object
+        cannot be modified when tunnel is in a connecting
+        or connected state."
+    DEFVAL { 1024 }
+    ::= { ibL2tpGroupConfigEntry 5 }
+
+ibL2tpGroupConfigCtrlMaxRetx OBJECT-TYPE
+    SYNTAX          Integer32 (0..32)
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "This object defines the number of retransmissions
+        which the tunnel will attempt before assuming that
+        the peer is no longer responding. A value of zero
+        indicates that this peer will not attempt to
+        retransmit an unacknowledged control packet."
+    DEFVAL { 8 }
+    ::= { ibL2tpGroupConfigEntry 6 }
+
+ibL2tpGroupConfigCtrlMaxRetxTO OBJECT-TYPE
+    SYNTAX          Integer32 (1..32)
+    UNITS           "seconds"
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "This object defines the maximum retransmission timeout
+        interval which the tunnel will wait before retrans-
+        mitting a control packet that has not been acknowledged."
+    DEFVAL { 16 }
+    ::= { ibL2tpGroupConfigEntry 7 }
+
+ibL2tpGroupConfigAuthentication OBJECT-TYPE
+    SYNTAX          TruthValue
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The tunnel authentication is enabled when the value
+        of this object is True."
+    DEFVAL { false }
+    ::= { ibL2tpGroupConfigEntry 8 }
+
+ibL2tpGroupConfigAvpHidden OBJECT-TYPE
+    SYNTAX          TruthValue
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The tunnel avp hidden is enabled when the value
+        of this object is True."
+    DEFVAL { false }
+    ::= { ibL2tpGroupConfigEntry 9 }
+
+ibL2tpGroupConfigLoadsharing OBJECT-TYPE
+    SYNTAX          TruthValue
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "This object indicates the working mode of LAC,
+        the load sharing is enabled when the value
+        of this object is True."
+    DEFVAL { false }
+    ::= { ibL2tpGroupConfigEntry 10 }
+
+ibL2tpGroupConfigTunnelName OBJECT-TYPE
+    SYNTAX          DisplayString (SIZE (0..31))
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The local name of the tunnel."
+    ::= { ibL2tpGroupConfigEntry 11 }
+
+ibL2tpGroupConfigPassword OBJECT-TYPE
+    SYNTAX          DisplayString (SIZE (0..16))
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The password of authentication of the tunnel will be
+        used in the tunnel connection. when read, a zero-length
+        string will be returned."
+    ::= { ibL2tpGroupConfigEntry 12 }
+
+ibL2tpGroupConfigLnsIP1 OBJECT-TYPE
+    SYNTAX          IpAddress
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The first LNS IP address for LAC to establish the tunnel,
+        this only support when the group mode is LAC."
+    ::= { ibL2tpGroupConfigEntry 13 }
+
+ibL2tpGroupConfigLnsWeight1 OBJECT-TYPE
+    SYNTAX          Integer32 (1..10)
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The weight of the first LNS IP address for LAC to establish the tunnel,
+        this only support when the group mode is LAC."
+    ::= { ibL2tpGroupConfigEntry 14 }
+
+ibL2tpGroupConfigLnsIP2 OBJECT-TYPE
+    SYNTAX          IpAddress
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The second LNS IP address for LAC to establish the tunnel,
+        this only support when the group mode is LAC."
+    ::= { ibL2tpGroupConfigEntry 15 }
+
+ibL2tpGroupConfigLnsWeight2 OBJECT-TYPE
+    SYNTAX          Integer32 (1..10)
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The weight of the second LNS IP address for LAC to establish the tunnel,
+        this only support when the group mode is LAC."
+    ::= { ibL2tpGroupConfigEntry 16 }
+
+ibL2tpGroupConfigLnsIP3 OBJECT-TYPE
+    SYNTAX          IpAddress
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The third LNS IP address for LAC to establish the tunnel,
+        this only support when the group mode is LAC."
+    ::= { ibL2tpGroupConfigEntry 17 }
+
+ibL2tpGroupConfigLnsWeight3 OBJECT-TYPE
+    SYNTAX          Integer32 (1..10)
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The weight of the third LNS IP address for LAC to establish the tunnel,
+        this only support when the group mode is LAC."
+    ::= { ibL2tpGroupConfigEntry 18 }
+
+ibL2tpGroupConfigLnsIP4 OBJECT-TYPE
+    SYNTAX          IpAddress
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The fourth LNS IP address for LAC to establish the tunnel,
+        this only support when the group mode is LAC."
+    ::= { ibL2tpGroupConfigEntry 19 }
+
+ibL2tpGroupConfigLnsWeight4 OBJECT-TYPE
+    SYNTAX          Integer32 (1..10)
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The weight of the fourth LNS IP address for LAC to establish the tunnel,
+        this only support when the group mode is LAC."
+    ::= { ibL2tpGroupConfigEntry 20 }
+
+ibL2tpGroupConfigLnsIP5 OBJECT-TYPE
+    SYNTAX          IpAddress
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The fifth LNS IP address for LAC to establish the tunnel,
+        this only support when the group mode is LAC."
+    ::= { ibL2tpGroupConfigEntry 21 }
+
+ibL2tpGroupConfigLnsWeight5 OBJECT-TYPE
+    SYNTAX          Integer32 (1..10)
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The weight of the fifth LNS IP address for LAC to establish the tunnel,
+        this only support when the group mode is LAC."
+    ::= { ibL2tpGroupConfigEntry 22 }
+
+ibL2tpGroupConfigGroupName OBJECT-TYPE
+    SYNTAX          DisplayString ( SIZE (0..32) )
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The group name."
+    ::= { ibL2tpGroupConfigEntry 23 }
+
+ibL2tpGroupConfigRemoteName OBJECT-TYPE
+    SYNTAX          DisplayString (SIZE (0..31))
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The remote name of the LAC, LNS will accept the tunnel connection
+        if the remote name is equal with that of LAC."
+    ::= { ibL2tpGroupConfigEntry 24 }
+
+ibL2tpGroupConfigForceChap OBJECT-TYPE
+    SYNTAX          TruthValue
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The mandatory chap is enabled when the value of this object is True."
+    DEFVAL { false }
+    ::= { ibL2tpGroupConfigEntry 25 }
+
+ibL2tpGroupConfigForceLcp OBJECT-TYPE
+    SYNTAX          TruthValue
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The mandatory lcp is enabled when the value of this object is True"
+    DEFVAL { false }
+    ::= { ibL2tpGroupConfigEntry 26 }
+
+ibL2tpGroupConfigVTNumber OBJECT-TYPE
+    SYNTAX          Integer32 (0..65535)
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The virtual template that the LNS used to accept the tunnel connection."
+    ::= { ibL2tpGroupConfigEntry 27 }
+
+ibL2tpGroupConfigMode OBJECT-TYPE
+    SYNTAX          INTEGER {
+                              lac(1),
+                              lns(2)
+                            }
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The group mode, the lac is used as LAC group, the lns is used as LNS group."
+    ::= { ibL2tpGroupConfigEntry 28 }
+
+ibL2tpGroupConfigRowStatus   OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+            "This object manages the creation, deletion, and modification
+             of rows in the ibL2tpGroupConfigTable, which supports the
+             active status, createAndGo operation, and destroy operation."
+    ::= { ibL2tpGroupConfigEntry 29 }
+
+ibL2tpTunnelStats          OBJECT IDENTIFIER  ::= { ibL2tpObjects 4 }
+
+ibL2tpTunnelStatsTable    OBJECT-TYPE
+    SYNTAX          SEQUENCE OF IbL2tpTunnelStatsEntry
+    MAX-ACCESS      not-accessible
+    STATUS          current
+    DESCRIPTION
+        "The L2TP tunnel status and statistics table. This
+        table contains objects that can be used to describe
+        the current status and statistics of a single L2TP
+        tunnel."
+    ::= { ibL2tpTunnelStats 1 }
+
+ibL2tpTunnelStatsEntry    OBJECT-TYPE
+    SYNTAX          IbL2tpTunnelStatsEntry
+    MAX-ACCESS      not-accessible
+    STATUS          current
+    DESCRIPTION
+        "An L2TP tunnel interface stats entry."
+    INDEX           { ibL2tpTStatsUpID,
+                      ibL2tpTStatsLocalTID }
+    ::= { ibL2tpTunnelStatsTable 1 }
+
+IbL2tpTunnelStatsEntry ::= SEQUENCE {
+    ibL2tpTStatsUpID                     Integer32,
+    ibL2tpTStatsLocalTID                 Integer32,
+    ibL2tpTStatsRemoteTID                Integer32,
+    ibL2tpTStatsState                    INTEGER,
+    ibL2tpTStatsInitiated                INTEGER,
+    ibL2tpTStatsRemoteHostName           SnmpAdminString,
+    ibL2tpTStatsRemoteVendorName         SnmpAdminString,
+    ibL2tpTStatsRemoteFirmwareRev        Integer32,
+    ibL2tpTStatsRemoteProtocolVer        OCTET STRING,
+    ibL2tpTStatsBearerCaps               INTEGER,
+    ibL2tpTStatsFramingCaps              INTEGER,
+    ibL2tpTStatsControlRxPkts            Counter32,
+    ibL2tpTStatsControlRxZLB             Counter32,
+    ibL2tpTStatsControlTxPkts            Counter32,
+    ibL2tpTStatsControlTxZLB             Counter32,
+    ibL2tpTStatsControlAckTO             Counter32,
+    ibL2tpTStatsCurrentRemoteRWS         Gauge32,
+    ibL2tpTStatsTxSeq                    Integer32,
+    ibL2tpTStatsTxSeqAck                 Integer32,
+    ibL2tpTStatsRxSeq                    Integer32,
+    ibL2tpTStatsTotalSessions            Counter32,
+    ibL2tpTStatsFailedSessions           Counter32,
+    ibL2tpTStatsActiveSessions           Gauge32
+    }
+
+ibL2tpTStatsUpID  OBJECT-TYPE
+    SYNTAX          Integer32 (0..2047)
+    MAX-ACCESS      not-accessible
+    STATUS          current
+    DESCRIPTION
+        "This object of 1024 to 2047 value contains the UP(user plane) id in CU
+        (control plane and user plane) environment, the zero value indicates
+        a none CU environment, other value is not supported."
+    ::= { ibL2tpTunnelStatsEntry 1 }
+
+ibL2tpTStatsLocalTID OBJECT-TYPE
+    SYNTAX          Integer32 (1..65535)
+    MAX-ACCESS      not-accessible
+    STATUS          current
+    DESCRIPTION
+        "This object contains the local tunnel Identifier."
+    ::= { ibL2tpTunnelStatsEntry 2 }
+
+ibL2tpTStatsRemoteTID OBJECT-TYPE
+    SYNTAX          Integer32
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object contains the remote tunnel Identifier."
+    ::= { ibL2tpTunnelStatsEntry 3 }
+
+ibL2tpTStatsState    OBJECT-TYPE
+    SYNTAX          INTEGER {
+                             idle(1),
+                             connecting(2),
+                             established(3),
+                             disconnecting(4)
+                            }
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This field contains the current state of the
+        control tunnel."
+    ::= { ibL2tpTunnelStatsEntry 4 }
+
+ibL2tpTStatsInitiated OBJECT-TYPE
+    SYNTAX          INTEGER {
+                               locally(1),
+                               remotely(2)
+                           }
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+              "This object indicates whether the tunnel was
+               initiated locally or by the remote tunnel peer."
+    ::= { ibL2tpTunnelStatsEntry 5 }
+
+ibL2tpTStatsRemoteHostName OBJECT-TYPE
+    SYNTAX          SnmpAdminString (SIZE(0..31))
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+              "This object contains the host name as discovered
+               during the tunnel establishment phase (via the Host
+               Name AVP) of the L2TP peer. If the tunnel is idle
+               this object should maintain its value from the last
+               time it was connected."
+    ::= { ibL2tpTunnelStatsEntry 6 }
+
+ibL2tpTStatsRemoteVendorName OBJECT-TYPE
+    SYNTAX          SnmpAdminString (SIZE(0..256))
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+              "This object identifies the vendor name of the peer's
+               L2TP implementation. If the tunnel is idle this
+               object should maintain its value from the last time
+               it was connected."
+    ::= { ibL2tpTunnelStatsEntry 7 }
+
+ibL2tpTStatsRemoteFirmwareRev OBJECT-TYPE
+    SYNTAX          Integer32
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+              "This object contains the tunnel peer's firmware
+               revision number. If the tunnel is idle this object
+               should maintain its value from the last time it
+               was connected."
+    ::= { ibL2tpTunnelStatsEntry 8 }
+
+ibL2tpTStatsRemoteProtocolVer OBJECT-TYPE
+    SYNTAX          OCTET STRING (SIZE(2))
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object describes the protocol version and
+        revision of the tunnel peers implementation. The
+        first octet contains the protocol version. The
+        second octet contains the protocol revision."
+    ::= { ibL2tpTunnelStatsEntry 9 }
+
+ibL2tpTStatsBearerCaps OBJECT-TYPE
+    SYNTAX          INTEGER {
+                               none(1),
+                               digital(2),
+                               analog(3),
+                               digitalAnalog(4)
+                           }
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object describes the Bearer Capabilities of
+        the tunnel peer. If the tunnel is idle this object
+        should maintain its value from the last time it was
+        connected."
+    ::= { ibL2tpTunnelStatsEntry 10 }
+
+ibL2tpTStatsFramingCaps OBJECT-TYPE
+    SYNTAX          INTEGER {
+                               none(1),
+                               sync(2),
+                               async(3),
+                               syncAsync(4)
+                           }
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object describes the Framing Capabilities of
+         the tunnel peer. If the tunnel is idle this object
+         should maintain its value from the last time it was
+         connected."
+    ::= { ibL2tpTunnelStatsEntry 11 }
+
+ibL2tpTStatsControlRxPkts OBJECT-TYPE
+    SYNTAX          Counter32
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object contains the number of control packets
+         received on the tunnel."
+    ::= { ibL2tpTunnelStatsEntry 12 }
+
+ibL2tpTStatsControlRxZLB OBJECT-TYPE
+    SYNTAX          Counter32
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object returns a count of the number of Zero
+         Length Body control packet acknowledgement packets
+         that were received."
+    ::= { ibL2tpTunnelStatsEntry 13 }
+
+ibL2tpTStatsControlTxPkts OBJECT-TYPE
+    SYNTAX          Counter32
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object contains the number of control
+         packets that were transmitted to the tunnel
+         peer."
+    ::= { ibL2tpTunnelStatsEntry 14 }
+
+ibL2tpTStatsControlTxZLB OBJECT-TYPE
+    SYNTAX          Counter32
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object contains the number of Zero Length
+         Body control packets transmitted to the tunnel
+         peer."
+    ::= { ibL2tpTunnelStatsEntry 15 }
+
+ibL2tpTStatsControlAckTO OBJECT-TYPE
+    SYNTAX          Counter32
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object returns a count of the number of
+         control packet timeouts due to the lack of a
+         timely acknowledgement from the tunnel peer."
+    ::= { ibL2tpTunnelStatsEntry 16 }
+
+ibL2tpTStatsCurrentRemoteRWS OBJECT-TYPE
+    SYNTAX          Gauge32 (0..65535)
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object contains the current remote receive
+         window size as determined by the local flow
+         control mechanism employed."
+    ::= { ibL2tpTunnelStatsEntry 17 }
+
+ibL2tpTStatsTxSeq  OBJECT-TYPE
+    SYNTAX          Integer32 (0..65535)
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object contains the next send sequence number
+         for the control channel."
+    ::= { ibL2tpTunnelStatsEntry 18 }
+
+ibL2tpTStatsTxSeqAck OBJECT-TYPE
+    SYNTAX          Integer32 (0..65535)
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object contains the send sequence number that
+         the tunnel peer has acknowledged for the control
+         channel. The flow control state can be determined
+         by subtracting the l2tpTunnelStatsTxSeq from
+         ibL2tpTStatsTxSeqAck and comparing this value
+         to ibL2tpTStatsCurrentRemoteRWS (taking into
+         consideration sequence number wraps)."
+    ::= { ibL2tpTunnelStatsEntry 19 }
+
+ibL2tpTStatsRxSeq  OBJECT-TYPE
+    SYNTAX          Integer32 (0..65535)
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object contains the next receive sequence
+         number expected to be received on this control
+         channel."
+    ::= { ibL2tpTunnelStatsEntry 20 }
+
+ibL2tpTStatsTotalSessions OBJECT-TYPE
+    SYNTAX          Counter32
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object contains the total number of sessions
+         that this tunnel has successfully connected through
+         to its tunnel peer since this tunnel was created."
+    ::= { ibL2tpTunnelStatsEntry 21 }
+
+ibL2tpTStatsFailedSessions OBJECT-TYPE
+    SYNTAX          Counter32
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object contains the total number of sessions
+         that were initiated but failed to reach the
+         established phase."
+    ::= { ibL2tpTunnelStatsEntry 22 }
+
+ibL2tpTStatsActiveSessions OBJECT-TYPE
+    SYNTAX          Gauge32
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object contains the total number of sessions
+         in the established state for this tunnel."
+    ::= { ibL2tpTunnelStatsEntry 23 }
+
+ibL2tpTUpOrDownTrapOid OBJECT IDENTIFIER ::= { ibL2tpObjects 5 }
+
+ibL2tpTUpOrDownLocalTID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved local tunnel ID of trap information."
+    ::= { ibL2tpTUpOrDownTrapOid 1 }
+
+ibL2tpTUpOrDownTRemoteName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE(0..31))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved peer name of trap information."
+    ::= { ibL2tpTUpOrDownTrapOid 2 }
+
+ibL2tpTUpOrDownTPeerIPAdd OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved peer IP address of trap information."
+    ::= { ibL2tpTUpOrDownTrapOid 3 }
+
+ibL2tpTUpOrDownTStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        established(1),
+                        stopping(2)
+                        }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved tunnel status of trap information."
+    ::= { ibL2tpTUpOrDownTrapOid 4 }
+
+ibL2tpTUpOrDownTDownReason OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE(0..63))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved tunnel down reason of trap information."
+    ::= { ibL2tpTUpOrDownTrapOid 5 }
+
+ibL2tpTUpOrDownRemoteTID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved remote tunnel ID of trap information."
+    ::= { ibL2tpTUpOrDownTrapOid 6 }
+
+ibL2tpTUpOrDownSessCount OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved session count of trap information."
+    ::= { ibL2tpTUpOrDownTrapOid 7 }
+
+ibL2tpTUpOrDownTrap OBJECT IDENTIFIER  ::= { ibL2tpObjects 6 }
+
+ibL2tpTUpOrDownTrapPrefix OBJECT IDENTIFIER  ::= { ibL2tpTUpOrDownTrap 0 }
+
+ibL2tpTUpOrDown NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibL2tpTUpOrDownLocalTID,
+        ibL2tpTUpOrDownTRemoteName,
+        ibL2tpTUpOrDownTPeerIPAdd,
+        ibL2tpTUpOrDownTStatus,
+        ibL2tpTUpOrDownTDownReason,
+        ibL2tpTUpOrDownRemoteTID,
+        ibL2tpTUpOrDownSessCount
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when an L2TP tunnel becomes up or down
+         on the device."
+    ::= { ibL2tpTUpOrDownTrapPrefix 1 }
+
+ibL2tpSessionFailTrapOid OBJECT IDENTIFIER ::= { ibL2tpObjects 7 }
+
+ibL2tpSessFailChassisID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved chassis ID of trap information."
+    ::= { ibL2tpSessionFailTrapOid 1 }
+
+ibL2tpSessFailSlotID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved slot ID of trap information."
+    ::= { ibL2tpSessionFailTrapOid 2 }
+
+ibL2tpSessFailLocalTID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved local tunnel ID of trap information."
+    ::= { ibL2tpSessionFailTrapOid 3 }
+
+ibL2tpSessFailLocalSID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved local session ID of trap information."
+    ::= { ibL2tpSessionFailTrapOid 4 }
+
+ibL2tpSessFailPeerIPAdd OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved peer IP address of trap information."
+    ::= { ibL2tpSessionFailTrapOid 5 }
+
+ibL2tpSessFailLocalIPAdd OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved local IP address of trap information."
+    ::= { ibL2tpSessionFailTrapOid 6 }
+
+ibL2tpSessionFailTrap OBJECT IDENTIFIER  ::= { ibL2tpObjects 8 }
+
+ibL2tpSessionFailTrapPrefix OBJECT IDENTIFIER  ::= { ibL2tpSessionFailTrap 0 }
+
+ibL2tpSessionFail NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibL2tpSessFailChassisID,
+        ibL2tpSessFailSlotID,
+        ibL2tpSessFailLocalTID,
+        ibL2tpSessFailLocalSID,
+        ibL2tpSessFailPeerIPAdd,
+        ibL2tpSessFailLocalIPAdd
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when an L2TP session failed to be added
+         on the device."
+    ::= { ibL2tpSessionFailTrapPrefix 1 }
+
+END

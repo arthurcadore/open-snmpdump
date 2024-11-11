@@ -1,0 +1,572 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: 802.1Q-in-Q and BPDU Tunnel MIB
+-- Reference:
+-- Version: V1.1
+-- History:
+-- V1.0 2006-03-10 Initial version Created by Baiping Chen
+-- V1.1 2007/10/15 modified by wangjinwang
+--   Add ibQinQServiceTPIDValue and ibQinQCustomerTPIDValue
+--   to ibQinQGlobalConfigGroup.
+--   Add ibQinQIfServiceTPIDValue ibQinQIfCustomerTPIDValue
+--   ibQinQIfUplinkSwitch and ibQinQIfDownlinkSwitch
+--   to ibQinQIfConfigTable.
+-- ==================================================================
+IB-QINQ-MIB DEFINITIONS ::= BEGIN
+    IMPORTS
+        RowStatus, TEXTUAL-CONVENTION
+            FROM SNMPv2-TC
+        MODULE-IDENTITY, OBJECT-TYPE, Integer32
+            FROM SNMPv2-SMI
+        ifIndex
+            FROM RFC1213-MIB
+        ibCommon
+            FROM IB-OID-MIB;
+
+-- ==================================================================
+--
+-- module identity part
+--
+-- ==================================================================
+    ibQINQ MODULE-IDENTITY
+        LAST-UPDATED
+            "200603100000Z"
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+            "802.1Q-in-Q MIB"
+        REVISION
+            "200603100000Z"
+        DESCRIPTION
+            "The initial version of this MIB."
+        ::= { ibCommon 69 }
+
+
+-- ==================================================================
+--
+-- Textual Conventions
+--
+-- ==================================================================
+        IbQinQSwitchState ::= TEXTUAL-CONVENTION
+        STATUS      current
+        DESCRIPTION
+            "An enumerated value which indicates the state of
+            switch."
+        SYNTAX  INTEGER
+        {
+            enabled(1),
+            disabled(2)
+        }
+
+
+-- ==================================================================
+--
+-- =====================object definition begin======================
+--
+-- ==================================================================
+    ibQinQMibObject      OBJECT IDENTIFIER ::= { ibQINQ 1 }
+
+    ibQinQGlobalConfigGroup OBJECT IDENTIFIER ::= { ibQinQMibObject 1 }
+
+    ibQinQBpduTunnelSwitch  OBJECT-TYPE
+        SYNTAX IbQinQSwitchState
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The global configuration switch of BPDU 802.1q tunnel.
+            If global configuration is disabled, BPDU tunnel function
+            will be disabled despite of the corresponding configuration
+            of interface. BPDU tunnel function of a certain interface
+            would work only if the global and interface's switch are
+            both enabled."
+        DEFVAL { enabled }
+        ::= { ibQinQGlobalConfigGroup 1 }
+
+    ibQinQEthernetTypeValue  OBJECT-TYPE
+        SYNTAX      Integer32 (1..65535)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Ethernet protocol type configuring for a global value.
+            The ethernet protocol type is also the TPID(Tag Protocol
+            Identity) field of a VLAN tag described in 802.1q
+            document. This value can be also configured for an
+            individual interface or VLAN. The node that configure
+            this value for a single interface is ibQinQIfEthernetType,
+            whose priority is higher than ibQinQEthernetTypeValue.
+            That means, if the value configured for a interface is
+            different from the global value, the switch will select
+            the configuration of the interface and ignore the global
+            configuration. The ethernet protocol type of node
+            ibQinQVidEthernetType that configured for a VLAN has
+            the highest priority."
+        DEFVAL { 33024 }
+        ::= { ibQinQGlobalConfigGroup 2 }
+
+    ibQinQServiceTPIDValue  OBJECT-TYPE
+        SYNTAX      Integer32 (1..65535)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Ethernet protocol type configured for service VLAN tags
+            globally.  The ethernet protocol type is also the TPID(Tag
+            Protocol Identity) field of a VLAN tag described in 802.1q
+            document.  This value can be also configured for an
+            individual interface.  The node that configure this
+            value for a single interface is ibQinQIfServiceTPIDValue,
+            whose priority is higher than ibQinQServiceTPIDValue.
+            That means, if the value configured for a interface is
+            different from the global value, the switch will select
+            the configuration of the interface and ignore the global
+            configuration."
+        ::= { ibQinQGlobalConfigGroup 3 }
+
+    ibQinQCustomerTPIDValue  OBJECT-TYPE
+        SYNTAX      Integer32 (1..65535)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Ethernet protocol type configured for customer VLAN tags
+            globally.  The ethernet protocol type is also the TPID(Tag
+            Protocol Identity) field of a VLAN tag described in 802.1q
+            document.  This value can be also configured for an
+            individual interface.  The node that configure this
+            value for a single interface is ibQinQIfCustomerTPIDValue,
+            whose priority is higher than ibQinQCustomerTPIDValue.
+            That means, if the value configured for a interface is
+            different from the global value, the switch will select
+            the configuration of the interface and ignore the global
+            configuration."
+        ::= { ibQinQGlobalConfigGroup 4 }
+
+    ibQinQBpduTunnelTable  OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbQinQBpduTunnelEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for configuring 802.1q BPDU tunnel function
+            for interfaces."
+        ::= { ibQinQMibObject 2 }
+
+    ibQinQBpduTunnelEntry  OBJECT-TYPE
+        SYNTAX      IbQinQBpduTunnelEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry for configuring 802.1q BPDU tunnel function
+            for interfaces."
+        INDEX
+        {
+            ifIndex,
+            ibQinQProtocolIndex
+        }
+        ::= { ibQinQBpduTunnelTable 1 }
+
+    IbQinQBpduTunnelEntry ::=
+        SEQUENCE
+        {
+            ibQinQProtocolIndex INTEGER,
+            ibQinQBpduRowStatus RowStatus
+        }
+
+    ibQinQProtocolIndex  OBJECT-TYPE
+        SYNTAX      INTEGER
+        {
+            bpdu(1),
+            stp(2),
+            gmosaic(3),
+            igmp(4)
+        }
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The index of protocol on which the BPDU tunnel state
+            will be set. 'bpdu' represents status of BPDU tunnel.
+            'stp' represents STP tunnel. 'gmosaic' represents GMOSAIC
+            tunnel. 'igmp' represents IGMP tunnel. STP/GMOSAIC/IGMP
+            tunnel will start to work only if BPDU tunnel and
+            STP/GMOSAIC/IGMP tunnel are both enabled."
+        ::= { ibQinQBpduTunnelEntry 1 }
+
+    ibQinQBpduRowStatus     OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Operation status of this table entry."
+        ::= { ibQinQBpduTunnelEntry 2 }
+
+
+    ibQinQPriorityRemarkTable  OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbQinQPriorityRemarkEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for configuring priority field in 802.1Q-in-Q
+            outer VLAN tag for interfaces. This feature uses the
+            priority of an inner VLAN tag to remark the priority
+            of an outer VLAN tag."
+        ::= { ibQinQMibObject 3 }
+
+    ibQinQPriorityRemarkEntry  OBJECT-TYPE
+        SYNTAX      IbQinQPriorityRemarkEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry for configuring priority remark function for
+            interfaces."
+        INDEX
+        {
+            ifIndex,
+            ibQinQPriorityValue
+        }
+        ::= { ibQinQPriorityRemarkTable 1 }
+
+    IbQinQPriorityRemarkEntry ::=
+        SEQUENCE
+        {
+            ibQinQPriorityValue Integer32,
+            ibQinQPriorityRemarkValue Integer32,
+            ibQinQPriorityRowStatus RowStatus
+        }
+
+    ibQinQPriorityValue  OBJECT-TYPE
+        SYNTAX      Integer32 (1..8)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The priority value in inner VLAN tag. Since the priority
+            range is from 0 to 7, yet the index range is from 1 to 8.
+            Thus, the actual priority value equals to the value that
+            subtracts 1 from corresponding index value."
+        ::= { ibQinQPriorityRemarkEntry 1 }
+
+    ibQinQPriorityRemarkValue  OBJECT-TYPE
+        SYNTAX      Integer32 (0..7)
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "The new priority value used to fill outer tag."
+        ::= { ibQinQPriorityRemarkEntry 2 }
+
+    ibQinQPriorityRowStatus     OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Operation status of this table entry."
+        ::= { ibQinQPriorityRemarkEntry 3 }
+
+
+    ibQinQVidTable  OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbQinQVidEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for configuring VLAN ID of the 802.1Q-in-Q
+            interfaces."
+        ::= { ibQinQMibObject 4 }
+
+    ibQinQVidEntry  OBJECT-TYPE
+        SYNTAX      IbQinQVidEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry for configuring VLAN ID of the 802.1Q-in-Q
+            interfaces."
+        INDEX
+        {
+            ifIndex,
+            ibQinQVlanID
+        }
+        ::= { ibQinQVidTable 1 }
+
+    IbQinQVidEntry ::=
+        SEQUENCE
+        {
+            ibQinQVlanID Integer32,
+            ibQinQInboundVidListLow OCTET STRING,
+            ibQinQInboundVidListHigh OCTET STRING,
+            ibQinQVidEthernetType Integer32,
+            ibQinQVidRowStatus RowStatus
+        }
+
+    ibQinQVlanID    OBJECT-TYPE
+        SYNTAX      Integer32 (1..4094)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "VLAN ID"
+        ::= { ibQinQVidEntry 1 }
+
+    ibQinQInboundVidListLow    OBJECT-TYPE
+        SYNTAX      OCTET STRING (SIZE(256))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "The inbound VLAN IDs which need 802.1Q-in-Q processing.
+            The VLAN ID range, described by bitmap, is from 1 to
+            2048. The length of bitmap is 256 in bytes. Each octet
+            within this value specifies a set of eight VLANs, with
+            the first octet specifying VLANs 1 through 8, the second
+            octet specifying VLANs 9 through 16, etc. Within each
+            octet, the most significant bit represents the highest
+            numbered VLAN, and the least significant bit represents
+            the lowest numbered VLAN."
+        ::= { ibQinQVidEntry 2 }
+
+    ibQinQInboundVidListHigh    OBJECT-TYPE
+        SYNTAX      OCTET STRING (SIZE(256))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "The inbound VLAN IDs which need 802.1Q-in-Q processing.
+            The VLAN ID range, described by bitmap, is from 2049 to
+            4094. The length of bitmap is 256 in bytes. Each octet
+            within this value specifies a set of eight VLANs, with
+            the first octet specifying VLANs 2049 through 2056, the
+            second octet specifying VLANs 2057 through 2064, etc.
+            Within each octet, the most significant bit represents
+            the highest numbered VLAN, and the least significant bit
+            represents the lowest numbered VLAN."
+        ::= { ibQinQVidEntry 3 }
+
+    ibQinQVidEthernetType   OBJECT-TYPE
+        SYNTAX      Integer32 (1..65535)
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Ethernet protocol type configuring for a VLAN."
+        DEFVAL { 33024 }
+        ::= { ibQinQVidEntry 4 }
+
+    ibQinQVidRowStatus  OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Operation status of this table entry."
+        ::= { ibQinQVidEntry 5 }
+
+
+    ibQinQVidSwapTable  OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbQinQVidSwapEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for configuring 802.1Q-in-Q inner VLAN ID
+            swapping function for interfaces."
+        ::= { ibQinQMibObject 5 }
+
+    ibQinQVidSwapEntry  OBJECT-TYPE
+        SYNTAX      IbQinQVidSwapEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry for configuring 802.1Q-in-Q inner VLAN ID
+            swapping function for interfaces."
+        INDEX
+        {
+            ifIndex,
+            ibQinQVlanID,
+            ibQinQVidSwapOld
+        }
+        ::= { ibQinQVidSwapTable 1 }
+
+    IbQinQVidSwapEntry ::=
+        SEQUENCE
+        {
+            ibQinQVidSwapOld Integer32,
+            ibQinQVidSwapNew Integer32,
+            ibQinQVidSwapRowStatus RowStatus
+        }
+
+    ibQinQVidSwapOld    OBJECT-TYPE
+        SYNTAX      Integer32 (1..4094)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The old VLAN ID of original 802.1Q packets."
+        ::= { ibQinQVidSwapEntry 1 }
+
+    ibQinQVidSwapNew    OBJECT-TYPE
+        SYNTAX      Integer32 (1..4094)
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "The new VLAN ID of original 802.1Q packets."
+        ::= { ibQinQVidSwapEntry 2 }
+
+    ibQinQVidSwapRowStatus     OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Operation status of this table entry."
+        ::= { ibQinQVidSwapEntry 3 }
+
+
+    ibQinQPrioritySwapTable  OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbQinQPrioritySwapEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for configuring 802.1Q-in-Q inner VLAN priority
+            swapping function for interfaces. Using this function,
+            the priority of inner VLAN tag can be modified."
+        ::= { ibQinQMibObject 6 }
+
+    ibQinQPrioritySwapEntry  OBJECT-TYPE
+        SYNTAX      IbQinQPrioritySwapEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry for configuring 802.1Q-in-Q inner VLAN
+            priority swapping function for interfaces."
+        INDEX
+        {
+            ifIndex,
+            ibQinQVlanID,
+            ibQinQPrioritySwapOld
+        }
+        ::= { ibQinQPrioritySwapTable 1 }
+
+    IbQinQPrioritySwapEntry ::=
+        SEQUENCE
+        {
+            ibQinQPrioritySwapOld Integer32,
+            ibQinQPrioritySwapNew Integer32,
+            ibQinQPrioritySwapRowStatus RowStatus
+        }
+
+    ibQinQPrioritySwapOld    OBJECT-TYPE
+        SYNTAX      Integer32 (1..8)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The old priority of original 802.1Q packets. It is the
+            priority of inner VLAN tag. Since the VLAN priority range
+            is from 0 to 7, yet the index range is from 1 to 8. Thus,
+            the actual priority value equals to the value that
+            subtracts 1 from corresponding index value."
+        ::= { ibQinQPrioritySwapEntry 1 }
+
+    ibQinQPrioritySwapNew    OBJECT-TYPE
+        SYNTAX      Integer32 (0..7)
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "The new priority of original 802.1Q packets. It is the
+            priority of inner VLAN tag after swapped."
+        ::= { ibQinQPrioritySwapEntry 2 }
+
+    ibQinQPrioritySwapRowStatus     OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Operation status of this table entry."
+        ::= { ibQinQPrioritySwapEntry 3 }
+
+
+    ibQinQIfConfigTable  OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbQinQIfConfigEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for configuring 802.1Q-in-Q functions for
+            interfaces."
+        ::= { ibQinQMibObject 7 }
+
+    ibQinQIfConfigEntry  OBJECT-TYPE
+        SYNTAX      IbQinQIfConfigEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry for configuring 802.1Q-in-Q functions for
+            interfaces."
+        INDEX
+        {
+            ifIndex
+        }
+        ::= { ibQinQIfConfigTable 1 }
+
+    IbQinQIfConfigEntry ::=
+        SEQUENCE
+        {
+            ibQinQIfEthernetType Integer32,
+            ibQinQIfSwitch IbQinQSwitchState,
+            ibQinQIfRowStatus RowStatus,
+            ibQinQIfServiceTPIDValue Integer32,
+            ibQinQIfCustomerTPIDValue Integer32,
+            ibQinQIfUplinkSwitch IbQinQSwitchState,
+            ibQinQIfDownlinkSwitch IbQinQSwitchState
+        }
+
+    ibQinQIfEthernetType    OBJECT-TYPE
+        SYNTAX      Integer32 (1..65535)
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Ethernet protocol type configuring for an interface."
+        DEFVAL { 33024 }
+        ::= { ibQinQIfConfigEntry 1 }
+
+    ibQinQIfSwitch    OBJECT-TYPE
+        SYNTAX      IbQinQSwitchState
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Switch of 802.1Q-in-Q functions configuring for an
+            interface."
+        DEFVAL { disabled }
+        ::= { ibQinQIfConfigEntry 2 }
+
+    ibQinQIfRowStatus    OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Operation status of this table entry."
+        ::= { ibQinQIfConfigEntry 3 }
+
+    ibQinQIfServiceTPIDValue    OBJECT-TYPE
+        SYNTAX      Integer32 (1..65535)
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Service TPID value configured for an interface."
+        ::= { ibQinQIfConfigEntry 4 }
+
+    ibQinQIfCustomerTPIDValue    OBJECT-TYPE
+        SYNTAX      Integer32 (1..65535)
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Customer TPID value configured for an interface."
+        ::= { ibQinQIfConfigEntry 5 }
+
+    ibQinQIfUplinkSwitch    OBJECT-TYPE
+        SYNTAX      IbQinQSwitchState
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Switch of the uplink 802.1Q-in-Q function
+            for an interface."
+        DEFVAL { disabled }
+        ::= { ibQinQIfConfigEntry 6 }
+
+    ibQinQIfDownlinkSwitch    OBJECT-TYPE
+        SYNTAX      IbQinQSwitchState
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Switch of the downlink 802.1Q-in-Q function
+            for an interface."
+        DEFVAL { disabled }
+        ::= { ibQinQIfConfigEntry 7 }
+
+END

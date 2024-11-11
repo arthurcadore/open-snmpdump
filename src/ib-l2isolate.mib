@@ -1,0 +1,128 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: This file describes the ib MIB implementation of l2 isolation
+-- Reference:
+-- Version:     V1.0 Created by y04444 Initial version
+-- History:
+-- V1.0 Initial version
+-- =================================================================
+IB-L2ISOLATE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    TruthValue,
+    MacAddress,
+    RowStatus
+        FROM SNMPv2-TC
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, Integer32
+        FROM SNMPv2-SMI;
+
+ibL2Isolate MODULE-IDENTITY
+    LAST-UPDATED "200905060000Z"            -- May 06th, 2009 at 00:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB module is used for l2 isolation."
+    REVISION    "200905060000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { ibCommon 103 }
+
+ibL2IsolateObject OBJECT IDENTIFIER ::= { ibL2Isolate 1 }
+
+-- =================================================================
+--  1st Table of ibL2Isolate: ibL2IsolateEnableTable
+-- =================================================================
+ibL2IsolateEnableTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbL2IsolateEnableEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for enabling/disabling layer-2-isolate for VLAN."
+    ::= { ibL2IsolateObject 1 }
+
+ibL2IsolateEnableEntry OBJECT-TYPE
+    SYNTAX      IbL2IsolateEnableEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for enabling/disabling layer-2-isolate for VLAN."
+    INDEX
+        {
+            ibL2IsolateVLANIndex
+        }
+    ::= { ibL2IsolateEnableTable 1 }
+
+IbL2IsolateEnableEntry ::= SEQUENCE
+    {
+        ibL2IsolateVLANIndex        Integer32,
+        ibL2IsolateEnable           TruthValue
+    }
+
+ibL2IsolateVLANIndex OBJECT-TYPE
+    SYNTAX      Integer32 (1..4094)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Represents index of VLAN for layer-2-isolate."
+    ::= { ibL2IsolateEnableEntry 1 }
+
+ibL2IsolateEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Represents the layer-2-isolate status of VLAN."
+    ::= { ibL2IsolateEnableEntry 2 }
+
+-- =================================================================
+--   2nd Table of ibL2Isolate: ibL2IsolatePermitMACTable
+-- =================================================================
+ibL2IsolatePermitMACTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbL2IsolatePermitMACEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table represents the permitting MAC address for the specific VLAN."
+    ::= { ibL2IsolateObject 2 }
+
+ibL2IsolatePermitMACEntry OBJECT-TYPE
+    SYNTAX      IbL2IsolatePermitMACEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry represents the permitting MAC address for the specific VLAN."
+    INDEX
+        {
+            ibL2IsolateVLANIndex,
+            ibL2IsoLatePermitMAC
+        }
+    ::= { ibL2IsolatePermitMACTable 1 }
+
+IbL2IsolatePermitMACEntry ::= SEQUENCE
+    {
+        ibL2IsoLatePermitMAC            MacAddress,
+        ibL2IsoLatePermitMACRowStatus   RowStatus
+    }
+
+ibL2IsoLatePermitMAC OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Represents the MAC address permitted in the VLAN."
+    ::= { ibL2IsolatePermitMACEntry 1 }
+
+ibL2IsoLatePermitMACRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus. Three actions are used: active, CreateAndGo, destroy."
+    ::= { ibL2IsolatePermitMACEntry 2 }
+
+END

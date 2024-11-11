@@ -1,0 +1,155 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Dual Main Control MIB
+--
+-- Version: V1.2
+-- History:
+-- Revise History: 1) 2003-03-27 Fuzhenyu created
+-- V1.1 2004-10-12 updated by gaolong
+--      Import NOTIFICATION-TYPE.
+--      MAX-ACCESS clause value from write-only to read-write.
+--      Substitute ibsMixTrapMib MODULE-IDENTITY with ibsMixTrapMib OBJECT IDENTIFIER.
+-- V1.2 2005-11-14
+--      updated by Chen Xi
+--      Modify description of all objects except ibLswXSlotTable and ibLswXSlotEntry.
+--      updated by Yu Lan
+--      Add process(3) value for ibLswMainCardBoardStatus.
+--      Add ibLswCrossBarStatus.
+-- ------------------------------------------------------------------
+--
+-- ------------------------------------------------------------------
+--
+-- Variable imported
+--
+-- ------------------------------------------------------------------
+IB-LswMix-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    ibLswFrameIndex,ibLswSlotIndex
+        FROM IB-LSW-DEV-ADM-MIB
+    iblswCommon
+        FROM IB-OID-MIB;
+
+--  the document include the private data about device
+-- ******************************beginning  ******************************
+--
+-- ------------------------------------------------------------------
+    ibLswMix MODULE-IDENTITY
+            LAST-UPDATED "200106290000Z"
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION
+            ""
+            REVISION "200106290000Z"
+            DESCRIPTION
+            ""
+            ::= { iblswCommon  17 }
+
+
+--  the document include the private data about device mix
+
+ibLswLastSwitchDate OBJECT-TYPE
+    SYNTAX INTEGER
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "This object indicates the date of the most recent change
+    to the mpu(Main Processing Unit). "
+    ::= { ibLswMix 1 }
+
+ibLswLastSwitchTime OBJECT-TYPE
+    SYNTAX INTEGER
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "This object indicates the time of the most recent change
+    to the mpu. "
+    ::= { ibLswMix 2 }
+
+ibLswMpuSwitchsNum OBJECT-TYPE
+    SYNTAX INTEGER
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "This object indicates the total times of the mpu switched
+    since the system start up. "
+    ::= { ibLswMix 3 }
+
+ibLswMpuSwitch OBJECT-TYPE
+    SYNTAX INTEGER{
+        switch(1)
+    }
+    MAX-ACCESS  read-write
+    STATUS  current
+    DESCRIPTION
+    "Setting this object will immediately switch the standby mpu
+    to master mpu. Read is not supported. "
+    ::= { ibLswMix 4 }
+
+--  the document include the private data about main card
+ibLswXSlotTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF IbLswXSlotEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+    "The source main table."
+     ::= { ibLswMix 5 }
+
+ibLswXSlotEntry OBJECT-TYPE
+    SYNTAX  IbLswXSlotEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+    "An entry in the source main table."
+    INDEX   { ibLswFrameIndex, ibLswSlotIndex }
+     ::= { ibLswXSlotTable 1 }
+
+IbLswXSlotEntry ::=
+    SEQUENCE {
+        ibLswMainCardBoardStatus        INTEGER,
+        ibLswCrossBarStatus            INTEGER
+    }
+
+ibLswMainCardBoardStatus OBJECT-TYPE
+    SYNTAX  INTEGER{
+      master(1),
+      standby(2),
+      process(3)
+    }
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+       "The value describes whether the board is master, standby or process.
+       master and standby are the possible states for the mpu, while process
+       indicates the state of lpu(Line Processing Unit)"
+     ::= { ibLswXSlotEntry 1 }
+
+ibLswCrossBarStatus OBJECT-TYPE
+    SYNTAX INTEGER{
+       master(1),
+       standby(2)
+       }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+       "The value describes whether the crossbar is master or standby. It is
+       master when it's in the master mpu board, standby when in the standby mpu.
+       But both crossbars in mpus are master when the device in load-balance mode."
+    ::= { ibLswXSlotEntry 2 }
+
+   ibsMixTrapMib OBJECT IDENTIFIER        ::= { ibLswMix  10 }
+
+   ibSlaveSwitchOver NOTIFICATION-TYPE
+      STATUS  current
+      DESCRIPTION
+      "An ibSlaveSwitchOver trap signifies that the action of
+      standby mpu switching to master has completed. "
+      ::= { ibsMixTrapMib 1 }
+
+END

@@ -1,0 +1,1149 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Network Time Protocol (NTP) Version 3, is used to synchronize
+--              timekeeping among a set of distributed time servers and clients.
+-- Reference:
+-- Version: V2.2
+-- History:
+-- V1.0   <sunhaipeng>, <2003-03-19>, <initial>
+-- V1.1   jinyi, 2004-12-02,
+--        Fix syntax bugs and adjust format of the whole file.
+-- V1.2  sunkai, 2006-03-23
+--       Modified SYNTAX of ibNTPPeerKeyId.
+-- V1.3  2010-03-05
+--       Added ibNTPServerIP.
+-- V1.4  2011-01-27
+--       Added ibNTPSysPollSec, ibNTPSysClockSec.  Modified ibNTPServerIP.
+-- V1.5  2012-04-13 by huangshengliang
+--       change seconds to milliseconds.
+-- V1.6  2013-05-29 by niuxuning
+--       Modified local clock of ibNTPPeerStratum.
+-- V1.7  2014-03-03 by wangjianming
+--       Changed the state of ibNTPSysPeer to obsolete.
+--       Added ibNTPSysSrcPeer.
+-- V1.8  2016-09-14 by chenzichao
+--       Corrected spelling of the word 'message'.
+-- V1.9  2022-3-16 by yinwenyao kf8812
+--       Added ibNTPSysOldServerIP for Trap by yinwenyao kf8812
+--       Added ibNTPSysSrcVpnName for Trap by yinwenyao kf8812
+--       Added ibNTPSysOldSrcVpnName for Trap by yinwenyao kf8812
+--       Added ibNTPSysMaxDynamicSessions for Trap by yinwenyao kf8812
+--       Added ibNTPSystemMIBTraps to ibNTPSystemMIB by yinwenyao kf8812
+--       Added ibNTPSysStateChangeTrap by yinwenyao kf8812
+--       Added ibNTPSysPeerChangeTrap by yinwenyao kf8812
+--       Added ibNTPDynSessionLimit by yinwenyao kf8812
+--       Added ibNTPDynSessionLimitResume by yinwenyao kf8812
+-- V2.0  2022-06-28 by duwei
+--       Added ibNTPSessionLimit
+--       Added ibNTPSessionLimitResume
+-- V2.1  2022-09-01 by duwei
+--       Added ibNTPSysOldStratum,ibNTPSysTimeOffsetThres,
+--       ibNTPSysTimeOffsetLimit for trap.
+--       Added ibNTPSynchronizationLost.
+--       Added ibNTPSynchronizationResume.
+--       Added ibNTPSysStratumChange.
+--       Added ibNTPTimeOffsetThresExceed.
+--       Added ibNTPTimeOffsetThresResume.
+--       Added ibNTPTimeOffsetLimit.
+--       Added ibNTPTimeOffsetLimitResume.
+-- V2.2  2022-09-01 by duwei
+--       Added ibNTPSysLeapChangeTrap, ibNTPServerAbnormal,
+--       ibNTPServerNormal, and ibNTPStepSetTimeFailed for trap.
+-- =================================================================
+IB-NTP-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        IpAddress, Integer32, MODULE-IDENTITY, NOTIFICATION-TYPE, OBJECT-TYPE, Counter32, Unsigned32
+            FROM SNMPv2-SMI
+        RowStatus, TruthValue, DisplayString
+            FROM SNMPv2-TC
+        ibRhw
+            FROM IB-OID-MIB;
+
+        ibNTP MODULE-IDENTITY
+            LAST-UPDATED "202212010000Z"
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION
+                "This MIB provides mechanisms to monitor a NTP server."
+            REVISION "202212010000Z"
+            DESCRIPTION
+                "Add ibNTPSysLeapChangeTrap, ibNTPServerAbnormal,
+                 ibNTPServerNormal, and ibNTPStepSetTimeFailed for trap."
+            REVISION "202209010000Z"
+            DESCRIPTION
+                "Added ibNTPSysOldStratum,ibNTPSysTimeOffsetThres,
+                 ibNTPSysTimeOffsetLimit for trap.
+                 Added ibNTPSynchronizationLost.
+                 Added ibNTPSynchronizationResume.
+                 Added ibNTPSysStratumChange.
+                 Added ibNTPTimeOffsetThresExceed.
+                 Added ibNTPTimeOffsetThresResume.
+                 Added ibNTPTimeOffsetLimit.
+                 Added ibNTPTimeOffsetLimitResume."
+            REVISION "202206280000Z"
+            DESCRIPTION
+                "Added ibNTPSessionLimit for trap.
+                 Added ibNTPSessionLimitResume for trap."
+            REVISION "202203160000Z"
+            DESCRIPTION
+                "Added ibNTPSysOldServerIP for Trap.
+                 Added ibNTPSysSrcVpnName for Trap.
+                 Added ibNTPSysOldSrcVpnName for Trap.
+                 Added ibNTPSysMaxDynamicSessions for Trap.
+                 Added ibNTPSystemMIBTraps to ibNTPSystemMIB.
+                 Added ibNTPSysStateChangeTrap.
+                 Added ibNTPSysPeerChangeTrap.
+                 Added ibNTPSysDynamicSessionLimitReach.
+                 Added ibNTPSysDynamicSessionLimitReachResume."
+            REVISION "200303150000Z"
+            DESCRIPTION
+                "The initial revision of this MIB module."
+            ::= { ibRhw 22 }
+
+        ibNTPSystemMIB OBJECT IDENTIFIER ::= { ibNTP 1 }
+
+    ibNTPSystemMIBObjects OBJECT IDENTIFIER ::= { ibNTPSystemMIB 1 }
+
+    ibNTPSysLeap OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                noWarning(0),
+                addSecond(1),
+                subtractSecond(2),
+                alarm(3)
+            }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Leap Indicator (LI): This is a two-bit code warning of an impending
+            leap second to be inserted/deleted in the last minute of the current
+            day, with bit 0 and bit 1, respectively, coded as follows:
+            00, no warning
+            01, last minute has 61 seconds
+            10, last minute has 59 seconds)
+            11, alarm condition (clock not synchronized)."
+        ::= { ibNTPSystemMIBObjects 1 }
+
+    ibNTPSysStratum OBJECT-TYPE
+        SYNTAX      Integer32(1..16)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is an eight-bit integer indicating the stratum level
+            of the local clock, with values defined as follows:
+            0, unspecified
+            1, primary reference (e.g.,, radio clock)
+            2-255, secondary reference (via NTP)"
+        ::= { ibNTPSystemMIBObjects 2 }
+
+    ibNTPSysPrecision OBJECT-TYPE
+        SYNTAX      Integer32(-20..20)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Precision : This is a signed integer indicating the
+            precision of the various clocks, in seconds to the nearest
+            power of two.  The value must be rounded to the next larger
+            power of two; for instance, a 50-Hz (20 ms) or 60-Hz (16.67ms)
+            power-frequency clock would be assigned the value -5 (31.25 ms),
+            while a 1000-Hz (1 ms) crystal-controlled clock would be assigned
+            the value -9 (1.95 ms)."
+        ::= { ibNTPSystemMIBObjects 3 }
+
+    ibNTPSysRootdelay OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Root Delay : This is a signed fixed-point number indicating
+            the total roundtrip delay to the primary reference source
+            at the root of the synchronization subnet, in milliseconds.  Note
+            that this variable can take on both positive and negative
+            values, depending on clock precision and skew."
+        ::= { ibNTPSystemMIBObjects 4 }
+
+    ibNTPSysRootdispersion OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Root Dispersion : This is a signed fixed-point number
+            indicating the maximum error relative to the primary
+            reference source at the root of the synchronization
+            subnet, in milliseconds.  Only positive values greater than
+            zero are possible."
+        ::= { ibNTPSystemMIBObjects 5 }
+
+    ibNTPSysRefid OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Reference Clock Identifier : This is a 32-bit code
+            identifying the particular reference clock.  In the
+            case of stratum 0 (unspecified) or stratum 1 (primary
+            reference source), this is a four-octet, left-justified,
+            zero-padded ASCII string.
+            Stratum, Code, Meaning
+            0,       DCN,  DCN routing protocol
+            0,       TSP,  TSP time protocol
+            1,       ATOM, Atomic clock (calibrated)
+            1,       WWVB, WWVB LF (band 5) radio
+            1,       GOES, GOES UHF (band 9) satellite
+            1,       WWV,  WWV HF (band 7) radio"
+        ::= { ibNTPSystemMIBObjects 6 }
+
+    ibNTPSysReftime OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Reference Timestamp : This is the local time, in
+            timestamp format, when the local clock was last
+            updated.  If the local clock has never been synchronized,
+            the value is zero."
+        ::= { ibNTPSystemMIBObjects 7 }
+
+    ibNTPSysPoll OBJECT-TYPE
+        SYNTAX      Integer32(-20..20)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Poll Interval : This is a signed integer indicating
+            the minimum interval between transmitted messages,
+            in seconds as a power of two.  For instance, a value
+            of six indicates a minimum interval of 64 seconds."
+        ::= { ibNTPSystemMIBObjects 8 }
+
+    ibNTPSysPeer OBJECT-TYPE
+        SYNTAX      Integer32(0..2147483647)
+        MAX-ACCESS  read-only
+        STATUS      obsolete
+        DESCRIPTION
+            "This is a selector identifying the current synchronization
+            source.  Usually this will be a pointer to a structure
+            containing the peer variables.  The special value NULL indicates
+            There is no currently valid synchronization source.
+            ibNTPSysPeer is replaced by ibNTPSysSrcPeer.  Reading
+            ibNTPSysPeer might fail because the syntax value range is limited,
+            for example, when the synchronization source IP address is a Class C
+            address."
+        ::= { ibNTPSystemMIBObjects 9 }
+
+    ibNTPSysState OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                noUpdateClock(0),
+                getfreqInfo(1),
+                clockBySet(2),
+                clockBySetAndNoFreq(3),
+                clockBySyns(4),
+                findError(5)
+            }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a integer indicating the state of local clock."
+        ::= { ibNTPSystemMIBObjects 10 }
+
+    ibNTPSysOffset OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The offset of two clocks is the time difference between them, in milliseconds."
+        ::= { ibNTPSystemMIBObjects 11 }
+
+    ibNTPSysDrift OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Real clocks exhibit some variation in skew (second derivative of
+            offset with time), which is called drift."
+        ::= { ibNTPSystemMIBObjects 12 }
+
+    ibNTPSysCompliance OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a string indicating the system error."
+        ::= { ibNTPSystemMIBObjects 13 }
+
+    ibNTPSysClock OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is the current local time, in timestamp
+            format.  Local time is derived from the hardware clock of the particular
+            machine and increments at intervals depending on the design used."
+        ::= { ibNTPSystemMIBObjects 14 }
+
+    ibNTPSysStabil OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a indicating that stability of a clock is how well
+            it can maintain a constant frequency."
+        ::= { ibNTPSystemMIBObjects 15 }
+
+    ibNTPSysAuthenticate OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                noAuthenticate(0),
+                authenticate(1)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "This is a integer indicating that system support authentication."
+        ::= { ibNTPSystemMIBObjects 16 }
+
+    ibNTPSysPollSec OBJECT-TYPE
+        SYNTAX      Integer32 (2..1048576)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "PollSec Interval : This is a integer indicating the minimum
+            interval between transmitted messages.  For instance, a value of
+            six indicates a minimum interval of 6 seconds."
+        ::= { ibNTPSystemMIBObjects 17 }
+
+    ibNTPSysClockSec OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is the current local time, in integer format.
+            Local time is derived from the hardware clock of the particular
+            machine and increments at intervals depending on the design used."
+        ::= { ibNTPSystemMIBObjects 18 }
+
+    ibNTPServerIP OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The NTP server ip address.  It must be a unicast address,
+            rather than a broadcast address, a multicast address or
+            the IP address of the local clock.  To delete a configured
+            NTP server ip address, please set ibNTPServerIP to 0."
+        ::= { ibNTPSystemMIBObjects 19 }
+
+    ibNTPSysSrcPeer OBJECT-TYPE
+        SYNTAX      Unsigned32(0..4294967295)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a selector identifying the current synchronization
+            source.  Usually this will be a unsigned integer containing
+            the peer variables.  The special value 0 indicates
+            There is no currently valid synchronization source.
+            This node will replace ibNTPSysPeer, because
+            its value range is unlimited, and data type is changed from
+            Integer32 to Unsigned32."
+        ::= { ibNTPSystemMIBObjects 20 }
+
+    ibNTPSysOldServerIP OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "The Old NTP server ip address. "
+        ::= { ibNTPSystemMIBObjects 21 }
+
+    ibNTPSysSrcVpnName OBJECT-TYPE
+        SYNTAX      DisplayString (SIZE(0..255))
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "The NTP server VPN Name."
+        ::= { ibNTPSystemMIBObjects 22 }
+
+    ibNTPSysOldSrcVpnName OBJECT-TYPE
+        SYNTAX      DisplayString (SIZE(0..255))
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "The Old NTP server VPN Name. "
+        ::= { ibNTPSystemMIBObjects 23 }
+
+    ibNTPSysMaxDynamicSessions OBJECT-TYPE
+        SYNTAX      Unsigned32(0..4294967295)
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Maximum number of NTP dynamic sessions."
+        ::= { ibNTPSystemMIBObjects 24 }
+
+    ibNTPSysMaxSessions OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "Maximum number of NTP sessions."
+        ::= { ibNTPSystemMIBObjects 25 }
+
+    ibNTPSysOldStratum OBJECT-TYPE
+        SYNTAX Integer32 (1..16)
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The old the stratum level of the local clock."
+        ::= { ibNTPSystemMIBObjects 26 }
+
+    ibNTPSysTimeOffsetThres OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (1..128))
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "Time offset alarm threshold, in milliseconds."
+        ::= { ibNTPSystemMIBObjects 27 }
+
+    ibNTPSysTimeOffsetLimit OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (1..128))
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "Clock synchronization offset threshold, in milliseconds."
+        ::= { ibNTPSystemMIBObjects 28 }
+
+--
+-- Notification definitions
+--
+-- =================================================================
+-- Traps are defined below.
+ibNTPSystemMIBTraps OBJECT IDENTIFIER ::= { ibNTPSystemMIB 2 }
+
+-- All trap definitions should be placed under this object.
+ibNTPSystemMIBTrapPrefix OBJECT IDENTIFIER ::= { ibNTPSystemMIBTraps 0 }
+
+-- All objects used for TRAP only are defined here.
+ibNTPSysStateChangeTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibNTPSysState,
+            ibNTPServerIP,
+            ibNTPSysSrcVpnName
+        }
+    STATUS      current
+    DESCRIPTION
+        "The trap is generated when The NTP local clock state changed."
+    ::= { ibNTPSystemMIBTrapPrefix 1 }
+
+ibNTPSysPeerChangeTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibNTPSysOldServerIP,
+            ibNTPSysOldSrcVpnName,
+            ibNTPServerIP,
+            ibNTPSysSrcVpnName
+        }
+    STATUS      current
+    DESCRIPTION
+        "The trap is generated when The peer specified by NTP has changed."
+    ::= { ibNTPSystemMIBTrapPrefix 2 }
+
+ibNTPDynSessionLimit NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibNTPSysMaxDynamicSessions
+        }
+    STATUS      current
+    DESCRIPTION
+        "The trap is generated when The number of NTP dynamic sessions has reached the upper limit."
+    ::= { ibNTPSystemMIBTrapPrefix 3 }
+
+ibNTPDynSessionLimitResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibNTPSysMaxDynamicSessions
+        }
+    STATUS      current
+    DESCRIPTION
+        "The trap is generated when The NTP dynamic session number below the limit."
+    ::= { ibNTPSystemMIBTrapPrefix 4 }
+
+ibNTPSessionLimit NOTIFICATION-TYPE
+    OBJECTS { ibNTPSysMaxSessions }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the number of NTP sessions reaches the upper limit."
+    ::= { ibNTPSystemMIBTrapPrefix 5 }
+
+ibNTPSessionLimitResume NOTIFICATION-TYPE
+    OBJECTS { ibNTPSysMaxSessions }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the number of NTP sessions drops below the limit."
+    ::= { ibNTPSystemMIBTrapPrefix 6 }
+
+ibNTPSynchronizationLost NOTIFICATION-TYPE
+    OBJECTS { ibNTPSysState, ibNTPServerIP}
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the local clock loses synchronization with the NTP server."
+    ::= { ibNTPSystemMIBTrapPrefix 7 }
+
+ibNTPSynchronizationResume NOTIFICATION-TYPE
+    OBJECTS { ibNTPSysState, ibNTPServerIP}
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the local clock resumes synchronization with the NTP server."
+    ::= { ibNTPSystemMIBTrapPrefix 8 }
+
+ibNTPSysStratumChange NOTIFICATION-TYPE
+    OBJECTS { ibNTPSysStratum, ibNTPSysOldStratum }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the stratum level of the local clock changes."
+    ::= { ibNTPSystemMIBTrapPrefix 9 }
+
+ibNTPTimeOffsetThresExceed NOTIFICATION-TYPE
+    OBJECTS { ibNTPSysOffset, ibNTPSysTimeOffsetThres }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the time offset between the clock source and
+        the client reaches the threshold."
+    ::= { ibNTPSystemMIBTrapPrefix 10 }
+
+ibNTPTimeOffsetThresResume NOTIFICATION-TYPE
+    OBJECTS { ibNTPSysOffset, ibNTPSysTimeOffsetThres }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the time offset between the clock source and
+        the client drops below the threshold."
+    ::= { ibNTPSystemMIBTrapPrefix 11 }
+
+ibNTPTimeOffsetLimit NOTIFICATION-TYPE
+    OBJECTS { ibNTPSysOffset, ibNTPSysTimeOffsetLimit }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the time offset between the clock source and
+        the client over the upper limit for clock synchronization.
+        The client will not synchronize with the clock source."
+    ::= { ibNTPSystemMIBTrapPrefix 12 }
+
+ibNTPTimeOffsetLimitResume NOTIFICATION-TYPE
+    OBJECTS { ibNTPSysOffset, ibNTPSysTimeOffsetLimit }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the time offset between the clock source and
+        the client drops below the upper limit for clock synchronization."
+    ::= { ibNTPSystemMIBTrapPrefix 13 }
+
+ibNTPSysLeapChangeTrap NOTIFICATION-TYPE
+    OBJECTS { ibNTPSysLeap }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when System Leap Indicator changed after clock update."
+    ::= { ibNTPSystemMIBTrapPrefix 14 }
+
+ibNTPServerAbnormal NOTIFICATION-TYPE
+    OBJECTS { ibNTPServerIP }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when NTP server state went abnormal."
+    ::= { ibNTPSystemMIBTrapPrefix 15 }
+
+ibNTPServerNormal NOTIFICATION-TYPE
+    OBJECTS { ibNTPServerIP }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when NTP server state returned to normal."
+    ::= { ibNTPSystemMIBTrapPrefix 16 }
+
+ibNTPStepSetTimeFailed NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+        "The trap is generated upon failure to set system time in the one-step adjustment process."
+    ::= { ibNTPSystemMIBTrapPrefix 17 }
+
+    ibNTPPeerMIB OBJECT IDENTIFIER ::= { ibNTP 2 }
+
+    ibNTPPeerMIBObjects OBJECT IDENTIFIER ::= { ibNTPPeerMIB 1 }
+
+    ibNTPPeerTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbNTPPeerEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "This table provides information on the peers with
+            which the local NTP server has associations.  The peers
+            are also NTP servers but running on different hosts."
+        ::= { ibNTPPeerMIBObjects 1 }
+
+    ibNTPPeerEntry OBJECT-TYPE
+        SYNTAX IbNTPPeerEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "Each peers' entry provides NTP information retrieved
+            from a particular peer NTP server.  Each peer is
+            identified by a unique association identifier.
+            Entries are automatically created when the user
+            configures the NTP server to be associated with remote
+            peers.  Similarly entries are deleted when the user
+            removes the peer association from the NTP server.
+            Entries can also be created by the management station
+            by setting values for the following objects:
+            ibNTPPeerRemAdr and making the ibNTPPeerRowStatus as
+            'active'.  At the least, the management station has
+            to set a value for ibNTPPeerRemAdr to make the
+            row active."
+    INDEX { ibNTPPeerRemAdr, ibNTPPeerHMode }
+    ::= { ibNTPPeerTable 1 }
+
+    IbNTPPeerEntry ::=
+        SEQUENCE
+            {
+                ibNTPPeerConfig            TruthValue,
+                ibNTPPeerAuthenable        TruthValue,
+                ibNTPPeerAuthentic         TruthValue,
+                ibNTPPeerRemAdr            IpAddress,
+                ibNTPPeerRemPort           Integer32,
+                ibNTPPeerLocAdr            IpAddress,
+                ibNTPPeerLocPort           Integer32,
+                ibNTPPeerLeap              INTEGER,
+                ibNTPPeerHMode             INTEGER,
+                ibNTPPeerStratum           Integer32,
+                ibNTPPeerPPoll             Integer32,
+                ibNTPPeerHPoll             Integer32,
+                ibNTPPeerPrecision         Integer32,
+                ibNTPPeerRootDelay         OCTET STRING,
+                ibNTPPeerRootDispersion    OCTET STRING,
+                ibNTPPeerRefId             OCTET STRING,
+                ibNTPPeerRefTime           OCTET STRING,
+                ibNTPPeerOrg               OCTET STRING,
+                ibNTPPeerRec               OCTET STRING,
+                ibNTPPeerXmt               OCTET STRING,
+                ibNTPPeerReach             Integer32,
+                ibNTPPeerValid             Integer32,
+                ibNTPPeerTimer             Integer32,
+                ibNTPPeerDelay             OCTET STRING,
+                ibNTPPeerOffset            OCTET STRING,
+                ibNTPPeerJitter            OCTET STRING,
+                ibNTPPeerDispersion        OCTET STRING,
+                ibNTPPeerKeyId             Unsigned32,
+                ibNTPPeerFiltDelay         OCTET STRING,
+                ibNTPPeerFiltOffset        OCTET STRING,
+                ibNTPPeerFiltError         OCTET STRING,
+                ibNTPPeerPMode             INTEGER,
+                ibNTPPeerReceived          Counter32,
+                ibNTPPeerSent              Counter32,
+                ibNTPPeerFlash             BITS,
+                ibNTPPeerRowStatus         RowStatus
+            }
+
+    ibNTPPeerConfig OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a bit indicating that the association was created
+            from configuration information and should not be demobilized
+            if the peer becomes unreachable."
+        ::= { ibNTPPeerEntry 1 }
+
+    ibNTPPeerAuthenable OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a bit indicating that system support authentication."
+        ::= { ibNTPPeerEntry 2 }
+
+    ibNTPPeerAuthentic OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a bit indicating that message pass authentication which is authentic."
+        ::= { ibNTPPeerEntry 3 }
+
+    ibNTPPeerRemAdr OBJECT-TYPE
+        SYNTAX IpAddress
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The IP address of the peer.  When creating a new
+            association, a value for this object should be set
+            before the row is made active."
+        ::= { ibNTPPeerEntry 4 }
+
+    ibNTPPeerRemPort OBJECT-TYPE
+        SYNTAX Integer32 (1..65535)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The UDP port number on which the peer receives NTP messages."
+        ::= { ibNTPPeerEntry 5 }
+
+    ibNTPPeerLocAdr OBJECT-TYPE
+        SYNTAX IpAddress
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The IP address of the local host.  Multi-homing can
+             be supported using this object."
+        ::= { ibNTPPeerEntry 6 }
+
+    ibNTPPeerLocPort OBJECT-TYPE
+        SYNTAX Integer32(1..65535)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The UDP port number on which the local host receives NTP messages."
+        ::= { ibNTPPeerEntry 7 }
+
+    ibNTPPeerLeap OBJECT-TYPE
+        SYNTAX INTEGER
+            {
+                noWarning(0),
+                addSecond(1),
+                subtractSecond(2),
+                alarm(3)
+            }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a two-bit code warning of an impending leap
+            second to be inserted in the NTP timescale.  The bits
+            are set before 23:59 on the day of insertion and reset
+            after 00:00 on the following day.  This causes the
+            number of seconds (rollover interval) in the day of
+            insertion to be increased or decreased by one.  The two
+            bits are coded as below,
+            00, no warning
+            01, last minute has 61 seconds
+            10, last minute has 59 seconds
+            11, alarm condition (clock not synchronized)"
+        ::= { ibNTPPeerEntry 8 }
+
+    ibNTPPeerHMode OBJECT-TYPE
+        SYNTAX INTEGER
+            {
+                unspecified (0),
+                symmetricActive (1),
+                symmetricPassive (2),
+                client (3),
+                server(4),
+                broadcast (5),
+                reservedControl (6),
+                reservedPrivate (7),
+                broadcastclient (8),
+                multicastclient (9)
+            }
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "This is an integer indicating the association mode,
+            with values coded as follows,
+            0, unspecified
+            1, symmetric active - A host operating in this mode
+                    sends periodic messages regardless of the
+                    reach ability state or stratum of its peer.  By
+                    operating in this mode the host announces its
+                    willingness to synchronize and be synchronized
+                    by the peer
+            2, symmetric passive - This type of association is
+                    ordinarily created upon arrival of a message
+                    from a peer operating in the symmetric active
+                    mode and persists only as long as the peer is
+                    reachable and operating at a stratum level
+                    less than or equal to the host; otherwise, the
+                    association is dissolved.  However, the
+                    association will always persist until at least
+                    one message has been sent in reply.  By
+                    operating in this mode the host announces its
+                    willingness to synchronize and be synchronized
+                    by the peer
+            3, client -  A host operating in this mode sends
+                    periodic messages regardless of the
+                    reach ability state or stratum of its peer.  By
+                    operating in this mode the host, usually a LAN
+                    workstation, announces its willingness to be
+                    synchronized by, but not to synchronize the peer
+            4, server - This type of association is ordinarily
+                    created upon arrival of a client request message
+                    and exists only in order to reply to that
+                    request, after which the association is
+                    dissolved.  By operating in this mode the host,
+                    usually a LAN time server, announces its
+                    willingness to synchronize, but not to be
+                    synchronized by the peer
+            5, broadcast - A host operating in this mode sends
+                    periodic messages regardless of the
+                    reach ability state or stratum of the peers.
+                    By operating in this mode the host, usually a
+                    LAN time server operating on a high-speed
+                    broadcast medium, announces its willingness to
+                    synchronize all of the peers, but not to be
+                    synchronized by any of them
+            6, reserved for NTP control messages
+            7, reserved for private use
+            8, broadcastclient
+            9, multicastclient"
+        ::= { ibNTPPeerEntry 9 }
+
+    ibNTPPeerStratum OBJECT-TYPE
+        SYNTAX      Integer32(0..255)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a integer indicating the stratum level
+            of the peer clock, with values defined as follows:
+            0, unspecified
+            1, primary reference (e.g.,, radio clock)
+            2-255, secondary reference (via NTP)"
+        ::= { ibNTPPeerEntry 10 }
+
+    ibNTPPeerPPoll OBJECT-TYPE
+        SYNTAX      Integer32(-20..20)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The interval at which the peer polls the local host."
+        ::= { ibNTPPeerEntry 11 }
+
+    ibNTPPeerHPoll OBJECT-TYPE
+        SYNTAX      Integer32(-20..20)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The interval at which the local host polls the peer."
+        ::= { ibNTPPeerEntry 12 }
+
+    ibNTPPeerPrecision OBJECT-TYPE
+        SYNTAX      Integer32(-20..20)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a signed integer indicating the precision of
+            the peer clock, in seconds to the nearest power of two.
+            The value must be rounded to the next larger power of
+            two; for instance, a 50-Hz (20 ms) or 60-Hz (16.67 ms)
+            power-frequency clock would be assigned the value -5 (31.25 ms),
+            while a 1000-Hz (1 ms) crystal-controlled clock would be assigned
+            the value -9 (1.95 ms)."
+        ::= { ibNTPPeerEntry 13 }
+
+    ibNTPPeerRootDelay OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a signed fixed-point number indicating
+            the total roundtrip delay to the primary reference source
+            at the root of the synchronization subnet, in milliseconds.
+            Note that this variable can take on both positive and negative
+            values, depending on clock precision and skew."
+        ::= { ibNTPPeerEntry 14 }
+
+    ibNTPPeerRootDispersion OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a signed fixed-point number indicating
+            the maximum error of the peer clock relative to
+            the primary reference source at the root of the
+            synchronization subnet, in milliseconds.  Only
+            positive values greater than zero are possible."
+        ::= { ibNTPPeerEntry 15 }
+
+    ibNTPPeerRefId OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The reference identifier of the peer.
+            This is a 32-bit code identifying the particular reference clock.
+            In the case of stratum 0 (unspecified) or stratum 1 (primary
+            reference source), this is a four-octet, left-justified,
+            zero-padded ASCII string.
+            Stratum, Code, Meaning
+            0,       DCN,  DCN routing protocol
+            0,       TSP,  TSP time protocol
+            1,       ATOM, Atomic clock (calibrated)
+            1,       WWVB, WWVB LF (band 5) radio
+            1,       GOES, GOES UHF (band 9) satellite
+            1,       WWV,  WWV HF (band 7) radio"
+        ::= { ibNTPPeerEntry 16 }
+
+    ibNTPPeerRefTime OBJECT-TYPE
+        SYNTAX      OCTET STRING (SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is the local time at the peer, in timestamp format,
+            when the local clock was last updated.  If the local clock has
+            never been synchronized, the value is zero."
+        ::= { ibNTPPeerEntry 17 }
+
+    ibNTPPeerOrg OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is the local time, in timestamp format,
+            at the peer when it's latest NTP message was sent.
+            If the peer becomes unreachable the value is set to zero"
+        ::= { ibNTPPeerEntry 18 }
+
+    ibNTPPeerRec OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is the local time, in timestamp format,
+            when the latest NTP message from the peer arrived.
+            If the peer becomes unreachable the value is set to zero."
+        ::= { ibNTPPeerEntry 19 }
+
+    ibNTPPeerXmt OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is the local time, in timestamp format,
+            at which the NTP message departed the sender."
+        ::= { ibNTPPeerEntry 20 }
+
+    ibNTPPeerReach OBJECT-TYPE
+        SYNTAX      Integer32(0..2147483647)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a shift register of NTP.WINDOW bits used to
+            determine the reach ability status of the peer,
+            with bits entering from the least significant (rightmost) end.
+            A peer is considered reachable if at least
+            one bit in this register is set to one"
+        ::= { ibNTPPeerEntry 21 }
+
+    ibNTPPeerValid  OBJECT-TYPE
+        SYNTAX      Integer32(0..255)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is an integer counter indicating the valid samples
+            remaining in the filter register.  It is used to
+            determine the reach ability state and when the
+            poll interval should be increased or decreased."
+        ::= { ibNTPPeerEntry 22 }
+
+    ibNTPPeerTimer  OBJECT-TYPE
+        SYNTAX      Integer32(0..2147483647)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is an integer counter used to control the
+            interval of transmitted NTP messages from the local host to the peer."
+        ::= { ibNTPPeerEntry 23 }
+
+    ibNTPPeerDelay  OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a signed fixed-point number indicating
+            the roundtrip delay of the peer clock relative to
+            the local clock over the network path between them,
+            in milliseconds.  Note that this variable can take on
+            both positive and negative values, depending on
+            clock precision and skew-error accumulation."
+        ::= { ibNTPPeerEntry 24 }
+
+    ibNTPPeerOffset OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a signed, fixed-point number indicating the offset
+            of the peer clock relative to the local clock, in milliseconds."
+        ::= { ibNTPPeerEntry 25 }
+
+    ibNTPPeerJitter OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is an indicating that peer of sample Variance"
+        ::= { ibNTPPeerEntry 26 }
+
+    ibNTPPeerDispersion OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is a signed fixed-point number indicating the
+            maximum error of the peer clock relative to the local
+            clock over the network path between them, in milliseconds.
+            Only positive values greater than zero are possible."
+        ::= { ibNTPPeerEntry 27 }
+
+    ibNTPPeerKeyId OBJECT-TYPE
+        SYNTAX      Unsigned32(0..4294967295)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is an unsigned integer identifying the cryptographic
+            key used to generate the message-authentication code."
+        ::= { ibNTPPeerEntry 28 }
+
+    ibNTPPeerFiltDelay OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Round-trip delay of the peer clock relative to the
+            local clock over the network path between them, in
+            milliseconds.  This variable can take on both positive
+            and negative values, depending on clock precision
+            and skew-error accumulation."
+        ::= { ibNTPPeerEntry 29 }
+
+    ibNTPPeerFiltOffset OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The offset of the peer clock relative to the local clock in milliseconds."
+        ::= { ibNTPPeerEntry 30 }
+
+    ibNTPPeerFiltError OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..128))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The maximum error of the peer clock relative to the
+            local clock over the network path between them, in
+            milliseconds.  Only positive values greater than zero
+            are possible."
+        ::= { ibNTPPeerEntry 31 }
+
+    ibNTPPeerPMode OBJECT-TYPE
+        SYNTAX INTEGER
+            {
+                unspecified (0),
+                symmetricActive (1),
+                symmetricPassive (2),
+                client (3),
+                server(4),
+                broadcast (5),
+                reservedControl (6),
+                reservedPrivate (7),
+                broadcastclient (8),
+                multicastclient (9)
+            }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "This is an integer indicating the association mode,
+            with values coded as follows,
+            0, unspecified
+            1, symmetric active - A host operating in this mode
+                    sends periodic messages regardless of the
+                    reach ability state or stratum of its peer.  By
+                    operating in this mode the host announces its
+                    willingness to synchronize and be synchronized
+                    by the peer
+            2, symmetric passive - This type of association is
+                    ordinarily created upon arrival of a message
+                    from a peer operating in the symmetric active
+                    mode and persists only as long as the peer is
+                    reachable and operating at a stratum level
+                    less than or equal to the host; otherwise, the
+                    association is dissolved.  However, the
+                    association will always persist until at least
+                    one message has been sent in reply.  By
+                    operating in this mode the host announces its
+                    willingness to synchronize and be synchronized
+                    by the peer
+            3, client -  A host operating in this mode sends
+                    periodic messages regardless of the
+                    reach ability state or stratum of its peer.  By
+                    operating in this mode the host, usually a LAN
+                    workstation, announces its willingness to be
+                    synchronized by, but not to synchronize the peer
+            4, server - This type of association is ordinarily
+                    created upon arrival of a client request message
+                    and exists only in order to reply to that
+                    request, after which the association is
+                    dissolved.  By operating in this mode the host,
+                    usually a LAN time server, announces its
+                    willingness to synchronize, but not to be
+                    synchronized by the peer
+            5, broadcast - A host operating in this mode sends
+                    periodic messages regardless of the
+                    reach ability state or stratum of the peers.
+                    By operating in this mode the host, usually a
+                    LAN time server operating on a high-speed
+                    broadcast medium, announces its willingness to
+                    synchronize all of the peers, but not to be
+                    synchronized by any of them
+            6, reserved for NTP control messages
+            7, reserved for private use
+            8, broadcastclient
+            9, multicastclient
+            When creating a new peer association, if no value
+            is specified for this object, it defaults to
+            'symmetricActive'."
+        ::= { ibNTPPeerEntry 32 }
+
+    ibNTPPeerReceived OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The number of received messages."
+        ::= { ibNTPPeerEntry 33 }
+
+    ibNTPPeerSent OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The number of send messages."
+        ::= { ibNTPPeerEntry 34 }
+
+    ibNTPPeerFlash OBJECT-TYPE
+        SYNTAX      BITS
+            {
+                recvRepeatMsg(0),              -- received repeated message
+                recvremanMsg(1),               -- received remanufactured message
+                unSynMsg(2),                   -- unsynchronized message
+                dispBeyond(3),                 -- the peer dispersion beyond the mark
+                unauthenticate(4),             -- the peer unauthenticate
+                unSynClock(5),                 -- the peer clock is unsynchronized
+                straBeyond(6),                 -- the peer stratum beyond the mark
+                rootDispBeyond(7),             -- the peer rootdispersion beyond the mark
+                noAuthen(8),                   -- the peer no authentication
+                refuOperate(9)                 -- refuse operate
+            }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The information about the message."
+        ::= { ibNTPPeerEntry 35 }
+
+    ibNTPPeerRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "The status object for this row.  When a management
+            station is creating a new row, it should set the
+            value for cntpPeersPeerAddress at least, before the
+            row can be made 'active'."
+        ::= { ibNTPPeerEntry 36 }
+END
+

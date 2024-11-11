@@ -1,0 +1,97 @@
+-- ==========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Bit Index Explicit Replication MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 Initial version 2022-08-10 by liziyi kf9672.
+-- ==========================================================================
+IB-BIER-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    SnmpAdminString
+        FROM SNMP-FRAMEWORK-MIB;
+
+-- ==================================================================
+--
+-- ======================= definition begin =========================
+--
+-- ==================================================================
+
+ibBier MODULE-IDENTITY
+    LAST-UPDATED "202208100000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+      "All the configuration of the bier can be managed
+        by bier Mib."
+    REVISION "202208100000Z"
+    DESCRIPTION
+    "Initial revision"
+    ::= { ibCommon 244 }
+
+--
+-- Notification definitions
+--
+-- =================================================================
+-- Traps are defined below.
+
+ibBierTrap OBJECT IDENTIFIER ::= { ibBier 1 }
+ibBierTrapPrefix OBJECT IDENTIFIER ::= { ibBierTrap 0 }
+-- All trap definitions should be placed under this object.
+
+ibBierTrapPrefixBfridConflict  NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibBierSubdomain,
+            ibBierBfrid,
+            ibBierAddressFamily,
+            ibBierPrefix
+        }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when a Bit-Forwarding Router Identifier conflict occurs in a subdomain."
+    ::= { ibBierTrapPrefix 1 }
+
+ibBierTrapObject OBJECT IDENTIFIER ::= { ibBierTrap 1 }
+
+ibBierSubdomain  OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Current subdomain."
+    ::= {ibBierTrapObject 1 }
+
+ibBierBfrid  OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The Bit-Forwarding Router Identifier of the current conflict."
+    ::= {ibBierTrapObject 2 }
+
+ibBierAddressFamily  OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The address family of the conflicting node."
+    ::= {ibBierTrapObject 3 }
+
+ibBierPrefix  OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The prefix of the node."
+    ::= {ibBierTrapObject 4 }
+
+END

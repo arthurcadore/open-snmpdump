@@ -1,0 +1,512 @@
+-- =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The VXLAN(Virtual eXtensible Local Area Network) MIB
+-- Reference:
+-- Version: V1.2
+-- History:
+--   V1.0 2013-11-21 Initial version created by Neng Yan
+--   V1.1 2015-02-11 Modified by Neng Yan.  Values 'unknown(0)', 'openflow(4)',
+--                   and 'ovsdb(5)' were added for data type 'ibVxlanMacType'
+--   V1.2 2019-03-04 Modified by lipeng, added ibVxlanTunnelInputOctets,
+--                   ibVxlanTunnelOutputOctets, ibVxlanTunnelInputPackets,
+--                   ibVxlanTunnelOutputPackets, ibVxlanTunnelInputDiscards,
+--                   ibVxlanTunnelOutputDiscards
+-- =============================================================================
+IB-VXLAN-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+        RowStatus, TruthValue, MacAddress
+    FROM SNMPv2-TC
+        MODULE-IDENTITY,
+        OBJECT-TYPE,
+        Unsigned32, Counter64
+    FROM SNMPv2-SMI
+        InetAddressType,
+        InetAddress
+    FROM INET-ADDRESS-MIB
+        ibCommon
+    FROM IB-OID-MIB;
+
+-- =============================================================================
+-- module identity part
+-- =============================================================================
+ibVxlan MODULE-IDENTITY
+    LAST-UPDATED
+        "201903041650Z"        -- Mar 4, 2019 at 16:50 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The overlay MIB."
+    REVISION
+        "201903041650Z"   -- Mar 4, 2019 at 16:50 GMT
+    DESCRIPTION
+        "Added ibVxlanTunnelInputOctets,
+         ibVxlanTunnelOutputOctets, ibVxlanTunnelInputPackets,
+         ibVxlanTunnelOutputPackets, ibVxlanTunnelInputDiscards,
+         ibVxlanTunnelOutputDiscards."
+    REVISION
+        "201502110900Z"   -- Feb 11, 2015 at 09:00 GMT
+    DESCRIPTION
+        "Values 'unknown(0)', 'openflow(4)', and 'ovsdb(5)' were added
+         for data type 'ibVxlanMacType'."
+    REVISION
+        "201311210900Z"   -- Nov 21, 2013 at 09:00 GMT
+    DESCRIPTION
+        "Initial version."
+    ::= { ibCommon 150 }
+
+-- =============================================================================
+-- object definition begin
+-- =============================================================================
+
+ibVxlanObjects      OBJECT IDENTIFIER ::= { ibVxlan 1 }
+
+ibVxlanScalarGroup OBJECT IDENTIFIER ::= { ibVxlanObjects 1 }
+
+ibVxlanLocalMacNotify    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Local MAC(Media Access Control) address report capability."
+    DEFVAL { false }
+    ::= { ibVxlanScalarGroup 1 }
+
+ibVxlanRemoteMacLearn    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Remote MAC address self-learning capability."
+    DEFVAL { true }
+    ::= { ibVxlanScalarGroup 2 }
+
+ibVxlanNextVxlanID    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Next available VXLAN ID(identifier), in the range of 0x0 to 0xFFFFFF.
+        The invalid value 0xFFFFFFFF indicates that no ID can be set."
+    ::= { ibVxlanScalarGroup 3 }
+
+ibVxlanConfigured    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of currently configured VXLANs."
+    ::= { ibVxlanScalarGroup 4 }
+
+-- =============================================================================
+-- ibVxlanTable Definition
+-- =============================================================================
+ibVxlanTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVxlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for VXLAN parameters."
+    ::= { ibVxlanObjects 2 }
+
+ibVxlanEntry  OBJECT-TYPE
+    SYNTAX      IbVxlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry represents the parameters of a VXLAN."
+    INDEX
+    {
+        ibVxlanID
+    }
+    ::= { ibVxlanTable 1 }
+
+IbVxlanEntry ::=
+    SEQUENCE
+    {
+        ibVxlanID                 Unsigned32,
+        ibVxlanAddrType           InetAddressType,
+        ibVxlanGroupAddr          InetAddress,
+        ibVxlanSourceAddr         InetAddress,
+        ibVxlanVsiIndex           Unsigned32,
+        ibVxlanRemoteMacCount     Unsigned32,
+        ibVxlanRowStatus          RowStatus
+    }
+
+ibVxlanID    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The VXLAN ID."
+    ::= { ibVxlanEntry 1 }
+
+ibVxlanAddrType    OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The type of multicast group address."
+    ::= { ibVxlanEntry 2 }
+
+ibVxlanGroupAddr    OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Group destination address."
+    ::= { ibVxlanEntry 3 }
+
+ibVxlanSourceAddr    OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Group source address."
+    ::= { ibVxlanEntry 4 }
+
+ibVxlanVsiIndex    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "VSI index.  A unique index for the conceptual row identifying
+         a VSI in the ibVsiTable."
+    ::= { ibVxlanEntry 5 }
+
+ibVxlanRemoteMacCount    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Remote MAC address count of this VXLAN."
+    ::= { ibVxlanEntry 6 }
+
+ibVxlanRowStatus     OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry.  When a row in this
+         table is in active state, no objects in that row
+         can be modified by the agent except
+         ibVxlanGroupAddr, ibVxlanSourceAddr."
+    ::= { ibVxlanEntry 7 }
+
+-- =============================================================================
+-- End of ibVxlanTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibVxlanTunnelTable Definition
+-- =============================================================================
+ibVxlanTunnelTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVxlanTunnelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for VXLAN tunnel parameters."
+    ::= { ibVxlanObjects 3 }
+
+ibVxlanTunnelEntry  OBJECT-TYPE
+    SYNTAX      IbVxlanTunnelEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry represents the parameters of a VXLAN tunnel."
+    INDEX
+    {
+        ibVxlanID,
+        ibVxlanTunnelID
+    }
+    ::= { ibVxlanTunnelTable 1 }
+
+IbVxlanTunnelEntry ::=
+    SEQUENCE
+    {
+        ibVxlanTunnelID             Unsigned32,
+        ibVxlanTunnelRowStatus      RowStatus,
+        ibVxlanTunnelOctets         Counter64,
+        ibVxlanTunnelPackets        Counter64,
+        ibVxlanTunnelInputOctets    Counter64,
+        ibVxlanTunnelOutputOctets   Counter64,
+        ibVxlanTunnelInputPackets   Counter64,
+        ibVxlanTunnelOutputPackets  Counter64,
+        ibVxlanTunnelInputDiscards  Counter64,
+        ibVxlanTunnelOutputDiscards Counter64
+    }
+
+ibVxlanTunnelID    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A unique index for tunnel."
+    ::= { ibVxlanTunnelEntry 1 }
+
+ibVxlanTunnelRowStatus     OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibVxlanTunnelEntry 2 }
+
+ibVxlanTunnelOctets   OBJECT-TYPE
+    SYNTAX       Counter64
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "The number of octets that have been forwarded over the tunnel.
+
+        Discontinuities in the value of this counter can
+        occur at re-initialization of the management system,
+        and at other times."
+    ::= { ibVxlanTunnelEntry 3 }
+
+ibVxlanTunnelPackets  OBJECT-TYPE
+    SYNTAX       Counter64
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "The number of packets that have been forwarded over the tunnel.
+
+        Discontinuities in the value of this counter can
+        occur at re-initialization of the management system
+        and at other times."
+    ::= { ibVxlanTunnelEntry 4 }
+
+ibVxlanTunnelInputOctets   OBJECT-TYPE
+    SYNTAX       Counter64
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "Number of incoming bytes that have been forwarded over the tunnel."
+    ::= { ibVxlanTunnelEntry 5 }
+
+ibVxlanTunnelOutputOctets   OBJECT-TYPE
+    SYNTAX       Counter64
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "Number of outgoing bytes that have been forwarded over the tunnel."
+    ::= { ibVxlanTunnelEntry 6 }
+
+ibVxlanTunnelInputPackets  OBJECT-TYPE
+    SYNTAX       Counter64
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "Number of incoming packets that have been forwarded over the tunnel."
+    ::= { ibVxlanTunnelEntry 7 }
+
+ibVxlanTunnelOutputPackets  OBJECT-TYPE
+    SYNTAX       Counter64
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "Number of outgoing packets that have been forwarded over the tunnel."
+    ::= { ibVxlanTunnelEntry 8 }
+
+ibVxlanTunnelInputDiscards  OBJECT-TYPE
+    SYNTAX       Counter64
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "Number of incoming discarded packets that have been forwarded over
+         the tunnel."
+    ::= { ibVxlanTunnelEntry 9 }
+
+ibVxlanTunnelOutputDiscards  OBJECT-TYPE
+    SYNTAX       Counter64
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "Number of outgoing discarded packets that have been forwarded over
+         the tunnel."
+    ::= { ibVxlanTunnelEntry 10 }
+
+-- =============================================================================
+-- End of ibVxlanTunnelTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibVxlanTunnelBoundTable Definition
+-- =============================================================================
+ibVxlanTunnelBoundTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVxlanTunnelBoundEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for the number of VXLANs to which the tunnel is bound."
+    ::= { ibVxlanObjects 4 }
+
+ibVxlanTunnelBoundEntry  OBJECT-TYPE
+    SYNTAX      IbVxlanTunnelBoundEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry represents the number of VXLANs to which a tunnel is bound."
+    INDEX
+    {
+        ibVxlanTunnelID
+    }
+    ::= { ibVxlanTunnelBoundTable 1 }
+
+IbVxlanTunnelBoundEntry ::=
+    SEQUENCE
+    {
+        ibVxlanTunnelBoundVxlanNum  Unsigned32
+    }
+
+ibVxlanTunnelBoundVxlanNum    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of VXLANs to which this tunnel is bound."
+    ::= { ibVxlanTunnelBoundEntry 1 }
+
+-- =============================================================================
+-- End of ibVxlanTunnelBoundTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibVxlanMacTable Definition
+-- =============================================================================
+ibVxlanMacTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVxlanMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for VXLAN remote MAC addresses."
+    ::= { ibVxlanObjects 5 }
+
+ibVxlanMacEntry  OBJECT-TYPE
+    SYNTAX      IbVxlanMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A VXLAN remote MAC address."
+    INDEX
+    {
+        ibVxlanVsiIndex,
+        ibVxlanMacAddr
+    }
+    ::= { ibVxlanMacTable 1 }
+
+IbVxlanMacEntry ::=
+    SEQUENCE
+    {
+        ibVxlanMacAddr            MacAddress,
+        ibVxlanMacTunnelID        Unsigned32,
+        ibVxlanMacType            INTEGER
+    }
+
+ibVxlanMacAddr    OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "MAC address."
+    ::= { ibVxlanMacEntry 1 }
+
+ibVxlanMacTunnelID    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A unique index for tunnel."
+    ::= { ibVxlanMacEntry 2 }
+
+ibVxlanMacType    OBJECT-TYPE
+    SYNTAX      INTEGER{
+                 unknown (0),
+                 selfLearned (1),
+                 staticConfigured (2),
+                 protocolLearned (3),
+                 openflow (4),
+                 ovsdb (5)
+                 }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The type of an MAC address.
+
+        selfLearned: Unicast address dynamically learned in the data plane.
+        staticConfigured: Unicast address manually added.
+        protocolLearned: Unicast address advertised through VXLAN IS-IS or BGP.
+               Support for VXLAN IS-IS and BGP depends on the software version.
+        openflow: Unicast address issued by a controller through OpenFlow.
+        ovsdb: Unicast address issued by a controller through OVSDB."
+    ::= { ibVxlanMacEntry 3 }
+
+-- =============================================================================
+-- End of ibVxlanMacTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibVxlanStaticMacTable Definition
+-- =============================================================================
+ibVxlanStaticMacTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVxlanStaticMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for VXLAN static remote MAC addresses."
+    ::= { ibVxlanObjects 6 }
+
+ibVxlanStaticMacEntry  OBJECT-TYPE
+    SYNTAX      IbVxlanStaticMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A VXLAN static MAC address."
+    INDEX
+    {
+        ibVxlanVsiIndex,
+        ibVxlanStaticMacAddr
+    }
+    ::= { ibVxlanStaticMacTable 1 }
+
+IbVxlanStaticMacEntry ::=
+    SEQUENCE
+    {
+        ibVxlanStaticMacAddr         MacAddress,
+        ibVxlanStaticMacTunnelID     Unsigned32,
+        ibVxlanStaticMacRowStatus    RowStatus
+    }
+
+ibVxlanStaticMacAddr    OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Static MAC address."
+    ::= { ibVxlanStaticMacEntry 1 }
+
+ibVxlanStaticMacTunnelID    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "A unique index for tunnel."
+    ::= { ibVxlanStaticMacEntry 2 }
+
+ibVxlanStaticMacRowStatus     OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry.  When a row in this
+         table is in active state, no objects in that row
+         can be modified by the agent."
+    ::= { ibVxlanStaticMacEntry 3 }
+
+-- =============================================================================
+-- End of ibVxlanStaticMacTable Definition
+-- =============================================================================
+
+END

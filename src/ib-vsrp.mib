@@ -1,0 +1,130 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- Description:  This MIB file is used for configuration of VSRP (Virtual Service
+--               Redundancy Protocol).
+--                include :1.VSRP Peer trap
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2022/08/31 created by w22500
+-- ============================================================================
+IB-VSRP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC;
+
+
+ibVsrp MODULE-IDENTITY
+    LAST-UPDATED "202208312041Z"             -- august 31, 2022 at 20:41 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The initial revision of this MIB module."
+
+    REVISION "202208312041Z"             -- august 31, 2022 at 20:41 GMT
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 254 }
+
+
+--
+-- Node definitions
+--
+
+
+-- Describes objects for VSRP peer connect traps
+ibVsrpTraps OBJECT IDENTIFIER ::= { ibVsrp 1 }
+
+ibVsrpTrapsPrefix OBJECT IDENTIFIER ::= { ibVsrpTraps 0 }
+ibVsrpPeerConnDownTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibVsrpPeerName,
+        ibVsrpPeerConnDownReason
+    }
+    STATUS current
+    DESCRIPTION
+        "Send trap when the TCP connection of VSRP peer was torn down."
+    ::= { ibVsrpTrapsPrefix 1 }
+
+ibVsrpPeerConnUPTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibVsrpPeerName
+    }
+    STATUS current
+    DESCRIPTION
+        "Send traps when the TCP connection of VSRP peer is established."
+    ::= { ibVsrpTrapsPrefix 2 }
+
+ibVsrpInstanceStateChangeTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibVsrpInstanceName,
+        ibVsrpInstanceOldState,
+        ibVsrpInstanceNewState,
+        ibVsrpInstChangeReason
+    }
+    STATUS current
+    DESCRIPTION
+        "Send traps when VSRP instance state changed."
+    ::= { ibVsrpTrapsPrefix 3 }
+
+
+ibVsrpTrapsInfo OBJECT IDENTIFIER ::= { ibVsrpTraps 1 }
+ibVsrpPeerName OBJECT-TYPE
+    SYNTAX DisplayString(SIZE (1..31))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "VSRP Peer name."
+    ::= { ibVsrpTrapsInfo 1 }
+
+ibVsrpPeerConnDownReason OBJECT-TYPE
+    SYNTAX DisplayString(SIZE (1..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The reason for TCP connection torn down."
+    ::= { ibVsrpTrapsInfo 2 }
+
+ibVsrpInstanceName OBJECT-TYPE
+    SYNTAX DisplayString(SIZE (1..31))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "VSRP instance name."
+    ::= { ibVsrpTrapsInfo 3 }
+
+ibVsrpInstanceOldState OBJECT-TYPE
+    SYNTAX DisplayString(SIZE (1..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The old state of VSRP instance."
+    ::= { ibVsrpTrapsInfo 4 }
+
+ibVsrpInstanceNewState OBJECT-TYPE
+    SYNTAX DisplayString(SIZE (1..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The new state of VSRP instance."
+    ::= { ibVsrpTrapsInfo 5 }
+
+ibVsrpInstChangeReason OBJECT-TYPE
+    SYNTAX DisplayString(SIZE (1..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The reason for VSRP instance state change."
+    ::= { ibVsrpTrapsInfo 6 }
+
+END

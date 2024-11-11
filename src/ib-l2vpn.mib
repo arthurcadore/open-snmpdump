@@ -1,0 +1,1386 @@
+-- =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Layer 2 Virtual Private Network (L2VPN) MIB
+-- Reference:
+-- Version: V1.5
+-- History:
+-- V1.5 2023-01-17 Modified by xuwentao
+--   Add ibL2vpnFlowLabelNonSuppTable, ibL2vpnCCCTable and ibL2vpnPwInfoTable.
+--   Add nodes ibL2vpnFlowLabelNonSupp, ibL2vpnSingleCCCVcDown,
+--   ibL2vpnSingleCCCVcUp, ibL2vpnPwOutAgeClear and ibL2vpnPwOutAge.
+-- V1.4 2021-11-30 Modified by lifei
+--   Add ibL2vpnMacLimitPwTable and Added nodes ibL2vpnMacLimitMaxAc ibL2vpnMacLimitMaxAcClear ibL2vpnMacLimitMaxPw
+--   ibL2vpnMacLimitMaxPwClear ibL2vpnPwParaMisMatch ibL2vpnPwParaMatch
+-- V1.3 2020-08-08 Modified by Gaolei
+--   Added node ibL2vpnPwOutboundQosCarCir ibL2vpnPwOutboundQosCarCbs
+--   ibL2vpnPwOutboundQosCarEbs ibL2vpnPwOutboundQosCarPir
+-- V1.2 2018-04-27  Modified by fuzhihua
+--      Added nodes ibL2vpnXcgConnRedundancy and ibL2vpnXcgPwIgnoreStandby
+-- V1.1 2018-01-17 Modified by Chenjuxi
+--   Add node ibL2vpnPwcFlowLabel
+--      2017-11-21 Modified by Chenjian
+--   Add ibL2vpnLinkTable
+--      2016-09-30 Modified by Liyun
+--   Add ibL2vpnAcCfgTable and ibL2vpnPwCfgTable
+-- V1.0 2015-01-16 Created by Yanneng
+-- =============================================================================
+IB-L2VPN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        RowStatus, TruthValue, DisplayString
+    FROM SNMPv2-TC
+        InterfaceIndexOrZero
+    FROM IF-MIB
+        MODULE-IDENTITY,
+        OBJECT-TYPE,
+        Unsigned32,
+        IpAddress,
+        NOTIFICATION-TYPE
+    FROM SNMPv2-SMI
+        InterfaceIndex
+    FROM IF-MIB
+        ibCommon
+    FROM IB-OID-MIB;
+
+-- =============================================================================
+-- module identity part
+-- =============================================================================
+ibL2vpn MODULE-IDENTITY
+    LAST-UPDATED "202301171100Z"       -- Dec 01, 2023 at 11:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Add ibL2vpnFlowLabelNonSuppTable ibL2vpnCCCTable and ibL2vpnPwInfoTable
+         Added nodes ibL2vpnFlowLabelNonSupp ibL2vpnSingleCCCVcDown
+         ibL2vpnSingleCCCVcUp ibL2vpnPwOutAgeClear and ibL2vpnPwOutAge."
+    REVISION
+        "202301171100Z"   -- Dec 01, 2023 at 11:00 GMT
+    DESCRIPTION
+        "Added ibL2vpnMacLimitMaxAc ibL2vpnMacLimitMaxAcClear ibL2vpnMacLimitMaxPw ibL2vpnMacLimitMaxPwClear
+         ibL2vpnPwParaMisMatch ibL2vpnPwParaMatch."
+    REVISION
+        "202112101100Z"   -- Dec 10, 2021 at 11:00 GMT
+    DESCRIPTION
+        "Added ibL2vpnPwOutboundQosCarCir ibL2vpnPwOutboundQosCarCbs ibL2vpnPwOutboundQosCarEbs and ibL2vpnPwOutboundQosCarPir."
+    REVISION
+        "202010291800Z"   -- Oct 29, 2020 at 18:00 GMT
+    DESCRIPTION
+        "Added ibL2vpnXcgConnRedundancy and ibL2vpnXcgPwIgnoreStandby."
+    REVISION
+        "201804271800Z"   -- Apr 27, 2018 at 18:00 GMT
+    DESCRIPTION
+        "Added node ibL2vpnPwcFlowLabel."
+    REVISION
+        "201801171500Z"   -- Jan 17, 2018 at 15:00 GMT
+    DESCRIPTION
+        "Added ibL2vpnLinkTable."
+    REVISION
+        "201711211500Z"   -- Nov 21, 2017 at 15:00 GMT
+    DESCRIPTION
+        "Added ibL2vpnAcCfgTable and ibL2vpnPwCfgTable."
+    REVISION
+        "201609301800Z"   -- Sept 30, 2016 at 18:00 GMT
+    DESCRIPTION
+        "This MIB contains objects to manage L2VPN."
+    REVISION
+        "201501160000Z"   -- Jan 16, 2015 at 00:00 GMT
+    DESCRIPTION
+        "Initial version."
+    ::= { ibCommon 162 }
+
+-- ==================================================================
+-- =================== ibL2VpnPwNotifications definition ==========
+-- ==================================================================
+
+ibL2vpnPwNotifications OBJECT IDENTIFIER ::= { ibL2vpn 0 }
+
+-- ==================================================================
+-- ======================= ibL2vpnGlobalTable definition ==========
+-- ==================================================================
+
+ibL2vpnGlobalTable OBJECT IDENTIFIER ::= { ibL2vpn 2 }
+
+ibL2vpnPwcTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbL2vpnPwcEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains pseudowire (PW) class information."
+    ::= { ibL2vpnGlobalTable 1 }
+
+ibL2vpnPwcEntry OBJECT-TYPE
+    SYNTAX      IbL2vpnPwcEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Provides information about a PW class entry."
+    INDEX
+        {
+            ibL2vpnPwcName
+        }
+    ::= { ibL2vpnPwcTable 1 }
+
+IbL2vpnPwcEntry ::= SEQUENCE
+    {
+        ibL2vpnPwcName             OCTET STRING,
+        ibL2vpnPwcCvType           INTEGER,
+        ibL2vpnPwcCcType           INTEGER,
+        ibL2vpnPwcControlWord      TruthValue,
+        ibL2vpnPwcPwType           INTEGER,
+        ibL2vpnPwcRowStatus        RowStatus,
+        ibL2vpnPwcFlowLabel        INTEGER
+    }
+
+ibL2vpnPwcName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..19))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "PW class name."
+    ::= { ibL2vpnPwcEntry 1 }
+
+ibL2vpnPwcCvType OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        unknown(1),
+        bfd(2),
+        rawBFD(3)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Virtual Circuit Connectivity Verification (VCCV) Bidirectional
+         Forwarding Detection (BFD) type."
+    ::= { ibL2vpnPwcEntry 2 }
+
+ibL2vpnPwcCcType OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        unknown(1),
+        controlWord(2),
+        routerAlert(3),
+        ttl(4)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Virtual Circuit Connectivity Verification (VCCV) Control Channel
+        (CC) type."
+    ::= { ibL2vpnPwcEntry 3 }
+
+ibL2vpnPwcControlWord OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Whether control word is enabled."
+    DEFVAL { false }
+    ::= { ibL2vpnPwcEntry 4 }
+
+ibL2vpnPwcPwType OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        vlan(4),
+        ethernet(5)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "PW encapsulation type."
+    DEFVAL { vlan }
+    ::= { ibL2vpnPwcEntry 5 }
+
+ibL2vpnPwcRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry.  A row entry cannot be modified
+         when the value of this object is 'active'."
+    ::= { ibL2vpnPwcEntry 6 }
+
+ibL2vpnPwcFlowLabel OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        unknown(1),
+        send(2),
+        receive(3),
+        both(4)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Flow label capability."
+    DEFVAL { unknown }
+    ::= { ibL2vpnPwcEntry 7 }
+
+-- ==================================================================
+-- ======================= ibL2vpnLinkTable definition ==========
+-- ==================================================================
+
+ibL2vpnLinkTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbL2vpnLinkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains L2VPN link information."
+    ::= { ibL2vpnGlobalTable 2 }
+
+ibL2vpnLinkEntry OBJECT-TYPE
+    SYNTAX      IbL2vpnLinkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Provides information about an L2VPN link entry."
+    INDEX
+        {
+            ibL2vpnLinkVsiIndex,
+            ibL2vpnLinkLinkID
+        }
+    ::= { ibL2vpnLinkTable 1 }
+
+IbL2vpnLinkEntry ::= SEQUENCE
+    {
+        ibL2vpnLinkVsiIndex        Unsigned32,
+        ibL2vpnLinkLinkID          Unsigned32,
+        ibL2vpnLinkType            INTEGER,
+        ibL2vpnLinkIfIndex         InterfaceIndex,
+        ibL2vpnLinkSrvID           Unsigned32,
+        ibL2vpnLinkTunnelID        Unsigned32
+    }
+
+ibL2vpnLinkVsiIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Virtual Switch Instance (VSI) index of the l2vpn link.  The maximum
+         value of unsigned32 means that the VSI index is invalid."
+    ::= { ibL2vpnLinkEntry 1 }
+
+ibL2vpnLinkLinkID OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "VSI link Identifier (ID) of the l2vpn link.  The maximum value of
+         unsigned32 means that the VSI link ID is invalid."
+    ::= { ibL2vpnLinkEntry 2 }
+
+ibL2vpnLinkType OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        unknown(1),
+        ac(2),
+        tunnel(3)
+    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Link type of the l2vpn link.  If the link type is neither Attachment
+         Circuit (AC) nor tunnel, it returns 1."
+    ::= { ibL2vpnLinkEntry 3 }
+
+ibL2vpnLinkIfIndex OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Interface index of the L2VPN link.  Value zero means that the interface
+         index is invalid."
+    ::= { ibL2vpnLinkEntry 4 }
+
+ibL2vpnLinkSrvID OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Service instance ID of the L2VPN link.  Value zero means that the
+         service instance ID is invalid."
+    ::= { ibL2vpnLinkEntry 5 }
+
+ibL2vpnLinkTunnelID OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The tunnel ID of the L2VPN link.  The maximum value of unsigned32 means
+         that the tunnel ID is invalid."
+    ::= { ibL2vpnLinkEntry 6 }
+
+-- ==================================================================
+-- ======================= ibL2vpnMacLimitPwTable definition ==========
+-- ==================================================================
+
+ibL2vpnMacLimitPwTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbL2vpnMacLimitPwEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains L2VPN Mac Limit information."
+    ::= { ibL2vpnGlobalTable 3 }
+
+ibL2vpnMacLimitPwEntry OBJECT-TYPE
+    SYNTAX      IbL2vpnMacLimitPwEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Provides information about an L2VPN Mac Limit entry."
+    INDEX
+        {
+            ibL2vpnMacLimitPwVsiIndex,
+            ibL2vpnMacLimitPwLinkID
+        }
+    ::= { ibL2vpnMacLimitPwTable 1 }
+
+IbL2vpnMacLimitPwEntry ::= SEQUENCE
+    {
+        ibL2vpnMacLimitPwVsiIndex        Unsigned32,
+        ibL2vpnMacLimitPwLinkID          Unsigned32,
+        ibL2vpnMacLimitPwVsiName         OCTET STRING,
+        ibL2vpnMacLimitPwRowStatus       RowStatus
+    }
+
+ibL2vpnMacLimitPwVsiIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Index of VSI.  Its value ranges from 0x1 to 0xFFFFFFFE."
+    ::= { ibL2vpnMacLimitPwEntry 1 }
+
+ibL2vpnMacLimitPwLinkID OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VSI link Identifier (ID) of the l2vpn link.  The maximum value of
+         unsigned32 means that the VSI link ID is invalid."
+    ::= { ibL2vpnMacLimitPwEntry 2 }
+
+ibL2vpnMacLimitPwVsiName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..31))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Name of VSI.  Max string length of VSI name is 31."
+    ::= { ibL2vpnMacLimitPwEntry 3 }
+ibL2vpnMacLimitPwRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibL2vpnMacLimitPwEntry 4 }
+
+-- ==================================================================
+-- ======================= ibL2vpnPwInfoTable definition ==========
+-- ==================================================================
+
+ibL2vpnPwInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbL2vpnPwInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains L2VPN PW warning information."
+    ::= { ibL2vpnGlobalTable 4 }
+
+ibL2vpnPwInfoEntry OBJECT-TYPE
+    SYNTAX      IbL2vpnPwInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This entry describes configurations for a PW."
+    INDEX
+        {
+            ibL2vpnPeerIp,
+            ibL2vpnPWPwID
+        }
+    ::= { ibL2vpnPwInfoTable 1 }
+
+IbL2vpnPwInfoEntry ::= SEQUENCE
+    {
+        ibL2vpnPeerIp                  IpAddress,
+        ibL2vpnPWPwID                  Unsigned32,
+        ibL2vpnPwType                  INTEGER
+    }
+
+ibL2vpnPeerIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Peer IP address."
+    ::= { ibL2vpnPwInfoEntry 1 }
+
+ibL2vpnPWPwID OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "PW identifier (ID)."
+    ::= { ibL2vpnPwInfoEntry 2 }
+
+ibL2vpnPwType      OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        vlan(4),
+        ethernet(5)
+    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "L2VPN PW type."
+    ::= { ibL2vpnPwInfoEntry 3 }
+
+-- ==================================================================
+-- =========== ibL2vpnFlowLabelNonSuppTable definition ============
+-- ==================================================================
+
+ibL2vpnFlowLabelNonSuppTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbL2vpnFlowLabelNonSuppEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains Slot configuration."
+    ::= { ibL2vpnGlobalTable 5}
+
+ibL2vpnFlowLabelNonSuppEntry OBJECT-TYPE
+    SYNTAX      IbL2vpnFlowLabelNonSuppEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This entry describes configurations about a Slot."
+        INDEX
+        {
+            ibL2vpnFlowLabelSlotId
+        }
+    ::= { ibL2vpnFlowLabelNonSuppTable 1 }
+
+IbL2vpnFlowLabelNonSuppEntry ::= SEQUENCE
+    {
+        ibL2vpnFlowLabelSlotId                Unsigned32,
+        ibL2vpnFlowLabelOID                   OBJECT IDENTIFIER
+    }
+
+ibL2vpnFlowLabelSlotId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "SlotId identifier (ID)."
+    ::= { ibL2vpnFlowLabelNonSuppEntry 1 }
+
+ibL2vpnFlowLabelOID OBJECT-TYPE
+    SYNTAX      OBJECT IDENTIFIER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "OID identifier (ID)."
+    ::= { ibL2vpnFlowLabelNonSuppEntry 2 }
+
+-- ==================================================================
+-- =======================ibL2vpnVpwsTable definition  ============
+-- ==================================================================
+
+ibL2vpnVpwsTable OBJECT IDENTIFIER ::= { ibL2vpn 3 }
+
+-- ==================================================================
+-- =======================ibL2vpnXcgTable definition  ============
+-- ==================================================================
+ibL2vpnXcgTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbL2vpnXcgEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains cross-connect group information."
+    ::= { ibL2vpnVpwsTable 1 }
+
+ibL2vpnXcgEntry OBJECT-TYPE
+    SYNTAX      IbL2vpnXcgEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Provides information about a cross-connect group entry."
+    INDEX
+        {
+            ibL2vpnXcgName
+        }
+    ::= { ibL2vpnXcgTable 1 }
+
+IbL2vpnXcgEntry ::= SEQUENCE
+    {
+        ibL2vpnXcgName            OCTET STRING,
+        ibL2vpnXcgAdminState      INTEGER,
+        ibL2vpnXcgRowStatus       RowStatus
+    }
+
+ibL2vpnXcgName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..31))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Cross-connect group name."
+    ::= { ibL2vpnXcgEntry 1 }
+
+ibL2vpnXcgAdminState OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        adminUp(1),
+        adminDown(2)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The desired state of the cross-connect group.  The column doesn't exist
+         when this group hasn't any connection."
+    ::= { ibL2vpnXcgEntry 2 }
+
+ibL2vpnXcgRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibL2vpnXcgEntry 3 }
+-- ==================================================================
+-- ====================ibL2vpnXcgConnTable definition  ============
+-- ==================================================================
+ibL2vpnXcgConnTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbL2vpnXcgConnEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains cross-connect information."
+    ::= { ibL2vpnVpwsTable 2 }
+
+ibL2vpnXcgConnEntry OBJECT-TYPE
+    SYNTAX      IbL2vpnXcgConnEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Provides information about a cross-connect entry."
+    INDEX
+        {
+            ibL2vpnXcgName,
+            ibL2vpnXcgConnName
+        }
+    ::= { ibL2vpnXcgConnTable 1 }
+
+IbL2vpnXcgConnEntry ::= SEQUENCE
+    {
+        ibL2vpnXcgConnName         OCTET STRING,
+        ibL2vpnXcgConnRowStatus    RowStatus,
+        ibL2vpnXcgConnRedundancy   INTEGER
+    }
+
+ibL2vpnXcgConnName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..20))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Cross-connect name."
+    ::= { ibL2vpnXcgConnEntry 1 }
+
+ibL2vpnXcgConnRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibL2vpnXcgConnEntry 2 }
+
+ibL2vpnXcgConnRedundancy OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        slave(1),
+        master(2)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "PW redundancy mode."
+    DEFVAL { slave }
+    ::= { ibL2vpnXcgConnEntry 3 }
+-- ==================================================================
+-- ====================ibL2vpnXcgAcTable definition  ==============
+-- ==================================================================
+ibL2vpnXcgAcTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbL2vpnXcgAcEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains information about attachment circuits (ACs)
+         bound to cross-connects"
+    ::= { ibL2vpnVpwsTable 3 }
+
+ibL2vpnXcgAcEntry OBJECT-TYPE
+    SYNTAX      IbL2vpnXcgAcEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Provides information about an attachment circuit entry."
+    INDEX
+        {
+            ibL2vpnXcgName,
+            ibL2vpnXcgConnName,
+            ibL2vpnXcgAcIfIndex,
+            ibL2vpnXcgAcEvcSrvInstId
+        }
+    ::= { ibL2vpnXcgAcTable 1 }
+
+IbL2vpnXcgAcEntry ::= SEQUENCE
+    {
+        ibL2vpnXcgAcIfIndex            InterfaceIndex,
+        ibL2vpnXcgAcEvcSrvInstId       Unsigned32,
+        ibL2vpnXcgAcAccessMode         INTEGER,
+        ibL2vpnXcgAcRowStatus          RowStatus
+    }
+
+ibL2vpnXcgAcIfIndex OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Index of the interface."
+    ::= { ibL2vpnXcgAcEntry 1 }
+
+ibL2vpnXcgAcEvcSrvInstId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Index of the service instance.  The value is always 0 when the
+         interface isn't a layer 2 Ethernet interface."
+    ::= { ibL2vpnXcgAcEntry 2 }
+
+ibL2vpnXcgAcAccessMode OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        vlan(1),
+        ethernet(2)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Access mode of the AC.  The value is meaningless when the
+         interface isn't a layer 2 Ethernet interface."
+    ::= { ibL2vpnXcgAcEntry 3 }
+
+ibL2vpnXcgAcRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry.  A row entry cannot be modified
+         when the value of this object is 'active'."
+    ::= { ibL2vpnXcgAcEntry 4 }
+-- ==================================================================
+-- ====================ibL2vpnXcgPwTable definition  ==============
+-- ==================================================================
+ibL2vpnXcgPwTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbL2vpnXcgPwEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains PW information."
+    ::= { ibL2vpnVpwsTable 4 }
+
+ibL2vpnXcgPwEntry OBJECT-TYPE
+    SYNTAX      IbL2vpnXcgPwEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Provides information about a PW entry."
+    INDEX
+        {
+            ibL2vpnXcgName,
+            ibL2vpnXcgConnName,
+            ibL2vpnXcgPwIndex
+        }
+    ::= { ibL2vpnXcgPwTable 1 }
+
+IbL2vpnXcgPwEntry ::= SEQUENCE
+    {
+        ibL2vpnXcgPwIndex            Unsigned32,
+        ibL2vpnXcgPwCfgType          INTEGER,
+        ibL2vpnXcgPwClassName        OCTET STRING,
+        ibL2vpnXcgPwTunnelPolicy     OCTET STRING,
+        ibL2vpnXcgPwPeerIp           IpAddress,
+        ibL2vpnXcgPwPwID             Unsigned32,
+        ibL2vpnXcgPwRowStatus        RowStatus,
+        ibL2vpnXcgPwIgnoreStandby    TruthValue
+    }
+
+ibL2vpnXcgPwIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "A unique index for a PW."
+    ::= { ibL2vpnXcgPwEntry 1 }
+
+ibL2vpnXcgPwCfgType OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        primary(1),
+        backup(2)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "PW attribute."
+    ::= { ibL2vpnXcgPwEntry 2 }
+
+ibL2vpnXcgPwClassName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..19))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "PW class name."
+    ::= { ibL2vpnXcgPwEntry 3 }
+
+ibL2vpnXcgPwTunnelPolicy OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..19))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Tunnel policy name."
+    ::= { ibL2vpnXcgPwEntry 4 }
+
+ibL2vpnXcgPwPeerIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Peer IP address."
+    ::= { ibL2vpnXcgPwEntry 5 }
+
+ibL2vpnXcgPwPwID OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "PW identifier(ID)."
+    ::= { ibL2vpnXcgPwEntry 6 }
+
+ibL2vpnXcgPwRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry.  A row entry cannot be modified
+         when the value of this object is 'active'."
+    ::= { ibL2vpnXcgPwEntry 7 }
+
+ibL2vpnXcgPwIgnoreStandby OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Ignores the PW standby state advertised by the remote PE."
+    DEFVAL { false }
+    ::= { ibL2vpnXcgPwEntry 8 }
+-- ==================================================================
+-- ======================= ibL2vpnCCCTable definition =============
+-- ==================================================================
+ibL2vpnCCCTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbL2vpnCCCEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains Circuit Cross Connect(CCC)
+         remote connection warning information."
+    ::= { ibL2vpnVpwsTable 5 }
+
+ibL2vpnCCCEntry OBJECT-TYPE
+    SYNTAX      IbL2vpnCCCEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This entry describes configurations for a CCC."
+        INDEX
+        {
+            ibL2vpnInInterfaceIndex, ibL2vpnOutInterfaceIndex
+        }
+    ::= { ibL2vpnCCCTable 1 }
+
+IbL2vpnCCCEntry ::= SEQUENCE
+    {
+        ibL2vpnInInterfaceIndex     InterfaceIndex,
+        ibL2vpnOutInterfaceIndex    InterfaceIndex,
+        ibL2vpnChangeReason         Unsigned32,
+        ibL2vpnInInterfaceName      OCTET STRING,
+        ibL2vpnOutInterfaceName     OCTET STRING
+    }
+
+ibL2vpnInInterfaceIndex OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Index of the inbound interface."
+    ::= { ibL2vpnCCCEntry 1 }
+
+ibL2vpnOutInterfaceIndex OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Index of the outbound interface."
+    ::= { ibL2vpnCCCEntry 2 }
+
+ibL2vpnChangeReason OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The reason for the CCC state change.
+         Local AC Up/Down(4);
+         Local AC (not) bind(5);
+         Local Xconnect-group Up/Down(8);
+         Label (not) allocated(11)."
+    ::= { ibL2vpnCCCEntry 3 }
+
+ibL2vpnInInterfaceName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the inbound interface."
+    ::= { ibL2vpnCCCEntry 4 }
+
+ibL2vpnOutInterfaceName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the outbound interface."
+    ::= { ibL2vpnCCCEntry 5 }
+
+-- ==================================================================
+-- ===============ibL2vpnPwNotifications definition  ==============
+-- ==================================================================
+ibL2vpnPwSwitchPtoB NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibL2vpnXcgPwIndex,
+            ibL2vpnXcgPwPeerIp,
+            ibL2vpnXcgPwPwID,
+            ibL2vpnXcgPwIndex,
+            ibL2vpnXcgPwPeerIp,
+            ibL2vpnXcgPwPwID
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when a primary-to-backup PW switching
+         happens.  The first three elements show the primary PW,
+         and the second three elements show the backup PW."
+    ::= { ibL2vpnPwNotifications 1 }
+
+ibL2vpnPwSwitchBtoP NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibL2vpnXcgPwIndex,
+            ibL2vpnXcgPwPeerIp,
+            ibL2vpnXcgPwPwID,
+            ibL2vpnXcgPwIndex,
+            ibL2vpnXcgPwPeerIp,
+            ibL2vpnXcgPwPwID
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when a backup-to-primary PW switching
+         happens.  The first three elements show the backup PW,
+         and the second three elements show the primary PW."
+    ::= { ibL2vpnPwNotifications 2 }
+-- ==================================================================
+
+
+-- ==================================================================
+-- =======================ibL2vpnAcTable definition  ============
+-- ==================================================================
+
+ibL2vpnAcTable OBJECT IDENTIFIER ::= { ibL2vpn 4 }
+
+-- ==================================================================
+-- ======================= ibL2vpnAcCfgTable definition ==========
+-- ==================================================================
+ibL2vpnAcCfgTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbL2vpnAcCfgEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains interface configurations and AC configurations."
+    ::= { ibL2vpnAcTable 1 }
+
+ibL2vpnAcCfgEntry OBJECT-TYPE
+    SYNTAX      IbL2vpnAcCfgEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This entry describes information about interface configurations
+        and AC configurations."
+    INDEX
+        {
+            ibL2vpnAcIfIndex,ibL2vpnAcSrvId
+        }
+    ::= { ibL2vpnAcCfgTable 1 }
+
+IbL2vpnAcCfgEntry ::= SEQUENCE
+    {
+        ibL2vpnAcIfIndex            InterfaceIndex,
+        ibL2vpnAcSrvId              Unsigned32,
+        ibL2vpnAcIfName             DisplayString,
+        ibL2vpnAcVsiName            DisplayString,
+        ibL2vpnAcXcgName            DisplayString,
+        ibL2vpnAcXcgConnName        DisplayString,
+        ibL2vpnAcDot1qType          INTEGER,
+        ibL2vpnAcVLANID             Unsigned32
+    }
+
+ibL2vpnAcIfIndex   OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Index of the interface."
+    ::= { ibL2vpnAcCfgEntry 1 }
+
+ibL2vpnAcSrvId   OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Index of the service instance.  The value is always 0 when the
+        interface isn't a layer 2 Ethernet interface."
+    ::= { ibL2vpnAcCfgEntry 2 }
+
+ibL2vpnAcIfName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the interface."
+    ::= { ibL2vpnAcCfgEntry 3 }
+
+ibL2vpnAcVsiName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the VSI."
+    ::= { ibL2vpnAcCfgEntry 4 }
+
+ibL2vpnAcXcgName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Cross-connect group name."
+    ::= { ibL2vpnAcCfgEntry 5 }
+
+ibL2vpnAcXcgConnName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Cross-connect name."
+    ::= { ibL2vpnAcCfgEntry 6 }
+
+ibL2vpnAcDot1qType OBJECT-TYPE
+    SYNTAX INTEGER
+    {
+        other(1),
+        default(2),
+        singletag(3)
+    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object indicates the configuration of VLAN IDs."
+    ::= { ibL2vpnAcCfgEntry 7 }
+
+ibL2vpnAcVLANID OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "When the interface is a layer 2 Ethernet interface, this
+        object indicates the VLAN IDs assigned to this service instance.
+        When the interface is a subinterface, this object indicates
+        the outermost VLAN IDs in the VLAN-tagged packets."
+    ::= { ibL2vpnAcCfgEntry 8 }
+
+-- ==================================================================
+-- =======================ibL2vpnPwTable definition  ============
+-- ==================================================================
+
+ibL2vpnPwTable OBJECT IDENTIFIER ::= { ibL2vpn 5 }
+
+-- ==================================================================
+-- ======================= ibL2vpnPwCfgTable definition ==========
+-- ==================================================================
+ibL2vpnPwCfgTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbL2vpnPwCfgEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains PW configuration."
+    ::= { ibL2vpnPwTable 1 }
+
+
+ibL2vpnPwCfgEntry OBJECT-TYPE
+    SYNTAX      IbL2vpnPwCfgEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This entry describes configurations about a PW."
+        INDEX
+        {
+            ibL2vpnPwPeerIp, ibL2vpnPwId
+        }
+    ::= { ibL2vpnPwCfgTable 1 }
+
+IbL2vpnPwCfgEntry ::= SEQUENCE
+    {
+        ibL2vpnPwPeerIp                IpAddress,
+        ibL2vpnPwId                    Unsigned32,
+        ibL2vpnPwAcIfIndex             InterfaceIndexOrZero,
+        ibL2vpnPwAcIfName              DisplayString,
+        ibL2vpnPwAcSrvId               Unsigned32,
+        ibL2vpnPwVsiName               DisplayString,
+        ibL2vpnPwXcgName               DisplayString,
+        ibL2vpnPwXcgConnName           DisplayString,
+        ibL2vpnPwQosDirection          INTEGER,
+        ibL2vpnPwInboundQosCir         Unsigned32,
+        ibL2vpnPwInboundQosCbs         Unsigned32,
+        ibL2vpnPwInboundQosEbs         Unsigned32,
+        ibL2vpnPwOutboundQosCir        Unsigned32,
+        ibL2vpnPwOutboundQosCbs        Unsigned32,
+        ibL2vpnPwOutboundQosEbs        Unsigned32,
+        ibL2vpnPwOutboundQosCarCir     Unsigned32,
+        ibL2vpnPwOutboundQosCarCbs     Unsigned32,
+        ibL2vpnPwOutboundQosCarEbs     Unsigned32,
+        ibL2vpnPwOutboundQosCarPir     Unsigned32
+    }
+
+ibL2vpnPwPeerIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Peer IP address."
+    ::= { ibL2vpnPwCfgEntry 1 }
+
+ibL2vpnPwId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "PW identifier (ID)."
+    ::= { ibL2vpnPwCfgEntry 2 }
+
+ibL2vpnPwAcIfIndex OBJECT-TYPE
+    SYNTAX      InterfaceIndexOrZero
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index of the AC interface."
+    ::= { ibL2vpnPwCfgEntry 3 }
+
+ibL2vpnPwAcIfName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the AC interface."
+    ::= { ibL2vpnPwCfgEntry 4 }
+
+ibL2vpnPwAcSrvId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index of the service instance.  The value is always
+        0 when the interface isn't a layer 2 Ethernet interface."
+    ::= { ibL2vpnPwCfgEntry 5 }
+
+ibL2vpnPwVsiName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the VSI."
+    ::= { ibL2vpnPwCfgEntry 6 }
+
+ibL2vpnPwXcgName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Cross-connect group name."
+    ::= { ibL2vpnPwCfgEntry 7 }
+
+ibL2vpnPwXcgConnName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Cross-connect name."
+    ::= { ibL2vpnPwCfgEntry 8 }
+
+ibL2vpnPwQosDirection OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        none(1),
+        inbound(2),
+        outbound(3),
+        both(4)
+    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Rate limit in the inbound or outbound direction."
+    ::= { ibL2vpnPwCfgEntry 9 }
+
+ibL2vpnPwInboundQosCir OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Committed Information Rate in the inbound direction."
+    ::= { ibL2vpnPwCfgEntry 10 }
+
+ibL2vpnPwInboundQosCbs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Committed Burst Size in the inbound direction."
+    ::= { ibL2vpnPwCfgEntry 11 }
+
+ibL2vpnPwInboundQosEbs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Excess Burst Size in the inbound direction."
+    ::= { ibL2vpnPwCfgEntry 12 }
+
+ibL2vpnPwOutboundQosCir OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Committed Information Rate in the outbound direction."
+    ::= { ibL2vpnPwCfgEntry 13 }
+
+ibL2vpnPwOutboundQosCbs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Committed Burst Size in the outbound direction."
+    ::= { ibL2vpnPwCfgEntry 14 }
+
+ibL2vpnPwOutboundQosEbs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Excess Burst Size in the outbound direction."
+    ::= { ibL2vpnPwCfgEntry 15 }
+ibL2vpnPwOutboundQosCarCir OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Committed Information Rate in kbps."
+    ::= { ibL2vpnPwCfgEntry 16 }
+
+ibL2vpnPwOutboundQosCarCbs OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Committed Burst Size in bytes."
+    ::= { ibL2vpnPwCfgEntry 17 }
+
+ibL2vpnPwOutboundQosCarEbs OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Excess Burst Size in bytes.
+         Only software QoS supports this node.
+         4294967295 is returned when getting value from hardware QoS."
+    ::= { ibL2vpnPwCfgEntry 18 }
+
+ibL2vpnPwOutboundQosCarPir OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Peak Information Rate in kbps.
+         Only hardware QoS supports this node.
+         4294967295 is returned when getting value from software QoS."
+    ::= { ibL2vpnPwCfgEntry 19 }
+
+-- ==================================================================
+-- ===============ibL2vpnPwNotifications definition  ==============
+-- ==================================================================
+ibL2vpnMacLimitMaxAc NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibL2vpnAcIfName,
+            ibL2vpnAcVsiName
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when The number
+         of MAC address entries on the AC reached the
+         upper limit happens. The first element show
+         the ServiceID"
+    ::= { ibL2vpnPwNotifications 3 }
+
+ibL2vpnMacLimitMaxAcClear NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibL2vpnAcIfName,
+            ibL2vpnAcVsiName
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when The number of
+         MAC address entries on the AC fell below the upper
+         limit happens. The first element show the the ServiceID."
+    ::= { ibL2vpnPwNotifications 4 }
+
+ibL2vpnMacLimitMaxPw NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibL2vpnMacLimitPwVsiIndex,
+            ibL2vpnMacLimitPwLinkID,
+            ibL2vpnMacLimitPwVsiName
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when The number
+         of MAC address entries on the PW reached the
+         upper limit happens. The first  element show
+         the vsi index"
+    ::= { ibL2vpnPwNotifications 5 }
+
+ibL2vpnMacLimitMaxPwClear NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibL2vpnMacLimitPwVsiIndex,
+            ibL2vpnMacLimitPwLinkID,
+            ibL2vpnMacLimitPwVsiName
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when The number of
+         MAC address entries on the PW fell below the upper
+         limit happens. The first element show the the vsi
+         index."
+    ::= { ibL2vpnPwNotifications 6 }
+
+ibL2vpnPwParaMisMatch NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibL2vpnPwVsiName,
+            ibL2vpnPwXcgName,
+            ibL2vpnPwXcgConnName
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the e PW parameter
+         mismatch happens. The first element show the Pw PeerIp"
+    ::= { ibL2vpnPwNotifications 7 }
+
+ibL2vpnPwParaMatch NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibL2vpnPwVsiName,
+            ibL2vpnPwXcgName,
+            ibL2vpnPwXcgConnName
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the e PW parameter
+         match happens. The first element show the Pw PeerIp"
+    ::= { ibL2vpnPwNotifications 8 }
+
+ibL2vpnPwOutAge NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibL2vpnPeerIp,
+            ibL2vpnPWPwID,
+            ibL2vpnPwType
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when both main PW and backup PW are
+         down."
+    ::= { ibL2vpnPwNotifications 9 }
+
+ibL2vpnPwOutAgeClear NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibL2vpnPeerIp,
+            ibL2vpnPWPwID,
+            ibL2vpnPwType
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the main PW or backup PW is
+         recovered."
+    ::= { ibL2vpnPwNotifications 10 }
+
+ibL2vpnSingleCCCVcUp NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibL2vpnInInterfaceIndex,
+            ibL2vpnOutInterfaceIndex,
+            ibL2vpnChangeReason,
+            ibL2vpnInInterfaceName,
+            ibL2vpnOutInterfaceName
+        }
+    STATUS      current
+    DESCRIPTION
+        "The status of the single CCC turned UP."
+    ::= { ibL2vpnPwNotifications 11 }
+
+ibL2vpnSingleCCCVcDown NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibL2vpnInInterfaceIndex,
+            ibL2vpnOutInterfaceIndex,
+            ibL2vpnChangeReason,
+            ibL2vpnInInterfaceName,
+            ibL2vpnOutInterfaceName
+        }
+    STATUS      current
+    DESCRIPTION
+        "The status of the single CCC turned DOWN."
+    ::= { ibL2vpnPwNotifications 12 }
+
+ibL2vpnFlowLabelNonSupp NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibL2vpnFlowLabelSlotId,
+            ibL2vpnFlowLabelOID
+        }
+    STATUS      current
+    DESCRIPTION
+        "The device has detected that there is a board with
+         unsupported stream tag function."
+    ::= { ibL2vpnPwNotifications 13 }
+-- ==================================================================
+
+END

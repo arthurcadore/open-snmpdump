@@ -1,0 +1,77 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Ethernet Operation, Administration,
+--              and Maintenance(ETHOAM) MIB
+-- Reference: IF-MIB
+-- Version: V1.0
+-- History:
+--   V1.0 created by zhengjun
+--     Initial version 2022-05-27
+-- =================================================================
+-- =================================================================
+--
+-- Import and definition
+--
+-- =================================================================
+IB-ETHOAM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    dot3OamEventLogTimestamp, dot3OamEventLogOui, dot3OamEventLogType,
+    dot3OamEventLogLocation
+        FROM DOT3-OAM-MIB
+    ifDescr, ifIndex
+        FROM IF-MIB;
+
+ibEthoam MODULE-IDENTITY
+    LAST-UPDATED
+        "202205271522Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB defines objects for managing Ethernet OAM.
+        Ethernet OAM is a tool that monitors Layer 2 link status
+        and addresses common link-related issues on the last mile."
+    REVISION
+        "202205271522Z"
+    DESCRIPTION
+        "Initial revision of the Ethoam MIB module."
+    ::= { ibCommon  227 }
+
+ibEthoamTrap            OBJECT IDENTIFIER ::= { ibEthoam 1 }
+ibEthoamTrapPrefix      OBJECT IDENTIFIER ::= { ibEthoamTrap 0 }
+ibEthoamNonThresholdRecovery NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            dot3OamEventLogTimestamp,
+            dot3OamEventLogOui,
+            dot3OamEventLogType,
+            dot3OamEventLogLocation
+        }
+    STATUS      current
+    DESCRIPTION
+        "A NonThresholdEventRecovery notification is sent when a local
+        or remote non-threshold crossing event is recoverd"
+    ::= { ibEthoamTrapPrefix 1 }
+
+ibEthoamLoopbackFailed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS      current
+    DESCRIPTION
+        "A trap message is generated when a port
+        fails to enable loopback test."
+    ::= { ibEthoamTrapPrefix 2 }
+
+END

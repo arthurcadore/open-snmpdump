@@ -1,0 +1,944 @@
+-- ===========================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- Description: The MIB is designed to manage the disk.
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 2007-09-04 created by lizhicheng
+-- =================================================================
+IB-LOGIC-VOLUME-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+        Counter32, Integer32,
+        OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI
+        RowStatus, DateAndTime, TEXTUAL-CONVENTION, TruthValue
+    FROM SNMPv2-TC
+        InetAddressType, InetAddress
+    FROM INET-ADDRESS-MIB
+        entPhysicalIndex
+    FROM ENTITY-MIB
+        IbLvIDType, IbStorageEnableState, IbStorageActionType,
+        IbStorageLedStateType, IbSessionIDType,
+        IbRaidIDType, IbWwpnListType, ibStorageRef
+    FROM IB-STORAGE-REF-MIB;
+
+
+ibLogicVolume MODULE-IDENTITY
+    LAST-UPDATED "200709041452Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB describes the general information of disk device."
+    ::= { ibStorageRef 5 }
+
+ibLvMibObjects OBJECT IDENTIFIER ::= { ibLogicVolume 1 }
+
+
+
+
+ibLogicResourceCapacityObject  OBJECT IDENTIFIER ::= { ibLvMibObjects 1 }
+ibLvCount OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the maximal number of logic volumes supported."
+    ::= { ibLogicResourceCapacityObject 1 }
+
+ibLvMaxSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "TB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the maximal size of logic volumes supported."
+    ::= { ibLogicResourceCapacityObject 2 }
+
+ibTargetCount OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the maximal number of targets supported."
+    ::= { ibLogicResourceCapacityObject 3 }
+
+ibInitiatorCount OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the maximal number of initiators supported."
+    ::= { ibLogicResourceCapacityObject 4 }
+
+ibSanClientCount OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the maximal number of SAN client supported."
+    ::= { ibLogicResourceCapacityObject 5 }
+
+-- Logic Resource Table
+-- This table described the logic resource information.
+
+ibLogicVolumeResource  OBJECT IDENTIFIER ::= { ibLvMibObjects 2 }
+
+ibLvCreateIndex OBJECT-TYPE
+    SYNTAX      IbLvIDType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object supplys an valid index which uses to create a new
+        entry for the ibLvTable object. Reference to ibLvRowStatus object
+        for more information.
+        Note that if an entry of the associated table has been created or
+        deleted, the historical value of this object may be an invalid index
+        to create a new entry for the associated table."
+    ::= { ibLogicVolumeResource 1 }
+
+ibLvTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbLvEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes the logic resource information of a
+        logic volume."
+    ::= { ibLogicVolumeResource 2 }
+
+ibLvEntry OBJECT-TYPE
+    SYNTAX      IbLvEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable
+        to a particular logic resource."
+    INDEX
+        {
+            ibLvIndex
+        }
+
+    ::= { ibLvTable 1 }
+
+IbLvEntry ::= SEQUENCE
+    {
+        ibLvIndex                IbLvIDType,
+        ibLvName                 OCTET STRING,
+        ibLvTotalSize            Integer32,
+        ibLvCreateRaidUuid       IbRaidIDType,
+        ibLvCreateRaidSize       Integer32,
+        ibLvSedInquiryStringKeep TruthValue,
+        ibLvSedRaidUuid          IbRaidIDType,
+        ibLvState                INTEGER,
+        ibLvAssigned             INTEGER,
+        ibLvType                 INTEGER,
+        ibLvExtendTimes          Integer32,
+        ibLvRowStatus            RowStatus
+    }
+
+ibLvIndex OBJECT-TYPE
+    SYNTAX      IbLvIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object describes the symbol of a logic volume."
+    ::= { ibLvEntry 1 }
+
+ibLvName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..31))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the name of a logic volume."
+    ::= { ibLvEntry 2 }
+
+ibLvTotalSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the total size of a logic volume. The
+        units is million bytes."
+    ::= { ibLvEntry 3 }
+
+ibLvCreateRaidUuid OBJECT-TYPE
+    SYNTAX      IbRaidIDType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the ID of array where a logic volume
+        build on."
+    ::= { ibLvEntry 4 }
+
+ibLvCreateRaidSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the size of a logic volume when create it.
+        The units is million bytes."
+    ::= { ibLvEntry 5 }
+
+ibLvSedInquiryStringKeep OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the inquiry string of the logic volume should
+        be reserved. This value of this object is valid only when the associated
+        ibLvType is equal to 'serviceEnabled'."
+    ::= { ibLvEntry 6 }
+
+ibLvSedRaidUuid OBJECT-TYPE
+    SYNTAX      IbRaidIDType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the location where the SED infomation is
+        build on."
+    ::= { ibLvEntry 7 }
+
+ibLvState OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            usable(1),
+            unusable(2),
+            conflict(3)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the state of a logic volume. The value
+        'conflict' means the names of two or more logic volume are reduplicate."
+    ::= { ibLvEntry 8 }
+
+ibLvAssigned OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            use(1),
+            unused(2)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the logic volume has be designated for
+        target or SAN client."
+    ::= { ibLvEntry 9 }
+
+ibLvType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            virtual(1),
+            direct(2),
+            serviceEnabled(3)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the type of a logic volume.
+         The value 'virtual' means virtual devices are defined as sets of storage blocks
+         from one or more physical array. This allows the creation of virtual devices that
+         can be a portion of a larger physical array, or an aggregation of multiple physical array.
+         The value 'direct' means direct devices are directly mapped SCSI devices.
+         Because they are not virtualized, direct devices cannot take advantage of advanced storage options,
+         such as mirroring, failover, replication, or snapshot copy.
+         The value 'serviceEnabled' means service enabled devices are all maintained in a one-to-one
+         mapping relationship(one physical array equals one logical device)."
+    ::= { ibLvEntry 10 }
+
+ibLvExtendTimes OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the times the logic volume has been extended."
+    ::= { ibLvEntry 11 }
+
+ibLvRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the actions to create or delete a logic
+        volume."
+    ::= { ibLvEntry 12 }
+
+
+
+-- Extend Logic Resource Table
+-- This table described the extend resource information of the logic volume.
+ibLvExtTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbLvExtEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains the extend resource information of the logic
+        volume."
+    ::= { ibLvMibObjects 3}
+
+ibLvExtEntry OBJECT-TYPE
+    SYNTAX      IbLvExtEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable
+        to extend resource of logic volume."
+    INDEX
+        {
+            ibLvIndex,
+            ibLvRaidUuid
+        }
+
+    ::= { ibLvExtTable 1 }
+
+IbLvExtEntry ::= SEQUENCE
+    {
+        ibLvRaidUuid        IbRaidIDType,
+        ibLvExtSize         Integer32,
+        ibLvRaidSize        Integer32,
+        ibLvExtRowStatus    RowStatus
+    }
+
+ibLvRaidUuid OBJECT-TYPE
+    SYNTAX      IbRaidIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This index is identical to ibRaidUuid in IB-RAID-MIB."
+    ::= { ibLvExtEntry 1 }
+
+ibLvExtSize OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483647)
+    UNITS       "MB"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the extend size of the logic volume in a
+        specific raid. The units is million bytes.
+        This object will always return zero when read."
+    ::= { ibLvExtEntry 2 }
+
+ibLvRaidSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the size of logic volume on the specific raid.
+        The units is million bytes."
+    ::= { ibLvExtEntry 3 }
+
+ibLvExtRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the action to extend the logic volume."
+    ::= { ibLvExtEntry 4 }
+
+
+
+
+
+-- Target's Creation Information Table
+-- This table describes some information when creating the target.
+ibTargetResource OBJECT IDENTIFIER ::= { ibLvMibObjects 4 }
+
+ibTargetCreateIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object supplys an valid index which uses to create a new
+        entry for the ibTargetTable object.
+        Note that if an entry of the associated table has been created or
+        deleted, the historical value of this object may be an invalid index
+        to create a new entry for the associated table."
+    ::= { ibTargetResource 1 }
+
+ibTargetTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTargetEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes some information when creating a target."
+    ::= { ibTargetResource 2 }
+
+ibTargetEntry OBJECT-TYPE
+    SYNTAX      IbTargetEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable
+        to a target when create it."
+    INDEX
+        {
+            ibTargetId
+        }
+
+    ::= { ibTargetTable 1 }
+
+IbTargetEntry ::= SEQUENCE
+    {
+        ibTargetId           Integer32,
+        ibTargetName         OCTET STRING,
+        ibTargetMinLun       Integer32,
+        ibTargetRowStatus    RowStatus
+    }
+
+ibTargetId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the ID of a target."
+    ::= { ibTargetEntry 1 }
+
+ibTargetName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..223))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the name of a target."
+    ::= { ibTargetEntry 2 }
+
+ibTargetMinLun OBJECT-TYPE
+    SYNTAX      Integer32(0..127)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the mini LUN(logical unit number) number
+        of a target."
+    DEFVAL { 0 }
+    ::= { ibTargetEntry 3 }
+
+ibTargetRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the actions to add or delete the target."
+    ::= { ibTargetEntry 4 }
+
+
+
+
+-- Target's Address Information Table
+-- This table described address information of the target.
+ibTargetAddressTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTargetAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table described some address information of a target."
+    ::= { ibLvMibObjects 5 }
+
+ibTargetAddressEntry OBJECT-TYPE
+    SYNTAX      IbTargetAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable
+        to the address of a target."
+    INDEX
+        {
+            ibTargetId,
+            ibTargetIpAddrType,
+            ibTargetIpAddress
+        }
+
+    ::= { ibTargetAddressTable 1 }
+
+IbTargetAddressEntry ::= SEQUENCE
+    {
+        ibTargetIpAddress      InetAddress,
+        ibTargetIpAddrType     InetAddressType,
+        ibTargetIpRowStatus    RowStatus
+    }
+
+ibTargetIpAddress OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object describes the IP address of a target."
+    ::= { ibTargetAddressEntry 1 }
+
+ibTargetIpAddrType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object describes the type of IP address."
+    ::= { ibTargetAddressEntry 2 }
+
+ibTargetIpRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the actions to add or delete a IP address
+        of a target."
+    ::= { ibTargetAddressEntry 3 }
+
+
+
+
+
+-- Target's Logic Resource Information Table
+-- This table describes logic resource information of the target.
+ibTargetLvAssignTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTargetLvAssignEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes logic resource information of a target."
+    ::= { ibLvMibObjects 6 }
+
+ibTargetLvAssignEntry OBJECT-TYPE
+    SYNTAX      IbTargetLvAssignEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable
+        to the logic resource of a target."
+    INDEX
+        {
+            ibTargetId,
+            ibLvIndex
+        }
+
+    ::= { ibTargetLvAssignTable 1 }
+
+IbTargetLvAssignEntry ::= SEQUENCE
+    {
+        ibTargetLvLun          Integer32,
+        ibTargetLvRowStatus    RowStatus
+    }
+
+ibTargetLvLun OBJECT-TYPE
+    SYNTAX      Integer32(0..127)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the init LUN number of a target."
+    ::= { ibTargetLvAssignEntry 1 }
+
+ibTargetLvRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the actions to add or delete
+        the logic resource of a target."
+    ::= { ibTargetLvAssignEntry 2 }
+
+
+
+-- Initiator's Creation Information Table
+-- This table describes the creation information of initiators.
+ibInitiatorResource  OBJECT IDENTIFIER ::= { ibLvMibObjects 7 }
+
+ibInitiatorCreateIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object supplys an valid index which uses to create a new
+        entry for the ibInitiatorTable object.
+        Note that if an entry of the associated table has been created or
+        deleted, the historical value of this object may be an invalid index
+        to create a new entry for the associated table."
+    ::= { ibInitiatorResource 1 }
+
+ibInitiatorTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbInitiatorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes the creation information of initiators."
+    ::= { ibInitiatorResource 2 }
+
+ibInitiatorEntry OBJECT-TYPE
+    SYNTAX      IbInitiatorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable to the creation
+        of initiator."
+    INDEX
+        {
+            ibSanClientId,
+            ibInitiatorId
+        }
+
+    ::= { ibInitiatorTable 1 }
+
+IbInitiatorEntry ::= SEQUENCE
+    {
+        ibInitiatorId          Integer32,
+        ibInitiatorName        OCTET STRING,
+        ibInitiatorRowStatus   RowStatus
+    }
+
+ibInitiatorId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the ID of the initiator."
+    ::= { ibInitiatorEntry 1 }
+
+ibInitiatorName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(1..223))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the name of the initiator."
+    ::= { ibInitiatorEntry 2 }
+
+ibInitiatorRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the actions to add or delete initiators."
+    ::= { ibInitiatorEntry 3 }
+
+
+
+
+-- Target And Initiator Associate Information Table
+-- This table describes the associates information between targets and initiators.
+ibTargetInitiatorAssociateTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTargetInitiatorAssociateEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes the associate information between the target and
+        initiator."
+    ::= { ibLvMibObjects 8 }
+
+ibTargetInitiatorAssociateEntry OBJECT-TYPE
+    SYNTAX      IbTargetInitiatorAssociateEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable
+        to association between the target and initiator."
+    INDEX
+        {
+            ibTargetId,
+            ibInitiatorId
+        }
+
+    ::= { ibTargetInitiatorAssociateTable 1 }
+
+IbTargetInitiatorAssociateEntry ::= SEQUENCE
+    {
+        ibTIAccessMode    INTEGER,
+        ibTIChap          IbStorageEnableState,
+        ibTIUserName      OCTET STRING,
+        ibTIPassword      OCTET STRING,
+        ibTIRowStatus     RowStatus
+    }
+
+ibTIAccessMode OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            read(1),
+            write(2),
+            nonexclusive(3)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the mode of accessing between the target
+        and initiator.
+        The value 'read' means read available.
+        The value 'write' means read/write available, and write available only for one association.
+        The value 'nonexclusive' means read/write available for multi-association."
+    ::= { ibTargetInitiatorAssociateEntry 1 }
+
+ibTIChap OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the state of the chap attestation."
+    DEFVAL { disable }
+    ::= { ibTargetInitiatorAssociateEntry 2 }
+
+ibTIUserName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..128))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the user name for the chap attestation."
+    ::= { ibTargetInitiatorAssociateEntry 3 }
+
+ibTIPassword OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(12..16))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the password for the chap attestation.
+        It is proclaimed and can be modified."
+    ::= { ibTargetInitiatorAssociateEntry 4 }
+
+ibTIRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the actions to add or delete the association."
+    ::= { ibTargetInitiatorAssociateEntry 5 }
+
+
+
+
+-- Session Status Table
+-- This table described the information of the sessions between targets and
+-- initiators.
+ibTISessionTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTISessionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table described the information of the sessions."
+    ::= { ibLvMibObjects 9 }
+
+ibTISessionEntry OBJECT-TYPE
+    SYNTAX      IbTISessionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable
+        to the sessions."
+    INDEX
+        {
+            ibTargetId,
+            ibTISessionId
+        }
+
+    ::= { ibTISessionTable 1 }
+
+IbTISessionEntry ::= SEQUENCE
+    {
+        ibTISessionId                 IbSessionIDType,
+        ibTISessionConnectionCount    Counter32,
+        ibTISessionInitiatorName      OCTET STRING
+    }
+
+
+ibTISessionId OBJECT-TYPE
+    SYNTAX      IbSessionIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the ID of a session."
+    ::= { ibTISessionEntry 1 }
+
+ibTISessionConnectionCount OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the number of connections between the targets
+        and initiators."
+    ::= { ibTISessionEntry 2 }
+
+ibTISessionInitiatorName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..223))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the initiator's name of a session."
+    ::= { ibTISessionEntry 3 }
+
+
+-- SAN Client Information Table
+-- This table described the information of the logs.
+ibSanClientResource  OBJECT IDENTIFIER ::= { ibLvMibObjects 10 }
+
+ibSanClientCreateIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object supplys an valid index which uses to create a new
+        entry for the ibSanClientTable object.
+        Note that if an entry of the associated table has been created or
+        deleted, the historical value of this object may be an invalid index
+        to create a new entry for the associated table."
+    ::= { ibSanClientResource 1 }
+
+ibSanClientTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSanClientEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table described the information of SAN(Storage Area Network)
+        clients."
+    ::= { ibSanClientResource 2 }
+
+ibSanClientEntry OBJECT-TYPE
+    SYNTAX      IbSanClientEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable to the SAN
+        clients."
+    INDEX
+        {
+            ibSanClientId
+        }
+    ::= { ibSanClientTable 1 }
+
+IbSanClientEntry ::= SEQUENCE
+    {
+        ibSanClientId            Integer32,
+        ibSanClientName          OCTET STRING,
+        ibSanClientType          INTEGER,
+        ibFcInitiatorWwpnList    IbWwpnListType,
+        ibFcAccessMode           INTEGER,
+        ibSanClientRowStatus     RowStatus
+    }
+
+ibSanClientId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the index of a SAN client."
+    ::= { ibSanClientEntry 1 }
+
+ibSanClientName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..64))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the name of a SAN client."
+    ::= { ibSanClientEntry 2 }
+
+ibSanClientType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            iscsi(1),
+            fc(2)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the type of a SAN client."
+    ::= { ibSanClientEntry 3 }
+
+ibFcInitiatorWwpnList OBJECT-TYPE
+    SYNTAX      IbWwpnListType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the name list of FC Initiator WWPN(World Wide
+        Port Name). The value of this object is invalid and should be ignored
+        when the value of associated ibSanClientType object is not equal
+        to 'fc'."
+    ::= { ibSanClientEntry 4 }
+
+ibFcAccessMode OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            read(1),
+            write(2),
+            nonexclusive(3)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the mode of access. The value of this object
+        is invalid and should be ignored when the value of associated
+        ibSanClientType object is not equal to 'fc'.
+        The value 'read' means read available.
+        The value 'write' means read/write available, and write available only for one association.
+        The value 'nonexclusive' means read/write available for multi-association."
+    ::= { ibSanClientEntry 6 }
+
+ibSanClientRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the action to create or delete a SAN client."
+    ::= { ibSanClientEntry 7 }
+
+-- FC's Logic Resource Information Table
+-- This table describes logic resource information of the FC.
+ibFcLogicResourceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbFcLogicResourceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes logic resource information of a FC."
+    ::= { ibLvMibObjects 11 }
+
+ibFcLogicResourceEntry OBJECT-TYPE
+    SYNTAX      IbFcLogicResourceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable
+        to the logic resource of a FC."
+    INDEX
+        {
+            ibSanClientId,
+            ibLvIndex
+        }
+
+    ::= { ibFcLogicResourceTable 1 }
+
+IbFcLogicResourceEntry ::= SEQUENCE
+    {
+        ibFcLvLun             Integer32,
+        ibFcTargetWwpnName    IbWwpnListType,
+        ibFcInitiatorWwpnName IbWwpnListType,
+        ibFcLvRowStatus       RowStatus
+    }
+
+ibFcLvLun OBJECT-TYPE
+    SYNTAX      Integer32(0..127)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the init LUN number of a FC."
+    ::= { ibFcLogicResourceEntry 1 }
+
+
+ibFcTargetWwpnName OBJECT-TYPE
+    SYNTAX      IbWwpnListType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the name list of FC Target WWPN(World Wide
+        Port Name). "
+    ::= { ibFcLogicResourceEntry 2 }
+
+ibFcInitiatorWwpnName OBJECT-TYPE
+    SYNTAX      IbWwpnListType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the name list of FC Initiator WWPN(World Wide
+        Port Name). "
+    ::= { ibFcLogicResourceEntry 3 }
+
+ibFcLvRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the actions to add or delete
+        the logic resource of a FC."
+    ::= { ibFcLogicResourceEntry 4 }
+END

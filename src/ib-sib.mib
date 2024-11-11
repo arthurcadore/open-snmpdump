@@ -1,0 +1,197 @@
+-- =========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:  SIB MIB
+-- Reference:  Enterprise MIB
+-- Version: V1.0
+-- History:
+--     V1.0 Initial version 2021-04-12
+-- =========================================================================
+IB-SIB-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, Counter64
+        FROM SNMPv2-SMI
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibSib MODULE-IDENTITY
+    LAST-UPDATED "202104120000Z"        -- April 12, 2021 at 00:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This module defines the objects pertaining to share interface bridge(SIB)."
+    REVISION  "202104120000Z"        -- April 12, 2021 at 00:00 GMT
+    DESCRIPTION "Initial version."
+    ::= { ibCommon 204 }
+
+ibSibNotifications   OBJECT IDENTIFIER ::= { ibSib 0 }
+ibSibObjects         OBJECT IDENTIFIER ::= { ibSib 1 }
+ibSibTables          OBJECT IDENTIFIER ::= { ibSib 2 }
+-- ----------------------------------------------------------------------
+  -- Throughput statistic table
+-- ----------------------------------------------------------------------
+ibSibThroughputTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF IbSibThroughputEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+        "Throughput statistics."
+    ::= { ibSibTables 1 }
+
+ibSibThroughputEntry OBJECT-TYPE
+    SYNTAX  IbSibThroughputEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+        "An entry (conceptual row) representing throughput statistics."
+    INDEX { ibSibThroughputChassis, ibSibThroughputSlot, ibSibThroughputCPUID }
+    ::= { ibSibThroughputTable 1 }
+
+IbSibThroughputEntry ::= SEQUENCE {
+    ibSibThroughputChassis          Unsigned32,
+    ibSibThroughputSlot             Unsigned32,
+    ibSibThroughputCPUID            Unsigned32,
+    ibSibThroughputDropNum          Counter64,
+    ibSibRealThroughput             Unsigned32,
+    ibSibRealThruputUsage           Unsigned32
+    }
+
+ibSibThroughputChassis   OBJECT-TYPE
+    SYNTAX Unsigned32(0..65534)
+    MAX-ACCESS  accessible-for-notify
+    STATUS  current
+    DESCRIPTION
+        "Chassis number."
+    ::= { ibSibThroughputEntry  1 }
+
+ibSibThroughputSlot    OBJECT-TYPE
+    SYNTAX Unsigned32(0..65534)
+    MAX-ACCESS  accessible-for-notify
+    STATUS  current
+    DESCRIPTION
+        "Slot number."
+    ::= { ibSibThroughputEntry  2 }
+
+ibSibThroughputCPUID   OBJECT-TYPE
+    SYNTAX Unsigned32(0..7)
+    MAX-ACCESS  accessible-for-notify
+    STATUS  current
+    DESCRIPTION
+        "CPU ID."
+    ::= { ibSibThroughputEntry  3 }
+
+ibSibThroughputDropNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets dropped because of throughput capability limits on the context."
+    ::= { ibSibThroughputEntry 4 }
+
+ibSibRealThroughput OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current throughput on the context."
+    ::= { ibSibThroughputEntry 5 }
+
+ibSibRealThruputUsage OBJECT-TYPE
+    SYNTAX      Unsigned32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Percentage of the current throughput to the maximum throughput."
+    ::= { ibSibThroughputEntry 6 }
+
+ibSibThroughputObjects  OBJECT IDENTIFIER ::= { ibSibObjects 1 }
+
+ibSibSetThroughput OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Maximum throughput allowed on the context."
+    ::= { ibSibThroughputObjects 1 }
+
+ibSibSetThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32(0..99)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Throughput usage threshold."
+    ::= { ibSibThroughputObjects 2 }
+
+ibSibThroughputUnit OBJECT-TYPE
+    SYNTAX      INTEGER {invalid(0),kbps(1),pps(2)}
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Throughput unit. Value 1 represents kbps and value 2 represents pps."
+    ::= { ibSibThroughputObjects 3 }
+
+-- ==================================================================
+--
+-- ======================= trap definition begin ====================
+--
+-- ==================================================================
+ibSibDropTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSibThroughputChassis,
+            ibSibThroughputSlot,
+            ibSibThroughputCPUID,
+            ibSibThroughputDropNum
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the throughput of the context reaches the limit."
+    ::= { ibSibNotifications 1 }
+
+ibSibDropRecoveryTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSibThroughputChassis,
+            ibSibThroughputSlot,
+            ibSibThroughputCPUID
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the packet drop conditions are cleared because the throughput of the context drops."
+    ::= { ibSibNotifications 2 }
+
+ibSibThresholdTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSibThroughputChassis,
+            ibSibThroughputSlot,
+            ibSibThroughputCPUID,
+            ibSibSetThroughput,
+            ibSibRealThroughput,
+            ibSibSetThreshold,
+            ibSibRealThruputUsage
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the throughput usage of the context reaches the threshold."
+    ::= { ibSibNotifications 3 }
+
+ibSibThrRevoveryTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSibThroughputChassis,
+            ibSibThroughputSlot,
+            ibSibThroughputCPUID,
+            ibSibSetThroughput,
+            ibSibRealThroughput,
+            ibSibSetThreshold,
+            ibSibRealThruputUsage
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the throughput usage of the context drops below the threshold."
+    ::= { ibSibNotifications 4 }
+END

@@ -1,0 +1,124 @@
+-- =========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The MIB file is used for management of
+--              IP-SGT(IP address-Security Group Tag) information.
+-- Reference:
+-- Version: 1.0
+-- History:
+-- V1.0 Initial version, created by lizhaocheng.
+-- ==========================================================================
+IB-IPSGT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC;
+
+ibIpsgt MODULE-IDENTITY
+    LAST-UPDATED "202208021020Z"        --Aug 02, 2022 at 00:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB contains objects to manage configuration and
+         monitor running state for IP-SGT feature.
+
+            *********************************
+                    MIB Tables
+            **********************************
+         This MIB consists of the following tables:
+            1 :  ibIpsgtNotifications
+            2 :  ibIpsgtObjects
+        "
+    REVISION "202208021020Z"        --Aug 02, 2022 at 00:00 GMT
+    DESCRIPTION
+        "Initial revision.
+         Add ibIpsgtNotifications.
+         Add ibIpsgtObjects."
+    ::= { ibCommon 247 }
+
+--
+-- Top level structure
+--
+
+ibIpsgtNotifications  OBJECT IDENTIFIER ::= { ibIpsgt 0 }
+ibIpsgtObjects        OBJECT IDENTIFIER ::= { ibIpsgt 1 }
+
+--
+-- type definitions
+--
+
+-- IP-SGT cloud server type
+IbServerType ::= TEXTUAL-CONVENTION
+    STATUS  current
+    DESCRIPTION
+        "The type of IP-SGT cloud server."
+    SYNTAX INTEGER
+    {
+        unknown(1),
+        master(2),
+        backup(3)
+    }
+
+--
+-- Notification Objects
+--
+ibIpsgtNotifyVarObjects OBJECT IDENTIFIER ::= { ibIpsgtObjects 1 }
+
+ibIpsgtNotifyDomain OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The domain of IP-SGT cloud server."
+    ::= { ibIpsgtNotifyVarObjects 1 }
+
+ibIpsgtNotifyPort OBJECT-TYPE
+    SYNTAX Integer32   (0..65534)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The L4 protocol port of IP-SGT cloud server."
+    ::= { ibIpsgtNotifyVarObjects 2 }
+
+ibIpsgtNotifyServerType OBJECT-TYPE
+    SYNTAX IbServerType
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The type of IP-SGT cloud server."
+    ::= { ibIpsgtNotifyVarObjects 3 }
+
+--
+-- IP-SGT notifications
+--
+ibIpsgtCloudConnectionUp NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibIpsgtNotifyDomain,
+        ibIpsgtNotifyPort,
+        ibIpsgtNotifyServerType
+    }
+    STATUS current
+    DESCRIPTION
+        "Generated when the channel to IP-SGT cloud server is connected."
+    ::= { ibIpsgtNotifications 1 }
+
+ibIpsgtCloudConnectionDown NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibIpsgtNotifyDomain,
+        ibIpsgtNotifyPort,
+        ibIpsgtNotifyServerType
+    }
+    STATUS current
+    DESCRIPTION
+        "Generated when a the channel to IP-SGT cloud server is disconnected."
+    ::= { ibIpsgtNotifications 2 }
+
+END

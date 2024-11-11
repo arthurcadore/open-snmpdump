@@ -1,0 +1,127 @@
+-- ==========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The MIB contains the managed objects definitions for the Virtual
+--              Private Network (VPN) peer on devices supporting this feature.
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 2016-03-09 Initial version created by qujin
+-- ==========================================================================
+IB-VPN-PEER-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, Counter64
+        FROM SNMPv2-SMI;
+
+ibVpnPeer MODULE-IDENTITY
+    LAST-UPDATED "201603091600Z"        -- 9th March, 2016 at 16:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB provides information about VPN peers.  This MIB is applicable to PE devices.
+        Some objects in this MIB may be used only for some specific products,
+        so users should refer to the related documents to acquire more
+        detailed information.
+        "
+    REVISION "201603091600Z"
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 165 }
+
+
+-- =================================================================
+-- Note that a scalar group should be defined firstly and all
+-- scalar objects are placed under that group.
+-- =================================================================
+ibVpnPeerGroup OBJECT IDENTIFIER ::= { ibVpnPeer 1 }
+
+-- =================================================================
+-- The section below describes statistics of VPN peer on a device.
+-- =================================================================
+ibVpnPeerStat OBJECT IDENTIFIER ::= { ibVpnPeerGroup 1 }
+
+-- =============================================================================
+-- ibVpnPeerStatTable Definition
+-- =============================================================================
+ibVpnPeerStatTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVpnPeerStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects to get statistic information
+         of a VPN peer on a device."
+    ::= { ibVpnPeerStat 1 }
+
+ibVpnPeerStatEntry OBJECT-TYPE
+    SYNTAX      IbVpnPeerStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Entry items"
+    INDEX
+        {
+            ibVpnPeerName
+        }
+    ::= { ibVpnPeerStatTable 1 }
+
+IbVpnPeerStatEntry ::=
+    SEQUENCE {
+        ibVpnPeerName
+            OCTET STRING,
+        ibVpnPeerOutPassPkts
+            Counter64,
+        ibVpnPeerOutPassBytes
+            Counter64,
+        ibVpnPeerOutDropPkts
+            Counter64,
+        ibVpnPeerOutDropBytes
+            Counter64
+             }
+
+ibVpnPeerName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..31))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A unique human-readable value for each VPN peer."
+    ::= { ibVpnPeerStatEntry 1 }
+
+ibVpnPeerOutPassPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of packets transmitted out of the VPN peer."
+    ::= { ibVpnPeerStatEntry 2 }
+
+ibVpnPeerOutPassBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of bytes transmitted out of the VPN peer."
+    ::= { ibVpnPeerStatEntry 3 }
+
+ibVpnPeerOutDropPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of dropped packets transmitted out of the VPN peer."
+    ::= { ibVpnPeerStatEntry 4 }
+
+ibVpnPeerOutDropBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of dropped bytes transmitted out of the VPN peer."
+    ::= { ibVpnPeerStatEntry 5 }
+
+
+END

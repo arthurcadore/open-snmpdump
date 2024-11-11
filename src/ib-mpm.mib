@@ -1,0 +1,377 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Multicast Port Management MIB
+-- Reference:
+-- Version: V1.2
+-- History:
+-- V1.0 2005-03-22 Created by Wang Xiaodong
+-- V1.1 2005-08-11 updated by Wang Xiaodong
+--      Add ibMPortGroupLimitReplace
+-- V1.2 2006-02-06 updated by Lv Jianning
+--      Add ibHostStaticJoinTable
+-- ==================================================================
+-- ==================================================================
+-- ==================================================================
+--
+-- Variables and types be imported
+--
+-- ==================================================================
+IB-MPM-MIB DEFINITIONS ::= BEGIN
+
+
+IMPORTS
+
+    Integer32,MODULE-IDENTITY,OBJECT-TYPE,Unsigned32,mib-2
+        FROM SNMPv2-SMI
+
+    TEXTUAL-CONVENTION,RowStatus
+        FROM SNMPv2-TC
+
+    ibCommon
+        FROM IB-OID-MIB
+
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB
+
+    ifIndex
+        FROM IF-MIB;
+
+    ibMpm MODULE-IDENTITY
+        LAST-UPDATED "200503220000Z"
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+            "The MPM (Multicast Port Management) MIB."
+        REVISION "200503220000Z"
+        DESCRIPTION
+            "The initial version of this MIB file."
+        ::= { ibCommon 51 }
+
+    EnabledStatus ::= TEXTUAL-CONVENTION
+        STATUS     current
+        DESCRIPTION
+            "A simple status value for the object."
+        SYNTAX     INTEGER { enabled(1), disabled(2) }
+
+
+
+-- ==================================================================
+--
+-- ======================= definition begin =========================
+--
+-- ==================================================================
+
+    ibMPMObject OBJECT IDENTIFIER ::= {  ibMpm 1  }
+
+    ibMPortGroupLimitMinNumber OBJECT-TYPE
+        SYNTAX  Unsigned32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The lower limit of group-limit number."
+        ::= { ibMPMObject 1 }
+
+    ibMPortGroupLimitMaxNumber OBJECT-TYPE
+        SYNTAX  Unsigned32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The upper limit of group-limit number."
+        ::= { ibMPMObject 2 }
+
+
+    ibMPMTable OBJECT IDENTIFIER ::= {  ibMpm 2  }
+
+    ibMPortGroupJoinTable OBJECT-TYPE
+        SYNTAX     SEQUENCE OF IbMPortGroupJoinEntry
+        MAX-ACCESS not-accessible
+        STATUS     current
+        DESCRIPTION
+            "A table which is used for configuring a port in a specified VLAN to join
+            a multicast group."
+        ::= { ibMPMTable 1 }
+
+    ibMPortGroupJoinEntry OBJECT-TYPE
+        SYNTAX     IbMPortGroupJoinEntry
+        MAX-ACCESS not-accessible
+        STATUS     current
+        DESCRIPTION
+            "An entry which is used for configuring a port in a specified VLAN to join
+            a multicast group."
+        INDEX      {
+                      ifIndex,
+                      ibMPortGroupJoinVlanID,
+                      ibMPortGroupJoinAddressType,
+                      ibMPortGroupJoinAddress
+                      }
+        ::= { ibMPortGroupJoinTable 1 }
+
+    IbMPortGroupJoinEntry ::= SEQUENCE {
+        ibMPortGroupJoinVlanID          Integer32,
+        ibMPortGroupJoinAddressType     InetAddressType,
+        ibMPortGroupJoinAddress         InetAddress,
+        ibMPortGroupJoinStatus          RowStatus
+        }
+
+    ibMPortGroupJoinVlanID OBJECT-TYPE
+        SYNTAX     Integer32
+        MAX-ACCESS not-accessible
+        STATUS     current
+        DESCRIPTION
+            "An index uniquely identifying a port in a specified
+            VLAN which joined the multicast group."
+        ::= { ibMPortGroupJoinEntry 1 }
+
+    ibMPortGroupJoinAddressType OBJECT-TYPE
+        SYNTAX     InetAddressType
+        MAX-ACCESS not-accessible
+        STATUS     current
+        DESCRIPTION
+            "Type of the multicast IP address."
+        ::= { ibMPortGroupJoinEntry 2 }
+
+    ibMPortGroupJoinAddress OBJECT-TYPE
+        SYNTAX     InetAddress
+        MAX-ACCESS not-accessible
+        STATUS     current
+        DESCRIPTION
+            "IP address of the group which the port belongs to,
+            and it must be a valid multicast IP address."
+        ::= { ibMPortGroupJoinEntry 3 }
+
+    ibMPortGroupJoinStatus OBJECT-TYPE
+        SYNTAX     RowStatus
+        MAX-ACCESS read-create
+        STATUS     current
+        DESCRIPTION
+            "This object is responsible for managing the creation and
+             deletion of rows, which supports 'active', 'notReady',
+             'createAndGo', 'destroy'.
+
+             Until instances of all corresponding columns are
+             appropriately configured, the value of the
+             corresponding instance of the ibMPortGroupJoinStatus
+             column is 'notReady'.
+
+             In particular, a newly created row cannot be actived
+             until the port belongs to the corresponding VLAN and
+             IGMP or IGMP snooping is enabled on that VLAN."
+        ::= { ibMPortGroupJoinEntry 4 }
+
+    ibMPortGroupTable OBJECT-TYPE
+        SYNTAX     SEQUENCE OF IbMPortGroupEntry
+        MAX-ACCESS not-accessible
+        STATUS     current
+        DESCRIPTION
+            "A table containing information about the status of a port
+             which joined a multicast group in the VLAN."
+         ::= { ibMPMTable 2 }
+
+    ibMPortGroupEntry OBJECT-TYPE
+        SYNTAX     IbMPortGroupEntry
+        MAX-ACCESS not-accessible
+        STATUS     current
+        DESCRIPTION
+            "An entry containing information about the status of a port
+             which joined a multicast group in the VLAN."
+        INDEX      {  ifIndex,
+                      ibMPortGroupVlanID,
+                      ibMPortGroupAddressType,
+                      ibMPortGroupAddress
+                   }
+        ::= { ibMPortGroupTable 1 }
+
+    IbMPortGroupEntry ::= SEQUENCE {
+        ibMPortGroupVlanID          Integer32,
+        ibMPortGroupAddressType     InetAddressType,
+        ibMPortGroupAddress         InetAddress
+        }
+
+    ibMPortGroupVlanID OBJECT-TYPE
+        SYNTAX     Integer32
+        MAX-ACCESS not-accessible
+        STATUS     current
+        DESCRIPTION
+            "An index uniquely identifies that a port belongs to a specified
+            VLAN."
+        ::= { ibMPortGroupEntry 1 }
+
+    ibMPortGroupAddressType OBJECT-TYPE
+        SYNTAX     InetAddressType
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "Type of multicast IP address."
+        ::= { ibMPortGroupEntry 2 }
+
+    ibMPortGroupAddress OBJECT-TYPE
+        SYNTAX     InetAddress
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+            "IP address of the group which the port joined, and it must be a
+             valid multicast IP address."
+        ::= { ibMPortGroupEntry 3 }
+
+    ibMPortConfigTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF IbMPortConfigEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "A table configuring the fast leave status, group limit number and
+             group policy parameter on a port in the specified VLAN."
+        ::= { ibMPMTable 3 }
+
+    ibMPortConfigEntry OBJECT-TYPE
+        SYNTAX  IbMPortConfigEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry containing information about the fast leave status, group
+             limit number and group policy parameter of a port in the specified
+             VLAN."
+        INDEX  { ifIndex,
+                 ibMPortConfigVlanID }
+        ::= { ibMPortConfigTable 1 }
+
+    IbMPortConfigEntry ::= SEQUENCE {
+        ibMPortConfigVlanID          Integer32,
+        ibMPortGroupLimitNumber      Unsigned32,
+        ibMPortFastLeaveStatus       EnabledStatus,
+        ibMPortGroupPolicyParameter  Integer32,
+        ibMPortConfigRowStatus       RowStatus,
+        ibMPortGroupLimitReplace     EnabledStatus
+        }
+
+    ibMPortConfigVlanID OBJECT-TYPE
+        SYNTAX     Integer32
+        MAX-ACCESS not-accessible
+        STATUS     current
+        DESCRIPTION
+            "The VLAN index."
+        ::= { ibMPortConfigEntry 1 }
+
+    ibMPortGroupLimitNumber OBJECT-TYPE
+        SYNTAX  Unsigned32
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The group limit number of the port."
+        ::= { ibMPortConfigEntry 2 }
+
+    ibMPortFastLeaveStatus OBJECT-TYPE
+        SYNTAX  EnabledStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The fast leave status of the port."
+        DEFVAL  { 2 }
+        ::= { ibMPortConfigEntry 3 }
+
+    ibMPortGroupPolicyParameter OBJECT-TYPE
+        SYNTAX  Integer32(0|2000..2999)
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The ACL number which is used as the group policy parameter
+             of the port."
+        DEFVAL  { 0 }
+        ::= { ibMPortConfigEntry 4 }
+
+    ibMPortConfigRowStatus OBJECT-TYPE
+        SYNTAX  RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The object is responsible for managing the creation and
+             deletion of rows, which supports 'active', 'notReady',
+             'createAndGo' and 'destroy'."
+        ::= { ibMPortConfigEntry 5 }
+
+    ibMPortGroupLimitReplace OBJECT-TYPE
+        SYNTAX  EnabledStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "This object is related to the object ibMPortGroupLimitNumber.
+             If the current IGMP group number is less than the value of
+             ibMPortGroupLimitNumber, any new IGMP group is permitted.
+             If the current IGMP group number equals to the value of
+             ibMPortGroupLimitNumber and the value of this object is enabled,
+             the group with the minimum multicast address will be replaced by
+             the new group.
+             If the current IGMP group number equals to the value of
+             ibMPortGroupLimitNumber and the value of this object is disabled,
+             none of new group will be permitted."
+        DEFVAL  { disabled }
+        ::= { ibMPortConfigEntry 6 }
+
+    ibHostStaticJoinTable OBJECT-TYPE
+        SYNTAX     SEQUENCE OF IbHostStaticJoinEntry
+        MAX-ACCESS not-accessible
+        STATUS     current
+        DESCRIPTION
+            "A table used to configure a host on a port in a specified VLAN
+            statically to join a multicast group."
+        ::= { ibMPMTable 4 }
+
+    ibHostStaticJoinEntry OBJECT-TYPE
+        SYNTAX     IbHostStaticJoinEntry
+        MAX-ACCESS not-accessible
+        STATUS     current
+        DESCRIPTION
+            "An entry used to configure a host on a port in a specified VLAN
+            statically to join a multicast group."
+        INDEX      {
+                      ifIndex,
+                      ibHostStaticJoinVlanID,
+                      ibHostStaticJoinAddressType,
+                      ibHostStaticJoinAddress
+                      }
+        ::= { ibHostStaticJoinTable 1 }
+
+    IbHostStaticJoinEntry ::= SEQUENCE {
+        ibHostStaticJoinVlanID          Integer32,
+        ibHostStaticJoinAddressType     InetAddressType,
+        ibHostStaticJoinAddress         InetAddress,
+        ibHostStaticJoinStatus          RowStatus
+        }
+
+    ibHostStaticJoinVlanID OBJECT-TYPE
+        SYNTAX     Integer32
+        MAX-ACCESS not-accessible
+        STATUS     current
+        DESCRIPTION
+            "An index uniquely identify the specified VLAN in which a host
+            on a port statically joined the multicast group."
+        ::= { ibHostStaticJoinEntry 1 }
+
+    ibHostStaticJoinAddressType OBJECT-TYPE
+        SYNTAX     InetAddressType
+        MAX-ACCESS not-accessible
+        STATUS     current
+        DESCRIPTION
+            "Type of the multicast IP address."
+        ::= { ibHostStaticJoinEntry 2 }
+
+    ibHostStaticJoinAddress OBJECT-TYPE
+        SYNTAX     InetAddress
+        MAX-ACCESS not-accessible
+        STATUS     current
+        DESCRIPTION
+            "IP address of the group which the host belongs to, and it must be
+            a valid multicast IP address."
+        ::= { ibHostStaticJoinEntry 3 }
+
+    ibHostStaticJoinStatus OBJECT-TYPE
+        SYNTAX     RowStatus
+        MAX-ACCESS read-create
+        STATUS     current
+        DESCRIPTION
+            "This object is responsible for managing rows, which supports
+            'active', 'createAndGo' and 'destroy'."
+        ::= { ibHostStaticJoinEntry 4 }
+END

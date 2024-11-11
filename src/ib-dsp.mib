@@ -1,0 +1,267 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The purpose of this MIB is to provide the definition of
+--              the DSP(Digital Signal Processing) status.
+-- Reference:
+-- Version: V1.1
+-- History:
+-- V1.0 2008-01-16 Initial version, created by Zhu Xinfeng
+-- V1.1 2008-07-14 Add ibVPMStateChange and ibDSPStateChange by zhuxinfeng
+-- =================================================================
+IB-DSP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        PhysicalIndex
+    FROM ENTITY-MIB
+        OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, Integer32, TimeTicks
+    FROM SNMPv2-SMI;
+
+ibDSP MODULE-IDENTITY
+    LAST-UPDATED "200801161300Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB is to provide the definition of the DSP(Digital Signal
+        Processing) status."
+    REVISION "200801161300Z"
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 89 }
+
+-- ===========================================================================
+--                            ibVPMStatusTable
+--
+-- ===========================================================================
+ibVPMStatusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVPMStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The table contains status parameters of VPM(Voice Process
+        Module) card."
+    ::= { ibDSP 1 }
+
+
+ibVPMStatusEntry OBJECT-TYPE
+    SYNTAX      IbVPMStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The entry of VPM status table."
+    INDEX
+        {
+            ibVPMIndex
+        }
+    ::= { ibVPMStatusTable 1 }
+
+IbVPMStatusEntry ::= SEQUENCE
+    {
+        ibVPMIndex                  Integer32,
+        ibVPMEnPhysicalIndex        PhysicalIndex,
+        ibVPMState                  INTEGER,
+        ibVPMResourceUtilization    Integer32,
+        ibVPMHiWaterUtilization     Integer32,
+        ibVPMMaxChannel             Integer32
+    }
+
+ibVPMIndex OBJECT-TYPE
+    SYNTAX      Integer32(1..64)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The index for this entry. The sequence of VPM card in the chassis is
+        from the top to bottom."
+    ::= { ibVPMStatusEntry 1 }
+
+ibVPMEnPhysicalIndex OBJECT-TYPE
+    SYNTAX      PhysicalIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The object corresponds to PhysicalIndex in the chassis."
+    ::= { ibVPMStatusEntry 2 }
+
+ibVPMState OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            normal(1),
+            warning(2),
+            fatal(3),
+            offLine(4)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The object indicates the current state of VPM card being monitored.
+        normal(1)  - VPM card in normal condition.
+        warning(2) - VPM card has some problem and need attention.
+        fatal(3)   - VPM card is not functional.
+        offLine(4) - VPM card is in off-line maintenance state."
+    ::= { ibVPMStatusEntry 3 }
+
+ibVPMResourceUtilization OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The object indicates the percentage of current DSP resource utilization
+        of the VPM card. The utilization is a ratio of number of busy DSP
+        resources (for handling calls, transcoding, voice compression,...)
+        to the total available DSP resources."
+    ::= { ibVPMStatusEntry 4 }
+
+ibVPMHiWaterUtilization OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The object indicates the highest percentage of DSP resource utilization
+        of the VPM card that have been occured."
+    ::= { ibVPMStatusEntry 5 }
+
+ibVPMMaxChannel OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum number of channels can be supported in each VPM card."
+    ::= { ibVPMStatusEntry 6 }
+
+-- ===========================================================================
+--                            ibDSPStatusTable
+--
+-- ===========================================================================
+ibDSPStatusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDSPStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The table contains status parameters of DSP(Digital Signal
+        Processing) card."
+    ::= { ibDSP 2 }
+
+ibDSPStatusEntry OBJECT-TYPE
+    SYNTAX      IbDSPStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The entry of DSP status table."
+    INDEX
+        {
+            ibDSPIndex
+        }
+    ::= { ibDSPStatusTable 1 }
+
+IbDSPStatusEntry ::= SEQUENCE
+    {
+        ibDSPIndex              Integer32,
+        ibDSPVPMIndex           Integer32,
+        ibDSPEnPhysicalIndex    PhysicalIndex,
+        ibDSPResetTime          TimeTicks,
+        ibDSPMaxChannel         Integer32,
+        ibDSPState              INTEGER,
+        ibDSPInUseChannel       Integer32
+    }
+
+ibDSPIndex OBJECT-TYPE
+    SYNTAX      Integer32(1..256)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The index for this entry. DSP is fixed on VPM card or chassis card.
+        The sequence of DSP in the VPM card or chassis card is from right to left."
+    ::= { ibDSPStatusEntry 1 }
+
+ibDSPVPMIndex OBJECT-TYPE
+    SYNTAX      Integer32(0..64)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The object corresponds to VPMIndex in the chassis.
+        If value of this object is non-zero, it is the index of VPM card.(DSP is in
+        this VPM card.) If value of this object is 0, then the DSP is fixed in the
+        chassis card."
+    ::= { ibDSPStatusEntry 2 }
+
+ibDSPEnPhysicalIndex OBJECT-TYPE
+    SYNTAX      PhysicalIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The object corresponds to PhysicalIndex in the chassis."
+    ::= { ibDSPStatusEntry 3 }
+
+ibDSPResetTime OBJECT-TYPE
+    SYNTAX      TimeTicks
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of sysUpTime from the last DSP reset occurred."
+    ::= { ibDSPStatusEntry 4 }
+
+ibDSPMaxChannel OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum number of channels can be supported in each DSP.
+        The value is chosen in an implementation-dependent manner by the
+        DSP functionality."
+    ::= { ibDSPStatusEntry 5 }
+
+ibDSPState OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            normal(1),
+            fatal(3),
+            offLine(4)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The object indicates the current state of DSP being monitored.
+        normal(1)  - DSP in normal condition.
+        fatal(3)   - DSP is not functional.
+        offLine(4) - DSP is in off-line maintenance state."
+    ::= { ibDSPStatusEntry 6 }
+
+ibDSPInUseChannel OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of channels that are reserved for serving calls.
+        The value is incremented when the DSP channel is reserved for call setup
+        and is decremented after the DSP channel is free due to call disconnection."
+    ::= { ibDSPStatusEntry 7 }
+
+-- ===========================================================================
+--                            ibTrapGroup
+--
+-- ===========================================================================
+-- Traps are defined below.
+
+ibDSPTrap OBJECT IDENTIFIER ::= { ibDSP 3 }
+
+ibDSPTrapPrex OBJECT IDENTIFIER ::= { ibDSPTrap 0 }
+
+ibVPMStateChange NOTIFICATION-TYPE
+    OBJECTS  { ibVPMIndex, ibVPMEnPhysicalIndex, ibVPMState }
+    STATUS   current
+    DESCRIPTION
+        "This trap is sent when VPM state changes."
+    ::= { ibDSPTrapPrex 1 }
+
+ibDSPStateChange NOTIFICATION-TYPE
+    OBJECTS  { ibDSPIndex, ibDSPVPMIndex, ibDSPEnPhysicalIndex, ibDSPState }
+    STATUS   current
+    DESCRIPTION
+        "This trap is sent when DSP state changes."
+    ::= { ibDSPTrapPrex 2 }
+
+END

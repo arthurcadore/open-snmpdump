@@ -1,0 +1,161 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:  Private MIB File For Loadbalance
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0  2010-12 Initial Version by l05567
+--       2011-11 Add 'ibLBRealServerConnectNumber', 'ibLBTrap',
+--               'ibLBRealServerOverLoad', 'ibLBTrapPrex' by l05567
+-- =================================================================
+IB-LB-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, Integer32
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibLB MODULE-IDENTITY
+    LAST-UPDATED "201012010000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The private mib file includes the loadbalance information of
+        the device."
+    REVISION      "201012010000Z"
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 116 }
+
+ibLBTables OBJECT IDENTIFIER ::= { ibLB 1 }
+
+-- MIB contains 2 groups
+
+-- =================================================================
+--    Real Server Group Table
+-- =================================================================
+
+ibLBRealServerGroupTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbLBRealServerGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Real server group table for loadbalance."
+    ::= { ibLBTables 1 }
+
+ibLBRealServerGroupEntry OBJECT-TYPE
+    SYNTAX      IbLBRealServerGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry contains the information of the real server group."
+    INDEX {
+            ibLBRealServerGroupName
+          }
+    ::= { ibLBRealServerGroupTable 1 }
+
+IbLBRealServerGroupEntry  ::=
+    SEQUENCE{
+        ibLBRealServerGroupName                DisplayString
+    }
+
+ibLBRealServerGroupName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..31))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Real server group name."
+    ::= { ibLBRealServerGroupEntry 1 }
+
+
+-- =================================================================
+--    Real Server Table
+-- =================================================================
+ibLBRealServerTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbLBRealServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Real server table for loadbalance."
+    ::= { ibLBTables 2 }
+
+ibLBRealServerEntry OBJECT-TYPE
+    SYNTAX      IbLBRealServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry contains the information of the real server."
+    INDEX {
+            ibLBRealServerGroupName,
+            ibLBRealServerName
+          }
+    ::= { ibLBRealServerTable 1 }
+
+IbLBRealServerEntry  ::=
+    SEQUENCE{
+        ibLBRealServerName                DisplayString,
+        ibLBRealServerStatus              INTEGER,
+        ibLBRealServerConnectNumber       Integer32
+    }
+
+ibLBRealServerName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..31))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Real server name."
+    ::= { ibLBRealServerEntry 1 }
+
+ibLBRealServerStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                          enabled(1),
+                          disabled(2),
+                          slowdown(3)
+                        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "A list of real server status type.
+         enabled:      the real server is enabled.
+         disabled:     the real server is disabled, the loadbalance device
+                       does not assign any traffic to the real server.
+         slowdown:     the real server continues to process the existed session
+                       previously assigned to it, but the loadbalance device
+                       does not assign any new session to the real server."
+     ::= { ibLBRealServerEntry 2 }
+
+ibLBRealServerConnectNumber OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The connection number of real server."
+    ::= { ibLBRealServerEntry 3 }
+
+-- =================================================================
+--    Traps of Loadbalance
+-- =================================================================
+ibLBTrap OBJECT IDENTIFIER ::= {ibLB 2}
+
+ibLBTrapPrex OBJECT IDENTIFIER ::= {ibLBTrap 0}
+
+ibLBRealServerOverLoad NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBRealServerGroupName,
+            ibLBRealServerName,
+            ibLBRealServerConnectNumber
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent when the real server is overloaded."
+    ::= {ibLBTrapPrex 1}
+
+END
+

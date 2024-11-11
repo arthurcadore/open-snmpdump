@@ -1,0 +1,994 @@
+-- ===========================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- Description: The MIB is designed to manage the storage system.
+-- Reference:
+-- Version: V1.1
+-- History:
+--   V1.0 2007-09-04 created by lizhicheng
+--   V1.1 2010-01-20 modified by zhanglei
+--        In IMPORTS, add entPhysicalName, entPhysicalDescr, PhysicalIndex,
+--        ibSoftwareInfoString, SnmpAdminString, ibEntityExtOperStatus,
+--        ibEntityExtPhysicalIndex, ibEntityExtTemperature,
+--        ibEntityExtCriticalLowerTemperatureThreshold, ibRaidUuid,
+--        ibRaidName, ibRaidHideState, ibRaidRunState
+--        Add ibExtVoltageTable to ibStoragePhysicalInfo
+--        Add ibStorageTraps to ibStorageMibObjects
+--        Add ibStorageTrapsPrefix and ibStorageTrapsObjects to ibStorageTraps
+--        Add ibSoftwareInfoString to ibStorageTrapsObjects
+--        Add notification objects:
+--            ibStorCriticalLowerTemperatureThresholdNotification
+--            ibStorTemperatureTooLow
+--            ibExtVoltageLowThresholdNotification
+--            ibExtVoltageHighThresholdNotification
+--            ibExtCriticalVoltageLowThresholdNotification
+--            ibExtCriticalVoltageHighThresholdNotification
+--            ibExtVoltageTooLow
+--            ibExtVoltageTooHigh
+--            ibExtBatteryStateNotification
+--            ibDiskIOErrorNotification
+--            ibRaidCreateNotification
+--            ibRaidDeleteNotification
+--            ibRaidHideStateNotification
+--            ibRaidRunStateNotification
+--            ibRaidImportNotification
+--            ibRaidRebuildStartNotification
+--            ibRaidRebuildFinishNotification
+--            ibRaidRebuildPauseNotification
+--            ibRaidRebuildInterruptNotification
+--            ibSoftwareModuleFailNotification
+--            ibRaidBatteryExpiredNotification
+--            ibRaidBatteryWillExpireNotification
+--            ibLvOnlineFailNotification
+--            ibLvOfflineFailNotification
+--            ibRaidRunNotification
+--            ibExtVoltageNormal
+--            ibDiskPowerOnNotification
+--            ibDiskPowerOffNotification
+-- =================================================================
+IB-STORAGE-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+        Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI
+        InetAddressType, InetAddress
+    FROM INET-ADDRESS-MIB
+        entPhysicalIndex, entPhysicalName, entPhysicalDescr, PhysicalIndex
+    FROM ENTITY-MIB
+        IbStorageCapableState, IbStorageEnableState, IbStorageActionType,
+        IbStorageLedStateType, IbWwpnListType, ibStorageRef, IbSoftwareInfoString
+    FROM IB-STORAGE-REF-MIB
+        SnmpAdminString
+    FROM SNMP-FRAMEWORK-MIB
+        ibEntityExtOperStatus, ibEntityExtPhysicalIndex, ibEntityExtTemperature,
+        ibEntityExtCriticalLowerTemperatureThreshold, ibEntityExtShutdownLowerTemperatureThreshold
+    FROM IB-ENTITY-EXT-MIB
+        ibRaidUuid, ibRaidName, ibRaidHideState, ibRaidRunState
+    FROM IB-RAID-MIB
+        ibDiskPowerOffReason
+    FROM IB-DISK-MIB;
+
+ibStorageMIB MODULE-IDENTITY
+    LAST-UPDATED "200709041452Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB describes the general information of storage device,
+        such as the property, configuration and management."
+    ::= { ibStorageRef 1 }
+
+ibStorageMibObjects OBJECT IDENTIFIER ::= { ibStorageMIB 1 }
+
+ibStorageServerInfo    OBJECT IDENTIFIER ::= { ibStorageMibObjects 1 }
+
+ibStoragePhysicalInfo  OBJECT IDENTIFIER ::= { ibStorageMibObjects 2 }
+
+-- The storage server's information are described here.
+ibStorageServerCapability  OBJECT IDENTIFIER ::= { ibStorageServerInfo 1 }
+
+
+ibRaidCapability OBJECT-TYPE
+    SYNTAX      IbStorageCapableState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the agent support raid management."
+    ::={ ibStorageServerCapability 1 }
+
+ibFcCapability OBJECT-TYPE
+    SYNTAX      IbStorageCapableState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the agent support FC(fiber channel) management."
+    ::={ ibStorageServerCapability 2 }
+
+ibNasCapability OBJECT-TYPE
+    SYNTAX      IbStorageCapableState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the agent support NAS(Network Attached Storage)."
+    ::={ ibStorageServerCapability 3 }
+
+ibAdaptiveRepCapability OBJECT-TYPE
+    SYNTAX      IbStorageCapableState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the agent support adaptive replication.
+        With adaptive replication option, data from the primary resource is continuously
+        replicated to a replication resource unless the system determines it is not practical
+        or possible, such as when there is insufficient bandwidth.
+        For continuous replication to occur, a continuous replication resource is used to
+        stage the data being replicated from the primary resource.
+        Similar to a cache, as soon as data comes into the continuous replication resource,
+        it is written to the replication resource."
+    ::={ ibStorageServerCapability 4 }
+
+ibRemoteRepCapability OBJECT-TYPE
+    SYNTAX      IbStorageCapableState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the agent support remote replication."
+    ::={ ibStorageServerCapability 5 }
+
+ibSafeCacheCapability OBJECT-TYPE
+    SYNTAX      IbStorageCapableState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the agent support safe cache."
+    ::={ ibStorageServerCapability 6 }
+
+ibSyncMirrorCapability OBJECT-TYPE
+    SYNTAX      IbStorageCapableState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the agent support synchronized mirror."
+    ::={ ibStorageServerCapability 7 }
+
+ibAsyncMirrorCapability OBJECT-TYPE
+    SYNTAX      IbStorageCapableState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the agent support asynchronous mirror."
+    ::={ ibStorageServerCapability 8 }
+
+ibTimeMarkCapability OBJECT-TYPE
+    SYNTAX      IbStorageCapableState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the agent support time mark."
+    ::={ ibStorageServerCapability 9 }
+
+ibSseCapability OBJECT-TYPE
+    SYNTAX      IbStorageCapableState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the agent support SSE(Storage Service Enable)."
+    ::={ ibStorageServerCapability 10 }
+
+
+-- The storage server's target config information are described here.
+ibStorageTargetConfig  OBJECT IDENTIFIER ::= { ibStorageServerInfo 2 }
+
+ibiSCSITargetEnable OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the agent support iSCSI target."
+    DEFVAL { disable }
+    ::={ ibStorageTargetConfig 1 }
+
+ibFcTargetEnable OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the agent support FC target."
+    ::={ ibStorageTargetConfig 2 }
+
+
+-- The server's physical information are described.
+ibStorageServerPhysInfo  OBJECT IDENTIFIER ::= { ibStorageServerInfo 3 }
+
+ibServerLocationLedState OBJECT-TYPE
+    SYNTAX      IbStorageLedStateType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the state of storage device's location led."
+    ::={ ibStorageServerPhysInfo 1 }
+
+ibServerResetButtonState OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the reset button is enable."
+    DEFVAL { enable }
+    ::={ ibStorageServerPhysInfo 2 }
+
+ibServerPowerButtonState OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the power button is enable."
+    DEFVAL { enable }
+    ::={ ibStorageServerPhysInfo 3 }
+
+ibServerPowerState OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            online(1),
+            onlinebypass(2),
+            onbattery(3),
+            unknown(4)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the state of power supply in the server,
+        and is valid when UPS has been configured successful.
+        The value 'online' means power supply is well-balanced.
+        The value 'onlinebypass' means supply power without ups.
+        The value 'onbattery' means supply power with battery.
+        The value 'unknown' means the power supply state is unknown."
+    ::={ ibStorageServerPhysInfo 4 }
+
+
+-- DEU Entity Extend Table
+-- This table described some information about the DEU.
+ibDeuTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDeuEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some information of a particular DEU(Disk Enclosure
+        Unit)."
+    ::= { ibStoragePhysicalInfo 1 }
+
+ibDeuEntry OBJECT-TYPE
+    SYNTAX      IbDeuEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable
+        to a particular DEU."
+    INDEX
+        {
+            ibDeuIndex
+        }
+
+    ::= { ibDeuTable 1 }
+
+IbDeuEntry ::= SEQUENCE
+    {
+        ibDeuIndex         Integer32,
+        ibDeuIDLed         IbStorageLedStateType,
+        ibDeuDiskScan      IbStorageActionType
+    }
+
+ibDeuIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the index of ibDeuTable. The DEU identified
+        by a particular value of this index is the same object as identified
+        by the same value of entPhysicalIndex."
+    ::= { ibDeuEntry 1 }
+
+ibDeuIDLed OBJECT-TYPE
+    SYNTAX      IbStorageLedStateType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the state of storage DEU's led."
+    DEFVAL { off }
+    ::= { ibDeuEntry 2 }
+
+ibDeuDiskScan OBJECT-TYPE
+    SYNTAX      IbStorageActionType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The operation of scanning the table. When the value of this object
+        is set to 'action', the operation of disk scanning is touched off."
+    ::= { ibDeuEntry 3 }
+
+-- Storage Server Network Interface Table
+-- This table described the interface information of the network.
+ibStorageInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbStorageInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes the interface information of the network."
+    ::= { ibStoragePhysicalInfo 2 }
+
+ibStorageInterfaceEntry OBJECT-TYPE
+    SYNTAX      IbStorageInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable
+        to a particular interface."
+    INDEX
+        {
+            ibStorageInterfaceIndex
+        }
+
+    ::= { ibStorageInterfaceTable 1 }
+
+IbStorageInterfaceEntry ::= SEQUENCE
+    {
+        ibStorageInterfaceIndex          Integer32,
+        ibStorageInterfaceGateway        InetAddress,
+        ibStorageInterfaceGatewayType    InetAddressType,
+        ibStorageInterfaceMTU            INTEGER
+    }
+
+ibStorageInterfaceIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the index of IbStorageInterfaceEntry. The
+        interface identified by this index is the same interface as identified
+        by the same value of ifIndex."
+    ::= { ibStorageInterfaceEntry 1 }
+
+
+ibStorageInterfaceGateway OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the gateway address of interface."
+    ::= { ibStorageInterfaceEntry 2 }
+
+ibStorageInterfaceGatewayType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the gateway address type of interface."
+    ::= { ibStorageInterfaceEntry 3 }
+
+ibStorageInterfaceMTU OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            mtu1(1500),
+            mtu2(9000)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the MTU of interface."
+    ::= { ibStorageInterfaceEntry 4 }
+
+
+-- Storage Server Bonding Interface Table
+-- This table described the information of the bonding interface.
+ibBondingTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbBondingEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes the information of the Bonding interface."
+    ::= { ibStoragePhysicalInfo 3 }
+
+ibBondingEntry OBJECT-TYPE
+    SYNTAX      IbBondingEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable to a particular
+        Bonding interface."
+    INDEX
+        {
+            ibBondingIndex
+        }
+
+    ::= { ibBondingTable 1 }
+
+IbBondingEntry ::= SEQUENCE
+    {
+        ibBondingIndex       Integer32,
+        ibBondingPortList    OCTET STRING
+    }
+
+ibBondingIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the index of ibBondingEntry. The interface
+        identified by this index is the same interface as identified by the
+        same value of ifIndex."
+    ::= { ibBondingEntry 1 }
+
+ibBondingPortList OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "An entry contains management information applicable to a particular bonding interface.
+         Every two bytes describe the ifIndex of an interface, and an interface belongs
+         to one bonding group only. An interface should be deleted from the portlist
+         of the bonding group it belongs to before it is added to another bonding group."
+    ::= { ibBondingEntry 2 }
+
+-- SCSI Adapter Table
+-- This table described some information of the SCSI adapter.
+ibScsiAdapterTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbScsiAdapterEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table containing some information of the SCSI(Small Computer
+        System interface) adapter."
+    ::= { ibStoragePhysicalInfo 4 }
+
+ibScsiAdapterEntry OBJECT-TYPE
+    SYNTAX      IbScsiAdapterEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable
+        to a particular SCSI adapter."
+    INDEX
+        {
+            entPhysicalIndex,
+            ibAdapterNumber
+        }
+    ::= { ibScsiAdapterTable 1 }
+
+IbScsiAdapterEntry ::= SEQUENCE
+    {
+        ibAdapterNumber              Integer32,
+        ibAdapterDesc                OCTET STRING,
+        ibAdapterType                INTEGER,
+        ibFcAdapterMode              INTEGER,
+        ibFcAdapterInitiatorWwpnName IbWwpnListType,
+        ibFcAdapterTargetWwpnName    IbWwpnListType,
+        ibFcAdapterPortState         INTEGER,
+        ibFcAdapterModeSwitch        IbStorageEnableState
+    }
+
+ibAdapterNumber OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the index of the adapter ."
+    ::= { ibScsiAdapterEntry 1 }
+
+ibAdapterDesc OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes some information of the adapter."
+    ::= { ibScsiAdapterEntry 2 }
+
+ibAdapterType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            scsi(1),
+            fc(2)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the type of adapter. If the value of this
+        object is not equal to 'fc', the associated object(such as ibFcAdapterMode,
+        ibFcAdapterIWWPNs,ibFcAdapterTWWPNs,ibFcAdapterPortState,ibFcAdapterModeSwitch)
+        will be invalid."
+    ::= { ibScsiAdapterEntry 3 }
+
+ibFcAdapterMode OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            initiator(1),
+            target(2),
+            dual(3)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the mode type of adapter."
+    ::= { ibScsiAdapterEntry 4 }
+
+ibFcAdapterInitiatorWwpnName OBJECT-TYPE
+    SYNTAX      IbWwpnListType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the FC's adapter WWPN(World Wide Port
+        Name) numbers."
+    ::= { ibScsiAdapterEntry 5 }
+
+ibFcAdapterTargetWwpnName OBJECT-TYPE
+    SYNTAX      IbWwpnListType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the FC's target WWPN numbers."
+    ::= { ibScsiAdapterEntry 6 }
+
+ibFcAdapterPortState OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            linkup(1),
+            linkdown(2)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the state of adapter's interface."
+    ::= { ibScsiAdapterEntry 7 }
+
+ibFcAdapterModeSwitch OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the adapter work on a target mode."
+    DEFVAL { disable }
+    ::= { ibScsiAdapterEntry 8 }
+
+-- Voltage Entity Extend Table
+-- This table described some entity extend information about the Voltage.
+ibExtVoltageTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbExtVoltageEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity extend information of the voltage."
+    ::= { ibStoragePhysicalInfo 5 }
+
+ibExtVoltageEntry OBJECT-TYPE
+    SYNTAX      IbExtVoltageEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable to the voltage."
+    INDEX
+        {
+            ibExtVoltagePhysicalIndex
+        }
+    ::= { ibExtVoltageTable 1 }
+
+IbExtVoltageEntry ::= SEQUENCE
+    {
+        ibExtVoltagePhysicalIndex          PhysicalIndex,
+        ibExtVoltagePhysicalName           SnmpAdminString,
+        ibExtVoltage                       Integer32,
+        ibExtVoltageLowThreshold           Integer32,
+        ibExtVoltageHighThreshold          Integer32,
+        ibExtCriticalVoltageLowThreshold   Integer32,
+        ibExtCriticalVoltageHighThreshold  Integer32,
+        ibExtShutdownVoltageLowThreshold   Integer32,
+        ibExtShutdownVoltageHighThreshold  Integer32
+    }
+
+ibExtVoltagePhysicalIndex OBJECT-TYPE
+    SYNTAX      PhysicalIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the entity index of voltage."
+    ::= { ibExtVoltageEntry 1 }
+
+ibExtVoltagePhysicalName OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the entity name of voltage."
+    ::= { ibExtVoltageEntry 2 }
+
+ibExtVoltage OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The voltage for the entity."
+    ::= { ibExtVoltageEntry 3 }
+
+ibExtVoltageLowThreshold OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The low-threshold for the voltage.
+            When voltage is lower than low-threshold, a notification will be
+            sent."
+    ::= { ibExtVoltageEntry 4 }
+
+ibExtVoltageHighThreshold OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The high-threshold for the voltage.
+            When voltage is higher than high-threshold, a notification will be
+            sent."
+    ::= { ibExtVoltageEntry 5 }
+
+ibExtCriticalVoltageLowThreshold OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The critical low threshold for voltage.
+            If the voltage is lower too much than the entity needs,
+            the entity will halt."
+    ::= { ibExtVoltageEntry 6 }
+
+ibExtCriticalVoltageHighThreshold OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The critical high threshold for voltage.
+            If the voltage is higher too much than the entity needs,
+            the entity will halt."
+    ::= { ibExtVoltageEntry 7 }
+
+ibExtShutdownVoltageLowThreshold OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The voltage is lower than the critical low threshold.
+            If the voltage is lower too much than the entity needs,
+            the entity halts now."
+    ::= { ibExtVoltageEntry 8 }
+
+ibExtShutdownVoltageHighThreshold OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The voltage is higher than the critical high threshold.
+            If the voltage is higher too much than the entity needs,
+            the entity halts now."
+    ::= { ibExtVoltageEntry 9 }
+
+ibStorageTraps OBJECT IDENTIFIER ::= { ibStorageMibObjects 3 }
+
+ibStorageTrapsPrefix OBJECT IDENTIFIER ::= { ibStorageTraps 0 }
+
+ibStorageTrapsObjects OBJECT IDENTIFIER ::= { ibStorageTraps 1 }
+
+ibSoftwareInfoString OBJECT-TYPE
+    SYNTAX      IbSoftwareInfoString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the software's information."
+    ::= { ibStorageTrapsObjects 1 }
+
+ibStorCriticalLowerTemperatureThresholdNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibEntityExtPhysicalIndex,
+        entPhysicalName,
+        ibEntityExtTemperature,
+        ibEntityExtCriticalLowerTemperatureThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibStorCriticalLowerTemperatureThresholdNotification indicates
+        the temperature is lower than the threshold.
+
+        If the temperature is lower too much than the entity needs,
+        the entity will halt."
+    ::= { ibStorageTrapsPrefix 1 }
+
+ibStorTemperatureTooLow NOTIFICATION-TYPE
+    OBJECTS {
+        ibEntityExtPhysicalIndex,
+        entPhysicalName,
+        ibEntityExtTemperature,
+        ibEntityExtShutdownLowerTemperatureThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibStorTemperatureTooLow indicates the temperature is
+        lower than the threshold.
+
+        If the temperature is lower too much than the entity needs,
+        the entity halts now."
+    ::= { ibStorageTrapsPrefix 2 }
+
+ibExtVoltageLowThresholdNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibExtVoltagePhysicalIndex,
+        ibExtVoltagePhysicalName,
+        ibExtVoltage,
+        ibExtVoltageLowThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibExtVoltageLowThresholdNotification indicates
+        the Voltage is lower than the low-threshold."
+    ::= { ibStorageTrapsPrefix 3 }
+
+ibExtVoltageHighThresholdNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibExtVoltagePhysicalIndex,
+        ibExtVoltagePhysicalName,
+        ibExtVoltage,
+        ibExtVoltageHighThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibExtVoltageHighThresholdNotification indicates
+        the Voltage is lower than the high-threshold."
+    ::= { ibStorageTrapsPrefix 4 }
+
+ibExtCriticalVoltageLowThresholdNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibExtVoltagePhysicalIndex,
+        ibExtVoltagePhysicalName,
+        ibExtVoltage,
+        ibExtCriticalVoltageLowThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibExtCriticalVoltageLowThresholdNotification indicates
+        the Voltage is lower than the critical low threshold."
+    ::= { ibStorageTrapsPrefix 5 }
+
+ibExtCriticalVoltageHighThresholdNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibExtVoltagePhysicalIndex,
+        ibExtVoltagePhysicalName,
+        ibExtVoltage,
+        ibExtCriticalVoltageHighThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibExtCriticalVoltageHighThresholdNotification indicates
+        the Voltage is higher than the critical high threshold."
+    ::= { ibStorageTrapsPrefix 6 }
+
+ibExtVoltageTooLow NOTIFICATION-TYPE
+    OBJECTS {
+        ibExtVoltagePhysicalIndex,
+        ibExtVoltagePhysicalName,
+        ibExtVoltage,
+        ibExtShutdownVoltageLowThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibExtVoltageTooLowNotification indicates
+        the Voltage is lower than the critical low threshold,
+        and the entity halt now!"
+    ::= { ibStorageTrapsPrefix 7 }
+
+ibExtVoltageTooHigh NOTIFICATION-TYPE
+    OBJECTS {
+        ibExtVoltagePhysicalIndex,
+        ibExtVoltagePhysicalName,
+        ibExtVoltage,
+        ibExtShutdownVoltageHighThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibExtVoltageTooHighNotification indicates
+        the Voltage is higher than the critical high threshold,
+        and the entity halt now!"
+    ::= { ibStorageTrapsPrefix 8 }
+
+ibExtBatteryStateNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibEntityExtPhysicalIndex,
+        entPhysicalName,
+        ibEntityExtOperStatus
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibExtBatteryStateNotification indicates
+        the raid battery entity's state changes."
+    ::= { ibStorageTrapsPrefix 9 }
+
+ibDiskIOErrorNotification NOTIFICATION-TYPE
+    OBJECTS { entPhysicalDescr }
+    STATUS current
+    DESCRIPTION
+        "The ibDiskIOErrorNotification indicates that a disk occurred I/O error."
+    ::= { ibStorageTrapsPrefix 10 }
+
+ibRaidCreateNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibRaidUuid,
+        ibRaidName
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibRaidCreateNotification indicates that a array is created."
+    ::= { ibStorageTrapsPrefix 11 }
+
+ibRaidDeleteNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibRaidUuid,
+        ibRaidName
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibRaidDeleteStateNotification indicates that a array is deleted."
+    ::= { ibStorageTrapsPrefix 12 }
+
+ibRaidHideStateNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibRaidUuid,
+        ibRaidName,
+        ibRaidHideState
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibRaidFailedNotification indicates that a array hide or unhide."
+    ::= { ibStorageTrapsPrefix 13 }
+
+ibRaidRunStateNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibRaidUuid,
+        ibRaidName,
+        ibRaidRunState
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibRaidDegradeNotification indicates that a array state change."
+    ::= { ibStorageTrapsPrefix 14 }
+
+ibRaidImportNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibRaidUuid,
+        ibRaidName
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibRaidFailedNotification indicates that a thrid array is imported."
+    ::= { ibStorageTrapsPrefix 15 }
+
+ibRaidRebuildStartNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibRaidUuid,
+        ibRaidName
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibRaidRebuildStartNotification indicates that
+        a array start to rebuild."
+    ::= { ibStorageTrapsPrefix 16 }
+
+ibRaidRebuildFinishNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibRaidUuid,
+        ibRaidName
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibRaidRebuildStartNotification indicates that
+        a array fininsh rebuild."
+    ::= { ibStorageTrapsPrefix 17 }
+
+ibRaidRebuildPauseNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibRaidUuid,
+        ibRaidName
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibRaidRebuildPauseNotification indicates that
+        pause a array rebuilding."
+    ::= { ibStorageTrapsPrefix 18 }
+
+ibRaidRebuildInterruptNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibRaidUuid,
+        ibRaidName
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibRaidRebuildInterruptNotification indicates that
+        interrupt a array rebuilding."
+    ::= { ibStorageTrapsPrefix 19 }
+
+ibSoftwareModuleFailNotification NOTIFICATION-TYPE
+    OBJECTS {  ibSoftwareInfoString }
+    STATUS current
+    DESCRIPTION
+        "The ibSoftwareModuleFailNotification indicates that software module(s) fail."
+    ::= { ibStorageTrapsPrefix 20 }
+
+ibRaidBatteryExpiredNotification NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+        "The ibRaidBatteryExpiredNotification indicates
+        RAID Battery lifetime had expired."
+    ::= { ibStorageTrapsPrefix 21 }
+
+ibRaidBatteryWillExpireNotification NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+        "The ibRaidBatteryWillExpireNotification indicates
+        RAID Battery lifetime will expire."
+    ::= { ibStorageTrapsPrefix 22 }
+
+ibLvOnlineFailNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibRaidUuid,
+        ibRaidName
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibLvOnlineFailNotification indicates lv(s) on vd fail to online."
+    ::= { ibStorageTrapsPrefix 23 }
+
+ibLvOfflineFailNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibRaidUuid,
+        ibRaidName
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibLvOfflineFailNotification indicates lv(s) on vd fail to offline."
+    ::= { ibStorageTrapsPrefix 24 }
+
+ibRaidRunNotification NOTIFICATION-TYPE
+    OBJECTS {
+        ibRaidUuid,
+        ibRaidName
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibRaidRunNotification indicates that a array is running."
+    ::= { ibStorageTrapsPrefix 25 }
+
+ibExtVoltageNormal NOTIFICATION-TYPE
+    OBJECTS {
+        ibExtVoltagePhysicalIndex,
+        ibExtVoltagePhysicalName,
+        ibExtVoltage,
+        ibExtVoltageLowThreshold,
+        ibExtVoltageHighThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibStorVoltageRecoveryNotification indicates
+        the Voltage has recovered in reference."
+    ::= { ibStorageTrapsPrefix 26 }
+
+ibDiskPowerOnNotification NOTIFICATION-TYPE
+    OBJECTS { entPhysicalDescr }
+    STATUS current
+    DESCRIPTION
+        "The ibDiskPowerOnNotification indicates that
+         a disk is power on."
+    ::= { ibStorageTrapsPrefix 27 }
+
+ibDiskPowerOffNotification NOTIFICATION-TYPE
+    OBJECTS {
+        entPhysicalDescr,
+        ibDiskPowerOffReason
+        }
+    STATUS current
+    DESCRIPTION
+        "The ibDiskPowerOffNotification indicates that
+         a disk is power off."
+    ::= { ibStorageTrapsPrefix 28 }
+
+END

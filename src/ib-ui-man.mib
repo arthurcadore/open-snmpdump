@@ -1,0 +1,386 @@
+-- =======================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: User-interfaces management mib
+-- Reference:
+-- Version: V1.7
+-- History:
+--  V1.0 Initial version 2002-12-20
+--  V1.1 2004-10-12 updated by gaolong
+--       Remove ibVtyAccUserIndex, ibVtyAccConnway from ibUIMgtBasicGroup
+--       because they are not accessbile objects.
+--  V1.2 Updated by tanbo 02122, 2004-12-20
+--       Add ibConStatus for console re-authentication.
+--  V1.3 2005-01-03 updated by huguohua02576
+--       Modified ibVtyAccAclNum's attribute.
+--       Added rowstatus for ibVtyAccTable.
+--  V1.4 2005-08-15 updated by wangrui01736
+--       Add enumeration value linkinbound(3) for ibVtyAccConnway.
+--  V1.5 2006-11-03 updated by songhao02718
+--       Add enumeration value acl6inbound(11) and acl6outbound(12) for ibVtyAccConnway.
+--  V1.6 2007-12-12 updated by miaochunyan05345
+--       Add ibTerminalUserName, ibTerminalSource, ibTerminalUserAuthFailureReason,
+--       ibLogIn, ibLogOut and ibLogInAuthenFailure.
+--  V1.7 2022-06-15 updated by caohao13309
+--       Add ibVtyCurrentVty, ibVtyMaxVty, ibVtyThreshold, ibVtyUsageExceed
+--       and ibVtyUsageResume.
+-- =======================================================================
+IB-UI-MAN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-GROUP, MODULE-COMPLIANCE
+        FROM SNMPv2-CONF
+    RowStatus,DisplayString
+        FROM SNMPv2-TC
+    Unsigned32, Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI;
+
+
+ibUIMgt MODULE-IDENTITY
+    LAST-UPDATED "202206150000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "User interfaces management MIB"
+    REVISION "202206150000Z"
+    DESCRIPTION
+        "Add ibVtyCurrentVty
+        ibVtyMaxVty
+        ibVtyThreshold
+        ibVtyUsageExceed
+        ibVtyUsageResume."
+    ::= { ibCommon 2 }
+
+
+--
+-- Node definitions
+--
+
+ibUIMgtObjects OBJECT IDENTIFIER ::= { ibUIMgt 1 }
+
+ibUIBasicInfo OBJECT IDENTIFIER ::= { ibUIMgtObjects 1 }
+
+ibUIScalarObjects OBJECT IDENTIFIER ::= { ibUIBasicInfo 1 }
+
+ibUITrapBindObjects OBJECT IDENTIFIER ::= { ibUIBasicInfo 2 }
+
+ibTerminalUserName OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "
+        It represents the name of the logging user when login with authentication,
+        otherwise login mode, such as Console, AUX, TTY, VTY etc.
+        "
+    ::= { ibUITrapBindObjects 1 }
+
+ibTerminalSource OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "
+        Login mode, such as Console, AUX, TTY, VTY etc.
+        "
+    ::= { ibUITrapBindObjects 2 }
+
+ibTerminalUserAuthFailureReason OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            exceedRetries(1),
+            authTimeout(2),
+            otherReason(3)
+        }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The reason why a user failed to log in."
+    ::= { ibUITrapBindObjects 3 }
+
+ibVtyCurrentVty OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Number of VTY user lines currently in use."
+    ::= {ibUITrapBindObjects 4}
+
+ibVtyMaxVty OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of VTY user lines."
+    ::= {ibUITrapBindObjects 5}
+
+ibVtyThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VTY user line threshold."
+    ::= {ibUITrapBindObjects 6}
+
+ibUINotifications OBJECT IDENTIFIER ::= { ibUIBasicInfo 3 }
+
+ibUINotificationsPrefix OBJECT IDENTIFIER ::= { ibUINotifications 0 }
+
+ibLogIn NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTerminalUserName,
+            ibTerminalSource
+        }
+    STATUS      current
+    DESCRIPTION
+        "
+        This notification is generated when a user logs in.
+        "
+    ::= { ibUINotificationsPrefix 1 }
+
+ibLogOut NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTerminalUserName,
+            ibTerminalSource
+        }
+    STATUS      current
+    DESCRIPTION
+        "
+        This notification is generated when a user logs out.
+        "
+    ::= { ibUINotificationsPrefix 2 }
+
+ibLogInAuthenFailure NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTerminalUserName,
+            ibTerminalSource,
+            ibTerminalUserAuthFailureReason
+        }
+    STATUS      current
+    DESCRIPTION
+        "
+        This notification is generated when a user fails to log in
+        because of authentication.
+        "
+    ::= { ibUINotificationsPrefix 3 }
+
+ibVtyUsageExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibVtyCurrentVty,
+            ibVtyMaxVty,
+            ibVtyThreshold
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the number of used VTY user lines reaches or exceeds the maximum value."
+    ::= { ibUINotificationsPrefix 4 }
+
+ibVtyUsageResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibVtyCurrentVty,
+            ibVtyMaxVty,
+            ibVtyThreshold
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the number of used VTY user lines returns to normal."
+    ::= { ibUINotificationsPrefix 5 }
+
+ibVtyMan OBJECT IDENTIFIER ::= { ibUIMgtObjects 2 }
+
+-- ibVtyAccTable===============================================================
+ibVtyAccTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVtyAccEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Description."
+    ::= { ibVtyMan 1 }
+
+ibVtyAccEntry OBJECT-TYPE
+    SYNTAX      IbVtyAccEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Description."
+    INDEX
+        {
+            ibVtyAccUserIndex,
+            ibVtyAccConnway
+        }
+    ::= { ibVtyAccTable 1 }
+
+IbVtyAccEntry ::= SEQUENCE
+    {
+        ibVtyAccUserIndex         Integer32,
+        ibVtyAccConnway           INTEGER,
+        ibVtyAccAclNum            Integer32,
+        ibVtyAccEntryRowStatus    RowStatus
+    }
+
+ibVtyAccUserIndex OBJECT-TYPE
+    SYNTAX      Integer32(0..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "
+        The relative index of the user interface of vty.
+        "
+    ::= { ibVtyAccEntry 1 }
+
+ibVtyAccConnway OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            inbound(1),
+            outbound(2),
+            linkinbound(3),
+            acl6inbound(11),
+            acl6outbound(12)
+        }
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "
+        inbound(1):Filter login connections from current UI with ipv4 layer acl.
+        outbound(2):Filter logout connections from current UI with ipv4 layer acl.
+        linkinbound(3):Filter login connections from current UI with link layer acl.
+        acl6inbound(11):Filter login connections from current UI with ipv6 layer acl.
+        acl6outbound(12):Filter logout connections from current UI with ipv6 layer acl.
+        "
+    ::= { ibVtyAccEntry 2 }
+
+ibVtyAccAclNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "
+        The filter rule number of ACL.
+        "
+    ::= { ibVtyAccEntry 3 }
+
+ibVtyAccEntryRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "
+        The status of this conceptual row. Now only support CreateAndGo and
+        Destroy and Active.
+        "
+    ::= { ibVtyAccEntry 4 }
+
+
+-- ibConStatus=================================================================
+ibConStatus OBJECT IDENTIFIER ::= { ibUIMgtObjects 3 }
+
+-- ibConStatusTable============================================================
+ibConStatusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbConStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "
+        The current status of CONSOLE user interface. A group of
+        attributes are used to describe the current status.
+        "
+    ::= { ibConStatus 1 }
+
+ibConStatusEntry OBJECT-TYPE
+    SYNTAX      IbConStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "
+        An entry of ibConStatusTable.
+        "
+    INDEX
+        {
+            ibConUserIndex
+        }
+    ::= { ibConStatusTable 1 }
+
+IbConStatusEntry ::= SEQUENCE
+    {
+        ibConUserIndex    Integer32,
+        ibConReAuth       INTEGER
+    }
+
+ibConUserIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "
+        The index of the user interface of CONSOLE.
+        It's equal to current UserID.
+        "
+    ::= { ibConStatusEntry 1 }
+
+ibConReAuth OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            disable(1),
+            enable(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        The re-authentication attribute of current user interface.
+        After disconnection of current user interface, connection
+        is rebuilt, at the moment
+        disable(1): re-authentication is not need.
+        enable(2): re-authentication is need.
+        "
+    ::= { ibConStatusEntry 2 }
+
+-- ibUIMgtMIBConformance18=====================================================
+ibUIMgtMIBConformance18 OBJECT IDENTIFIER ::= { ibUIMgt 2 }
+
+ibUIMgtMIBCompliances OBJECT IDENTIFIER ::= { ibUIMgtMIBConformance18 1 }
+
+ibUIMgtMIBCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement"
+    MODULE -- this module
+    MANDATORY-GROUPS
+        {
+            ibUIMgtBasicGroup,
+            ibConStatusGroup
+        }
+    ::= { ibUIMgtMIBCompliances 1 }
+
+ibUIMgtManMIBGroups OBJECT IDENTIFIER ::= { ibUIMgtMIBConformance18 2 }
+
+ibUIMgtBasicGroup OBJECT-GROUP
+    OBJECTS
+        {
+            ibVtyAccAclNum
+        }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects for a basic implement."
+    ::= { ibUIMgtManMIBGroups 1 }
+
+ibConStatusGroup OBJECT-GROUP
+    OBJECTS
+        {
+            ibConReAuth
+        }
+    STATUS      current
+    DESCRIPTION
+        "A collection of current user interface status."
+    ::= { ibUIMgtManMIBGroups 2 }
+
+END

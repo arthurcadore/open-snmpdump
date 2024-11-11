@@ -1,0 +1,906 @@
+-- =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Multiprotocol Label Switching MIB
+-- Reference:
+-- Version: V1.8
+-- History:
+--   V1.0 2013-06-13 Initial version Created by Neng Yan
+--   V1.1 2014-12-17 Modified by Neng Yan, Added ibMplsExtBfdTable
+--   V1.2 2015-06-16 Modified by Li Yun, Added ibMplsExtVpnStatsTable
+--   V1.3 2017-02-17 Modified by Liu Qingye, Added ibMplsExtVpnTable
+--   V1.4 2018-08-04 Modified by Lin jiang, Added ibMplsExtStaticLspTable
+--   V1.5 2022-07-18 Modified by Zhou wan, Added ibMplsExtNotifications
+--   V1.6 2022-09-14 Modified by Zhou wan, Modified ibMplsExtNotifications
+--   V1.7 2022-11-14 Modified by Zhou wan, Modified ibMplsExtStaticLspName
+--        2022-12-14 Modified by Zhou wan, Modified ibMplsExtNotifications
+--   V1.8 2023-03-14 Modified by Long lewen, Modified ibMplsExtNotifications
+-- =============================================================================
+IB-MPLSEXT-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Unsigned32, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    RowStatus, TruthValue, DisplayString
+        FROM SNMPv2-TC
+    InetAddressType,InetAddress,InetAddressIPv4
+        FROM INET-ADDRESS-MIB
+    InterfaceIndexOrZero
+        FROM IF-MIB
+    ibCommon
+        FROM IB-OID-MIB
+    Counter64
+        FROM SNMPv2-SMI
+    ;
+
+-- =============================================================================
+-- module identity part
+-- =============================================================================
+ibMplsExt MODULE-IDENTITY
+    LAST-UPDATED
+        "202303141400Z"   -- Mar 14, 2023 at 14:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Multiprotocol Label Switching MIB"
+    REVISION
+        "202303141400Z"   -- Mar 14, 2023 at 14:00 GMT
+    DESCRIPTION
+        "Modified ibMplsExtNotifications."
+    REVISION
+        "202212141400Z"   -- Dec 14, 2022 at 14:00 GMT
+    DESCRIPTION
+        "Modified ibMplsExtNotifications."
+    REVISION
+        "202211141500Z"   -- Nov 14, 2022 at 15:00 GMT
+    DESCRIPTION
+        "Modified ibMplsExtStaticLspName."
+    REVISION
+        "202209141800Z"   -- Sep 14, 2022 at 18:00 GMT
+    DESCRIPTION
+        "Modified ibMplsExtNotifications."
+    REVISION
+        "202207181800Z"   -- July 18, 2022 at 18:00 GMT
+    DESCRIPTION
+        "Added ibMplsExtNotifications."
+    REVISION
+        "201808041800Z"   -- Aug 04, 2018 at 18:00 GMT
+    DESCRIPTION
+        "Added ibMplsExtStaticLspTable."
+    REVISION
+        "201702171800Z"   -- Feb 17, 2017 at 18:00 GMT
+    DESCRIPTION
+        "Added ibMplsExtVpnTable."
+    REVISION
+        "201506161800Z"   -- Jun 16, 2015 at 18:00 GMT
+    DESCRIPTION
+        "Added ibMplsExtVpnStatsTable."
+    REVISION
+        "201412171200Z"   -- Dec 17, 2014 at 18:00 GMT
+    DESCRIPTION
+        "Added ibMplsExtBfdTable."
+    REVISION
+        "201306131800Z"   -- Jan 13, 2013 at 18:00 GMT
+    DESCRIPTION
+        "Initial version of this MIB."
+    ::= { ibCommon 142 }
+
+-- =============================================================================
+-- object definition begin
+-- =============================================================================
+ibMplsExtNotifications  OBJECT IDENTIFIER ::= { ibMplsExt 0 }
+
+ibMplsExtObjects        OBJECT IDENTIFIER ::= { ibMplsExt 1 }
+
+ibMplsExtScalarGroup    OBJECT IDENTIFIER ::= { ibMplsExtObjects 1 }
+
+ibMplsExtLsrID    OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The Label Switching Router's Identifier."
+    ::= { ibMplsExtScalarGroup 1 }
+
+ibMplsExtLdpStatus    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The global configuration of Label Distribution Protocol(LDP)."
+    ::= { ibMplsExtScalarGroup 2 }
+
+ibMplsExtLabelInfo    OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..127))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of MPLS(Multiprotocol Label Switching) Label."
+    ::= { ibMplsExtScalarGroup 3 }
+
+ibMplsExtTnlToVpnInfo    OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..127))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of MPLS(Multiprotocol Label Switching)
+         Tunnel to Vpn."
+    ::= { ibMplsExtScalarGroup 4 }
+
+ibMplsExtDrvInfo    OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..127))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of MPLS(Multiprotocol Label Switching) Drive."
+    ::= { ibMplsExtScalarGroup 5 }
+
+ibMplsExtLabelExtInfo    OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..127))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The external information of MPLS(Multiprotocol Label Switching)
+        Label."
+    ::= { ibMplsExtScalarGroup 6 }
+
+-- =============================================================================
+-- ibMplsExtTable Definition
+-- =============================================================================
+ibMplsExtTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMplsExtEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring
+        Multiprotocol Label Switching(MPLS) parameters."
+    ::= { ibMplsExtObjects 2 }
+
+ibMplsExtEntry   OBJECT-TYPE
+    SYNTAX      IbMplsExtEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for configuring MPLS parameters."
+    INDEX
+    {
+        ibMplsExtIndex
+    }
+    ::= { ibMplsExtTable 1 }
+
+IbMplsExtEntry ::=
+    SEQUENCE
+    {
+        ibMplsExtIndex               Unsigned32,
+        ibMplsExtCapability          TruthValue,
+        ibMplsExtMtu                 Unsigned32,
+        ibMplsExtRowStatus           RowStatus
+    }
+
+ibMplsExtIndex   OBJECT-TYPE
+    SYNTAX      Unsigned32(1..4294967295)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Index of MPLS interface."
+    ::= { ibMplsExtEntry 1 }
+
+ibMplsExtCapability    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The MPLS capability of an interface."
+    DEFVAL { false }
+    ::= { ibMplsExtEntry 2 }
+
+ibMplsExtMtu     OBJECT-TYPE
+    SYNTAX      Unsigned32(46..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The MPLS Maximum Transmission Unit(MTU) of an interface."
+    ::= { ibMplsExtEntry 3 }
+
+ibMplsExtRowStatus     OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibMplsExtEntry 4 }
+-- =============================================================================
+-- End of ibMplsExtTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibMplsExtLdpTable Definition
+-- =============================================================================
+ibMplsExtLdpTable     OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMplsExtLdpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring LDP parameters."
+    ::= { ibMplsExtObjects 3 }
+
+ibMplsExtLdpEntry     OBJECT-TYPE
+    SYNTAX      IbMplsExtLdpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for configuring LDP parameters."
+    INDEX
+    {
+        ibMplsExtLdpIndex
+    }
+    ::= { ibMplsExtLdpTable 1 }
+
+IbMplsExtLdpEntry ::=
+    SEQUENCE
+    {
+        ibMplsExtLdpIndex                 Unsigned32,
+        ibMplsExtLdpCapability            TruthValue,
+        ibMplsExtLdpRowStatus             RowStatus
+    }
+
+ibMplsExtLdpIndex     OBJECT-TYPE
+    SYNTAX      Unsigned32(1..4294967295)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Index of LDP interface."
+    ::= { ibMplsExtLdpEntry 1 }
+
+ibMplsExtLdpCapability    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The LDP capability of an interface."
+    DEFVAL { false }
+    ::= { ibMplsExtLdpEntry 2 }
+
+ibMplsExtLdpRowStatus     OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry.  A row entry cannot
+        be modified when the value of this object is 'active'."
+    ::= { ibMplsExtLdpEntry 3 }
+-- =============================================================================
+-- End of ibMplsExtLdpTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibMplsExtBfdTable Definition
+-- =============================================================================
+ibMplsExtBfdTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMplsExtBfdEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table of MPLS Bidirectional Forwarding Detection(BFD) sessions."
+    ::= { ibMplsExtObjects 4 }
+
+ibMplsExtBfdEntry   OBJECT-TYPE
+    SYNTAX      IbMplsExtBfdEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry in this table represents information on a single session."
+    INDEX
+    {
+        ibMplsExtBfdLocalDiscr
+    }
+    ::= { ibMplsExtBfdTable 1 }
+
+IbMplsExtBfdEntry ::=
+    SEQUENCE
+    {
+        ibMplsExtBfdLocalDiscr            Unsigned32,
+        ibMplsExtBfdType                  INTEGER,
+        ibMplsExtBfdBindIfIndex           InterfaceIndexOrZero,
+        ibMplsExtBfdBindIfName            DisplayString,
+        ibMplsExtBfdXcIndex               OCTET STRING,
+        ibMplsExtBfdPwBackupFlag          INTEGER,
+        ibMplsExtBfdPwId                  Unsigned32,
+        ibMplsExtBfdVsiIndex              Unsigned32,
+        ibMplsExtBfdPwPeerIpType          InetAddressType,
+        ibMplsExtBfdPwPeerIp              InetAddress,
+        ibMplsExtBfdPwSPE                 INTEGER,
+        ibMplsExtBfdPwEncapType           INTEGER
+    }
+
+ibMplsExtBfdLocalDiscr   OBJECT-TYPE
+    SYNTAX      Unsigned32(1..4294967295)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The local discriminator of the BFD session."
+    ::= { ibMplsExtBfdEntry 1 }
+
+ibMplsExtBfdType    OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        unknown(1),
+                        lsp(2),
+                        vpwsPw(3),
+                        vplsPw(4),
+                        te(5)
+                     }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The type of the BFD session."
+    ::= { ibMplsExtBfdEntry 2 }
+
+ibMplsExtBfdBindIfIndex   OBJECT-TYPE
+    SYNTAX      InterfaceIndexOrZero
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object displays tunnel interface index when the value of
+         ibMplsExtBfdType is te(5), and displays interface index of
+         an Attachment Circuit(AC) which is bound to a Pseudowire(PW) when
+         the value of ibMplsExtBfdType is vpwsPw(3).  This object is
+         invalid when the value of ibMplsExtBfdType is not te(5) or
+         vpwsPw(3), then this object contains a zero value."
+    ::= { ibMplsExtBfdEntry 3 }
+
+ibMplsExtBfdBindIfName   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object displays tunnel interface name when the value of
+         ibMplsExtBfdType is te(5), and displays interface name of
+         an AC which is bound to a PW when the value of ibMplsExtBfdType
+         is vpwsPw(3).  This object is invalid when the value of
+         ibMplsExtBfdType is not te(5) or vpwsPw(3), then this object
+         contains a zero-length string."
+    ::= { ibMplsExtBfdEntry 4 }
+
+ibMplsExtBfdXcIndex   OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..24))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Primary index for MplsOutSegmentEntry.  This object is invalid when
+        the value of ibMplsExtBfdType is not lsp(2), then this object
+        contains a zero-length string."
+    ::= { ibMplsExtBfdEntry 5 }
+
+ibMplsExtBfdPwBackupFlag     OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        none(1),
+                        primary(2),
+                        backup(3)
+                     }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "PW flag."
+    ::= { ibMplsExtBfdEntry 6 }
+
+ibMplsExtBfdPwId     OBJECT-TYPE
+    SYNTAX      Unsigned32(0..4294967295)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "PW Identifier."
+    DEFVAL { 0 }
+    ::= { ibMplsExtBfdEntry 7 }
+
+ibMplsExtBfdVsiIndex     OBJECT-TYPE
+    SYNTAX      Unsigned32(1..4294967295)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Virtual Switch Instance(VSI) index."
+    DEFVAL { 4294967295 }
+    ::= { ibMplsExtBfdEntry 8 }
+
+ibMplsExtBfdPwPeerIpType     OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The type of peer address.  Typically, this
+        address type is IPv4 or IPv6, with a prefix length
+        of 32 or 128, respectively."
+    ::= { ibMplsExtBfdEntry 9 }
+
+ibMplsExtBfdPwPeerIp     OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Peer address of the PW."
+    ::= { ibMplsExtBfdEntry 10 }
+
+ibMplsExtBfdPwSPE     OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        none(1),
+                        upe(2),
+                        spe(3)
+                     }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Node information of the Virtual Private Wire Service(VPWS) PW,
+        User facing-Provider Edge(UPE) or Switching Provider Edge(SPE)."
+    ::= { ibMplsExtBfdEntry 11 }
+
+ibMplsExtBfdPwEncapType     OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        unknown(1),
+                        frDlciMartini(2),
+                        atmAal5Sdu(3),
+                        atmTransCell(4),
+                        vlan(5),
+                        ethernet(6),
+                        hdlc(7),
+                        ppp(8),
+                        cesom(9),
+                        atmNto1Vcc(10),
+                        atmNto1Vpc(11),
+                        ipInterworking(12),
+                        atm1to1Vcc(13),
+                        atm1to1Vpc(14),
+                        atmAal5Pdu(15),
+                        frPort(16),
+                        cep(17),
+                        satopE1(18),
+                        satopT1(19),
+                        satopE3(20),
+                        satopT3(21),
+                        esopsnBasic(22),
+                        tdmoipAal1Mode(23),
+                        tdmCesopsnWithCas(24),
+                        tdmoipAal2Mode(25),
+                        frDlci(26)
+                     }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Encapsulation type of the PW."
+    ::= { ibMplsExtBfdEntry 12 }
+-- =============================================================================
+-- End of ibMplsExtBfdTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibMplsExtVpnStatsTable Definition
+-- =============================================================================
+ibMplsExtVpnStatsTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMplsExtVpnStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table contains statistical information about packets
+         received from and sent by each VPN."
+    ::= { ibMplsExtObjects 5 }
+
+ibMplsExtVpnStatsEntry   OBJECT-TYPE
+    SYNTAX      IbMplsExtVpnStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry in this table contains statistical
+        information about packets received from and sent by a VPN."
+    INDEX
+    {
+        ibMplsExtVpnStatsVrfIndex
+    }
+    ::= { ibMplsExtVpnStatsTable 1 }
+
+IbMplsExtVpnStatsEntry ::=
+    SEQUENCE
+    {
+        ibMplsExtVpnStatsVrfIndex            Unsigned32,
+        ibMplsExtVpnStatsVpnName             OCTET STRING,
+        ibMplsExtVpnStatsInOctets            Counter64,
+        ibMplsExtVpnStatsInPackets           Counter64,
+        ibMplsExtVpnStatsInErrors            Counter64,
+        ibMplsExtVpnStatsInDiscards          Counter64,
+        ibMplsExtVpnStatsOutOctets           Counter64,
+        ibMplsExtVpnStatsOutPackets          Counter64,
+        ibMplsExtVpnStatsOutErrors           Counter64,
+        ibMplsExtVpnStatsOutDiscards         Counter64
+    }
+
+ibMplsExtVpnStatsVrfIndex   OBJECT-TYPE
+    SYNTAX      Unsigned32(1..4294967295)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The index of a VPN."
+    ::= { ibMplsExtVpnStatsEntry 1 }
+
+ibMplsExtVpnStatsVpnName   OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of a VPN."
+    ::= { ibMplsExtVpnStatsEntry 2 }
+
+ibMplsExtVpnStatsInOctets     OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of octets received from a VPN."
+    ::= { ibMplsExtVpnStatsEntry 3 }
+
+ibMplsExtVpnStatsInPackets   OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets received from a VPN."
+    ::= { ibMplsExtVpnStatsEntry 4 }
+
+ibMplsExtVpnStatsInErrors     OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of error packets received from a VPN."
+    ::= { ibMplsExtVpnStatsEntry 5 }
+
+ibMplsExtVpnStatsInDiscards   OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of incoming packets,
+        which were chosen to be discarded by a VPN even
+        though no errors had been detected to prevent their
+        being transmitted."
+    ::= { ibMplsExtVpnStatsEntry 6 }
+
+ibMplsExtVpnStatsOutOctets     OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of octets sent by a VPN."
+    ::= { ibMplsExtVpnStatsEntry 7 }
+
+ibMplsExtVpnStatsOutPackets     OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets sent by a VPN."
+    ::= { ibMplsExtVpnStatsEntry 8 }
+
+ibMplsExtVpnStatsOutErrors     OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets that could not be sent by a VPN
+        due to errors."
+    ::= { ibMplsExtVpnStatsEntry 9 }
+
+ibMplsExtVpnStatsOutDiscards     OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of outgoing packets which were chosen to be discarded
+        by a VPN even though no errors had been detected to prevent
+        their being transmitted.  One possible reason for
+        discarding such a packet could be to free up
+        buffer space."
+    ::= { ibMplsExtVpnStatsEntry 10 }
+
+-- =============================================================================
+-- End of ibMplsExtVpnStatsTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibMplsExtVpnTable Definition
+-- =============================================================================
+ibMplsExtVpnTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMplsExtVpnEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains MPLS VPN information."
+    ::= { ibMplsExtObjects 6 }
+
+ibMplsExtVpnEntry   OBJECT-TYPE
+    SYNTAX      IbMplsExtVpnEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry in this table represents information on a single VPN instance."
+    INDEX
+    {
+        ibMplsExtVpnName
+    }
+    ::= { ibMplsExtVpnTable 1 }
+
+IbMplsExtVpnEntry ::=
+    SEQUENCE
+    {
+        ibMplsExtVpnName                  OCTET STRING,
+        ibMplsExtVrfIndex                 Unsigned32
+    }
+
+ibMplsExtVpnName   OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..31))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The name of a VPN instance."
+    ::= { ibMplsExtVpnEntry 1 }
+
+ibMplsExtVrfIndex   OBJECT-TYPE
+    SYNTAX      Unsigned32(0..4294967295)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index of a VPN instance."
+    ::= { ibMplsExtVpnEntry 2 }
+
+-- =============================================================================
+-- End of ibMplsExtVpnTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibMplsExtStaticLspTable Definition
+-- =============================================================================
+ibMplsExtStaticLspTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMplsExtStaticLspEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains MPLS static LSP information."
+    ::= { ibMplsExtObjects 7 }
+
+ibMplsExtStaticLspEntry   OBJECT-TYPE
+    SYNTAX      IbMplsExtStaticLspEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry in this table represents information on a single static LSP."
+    INDEX
+    {
+        ibMplsExtStaticLspName
+    }
+    ::= { ibMplsExtStaticLspTable 1 }
+
+IbMplsExtStaticLspEntry ::=
+   SEQUENCE
+    {
+        ibMplsExtStaticLspName             OCTET STRING,
+        ibMplsExtStaticLspType             INTEGER,
+        ibMplsExtStaticLspInLabel          Unsigned32,
+        ibMplsExtStaticLspOutLabel         Unsigned32,
+        ibMplsExtStaticLspDestAddr         InetAddressIPv4,
+        ibMplsExtStaticLspDestAddrMaskLen  Unsigned32,
+        ibMplsExtStaticLspNextHopAddr      InetAddressIPv4,
+        ibMplsExtStaticLspOutIfIndex       InterfaceIndexOrZero
+    }
+
+ibMplsExtStaticLspName   OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..67))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The name of the static LSP."
+    ::= { ibMplsExtStaticLspEntry 1 }
+
+ibMplsExtStaticLspType    OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        ingress(1),
+                        transit(2),
+                        egress(3)
+                     }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The type of the static LSP."
+    ::= { ibMplsExtStaticLspEntry 2 }
+
+ibMplsExtStaticLspInLabel   OBJECT-TYPE
+    SYNTAX      Unsigned32(16..1048575)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object represents the incoming label for the static LSP.  This
+         object is invalid when the value of ibMplsExtStaticLspType is
+         ingress."
+    ::= { ibMplsExtStaticLspEntry 3 }
+
+ibMplsExtStaticLspOutLabel   OBJECT-TYPE
+    SYNTAX      Unsigned32(0..1048575)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object represents the outgoing label for the static LSP.  This
+         object is invalid when the value of ibMplsExtStaticLspType is
+         egress."
+    ::= { ibMplsExtStaticLspEntry 4 }
+
+ibMplsExtStaticLspDestAddr   OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The destination address of the static LSP.  This object is invalid when
+         the value of ibMplsExtStaticLspType is transit."
+    ::= { ibMplsExtStaticLspEntry 5 }
+
+ibMplsExtStaticLspDestAddrMaskLen   OBJECT-TYPE
+    SYNTAX      Unsigned32(0..32)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The mask length of the destination address.  This object is invalid when
+         the value of ibMplsExtStaticLspType is transit."
+    ::= { ibMplsExtStaticLspEntry 6 }
+
+ibMplsExtStaticLspNextHopAddr   OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The nexthop address of the static LSP.  This object is invalid when the
+         value of ibMplsExtStaticLspType is egress."
+    ::= { ibMplsExtStaticLspEntry 7 }
+
+ibMplsExtStaticLspOutIfIndex   OBJECT-TYPE
+    SYNTAX      InterfaceIndexOrZero
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index of the outgoing interface for this static LSP.  This object
+         is invalid when the value of ibMplsExtStaticLspType is egress, then
+         this object contains a zero value."
+    ::= { ibMplsExtStaticLspEntry 8 }
+
+-- =============================================================================
+-- End of ibMplsExtStaticLspTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- Notifications
+-- =============================================================================
+ibMplsExtLabThreExceed  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsExtLabelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the label usage exceeded
+       the upper threshold limit."
+    ::= { ibMplsExtNotifications 1 }
+
+ibMplsExtLabThreExceedClear  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsExtLabelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the label usage dropped to
+       below the lower threshold limit."
+    ::= { ibMplsExtNotifications 2 }
+
+ibMplsExtLabTotExceed  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsExtLabelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when all of the labels are
+       occupied by the application."
+    ::= { ibMplsExtNotifications 3 }
+
+ibMplsExtLabTotExceedClear  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsExtLabelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the label usage droppped to
+       a specified value."
+    ::= { ibMplsExtNotifications 4 }
+
+ibMplsExtTnlToVpnEvent  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsExtTnlToVpnInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the iterative tunnel changed."
+    ::= { ibMplsExtNotifications 5 }
+
+ibMplsExtResCountExceed   NOTIFICATION-TYPE
+    OBJECTS {  ibMplsExtDrvInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the number of used MPLS resources
+       reach the maximum limit."
+    ::= { ibMplsExtNotifications 6 }
+
+ibMplsExtResCountExceedClear   NOTIFICATION-TYPE
+    OBJECTS {  ibMplsExtDrvInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the number of used MPLS resources
+       lower than the maximum limit."
+    ::= { ibMplsExtNotifications 7 }
+
+ibMplsExtLabLayerExceed   NOTIFICATION-TYPE
+    OBJECTS {  ibMplsExtDrvInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the layer number of label stack
+       greater than the maximum label depth of the device."
+    ::= { ibMplsExtNotifications 8 }
+
+ibMplsExtLabLayerExceedClear   NOTIFICATION-TYPE
+    OBJECTS {  ibMplsExtDrvInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the lower number of label stack
+       lower than the maximum label depth of the device."
+    ::= { ibMplsExtNotifications 9 }
+
+ibMplsExtEntryResExceed   NOTIFICATION-TYPE
+    OBJECTS {  ibMplsExtDrvInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the MPLS entry resources
+       are exhausted."
+    ::= { ibMplsExtNotifications 10 }
+
+ibMplsExtEntryResExceedClear   NOTIFICATION-TYPE
+    OBJECTS {  ibMplsExtDrvInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the MPLS entry resources
+       are recovered."
+    ::= { ibMplsExtNotifications 11 }
+
+ibMplsExtSRLabelConflict    NOTIFICATION-TYPE
+    OBJECTS {
+      ibMplsExtLabelInfo,
+      ibMplsExtLabelExtInfo
+      }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the label has been assigned by
+      another protocol."
+    ::= { ibMplsExtNotifications 12 }
+
+ibMplsExtSRPrefixConflict    NOTIFICATION-TYPE
+    OBJECTS {
+      ibMplsExtLabelInfo,
+      ibMplsExtLabelExtInfo
+      }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the label has been used by
+      another prefix."
+    ::= { ibMplsExtNotifications 13 }
+
+ibMplsExtHardResRestore     NOTIFICATION-TYPE
+    OBJECTS {  ibMplsExtDrvInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the Hardware resources for MPLS
+      are restored."
+    ::= { ibMplsExtNotifications 14 }
+
+ibMplsExtHardResNotEnough     NOTIFICATION-TYPE
+    OBJECTS {  ibMplsExtDrvInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when No enough hardware resource
+      for MPLS."
+    ::= { ibMplsExtNotifications 15 }
+
+-- =============================================================================
+-- End of notifications.
+-- =============================================================================
+
+END
+

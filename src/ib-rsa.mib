@@ -1,0 +1,319 @@
+-- =========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: RSA MIB
+-- Reference:
+-- Version: V1.1
+-- History:
+--  V1.0 2004-09-17 created by Yang Yang 02227
+--    Initial Version
+--  V1.1 2005-05-31 updated by gaolong
+--    Change module of this MIB
+-- =========================================================================
+IB-RSA-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        ibCommon
+            FROM IB-OID-MIB
+        IpAddress,Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+            FROM SNMPv2-SMI
+        DisplayString, RowStatus, DateAndTime, TEXTUAL-CONVENTION
+            FROM SNMPv2-TC;
+
+
+        ibRSA MODULE-IDENTITY
+            LAST-UPDATED "200410100000Z"
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION
+                "The IB-RSA-MIB contains objects to Manage
+                RSA configuration."
+            REVISION "200410100000Z"
+            DESCRIPTION
+                "The initial revision of RSA module."
+            ::= { ibCommon 23 }
+
+
+        RSAKeyErrorCode ::= TEXTUAL-CONVENTION
+                 STATUS current
+                 DESCRIPTION
+                         "Indicates the reason that SSH peer public key fails to config
+                         or that SSH local key pair fails to create/refresh/destroy."
+                 SYNTAX INTEGER
+                         {
+                        rsaSuccess(1),
+                        rsaFailure(2),
+                        rsaErrNoMemory(3),
+                        rsaErrKeyNotReplaced(4),
+                        rsaErrKeyBackup(5),
+                        rsaErrKeySaved(6),
+                        rsaErrKeyGenerate(7),
+                        rsaErrKeyDestroy(8),
+                        rsaErrHostEncKeyBackup(9),
+                        rsaErrHostEncKeySave(10),
+                        rsaErrHostEncKeyGenerate(11),
+                        rsaErrHostEncKeyDestroy(12),
+                        rsaErrHostSigKeyBackup(13),
+                        rsaErrHostSigKeySave(14),
+                        rsaErrHostSigKeyGenerate(15),
+                        rsaErrHostSigKeyDestroy(16),
+                        rsaErrServerKeyBackup(17),
+                        rsaErrServerKeySave(18),
+                        rsaErrServerKeyGenerate(19),
+                        rsaErrServerKeyDestroy(20),
+                        rsaErrPeerKeyNotReplaced(21),
+                        rsaErrPeerKeyNumArriveMax(22),
+                        rsaErrPeerKeyNotRemoved(23),
+                        rsaErrPeerKeyNotExist(24),
+                        rsaStatusKeyExist(25),
+                        rsaStatusKeyNotExist(26),
+                        rsaStatusKeyInvalid(27),
+                        rsaStatusHostEncKeyExist(28),
+                        rsaStatusHostEncKeyNotExist(29),
+                        rsaStatusHostEncKeyInvalid(30),
+                        rsaStatusHostSigKeyExist(31),
+                        rsaStatusHostSigKeyNotExist(32),
+                        rsaStatusHostSigKeyInvalid(33),
+                        rsaStatusServerKeyExist(34),
+                        rsaStatusServerKeyNotExist(35),
+                        rsaStatusServerKeyInvalid(36)
+                        }
+
+        ibRSAMIBObjects OBJECT IDENTIFIER ::= { ibRSA 1 }
+        ibRSAPeerPublicKeyTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbRSAPeerPublicKeyEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The (conceptual) RSA Peer Public Key Table"
+            ::= { ibRSAMIBObjects 1 }
+
+
+        ibRSAPeerPublicKeyEntry OBJECT-TYPE
+            SYNTAX IbRSAPeerPublicKeyEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the RSA Peer Public Key Table."
+            INDEX { ibRSAPeerPublicKeyName }
+            ::= { ibRSAPeerPublicKeyTable 1 }
+
+
+        IbRSAPeerPublicKeyEntry ::=
+            SEQUENCE {
+                ibRSAPeerPublicKeyName
+                    OCTET STRING,
+                ibRSAPeerIpAddress
+                    IpAddress,
+                ibRSAPeerFQDN
+                    DisplayString,
+                ibRSAPeerPublicKeyCode
+                    OCTET STRING,
+                ibRSAPeerPublicKeyStatus
+                    RowStatus
+             }
+
+        ibRSAPeerPublicKeyName OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE (1..64))
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The RSA peer public key name."
+            ::= { ibRSAPeerPublicKeyEntry 1 }
+
+        ibRSAPeerIpAddress OBJECT-TYPE
+            SYNTAX IpAddress
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Indicates the IP Address of RSA Peer machine."
+            ::= { ibRSAPeerPublicKeyEntry 2 }
+
+        ibRSAPeerFQDN OBJECT-TYPE
+            SYNTAX DisplayString
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The Full Qualified Domain Name of RSA Peer Machine"
+            ::= { ibRSAPeerPublicKeyEntry 3 }
+
+
+        ibRSAPeerPublicKeyCode OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE (1..1024))
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The code of RSA peer public key."
+            ::= { ibRSAPeerPublicKeyEntry 4 }
+
+
+        ibRSAPeerPublicKeyStatus OBJECT-TYPE
+            SYNTAX RowStatus
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The status of this RSA peer public key entry.
+                Support Active Status and CreateAndGo and Destroy Operation "
+            ::= { ibRSAPeerPublicKeyEntry 5 }
+
+        ibRSALocalKeyPairTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbRSALocalKeyPairEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The (conceptual)RSA local Key Pair Table."
+            ::= { ibRSAMIBObjects 2 }
+
+
+        ibRSALocalKeyPairEntry OBJECT-TYPE
+            SYNTAX IbRSALocalKeyPairEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the RSA local Key Pair Table."
+            INDEX { ibRSALocalKeyIndex }
+            ::= { ibRSALocalKeyPairTable 1 }
+
+
+        IbRSALocalKeyPairEntry ::=
+            SEQUENCE {
+                ibRSALocalKeyIndex
+                    INTEGER,
+                ibRSALocalHostKeyName
+                    DisplayString,
+                ibRSALocalHostKeyCode
+                    OCTET STRING,
+                ibRSALocalHostKeyCreatedTime
+                    DateAndTime,
+                ibRSALocalServerKeyName
+                    DisplayString,
+                ibRSALocalServerKeyCode
+                    OCTET STRING,
+                ibRSALocalServerKeyCreatedTime
+                    DateAndTime,
+                ibRSALocalKeyPairBits
+                    Integer32,
+                ibRSALocalKeyStatus
+                    RowStatus
+             }
+
+        ibRSALocalKeyIndex  OBJECT-TYPE
+            SYNTAX INTEGER (1..1)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The ibRSALocalKeyPairTable Table can only exist one entry at most."
+            ::= { ibRSALocalKeyPairEntry 1 }
+
+        ibRSALocalHostKeyName OBJECT-TYPE
+            SYNTAX DisplayString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Indicates RSA Host local public key name.Its value is composed of systemname, a
+                underscore and the string of 'Host'"
+            ::= { ibRSALocalKeyPairEntry 2 }
+
+        ibRSALocalHostKeyCode OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE (512..1024))
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Indicates the code of RSA Host local pkey  that the length is
+                between 512 and 2048 bits."
+            ::= { ibRSALocalKeyPairEntry 3 }
+
+        ibRSALocalHostKeyCreatedTime OBJECT-TYPE
+            SYNTAX DateAndTime
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Indicates the created time of RSA local Host key."
+            ::= { ibRSALocalKeyPairEntry 4 }
+
+        ibRSALocalServerKeyName OBJECT-TYPE
+            SYNTAX DisplayString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Indicates RSA Host local public key name.Its value is composed of systemname, a
+                underscore and the string of 'Server'"
+            ::= { ibRSALocalKeyPairEntry 5 }
+
+        ibRSALocalServerKeyCode OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE (512..1024))
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Indicates the code of RSA Host local pkey  that the length is
+                between 512 and 2048 bits."
+            ::= { ibRSALocalKeyPairEntry 6 }
+
+        ibRSALocalServerKeyCreatedTime OBJECT-TYPE
+            SYNTAX DateAndTime
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Indicates the created time of RSA local Host key."
+            ::= { ibRSALocalKeyPairEntry 7 }
+
+
+        ibRSALocalKeyPairBits OBJECT-TYPE
+            SYNTAX Integer32 (512..2048)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The bits of RSA local key pair, ranging between 512 and 2048.
+                 By default, the value is 512."
+            DEFVAL { 512 }
+            ::= { ibRSALocalKeyPairEntry 8 }
+
+
+        ibRSALocalKeyStatus OBJECT-TYPE
+            SYNTAX RowStatus
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The status column used for creating, deleting instances of
+                the columnar objects in the ibRSALocalKeyPairTable table."
+            ::= { ibRSALocalKeyPairEntry 9 }
+
+
+        ibRSAPeerKeyConfigFailReason OBJECT-TYPE
+            SYNTAX RSAKeyErrorCode
+            MAX-ACCESS accessible-for-notify
+            STATUS current
+            DESCRIPTION
+                "The reason that RSA peer public key fails to config."
+            ::= { ibRSAMIBObjects 3 }
+
+
+        ibRSALocalKeyFailReason OBJECT-TYPE
+            SYNTAX RSAKeyErrorCode
+            MAX-ACCESS accessible-for-notify
+            STATUS current
+            DESCRIPTION
+                "The reason that RSA local key pair fails to create, refresh
+                and destroy."
+            ::= { ibRSAMIBObjects 4 }
+
+        ibRSANotifications OBJECT IDENTIFIER ::= { ibRSA 2 }
+
+        ibRSALocalKeyPairOpeFail NOTIFICATION-TYPE
+            OBJECTS { ibRSALocalKeyFailReason }
+            STATUS current
+            DESCRIPTION
+                "The trap is generated while the RSA local key pair fails to
+                create, refresh and destory."
+            ::= { ibRSANotifications 1 }
+
+        ibRSAPeerKeyConfigFail NOTIFICATION-TYPE
+            OBJECTS { ibRSAPeerKeyConfigFailReason }
+            STATUS current
+            DESCRIPTION
+                "The trap is generated while the RSA peer public key fails to
+                configure."
+            ::= { ibRSANotifications 2 }
+    END

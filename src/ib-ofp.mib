@@ -1,0 +1,327 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:
+-- Reference:
+-- Version: V1.1
+-- History:
+-- V1.0 created by qiyunsheng.
+-- V1.1 2019-4-11 updated by yizhigao
+--      create ibOfpInstanceFlowTableTable.
+--      create ibOfpMibTrap
+-- ============================================================================
+IB-OFP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM  IB-OID-MIB
+    Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, Unsigned32
+        FROM SNMPv2-SMI
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB;
+
+-- ----------------------------------------------------------------------
+-- Node definitions
+-- ----------------------------------------------------------------------
+ibOfp MODULE-IDENTITY
+    LAST-UPDATED "201904111300Z"        -- APRIL 11, 2019 at 13:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB contains information about the OpenFlow module"
+    REVISION "201904111300Z"
+    DESCRIPTION
+        "Add Flow table and trap."
+    REVISION "201702281700Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { ibCommon 167 }
+
+-- ----------------------------------------------------------------------
+-- nodes defined
+-- ----------------------------------------------------------------------
+ibOfpInstanceObjects OBJECT IDENTIFIER ::= { ibOfp 1 }
+
+-- ----------------------------------------------------------------------
+-- Node of ibOfpInstanceControllerTable
+-- ----------------------------------------------------------------------
+ibOfpInstanceControllerTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbOfpInstanceControllerEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Information about OpenFlow controllers."
+    ::= { ibOfpInstanceObjects 1 }
+
+ibOfpInstanceControllerEntry OBJECT-TYPE
+    SYNTAX IbOfpInstanceControllerEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Define the index of ibOfpInstanceControllerTable."
+    INDEX
+        {
+            ibOfpInstanceID,
+            ibOfpInstanceControllerID
+        }
+    ::= { ibOfpInstanceControllerTable 1 }
+
+IbOfpInstanceControllerEntry ::=
+    SEQUENCE
+    {
+        ibOfpInstanceID
+            Integer32,
+        ibOfpInstanceControllerID
+            Integer32,
+        ibOfpInstanceControllerRole
+            INTEGER,
+        ibOfpInstanceCtrConnectType
+            INTEGER,
+        ibOfpInstanceCtrConnectState
+            INTEGER,
+        ibOfpInstanceCtrSSLPolicy
+            OCTET STRING,
+        ibOfpInstanceCtrVRFName
+            OCTET STRING,
+        ibOfpInstanceCtrIPType
+            InetAddressType,
+        ibOfpInstanceCtrIPaddress
+            InetAddress,
+        ibOfpInstanceCtrPort
+            Integer32
+     }
+
+ibOfpInstanceID OBJECT-TYPE
+    SYNTAX Integer32 (1..4094)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Index of an OpenFlow instance"
+    ::= { ibOfpInstanceControllerEntry 1 }
+
+ibOfpInstanceControllerID OBJECT-TYPE
+    SYNTAX Integer32 (0..63)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Index of an OpenFlow controller."
+    ::= { ibOfpInstanceControllerEntry 2 }
+
+ibOfpInstanceControllerRole OBJECT-TYPE
+    SYNTAX INTEGER
+    {
+        equal(1),
+        master(2),
+        slave(3)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The value of the controller's role."
+    ::= { ibOfpInstanceControllerEntry 3 }
+
+ibOfpInstanceCtrConnectType OBJECT-TYPE
+    SYNTAX INTEGER
+    {
+        tcp(1),
+        ssl(2)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The value of the controller's type."
+    ::= { ibOfpInstanceControllerEntry 4 }
+
+ibOfpInstanceCtrConnectState OBJECT-TYPE
+    SYNTAX INTEGER
+    {
+        idle(0),
+        established(1)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The value of the controller's state."
+    ::= { ibOfpInstanceControllerEntry 5 }
+
+ibOfpInstanceCtrSSLPolicy OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(0..31))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "SSL policy name for SSL connection with controller."
+    ::= { ibOfpInstanceControllerEntry 6 }
+
+ibOfpInstanceCtrVRFName OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(0..31))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "VRF name for VPN connection with controller."
+    ::= { ibOfpInstanceControllerEntry 7 }
+
+ibOfpInstanceCtrIPType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The IP addresses type of the Controller's IP Address."
+    ::= { ibOfpInstanceControllerEntry 8 }
+
+ibOfpInstanceCtrIPaddress OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Controller's IP address.
+         The type of this address is determined by the value of
+         ibOfpInstanceCtrIPType.
+        "
+    ::= { ibOfpInstanceControllerEntry 9}
+
+ibOfpInstanceCtrPort OBJECT-TYPE
+    SYNTAX Integer32 (1..65535)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Controller's port,
+         Default value is 6633."
+    ::= { ibOfpInstanceControllerEntry 10 }
+
+-- ----------------------------------------------------------------------
+-- Node of ibOfpInstanceFlowTableTable
+-- ----------------------------------------------------------------------
+ibOfpInstanceFlowTableTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbOfpInstanceFlowTableEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Information about OpenFlow flow tables."
+    ::= { ibOfpInstanceObjects 2 }
+
+ibOfpInstanceFlowTableEntry OBJECT-TYPE
+    SYNTAX IbOfpInstanceFlowTableEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Define the index of ibOfpInstanceFlowTableTable."
+    INDEX
+        {
+            ibOfpFlowTableInstanceID,
+            ibOfpInstanceTableID
+        }
+    ::= { ibOfpInstanceFlowTableTable 1 }
+
+IbOfpInstanceFlowTableEntry ::=
+    SEQUENCE
+    {
+        ibOfpFlowTableInstanceID
+            Integer32,
+        ibOfpInstanceTableID
+            Integer32,
+        ibOfpInstanceFlowEntryNumCtrl
+            Unsigned32,
+        ibOfpInstanceFlowEntryTotalNum
+            Unsigned32,
+        ibOfpInstanceFlowEntryLimit
+            Unsigned32
+     }
+
+ibOfpFlowTableInstanceID OBJECT-TYPE
+    SYNTAX Integer32 (1..4094)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Index of an OpenFlow instance"
+    ::= { ibOfpInstanceFlowTableEntry 1 }
+
+ibOfpInstanceTableID OBJECT-TYPE
+    SYNTAX Integer32 (0..254)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Index of an OpenFlow table."
+    ::= { ibOfpInstanceFlowTableEntry 2 }
+
+ibOfpInstanceFlowEntryNumCtrl OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of flow entries added by controllers in an OpenFlow flow table."
+    ::= { ibOfpInstanceFlowTableEntry 3 }
+
+ibOfpInstanceFlowEntryTotalNum OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Total number of flow entries in an OpenFlow table."
+    ::= { ibOfpInstanceFlowTableEntry 4 }
+
+ibOfpInstanceFlowEntryLimit OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Flow entry count limit in an OpenFlow table."
+    ::= { ibOfpInstanceFlowTableEntry 5 }
+
+-- ----------------------------------------------------------------------
+-- ibOfpMibTrapOid Table
+-- ----------------------------------------------------------------------
+ibOfpMibTrap OBJECT IDENTIFIER ::= { ibOfp 2 }
+
+ibOfpMibTrapOid OBJECT IDENTIFIER ::= { ibOfpMibTrap 1 }
+
+ibOfpTrapDisconnectReason OBJECT-TYPE
+    SYNTAX Integer32 (0..10)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Reason why this instance is disconnected from a controller
+             0: Unknown reason.
+             1: Undo commands executed
+             2: Echo timeout.
+             3: Hello failed.
+             4: Receiving Hello packets timed out.
+             5: Receiving messages failed.
+             6: Epoll error.
+             7: VRF deleted.
+             8: VRF global port down.
+             9: Failed to recycle the buffer.
+             10: AP down."
+    ::= { ibOfpMibTrapOid 1 }
+
+-- ----------------------------------------------------------------------
+-- ibOfpTraps Table
+-- ----------------------------------------------------------------------
+ibOfpTraps      OBJECT IDENTIFIER ::= { ibOfpMibTrap 2 }
+ibOfpTrapsPrefix      OBJECT IDENTIFIER ::= { ibOfpTraps 0 }
+
+ibOfpControllerDisconnect NOTIFICATION-TYPE
+    OBJECTS {
+                ibOfpInstanceID,
+                ibOfpInstanceControllerID,
+                ibOfpTrapDisconnectReason
+             }
+    STATUS current
+    DESCRIPTION
+        "This trap is generated when the instance is disconnected
+         from the controller.  The disconnection reason is
+         ibOfpTrapDisconnectReason."
+    ::= { ibOfpTrapsPrefix 1 }
+
+ibOfpControllerConnect NOTIFICATION-TYPE
+    OBJECTS {
+                ibOfpInstanceID,
+                ibOfpInstanceControllerID
+             }
+    STATUS current
+    DESCRIPTION
+        "This trap is generated when the instance is connected
+         to the controller."
+    ::= { ibOfpTrapsPrefix 2 }
+END

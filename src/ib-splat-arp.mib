@@ -1,0 +1,84 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: MAC management MIB
+-- Reference:
+-- Version: V1.3
+-- History:
+--  V1.0 Created by Zhangshilin, 2001.06.29
+--  V1.1 2002-01-08 modified by qizhenglin
+--  V1.2 2004-09-08 modify STATUS of ibLswProxyArpObject from mandatory to current by gaolong.
+--  V1.3 2004-10-12 updated by gaolong
+--       Import OBJECT-IDENTITY.
+-- ------------------------------------------------------------------
+
+IB-LswARP-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+
+    MODULE-IDENTITY,OBJECT-TYPE, OBJECT-IDENTITY
+        FROM SNMPv2-SMI
+
+    iblswCommon
+        FROM IB-OID-MIB;
+
+
+     ibLswArpMib MODULE-IDENTITY
+            LAST-UPDATED "200106290000Z"
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION
+            ""
+            REVISION "200106290000Z"
+            DESCRIPTION
+            ""
+            ::= { iblswCommon  4 }
+
+    ibLswProxyArpObject OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION
+                "Description."
+            ::= { ibLswArpMib 1 }
+    ibLswProxyArpEnableTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF IbLswProxyArpEnableEntry
+        MAX-ACCESS not-accessible
+        STATUS   current
+        DESCRIPTION "Contains information that if proxy ARP enabled for every VLAN interface. "
+        ::= { ibLswProxyArpObject 1 }
+
+     ibLswProxyArpEnableEntry OBJECT-TYPE
+        SYNTAX  IbLswProxyArpEnableEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+          "Contains information that if proxy ARP enabled for VLAN interface."
+        INDEX   { ibLswIfIndex }
+        ::= { ibLswProxyArpEnableTable 1 }
+
+    IbLswProxyArpEnableEntry ::=
+    SEQUENCE {
+        ibLswIfIndex INTEGER ,
+        ibLswProxyArpStatus  INTEGER
+        }
+
+    ibLswIfIndex OBJECT-TYPE
+        SYNTAX  INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " Vlan interface index "
+        ::= { ibLswProxyArpEnableEntry 1 }
+
+    ibLswProxyArpStatus OBJECT-TYPE
+        SYNTAX INTEGER
+        {
+            disabled(0),
+            enabled(1)
+        }
+        MAX-ACCESS  read-write
+        STATUS current
+        DESCRIPTION " Proxy ARP status for this VLAN interface."
+        ::= { ibLswProxyArpEnableEntry 2    }
+
+
+END

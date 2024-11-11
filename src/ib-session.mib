@@ -1,0 +1,1021 @@
+-- =========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The MIB is designed to set session configuration or get session information.
+-- Reference:
+-- Version: V1.7
+-- History:
+--  V1.0 2013-12-20 created by liqian 04379
+--       Initial version.
+--  V1.1 2014-07-14 modified by songhaibin 03750
+--       Add ibSessionStatTCPCount, ibSessionStatUDPCount,
+--       ibSessionStatOtherCount, ibSessionStatTCPCreateRate,
+--       ibSessionStatUDPCreateRate, ibSessionStatOtherCreateRate.
+--  V1.2 2014-10-14 modified by songhaibin 03750
+--       Add ibSessionEntTCPTotal, ibSessionEntUDPTotal,
+--       ibSessionEntOtherTotal, ibSessionEntTable.
+--       2016-12-25 modified by wangxiaohua 11458
+--       Add ibSessionStatDNSCount, ibSessionStatFTPCount,
+--       ibSessionStatGTPCount, ibSessionStatH323Count,
+--       ibSessionStatHTTPCount, ibSessionStatILSCount,
+--       ibSessionStatMGCPCount, ibSessionStatNBTCount,
+--       ibSessionStatPPTPCount, ibSessionStatRSHCount,
+--       ibSessionStatRTSPCount, ibSessionStatSCCPCount,
+--       ibSessionStatSIPCount, ibSessionStatSMTPCount,
+--       ibSessionStatSQLNETCount, ibSessionStatSSHCount,
+--       ibSessionStatTELNETCount, ibSessionStatTFTPCount,
+--       ibSessionStatXDMCPCount.
+--  V1.3 2018-4-26 modified by zhouliping 01738
+--       Add ibSessionDrvTrap, ibSessionDrvMaxNum.
+--  V1.4 2019-07-25 modified by liuzhengrui 17656
+--       Add ibSessUsageAbruptAlarmTrap ibSessRateAbruptAlarmTrap ibSessTryRateAbruptAlarmTrap.
+--       2019-11-11 modified by zhongtingming 18548
+--       Add ibSessionThdMaxTrap ibSessionThdRecoveryTrap.
+--  V1.5 2022-08-02 modified by liuzhengrui 17656
+--       Add ibSessSpecMaxTrap, ibSessSpecOverTrap, ibSessSpecBelowTrap, ibSessAlgSpecMaxTrap,
+--       ibSessAlgSpecOverTrap,ibSessAlgSpecBelowTrap, ibSessDenySpecMaxTrap,
+--       ibSessDenySpecOverTrap, ibSessDenySpecBelowTrap, ibSessCapabilityMaxTrap,
+--       ibSessCapabilityOverTrap, ibSessCapabilityBelowTrap, ibSessCapabilityRateMaxTrap,
+--       ibSessCapabilityRateOverTrap, ibSessCapabilityRateBelowTrap, ibSessionTrapUser.
+--  V1.6 2022-09-30 modified by liuzhengrui 17656
+--       Add ibSessionAllTables, ibSessionAllStatTable, ibSessionAllStatEntry, ibSessionAllIndex,
+--       ibSessionAllStatCount,ibSessionAllStatCreateRate.
+--  V1.7 2023-06-06 modified by wangjunxiang 27996
+--       Add ibSessionStatSUNRPCCount.
+-- =========================================================================
+IB-SESSION-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, Counter64, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI;
+
+ibSession MODULE-IDENTITY
+    LAST-UPDATED "202306061105Z"   -- June 6, 2023
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB is designed to manage sessions."
+
+    -- Revision History
+    REVISION "202306061105Z"  -- June 6, 2023
+    DESCRIPTION
+        "Add ibSessionStatSUNRPCCount"
+    REVISION "202209301105Z"  -- September 30, 2022
+    DESCRIPTION
+        "Add ibSessionAllTables, ibSessionAllStatTable, ibSessionAllStatEntry,
+    ibSessionAllStatCount, ibSessionAllStatCreateRate"
+    REVISION "202208031105Z"  -- August 3, 2022
+    DESCRIPTION
+        "Add ibSessSpecMaxTrap, ibSessSpecOverTrap, ibSessSpecBelowTrap, ibSessAlgSpecMaxTrap,
+    ibSessAlgSpecOverTrap,ibSessAlgSpecBelowTrap, ibSessDenySpecMaxTrap,
+    ibSessDenySpecOverTrap, ibSessDenySpecBelowTrap, ibSessCapabilityMaxTrap,
+    ibSessCapabilityOverTrap, ibSessCapabilityBelowTrap, ibSessCapabilityRateMaxTrap,
+    ibSessCapabilityRateOverTrap, ibSessCapabilityRateBelowTrap, ibSessionTrapUser"
+    REVISION "201911111427Z"  -- November 11, 2019
+    DESCRIPTION
+        "Add ibSessionThdMaxTrap ibSessionThdRecoveryTrap"
+    REVISION "201907251105Z"  -- July 25, 2019
+    DESCRIPTION
+        "Add ibSessUsageAbruptAlarmTrap, ibSessUsageAbruptAlarmTrap, ibSessTryRateAbruptAlarmTrap."
+    REVISION "201805161105Z"  -- May 16, 2018
+    DESCRIPTION
+        "Add ibSessionDrvTrap, ibSessionDrvMaxNum."
+    REVISION "201612251105Z"  -- December 25, 2016
+    DESCRIPTION
+        "Add the ibSessionStatDNSCount,
+         ibSessionStatFTPCount,
+         ibSessionStatGTPCount,
+         ibSessionStatH323Count,
+         ibSessionStatHTTPCount,
+         ibSessionStatILSCount,
+         ibSessionStatMGCPCount,
+         ibSessionStatNBTCount,
+         ibSessionStatPPTPCount,
+         ibSessionStatRSHCount,
+         ibSessionStatRTSPCount,
+         ibSessionStatSCCPCount,
+         ibSessionStatSIPCount,
+         ibSessionStatSMTPCount,
+         ibSessionStatSQLNETCount,
+         ibSessionStatSSHCount,
+         ibSessionStatTELNETCount,
+         ibSessionStatTFTPCount,
+         ibSessionStatXDMCPCount."
+    REVISION "201410141830Z"
+    DESCRIPTION
+        "Add ibSessionEntTCPTotal, ibSessionEntUDPTotal, ibSessionEntOtherTotal, ibSessionEntTable."
+    REVISION "201407151530Z"
+    DESCRIPTION
+        "The latest version of this MIB module."
+    REVISION     "201312200000Z"  -- December 26, 2013
+    DESCRIPTION  "Initial version."
+
+    ::= { ibCommon 149 }
+
+--
+-- Table definitions
+--
+
+ibSessionTables OBJECT IDENTIFIER ::= { ibSession 1 }
+-- ----------------------------------------------------------------------
+  -- Session statistic table
+-- ----------------------------------------------------------------------
+ibSessionStatTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF IbSessionStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+    "The statistics of sessions."
+::= { ibSessionTables 1 }
+
+ibSessionStatEntry OBJECT-TYPE
+    SYNTAX  IbSessionStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+    "An entry (conceptual row) representing session statistics information."
+    INDEX { ibSessionStatChassis, ibSessionStatSlot, ibSessionStatCPUID }
+::= { ibSessionStatTable 1 }
+
+IbSessionStatEntry ::= SEQUENCE {
+    ibSessionStatChassis          Unsigned32,
+    ibSessionStatSlot             Unsigned32,
+    ibSessionStatCPUID            Unsigned32,
+    ibSessionStatCount            Unsigned32,
+    ibSessionStatCreateRate       Unsigned32,
+    ibSessionStatTCPCount         Unsigned32,
+    ibSessionStatUDPCount         Unsigned32,
+    ibSessionStatOtherCount       Unsigned32,
+    ibSessionStatTCPCreateRate    Unsigned32,
+    ibSessionStatUDPCreateRate    Unsigned32,
+    ibSessionStatOtherCreateRate  Unsigned32,
+    ibSessionStatTCPTotal         Counter64,
+    ibSessionStatUDPTotal         Counter64,
+    ibSessionStatOtherTotal       Counter64,
+    ibSessionStatDNSCount         Unsigned32,
+    ibSessionStatFTPCount         Unsigned32,
+    ibSessionStatGTPCount         Unsigned32,
+    ibSessionStatH323Count        Unsigned32,
+    ibSessionStatHTTPCount        Unsigned32,
+    ibSessionStatILSCount         Unsigned32,
+    ibSessionStatMGCPCount        Unsigned32,
+    ibSessionStatNBTCount         Unsigned32,
+    ibSessionStatPPTPCount        Unsigned32,
+    ibSessionStatRSHCount         Unsigned32,
+    ibSessionStatRTSPCount        Unsigned32,
+    ibSessionStatSCCPCount        Unsigned32,
+    ibSessionStatSIPCount         Unsigned32,
+    ibSessionStatSMTPCount        Unsigned32,
+    ibSessionStatSQLNETCount      Unsigned32,
+    ibSessionStatSSHCount         Unsigned32,
+    ibSessionStatTELNETCount      Unsigned32,
+    ibSessionStatTFTPCount        Unsigned32,
+    ibSessionStatXDMCPCount       Unsigned32,
+    ibSessionStatSUNRPCCount      Unsigned32
+    }
+
+ibSessionStatChassis   OBJECT-TYPE
+    SYNTAX Unsigned32(0..65534)
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+    "An IRF member device ID."
+::= { ibSessionStatEntry  1 }
+
+ibSessionStatSlot    OBJECT-TYPE
+    SYNTAX Unsigned32(0..65534)
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+    "The slot where the card resides."
+::= { ibSessionStatEntry  2 }
+
+ibSessionStatCPUID   OBJECT-TYPE
+    SYNTAX Unsigned32(0..7)
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+    "CPU ID."
+::= { ibSessionStatEntry  3 }
+
+ibSessionStatCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of current sessions."
+::= { ibSessionStatEntry  4 }
+
+ibSessionStatCreateRate     OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of sessions per second."
+::= { ibSessionStatEntry  5 }
+
+ibSessionStatTCPCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of TCP sessions."
+::= { ibSessionStatEntry  6 }
+
+ibSessionStatUDPCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of UDP sessions."
+::= { ibSessionStatEntry  7 }
+
+ibSessionStatOtherCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of other sessions."
+::= { ibSessionStatEntry  8 }
+
+ibSessionStatTCPCreateRate  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of TCP sessions per second."
+::= { ibSessionStatEntry  9 }
+
+ibSessionStatUDPCreateRate  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of UDP sessions per second."
+::= { ibSessionStatEntry  10 }
+
+ibSessionStatOtherCreateRate  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of other sessions per second."
+::= { ibSessionStatEntry  11 }
+
+ibSessionStatTCPTotal  OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The total number of TCP sessions created till now."
+::= { ibSessionStatEntry  12 }
+
+ibSessionStatUDPTotal  OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The total number of UDP sessions created till now."
+::= { ibSessionStatEntry  13 }
+
+ibSessionStatOtherTotal  OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The total number of Other sessions created till now."
+::= { ibSessionStatEntry  14 }
+
+ibSessionStatDNSCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of DNS sessions."
+::= { ibSessionStatEntry  15 }
+
+ibSessionStatFTPCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of FTP sessions."
+::= { ibSessionStatEntry  16 }
+
+ibSessionStatGTPCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of GTP sessions."
+::= { ibSessionStatEntry  17 }
+
+ibSessionStatH323Count  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of H323 sessions."
+::= { ibSessionStatEntry  18 }
+
+ibSessionStatHTTPCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of HTTP sessions."
+::= { ibSessionStatEntry  19 }
+
+ibSessionStatILSCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of ILS sessions."
+::= { ibSessionStatEntry  20 }
+
+ibSessionStatMGCPCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of MGCP sessions."
+::= { ibSessionStatEntry  21 }
+
+ibSessionStatNBTCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of NBT sessions."
+::= { ibSessionStatEntry  22 }
+
+ibSessionStatPPTPCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of PPTP sessions."
+::= { ibSessionStatEntry  23 }
+
+ibSessionStatRSHCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of RSH sessions."
+::= { ibSessionStatEntry  24 }
+
+ibSessionStatRTSPCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of RTSP sessions."
+::= { ibSessionStatEntry  25 }
+
+ibSessionStatSCCPCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of SCCP sessions."
+::= { ibSessionStatEntry  26 }
+
+ibSessionStatSIPCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of SIP sessions."
+::= { ibSessionStatEntry  27 }
+
+ibSessionStatSMTPCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of SMTP sessions."
+::= { ibSessionStatEntry  28 }
+
+ibSessionStatSQLNETCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of SQLNET sessions."
+::= { ibSessionStatEntry  29 }
+
+ibSessionStatSSHCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of SSH sessions."
+::= { ibSessionStatEntry  30 }
+
+ibSessionStatTELNETCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of TELNET sessions."
+::= { ibSessionStatEntry  31 }
+
+ibSessionStatTFTPCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of TFTP sessions."
+::= { ibSessionStatEntry  32 }
+
+ibSessionStatXDMCPCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of XDMCP sessions."
+::= { ibSessionStatEntry  33 }
+
+ibSessionStatSUNRPCCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of SUNRPC sessions."
+::= { ibSessionStatEntry  34 }
+
+-- ----------------------------------------------------------------------
+  -- Session statistic by entity table
+-- ----------------------------------------------------------------------
+ibSessionEntTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF IbSessionEntEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+    "The statistics of sessions by entity."
+::= { ibSessionTables 2 }
+
+ibSessionEntEntry OBJECT-TYPE
+    SYNTAX  IbSessionEntEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+    "An entry (conceptual row) representing session statistics information."
+    INDEX { ibSessionEntIndex }
+::= { ibSessionEntTable 1 }
+
+IbSessionEntEntry ::= SEQUENCE {
+    ibSessionEntIndex            Unsigned32,
+    ibSessionEntCount            Unsigned32,
+    ibSessionEntCreateRate       Unsigned32,
+    ibSessionEntTCPCount         Unsigned32,
+    ibSessionEntUDPCount         Unsigned32,
+    ibSessionEntOtherCount       Unsigned32,
+    ibSessionEntTCPCreateRate    Unsigned32,
+    ibSessionEntUDPCreateRate    Unsigned32,
+    ibSessionEntOtherCreateRate  Unsigned32,
+    ibSessionEntTCPTotal         Counter64,
+    ibSessionEntUDPTotal         Counter64,
+    ibSessionEntOtherTotal       Counter64
+    }
+
+ibSessionEntIndex   OBJECT-TYPE
+    SYNTAX Unsigned32(1..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+    "Device entity index."
+::= { ibSessionEntEntry  1 }
+
+ibSessionEntCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of current sessions."
+::= { ibSessionEntEntry  2 }
+
+ibSessionEntCreateRate     OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of sessions per second."
+::= { ibSessionEntEntry  3 }
+
+ibSessionEntTCPCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of TCP sessions."
+::= { ibSessionEntEntry  4 }
+
+ibSessionEntUDPCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of UDP sessions."
+::= { ibSessionEntEntry  5 }
+
+ibSessionEntOtherCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of other sessions."
+::= { ibSessionEntEntry  6 }
+
+ibSessionEntTCPCreateRate  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of TCP sessions per second."
+::= { ibSessionEntEntry  7 }
+
+ibSessionEntUDPCreateRate  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of UDP sessions per second."
+::= { ibSessionEntEntry  8 }
+
+ibSessionEntOtherCreateRate  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of other sessions per second."
+::= { ibSessionEntEntry  9 }
+
+ibSessionEntTCPTotal  OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The total number of TCP sessions created till now."
+::= { ibSessionEntEntry  10 }
+
+ibSessionEntUDPTotal  OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The total number of UDP sessions created till now."
+::= { ibSessionEntEntry  11 }
+
+ibSessionEntOtherTotal  OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The total number of other sessions created till now."
+::= { ibSessionEntEntry  12 }
+
+-- Describe objects for session hardware resources trap
+ibSessionDrvTraps OBJECT IDENTIFIER ::= { ibSessionTables 3 }
+ibSessionDrvTrapPrefix OBJECT IDENTIFIER ::= { ibSessionDrvTraps 0 }
+ibSessionDrvMaxTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionDrvNum,
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu
+        }
+    STATUS      current
+    DESCRIPTION
+    "Send trap when the number of sessions supported by hardware
+     already reached the ibSessionDrvNum."
+    ::= { ibSessionDrvTrapPrefix 1 }
+ibSessionDrvRecoveryTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu
+        }
+    STATUS      current
+    DESCRIPTION
+    "Send trap when the Session resources supported by hardware had been released."
+    ::= { ibSessionDrvTrapPrefix 2 }
+
+ibSessionThdMaxTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionUsage,
+            ibSessionThreshold,
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu
+        }
+    STATUS      current
+    DESCRIPTION
+    "This notification is generated when the usage of sessions reached the threshold."
+    ::= { ibSessionDrvTrapPrefix 3 }
+ibSessionThdRecoveryTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionUsage,
+            ibSessionThreshold,
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu
+        }
+    STATUS      current
+    DESCRIPTION
+    "This notification is generated when the usage of sessions dropped below the threshold."
+    ::= { ibSessionDrvTrapPrefix 4 }
+
+ibSessionDrvTrapObjects OBJECT IDENTIFIER ::= { ibSessionDrvTraps 1 }
+ibSessionDrvNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+    "The number of sessions supported by hardware."
+    ::= { ibSessionDrvTrapObjects 1 }
+ibSessionChassis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+    "An IRF member device ID."
+    ::= { ibSessionDrvTrapObjects 2}
+ibSessionSlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+    "The slot where the card resides."
+    ::= { ibSessionDrvTrapObjects 3 }
+ibSessionCpu OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+    "CPU ID."
+    ::= { ibSessionDrvTrapObjects 4 }
+ibSessionUsage OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+    "The number of rate."
+    ::= { ibSessionDrvTrapObjects 5 }
+ibSessionThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+    "The number of threshold rate."
+    ::= { ibSessionDrvTrapObjects 6 }
+
+--Describe objects for session abrupt trap
+ibSessionMonitor OBJECT IDENTIFIER ::= { ibSessionTables 4}
+
+ibSessionTrapObjects OBJECT IDENTIFIER ::= { ibSessionMonitor 0 }
+
+ibSessUsageAbruptAlarmTrap NOTIFICATION-TYPE
+    OBJECTS{
+    ibSessionChassis,
+    ibSessionSlot,
+    ibSessionCpu,
+    ibSessionUsageAbruptVar,
+    ibSessionLastStat,
+    ibSessionCurrentStat
+  }
+  STATUS current
+  DESCRIPTION
+    "This notification is generated when a ibSessionUsageAbruptVar
+    alarm is generated."
+::= { ibSessionTrapObjects 1}
+
+ibSessRateAbruptAlarmTrap NOTIFICATION-TYPE
+    OBJECTS{
+    ibSessionChassis,
+    ibSessionSlot,
+    ibSessionCpu,
+    ibSessionRateAbruptVar,
+    ibSessionLastStat,
+    ibSessionCurrentStat
+  }
+  STATUS current
+  DESCRIPTION
+    "This notification is generated when a ibSessionRateAbruptVar
+    alarm is generated."
+::= { ibSessionTrapObjects 2 }
+
+ibSessTryRateAbruptAlarmTrap NOTIFICATION-TYPE
+    OBJECTS{
+    ibSessionChassis,
+    ibSessionSlot,
+    ibSessionCpu,
+    ibSessionTryRateAbruptVar,
+    ibSessionLastStat,
+    ibSessionCurrentStat
+  }
+  STATUS current
+  DESCRIPTION
+    "This notification is generated when a ibSessionTryRateAbruptVar
+    alarm is generated."
+::= { ibSessionTrapObjects 3 }
+
+ibSessSpecMaxTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the session exceeds the board software specification."
+    ::= { ibSessionTrapObjects 4 }
+
+ibSessSpecOverTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the session exceeds the board software specification."
+    ::= { ibSessionTrapObjects 5 }
+
+ibSessSpecBelowTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the session recovers to the lower limit of the board."
+    ::= { ibSessionTrapObjects 6 }
+
+ibSessAlgSpecMaxTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the alg reached the threshold."
+    ::= { ibSessionTrapObjects 7 }
+
+ibSessAlgSpecOverTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the alg reached the threshold."
+    ::= { ibSessionTrapObjects 8 }
+
+ibSessAlgSpecBelowTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the alg recovers to the lower limit of the board."
+    ::= { ibSessionTrapObjects 9 }
+
+ibSessDenySpecMaxTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the deny session reached the threshold."
+    ::= { ibSessionTrapObjects 10 }
+
+ibSessDenySpecOverTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the deny session reached the threshold."
+    ::= { ibSessionTrapObjects 11 }
+
+ibSessDenySpecBelowTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the deny session recovers to the lower limit of the board."
+    ::= { ibSessionTrapObjects 12 }
+
+ibSessCapabilityMaxTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu,
+            ibSessionTrapUser
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the maximum number of concurrent session has been reached."
+    ::= { ibSessionTrapObjects 13 }
+
+ibSessCapabilityOverTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu,
+            ibSessionTrapUser
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the maximum number of concurrent session has been reached."
+    ::= { ibSessionTrapObjects 14 }
+
+ibSessCapabilityBelowTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu,
+            ibSessionTrapUser
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the number of concurrent sessions is restored to the lower limit."
+    ::= { ibSessionTrapObjects 15 }
+
+ibSessCapabilityRateMaxTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu,
+            ibSessionTrapUser
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the session creation rate reaches the upper limit."
+    ::= { ibSessionTrapObjects 16 }
+
+ibSessCapabilityRateOverTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu,
+            ibSessionTrapUser
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the session creation rate reaches the upper limit."
+    ::= { ibSessionTrapObjects 17 }
+
+ibSessCapabilityRateBelowTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSessionChassis,
+            ibSessionSlot,
+            ibSessionCpu,
+            ibSessionTrapUser
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the session creation rate returns to the lower limit."
+    ::= { ibSessionTrapObjects 18 }
+
+
+ibSessionAbruptAlarm OBJECT IDENTIFIER ::= { ibSessionMonitor 1 }
+
+ibSessionUsageAbruptVar OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The value is percentage change about session concurrency during a statistical period(10s)."
+    ::= { ibSessionAbruptAlarm 1}
+
+ibSessionRateAbruptVar OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The value is percentage change about session creation rate during a statistical period(10s)."
+    ::= { ibSessionAbruptAlarm 2 }
+
+ibSessionTryRateAbruptVar OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The value is percentage change about session attempt rate during a statistical period(10s)."
+    ::= { ibSessionAbruptAlarm 3 }
+
+ibSessionLastStat OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The value of last session statistics(Usage:piece  Rate/TryRate:piece/s)."
+    ::= { ibSessionAbruptAlarm 4}
+
+ibSessionCurrentStat OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The value of current session statistics(Usage:piece  Rate/TryRate:piece/s)."
+    ::= { ibSessionAbruptAlarm 5}
+
+ibSessionTrapUser OBJECT-TYPE
+    SYNTAX OCTET STRING(SIZE(0..256))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The value is the users to which the current notification belongs."
+    ::= { ibSessionAbruptAlarm 6}
+
+ibSessionAllTables OBJECT IDENTIFIER ::= { ibSession 2 }
+-- ----------------------------------------------------------------------
+  -- Session statistic table all slot
+-- ----------------------------------------------------------------------
+ibSessionAllStatTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF IbSessionAllStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+    "The statistics of all sessions."
+    ::= { ibSessionAllTables 1 }
+
+ibSessionAllStatEntry OBJECT-TYPE
+    SYNTAX  IbSessionAllStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+    "An entry (conceptual row) representing session all statistics information."
+  INDEX { ibSessionAllIndex }
+    ::= { ibSessionAllStatTable 1 }
+
+IbSessionAllStatEntry ::= SEQUENCE {
+  ibSessionAllIndex                Unsigned32,
+    ibSessionAllStatCount            Unsigned32,
+    ibSessionAllStatCreateRate       Unsigned32
+    }
+
+ibSessionAllIndex   OBJECT-TYPE
+    SYNTAX Unsigned32(0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+    "Device entity index."
+    ::= { ibSessionAllStatEntry  1 }
+
+ibSessionAllStatCount  OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of current all sessions."
+    ::= { ibSessionAllStatEntry  2 }
+
+ibSessionAllStatCreateRate     OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+    "The number of all sessions per second."
+    ::= { ibSessionAllStatEntry  3 }
+
+END

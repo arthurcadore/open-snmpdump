@@ -1,0 +1,94 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The purpose of this MIB file is to provide the definition of
+--              the IPv6 netstream trap.
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2022-11-16
+--   Initial version, created by wangyuqing
+-- ============================================================================
+IB-NETSTREAM6-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI;
+
+-- Node definitions
+ibNetstream6 MODULE-IDENTITY
+    LAST-UPDATED "202211231800Z"        -- Nov 23, 2022 at 18:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB file is to provide the definition of the IPv6 netstream."
+    REVISION "202211231800Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 257}
+
+-- ibNetstream6TrapEntry
+ibNetstream6TrapEntry OBJECT IDENTIFIER ::= { ibNetstream6 1 }
+
+ibNetstream6TrapEntrys OBJECT IDENTIFIER  ::= { ibNetstream6TrapEntry 0 }
+
+ibNetstream6TrapEntryTHAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibNetstream6TrapEntrySpec,
+            ibNetstream6TrapEntryChassis,
+            ibNetstream6TrapEntrySlot
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the number of netstream6 tables exceeds the maximum value of the board by 80%,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibNetstream6TrapEntrys 1 }
+
+ibNetstream6TrapEntryTHResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibNetstream6TrapEntrySpec,
+            ibNetstream6TrapEntryChassis,
+            ibNetstream6TrapEntrySlot
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the number of Netstream6 tables drops below 70% of the board maximum,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibNetstream6TrapEntrys 2 }
+
+ibNetstream6TrapEntryObjects OBJECT IDENTIFIER  ::= { ibNetstream6TrapEntry 1 }
+
+-- ibNetstream6TrapEntryObjects
+
+ibNetstream6TrapEntrySpec OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The Maximum number of entries in the IPv6 netStream cache."
+    ::= { ibNetstream6TrapEntryObjects 1 }
+
+ibNetstream6TrapEntryChassis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of chassis ID. If the value is 65535, the device is
+        not a stacked device ."
+    ::= { ibNetstream6TrapEntryObjects 2 }
+
+ibNetstream6TrapEntrySlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of slot."
+    ::= { ibNetstream6TrapEntryObjects 3 }
+
+END

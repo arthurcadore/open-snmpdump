@@ -1,0 +1,1506 @@
+--===========================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- Description: This MIB is excerpted from the draft-ietf-hubmib-efm-epon-mib-02 directly
+---             only changed the object name,added the ib as prefix.
+-- Reference:  
+-- Version: V1.0
+-- History:
+-- V1.0 created by liyue.  
+--     Define MODULE-IDENTITY for ibEponDeviceMIB
+--=================================================================
+IB-EPON-DEVICE-MIB DEFINITIONS ::= BEGIN
+
+   IMPORTS
+       ibEpon            
+           FROM IB-OID-MIB  
+       MODULE-IDENTITY, mib-2, OBJECT-TYPE, Counter32,
+       Unsigned32, Integer32, zeroDotZero
+           FROM SNMPv2-SMI
+       TruthValue, DateAndTime, RowStatus, MacAddress
+           FROM SNMPv2-TC
+       ifIndex
+           FROM IF-MIB
+       MODULE-COMPLIANCE, OBJECT-GROUP
+           FROM SNMPv2-CONF
+       SnmpAdminString
+           FROM SNMP-FRAMEWORK-MIB;
+
+   ibEponDeviceMIB MODULE-IDENTITY
+       LAST-UPDATED "200409210000Z"  -- September 21, 2004
+       ORGANIZATION
+           "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+       CONTACT-INFO
+           ""
+       DESCRIPTION
+               "The objects in this MIB module are used to manage
+                Ethernet Passive Optical Network (EPON) devices which
+                are based on the Ethernet in the First Mile (EFM) PON
+                as defined in IEEE Draft P802.3ah/D3.0 clause 60,64,65.
+                                                                        
+                This MIB is excerpted from the draft files directly,only 
+                changed the object name,added the ib as prefix.  
+                                                                      
+                The following reference is used throughout this MIB
+                module:
+                [802.3ah] refers to:
+                IEEE Draft P802.3ah/D3.3: 'Draft amendment to -
+                Information technology - Telecommunications and
+                information exchange between systems - Local and
+                metropolitan area networks - Specific requirements -
+                Part 3: Carrier sense multiple access with collision
+                detection (CSMA/CD) access method and physical layer
+                specifications - Media Access Control Parameters,
+                Physical Layers and Management Parameters for subscriber
+                access networks', 22 April 2004.
+                Of particular interest are Clause 64(MPCP) 65(P2mP RS)
+                and 60 (PON PMDs). Clause 30, 'Management', and Clause
+                45,'Management Data Input/Output (MDIO) Interface'.
+
+                Copyright (C) The Internet Society (2004).  This version
+                of this MIB module is part of XXXX see the RFC itself
+                for full legal notices."
+
+             -- Editor's Note: Replace XXXX with the actual RFC number
+             -- assigned by RFC Editor and remove this note
+
+             REVISION    "200409210000Z"  -- September 21, 2004
+             DESCRIPTION "Initial version, published as RFC XXXX."
+
+       ::= { ibEpon 4 }      
+
+             -- Editor's Note: Replace XXX with a real OID once it is
+             -- assigned by IANA and remove this note.
+
+   ibEponDeviceObjectMIB OBJECT IDENTIFIER ::= { ibEponDeviceMIB 1 }
+
+   ibEponDeviceObjects OBJECT IDENTIFIER ::= { ibEponDeviceObjectMIB  1 }
+
+   ibEponDeviceConformance OBJECT IDENTIFIER ::= { ibEponDeviceObjectMIB  2 }
+
+   ibEponDeviceControlObjects OBJECT IDENTIFIER ::= { ibEponDeviceObjects 1 }
+
+   ibEponDeviceStatObjects OBJECT IDENTIFIER ::= { ibEponDeviceObjects 2 }
+
+   ibEponDeviceEventObjects OBJECT IDENTIFIER ::= { ibEponDeviceObjects 3 }
+
+
+   ibEponDeviceControlTable OBJECT-TYPE
+       SYNTAX  SEQUENCE OF IbEponDeviceControlEntry
+       MAX-ACCESS  not-accessible
+       STATUS  current
+       DESCRIPTION
+               "Table for EPON device MIB modules."
+       ::= { ibEponDeviceControlObjects 1 }
+
+   ibEponDeviceControlEntry OBJECT-TYPE
+       SYNTAX  IbEponDeviceControlEntry
+       MAX-ACCESS  not-accessible
+       STATUS  current
+       DESCRIPTION
+               "An entry in the EPON device Control table."
+       INDEX  { ifIndex }
+       ::= { ibEponDeviceControlTable 1 }
+
+   IbEponDeviceControlEntry ::=
+       SEQUENCE {
+        ibEponDeviceObjectReset                       INTEGER,
+        ibEponDeviceObjectModes                       INTEGER,
+        ibEponDeviceObjectFecEnabled                  INTEGER,
+        ibEponDeviceObjectOamMode                     INTEGER,
+        ibEponDeviceObjectDeviceReadyMode             INTEGER,
+        ibEponDeviceObjectPowerDown                   TruthValue,
+        ibEponDeviceObjectNumberOfLLIDs               Integer32,
+        ibEponDeviceObjectReportThreshold             Integer32,
+        ibEponDeviceRemoteMACAddressLLIDControl       INTEGER
+       }
+
+
+   ibEponDeviceObjectReset OBJECT-TYPE
+       SYNTAX  INTEGER {
+               running(1),
+               reset(2)
+       }
+       MAX-ACCESS  read-write
+       STATUS  current
+       DESCRIPTION
+               "This variable is used to reset the EPON device. The
+                interface may be unavailable while the reset occurs and
+                data may be lost. During reading operation it returns
+                the state of the EPON device. running(1) indicates and
+                operates normal operation, reset(2) indicates and
+                operates reset mode. Writing can be done all the time."
+       DEFVAL { 1 }
+       ::= { ibEponDeviceControlEntry 1 }
+
+   ibEponDeviceObjectModes OBJECT-TYPE
+       SYNTAX  INTEGER {
+               olt(1),
+               onu(2)
+       }
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "This variable defines the mode of the EPON device. When
+                an olt(1) it is an Optical Line Terminal device (server)
+                and when an onu(2) and Optical Network Unit device
+                (client)"
+       ::= { ibEponDeviceControlEntry 2 }
+
+   ibEponDeviceObjectFecEnabled OBJECT-TYPE
+       SYNTAX  INTEGER {
+               noFecEnabled (1),
+               fecTxEnabled (2),
+               fecRxEnabled (3),
+               fecTxRxEnabled (4)
+       }
+       MAX-ACCESS  read-write
+       STATUS  current
+       DESCRIPTION
+             "This variable defines and provides information whether the
+              EPON device uses FEC as defined in the [802.3ah] clause
+              65.2 for EPON. When noFECEnabled(1) the device does not
+              support FEC mode When fecTxEnabled(2) the device supports
+              the FEC transmission mode. When fecRxEnabled(3) the device
+              supports the FEC Receive mode. When fecTxRxEnabled(4) the
+              device supports the FEC transmission and receive mode.
+              Writing can be done all the time.
+              This attribute is relevant for an OLT and an ONU."
+       DEFVAL { 1 }
+       ::= { ibEponDeviceControlEntry 4 }
+
+   ibEponDeviceObjectOamMode OBJECT-TYPE
+       SYNTAX  INTEGER {
+               noOam (1),
+               oamServer (2),
+               oamclient (3)
+       }
+       MAX-ACCESS  read-write
+       STATUS  current
+       DESCRIPTION
+               "This variable defines and provides information on the
+                Operation Administration and Maintenance (OAM) mode of
+                an EPON device as defined by the [802.3ah] clause 57.
+                When noOam(1) the device does not supports the OAM mode.
+                When oamServer(2) the device supports the OAM mode as a
+                server unit. When oamClient(3) the device supports the
+                OAM mode as a client unit.
+                Writing can be done during initialization,
+                ibEponDeviceObjectDeviceReadyMode is in notReady(1) or
+                inProcess(2).
+                This attribute is relevant for an OLT and an ONU."
+       DEFVAL { 1 }
+       ::= { ibEponDeviceControlEntry 5 }
+
+
+   ibEponDeviceObjectDeviceReadyMode     OBJECT-TYPE
+       SYNTAX  INTEGER {
+               notReady (1),
+               inProcess (2),
+               ready (3)
+       }
+       MAX-ACCESS  read-write
+       STATUS  current
+       DESCRIPTION
+               "This variable defines the mode of an EPON device and
+                provides information on the mode in initialization -
+                ready for registration as defined by the [802.3ah]
+                clause 64.
+                When notReady(1) the device is not ready for operation.
+                When inProcess(2) the device is in initialization
+                process.
+                When ready(3) the device is ready for registration.
+                Writing can be done all the time.
+                This attribute is relevant for an OLT and an ONU."
+       DEFVAL { 1 }
+       ::= { ibEponDeviceControlEntry 6 }
+
+   ibEponDeviceObjectPowerDown OBJECT-TYPE
+       SYNTAX  TruthValue
+       MAX-ACCESS  read-write
+       STATUS  current
+       DESCRIPTION
+               "Setting this variable to True(1) will cause Device to be
+                entered into Power down mode where no registration is
+                allowed and only receiving data from the link.
+                Writing can be done all the time.
+                This attribute is relevant for an OLT and an ONU."
+       DEFVAL { false }
+       ::= { ibEponDeviceControlEntry 7 }
+
+
+   ibEponDeviceObjectNumberOfLLIDs OBJECT-TYPE
+       SYNTAX  Integer32
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A read only variable which defines the number of
+                registered LLIDs (as defined by the [802.3ah] clause 65)
+                in a EPON network for an OLT and an ONU. Initialization
+                value is 0.
+                This attribute is relevant for an OLT and an ONU."
+       ::= { ibEponDeviceControlEntry 8 }
+
+   ibEponDeviceObjectReportThreshold OBJECT-TYPE
+       SYNTAX  Integer32
+       UNITS       "TQ (16nsec)"
+       MAX-ACCESS  read-write
+       STATUS  current
+       DESCRIPTION
+               "A set of 8 integers, for each LLID, that defines the
+                threshold reporting for each Queue in the REPORT
+                message, as defined in [802.3ah] 64. First Queue set
+                reporting will provide information on the queue
+                occupancy of frames below this Threshold. The value
+                returned shall be in Time quanta (TQ) which is 16nsec or
+                2 octets increments.
+                Writing can be done all the time.
+                This attribute is relevant for an OLT and an ONU."
+       DEFVAL { 0 }
+       ::= { ibEponDeviceControlEntry 9 }
+
+   ibEponDeviceRemoteMACAddressLLIDControl OBJECT-TYPE
+       SYNTAX INTEGER {
+               none(1),
+               resetLog(2),
+               useDefaultReporting(3)
+       }
+       MAX-ACCESS  read-write
+       STATUS      current
+       DESCRIPTION
+               "Indicates and controls the resetting of the LLID MAC
+                address log. Setting this object to none(1) has no
+                action resetLog(2) empties the LLID MAC address log. All
+                data is deleted. Setting it to useDefaultReporting(3)
+                returns all entries priorities to their factory-default
+                reporting. Reading this object always returns
+                useDefaultReporting(3)."
+       DEFVAL { 3 }
+       ::= { ibEponDeviceControlEntry 10 }
+
+   ibEponDeviceRemoteMACAddressLLIDTable OBJECT-TYPE
+       SYNTAX      SEQUENCE OF IbEponDeviceRemoteMACAddressLLIDEntry
+       MAX-ACCESS  not-accessible
+       STATUS      current
+       DESCRIPTION
+               "A table of read-only value that identifies the
+                source_address and LLIDs parameter of the remote devices
+                in the network. This MacAddress value, as defined in
+                [802.3ah], 30.3.5.1.5, is updated on reception of a
+                valid frame with a unicast destination Field or
+                (1) a destination Field equal to the reserved multicast
+                address for MAC Control specified in [802.3ah] Annex
+                31A, (2) lengthOrType field value equal to the reserved
+                Type for MAC Control as specified in [802.3ah] Annex
+                31A. (3)an MPCP subtype value equal to the subtype
+                reserved for MPCP as specified in [802.3ah] Annex 31A,
+                and an LLID as allocated by the OLT. The table is
+                defined as Remote MAC address - LLID (RMadL)
+                The table is relevant only for an OLT device, and is
+                equivalent from a bridge emulation to the bridge
+                port-MAC address table where the LLIDs are equivalent to
+                virtual bridge ports."
+       ::= { ibEponDeviceControlObjects 2 }
+
+
+   ibEponDeviceRemoteMACAddressLLIDEntry OBJECT-TYPE
+       SYNTAX      IbEponDeviceRemoteMACAddressLLIDEntry
+       MAX-ACCESS  not-accessible
+       STATUS      current
+       DESCRIPTION
+               "A group of entries.  Applications create and delete
+                entries using ibEponDeviceRMadlEntryStatus.
+                When adding objects to an LLID they are added in the
+                persistent order of their index in this table."
+       INDEX       {ifIndex }
+       ::= { ibEponDeviceRemoteMACAddressLLIDTable 1 }
+
+       IbEponDeviceRemoteMACAddressLLIDEntry ::=
+       SEQUENCE {
+               ibEponDeviceRemoteMACAddressLLIDName    SnmpAdminString,
+               ibEponDeviceRMadlLLID                   Unsigned32,
+               ibEponDeviceRMadlLogID                  OBJECT IDENTIFIER,
+               ibEponDeviceRMadlRemoteAddress          MacAddress,
+               ibEponDeviceRMadlType                   INTEGER,
+               ibEponDeviceRMadlAction                 INTEGER,
+               ibEponDeviceRMadlEntryStatus            RowStatus
+       }
+
+   ibEponDeviceRemoteMACAddressLLIDName OBJECT-TYPE
+       SYNTAX      SnmpAdminString (SIZE (1..32))
+       MAX-ACCESS  read-create
+       STATUS      current
+       DESCRIPTION
+               "A locally-unique, administratively assigned name for a
+                group of entries."
+       ::= { ibEponDeviceRemoteMACAddressLLIDEntry 1 }
+
+   ibEponDeviceRMadlLLID OBJECT-TYPE
+       SYNTAX      Unsigned32 (1..4294967295)
+       MAX-ACCESS  read-create
+       STATUS      current
+       DESCRIPTION
+               "An arbitrary integer for the purpose of identifying the
+                LLID. Writing can be done all the time."
+       DEFVAL { 1 }
+       ::= { ibEponDeviceRemoteMACAddressLLIDEntry 2 }
+
+
+   ibEponDeviceRMadlLogID OBJECT-TYPE
+       SYNTAX      OBJECT IDENTIFIER
+       MAX-ACCESS  read-create
+       STATUS      current
+       DESCRIPTION
+               "The object identifier of a MIB module object to add to
+                an entry, indicating the entry ID in the table. Writing
+                can be done all the time."
+       DEFVAL { zeroDotZero }
+       ::= { ibEponDeviceRemoteMACAddressLLIDEntry 3 }
+
+   ibEponDeviceRMadlRemoteAddress OBJECT-TYPE
+       SYNTAX     MacAddress
+       MAX-ACCESS  read-create
+       STATUS      current
+       DESCRIPTION
+               "The remote MAC address of the LLID.
+                Writing can be done all the time."
+       ::= { ibEponDeviceRemoteMACAddressLLIDEntry 4 }
+
+
+   ibEponDeviceRMadlType OBJECT-TYPE
+       SYNTAX  INTEGER {
+               notRegister (1),
+               registered (2)
+       }
+       MAX-ACCESS  read-create
+       STATUS  current
+       DESCRIPTION
+               "A list of types for entries - LLIDs. Indicates and
+                defines the state of registration. notRegister(1) marks
+                a non registered LID, registered(2) marks a registered
+                LLID.  Writing can be done all the time."
+       DEFVAL { 1 }
+       ::= { ibEponDeviceRemoteMACAddressLLIDEntry 5 }
+
+   ibEponDeviceRMadlAction OBJECT-TYPE
+       SYNTAX  INTEGER {
+               none (1),
+               register (2),
+               deregister (3),
+               reregister (4)
+       }
+       MAX-ACCESS  read-create
+       STATUS  current
+       DESCRIPTION
+               "A list of actions for an entry - LLID.  Indicates and
+                defines the state of registration for the remote device.
+                none(1) marks no action, register(2) marks to register
+                an LLID, deregister(3) marks to deregister an LLID,
+                reregister(4) marks reregistered LLID.
+                Writing can be done all the time."
+       DEFVAL { 1 }
+       ::= { ibEponDeviceRemoteMACAddressLLIDEntry 6 }
+
+
+   ibEponDeviceRMadlEntryStatus OBJECT-TYPE
+       SYNTAX      RowStatus
+       MAX-ACCESS  read-create
+       STATUS      current
+       DESCRIPTION
+               "The control that allows creation and deletion of
+                entries. Once made active an entry MAY not be modified
+                except to delete it."
+      ::= { ibEponDeviceRemoteMACAddressLLIDEntry 7 }
+
+
+   --Statistics tables
+
+
+   ibEponDeviceStatTable OBJECT-TYPE
+       SYNTAX     SEQUENCE OF IbEponDeviceStatEntry
+       MAX-ACCESS not-accessible
+       STATUS     current
+       DESCRIPTION
+               "This table defines the list of statistics counters of
+                EPON devices. The attributes are relevant for an OLT and
+                an ONU."
+       ::= { ibEponDeviceStatObjects 1 }
+
+   ibEponDeviceStatEntry OBJECT-TYPE
+       SYNTAX     IbEponDeviceStatEntry
+       MAX-ACCESS not-accessible
+       STATUS     current
+       DESCRIPTION
+               "Table entries for Table of statistics counters of EPON
+                devices."
+       INDEX       { ifIndex }
+       ::= { ibEponDeviceStatTable 1 }
+
+   IbEponDeviceStatEntry ::=
+       SEQUENCE {
+               ibEponDeviceStatTxFramesQueue0            Counter32,
+               ibEponDeviceStatTxFramesQueue1            Counter32,
+               ibEponDeviceStatTxFramesQueue2            Counter32,
+               ibEponDeviceStatTxFramesQueue3            Counter32,
+               ibEponDeviceStatTxFramesQueue4            Counter32,
+               ibEponDeviceStatTxFramesQueue5            Counter32,
+               ibEponDeviceStatTxFramesQueue6            Counter32,
+               ibEponDeviceStatTxFramesQueue7            Counter32,
+               ibEponDeviceStatRxFramesQueue0            Counter32,
+               ibEponDeviceStatRxFramesQueue1            Counter32,
+               ibEponDeviceStatRxFramesQueue2            Counter32,
+               ibEponDeviceStatRxFramesQueue3            Counter32,
+               ibEponDeviceStatRxFramesQueue4            Counter32,
+               ibEponDeviceStatRxFramesQueue5            Counter32,
+               ibEponDeviceStatRxFramesQueue6            Counter32,
+               ibEponDeviceStatRxFramesQueue7            Counter32,
+               ibEponDeviceStatDroppedFramesQueue0       Counter32,
+               ibEponDeviceStatDroppedFramesQueue1       Counter32,
+               ibEponDeviceStatDroppedFramesQueue2       Counter32,
+               ibEponDeviceStatDroppedFramesQueue3       Counter32,
+               ibEponDeviceStatDroppedFramesQueue4       Counter32,
+               ibEponDeviceStatDroppedFramesQueue5       Counter32,
+               ibEponDeviceStatDroppedFramesQueue6       Counter32,
+               ibEponDeviceStatDroppedFramesQueue7       Counter32
+       }
+
+
+     ibEponDeviceStatTxFramesQueue0 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-0- frames
+                transmission occurs. Increment the counter by one for
+                each frame transmitted which is an output of -Queue-0-.
+                The -Queue-0- marking matched the REPORT MPCP message
+                Queue-0 field, as defined in [802.3ah] clause 64. This
+                counter is mandatory for an ONU."
+       ::= { ibEponDeviceStatEntry 1 }
+
+   ibEponDeviceStatTxFramesQueue1 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-1- frames
+                transmission occurs. Increment the counter by one for
+                each frame transmitted which is an output of -Queue-1-.
+                The -Queue-1- marking matched the REPORT MPCP message
+                Queue-1 field, as defined in [802.3ah] clause 64. This
+                counter is mandatory for an ONU."
+       ::= { ibEponDeviceStatEntry 2 }
+
+   ibEponDeviceStatTxFramesQueue2 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-2- frames
+                transmission occurs. Increment the counter by one for
+                each frame transmitted which is an output of -Queue-2-.
+                The -Queue-2- marking matched the REPORT MPCP message
+                Queue-2 field, as defined in [802.3ah] clause 64. This
+                counter is mandatory for an ONU."
+       ::= { ibEponDeviceStatEntry 3 }
+
+   ibEponDeviceStatTxFramesQueue3 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-3- frames
+                transmission occurs. Increment the counter by one for
+                each frame transmitted which is an output of -Queue-3-.
+                The -Queue-3- marking matched the REPORT MPCP message
+                Queue-3 field, as defined in [802.3ah] clause 64.
+                This counter is mandatory for an ONU."
+       ::= { ibEponDeviceStatEntry 4 }
+
+   ibEponDeviceStatTxFramesQueue4 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-4- frames
+                transmission occurs. Increment the counter by one for
+                each frame transmitted which is an output of -Queue-4-.
+                The -Queue-4- marking matched the REPORT MPCP message
+                Queue-4 field, as defined in [802.3ah] clause 64.
+                This counter is mandatory for an ONU."
+       ::= { ibEponDeviceStatEntry 5 }
+
+   ibEponDeviceStatTxFramesQueue5 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-5- frames
+                transmission occurs. Increment the counter by one for
+                each frame transmitted which is an output of -Queue-5-.
+                The -Queue-5- marking matched the REPORT MPCP message
+                Queue-5 field, as defined in [802.3ah] clause 64.
+                This counter is mandatory for an ONU."
+       ::= { ibEponDeviceStatEntry 6 }
+
+   ibEponDeviceStatTxFramesQueue6 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-6- frames
+                transmission occurs. Increment the counter by one for
+                each frame transmitted which is an output of -Queue-6-.
+                The -Queue-6- marking matched the REPORT MPCP message
+                Queue-6 field, as defined in [802.3ah] clause 64.
+                This counter is mandatory for an ONU."
+       ::= { ibEponDeviceStatEntry 7 }
+
+   ibEponDeviceStatTxFramesQueue7 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+          STATUS  current
+          DESCRIPTION
+               "A count of the number of times a -Queue-7- frames
+                transmission occurs. Increment the counter by one for
+                each frame transmitted which is an output of -Queue-7-.
+                The -Queue-7- marking matched the REPORT MPCP message
+                Queue-7 field, as defined in [802.3ah] clause 64.
+                This counter is mandatory for an ONU."
+       ::= { ibEponDeviceStatEntry 8 }
+
+   ibEponDeviceStatRxFramesQueue0 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-0- frames
+                reception occurs. A single counter at the ONU and a set
+                of counters, one for each LLID, at the OLT. Increment
+                the counter by one for each frame received for each
+                LLID, which is an output of -Queue-0-. The -Queue-0-
+                marking matched the REPORT MPCP message Queue-0 field,
+                as defined in [802.3ah] clause 64.
+                This counter is mandatory for an ONU and an OLT."
+       ::= { ibEponDeviceStatEntry 9 }
+
+   ibEponDeviceStatRxFramesQueue1 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-1- frames
+                reception occurs. A single counter at the ONU and a set
+                of counters, one for each LLID, at the OLT. Increment
+                the counter by one for each frame received for each
+                LLID, which is an output of -Queue-1-. The -Queue-1-
+                marking matched the REPORT MPCP message Queue-1 field,
+                as defined in [802.3ah] clause 64.
+                This counter is mandatory for an ONU and an OLT."
+       ::= { ibEponDeviceStatEntry 10 }
+
+
+   ibEponDeviceStatRxFramesQueue2 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-2- frames
+                reception occurs. A single counter at the ONU and a set
+                of counters, one for each LLID, at the OLT. Increment
+                the counter by one for each frame received for each
+                LLID, which is an output of -Queue-2-. The -Queue-2-
+                marking matched the REPORT MPCP message Queue-2 field,
+                as defined in [802.3ah] clause 64.
+                This counter is mandatory for an ONU and an OLT."
+       ::= { ibEponDeviceStatEntry 11 }
+
+   ibEponDeviceStatRxFramesQueue3 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-3- frames
+                reception occurs. A single counter at the ONU and a set
+                of counters, one for each LLID, at the OLT. Increment
+                the counter by one for each frame received for each
+                LLID, which is an output of -Queue-3-. The -Queue-3-
+                marking matched the REPORT MPCP message Queue-3 field,
+                as defined in [802.3ah] clause 64.
+                This counter is mandatory for an ONU and an OLT."
+       ::= { ibEponDeviceStatEntry 12 }
+
+   ibEponDeviceStatRxFramesQueue4 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-4- frames
+                reception occurs. A single counter at the ONU and a set
+                of counters, one for each LLID, at the OLT. Increment
+                the counter by one for each frame received for each
+                LLID, which is an output of -Queue-4-. The -Queue-4-
+                marking matched the REPORT MPCP message Queue-4 field,
+                as defined in [802.3ah] clause 64.
+                This counter is mandatory for an ONU and an OLT."
+       ::= { ibEponDeviceStatEntry 13 }
+
+
+   ibEponDeviceStatRxFramesQueue5 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-5- frames
+                reception occurs. A single counter at the ONU and a set
+                of counters, one for each LLID, at the OLT. Increment
+                the counter by one for each frame received for each
+                LLID, which is an output of -Queue-5-. The -Queue-5-
+                marking matched the REPORT MPCP message Queue-5 field,
+                as defined in [802.3ah] clause 64.
+                This counter is mandatory for an ONU and an OLT."
+       ::= { ibEponDeviceStatEntry 14 }
+
+   ibEponDeviceStatRxFramesQueue6 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-6- frames
+                reception occurs. A single counter at the ONU and a set
+                of counters, one for each LLID, at the OLT. Increment
+                the counter by one for each frame received for each
+                LLID, which is an output of -Queue-6-. The -Queue-6-
+                marking matched the REPORT MPCP message Queue-6 field,
+                as defined in [802.3ah] clause 64.
+                This counter is mandatory for an ONU and an OLT."
+       ::= { ibEponDeviceStatEntry 15 }
+
+   ibEponDeviceStatRxFramesQueue7 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-7- frames
+                reception occurs. A single counter at the ONU and a set
+                of counters, one for each LLID, at the OLT. Increment
+                the counter by one for each frame received for each
+                LLID, which is an output of -Queue-7-. The -Queue-7-
+                marking matched the REPORT MPCP message Queue-7 field,
+                as defined in [802.3ah] clause 64.
+                This counter is mandatory for an ONU and an OLT."
+       ::= { ibEponDeviceStatEntry 16 }
+
+
+
+   ibEponDeviceStatDroppedFramesQueue0 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-0- frames drops
+                occurs. Increment the counter by one for each frame
+                dropped from -Queue-0-. The -Queue-0- marking matched
+                the REPORT MPCP message Queue-0 field, as defined in
+                [802.3ah] clause 64.
+                This counter is mandatory for an ONU."
+       ::= { ibEponDeviceStatEntry 17 }
+
+   ibEponDeviceStatDroppedFramesQueue1 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-1- frames drops
+                occurs. Increment the counter by one for each frame
+                dropped from -Queue-1-. The -Queue-1- marking matched
+                the REPORT MPCP message Queue-1 field, as defined in
+                [802.3ah] clause 64.
+                This counter is mandatory for an ONU."
+       ::= { ibEponDeviceStatEntry 18 }
+
+   ibEponDeviceStatDroppedFramesQueue2 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-2- frames drops
+                occurs. Increment the counter by one for each frame
+                dropped from -Queue-2-. The -Queue-2- marking matched
+                the REPORT MPCP message Queue-2 field, as defined in
+                [802.3ah] clause 64.
+                This counter is mandatory for an ONU."
+       ::= { ibEponDeviceStatEntry 19 }
+
+   ibEponDeviceStatDroppedFramesQueue3 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-3- frames drops
+                occurs. Increment the counter by one for each frame
+                dropped from -Queue-3-. The -Queue-3- marking matched
+                the REPORT MPCP message Queue-3 field, as defined in
+                [802.3ah] clause 64.
+                This counter is mandatory for an ONU."
+       ::= { ibEponDeviceStatEntry 20}
+
+   ibEponDeviceStatDroppedFramesQueue4 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-4- frames drops
+                occurs. Increment the counter by one for each frame
+                dropped from -Queue-4-. The -Queue-4- marking matched
+                the REPORT MPCP message Queue-4 field, as defined in
+                [802.3ah] clause 64.
+                This counter is mandatory for an ONU."
+       ::= { ibEponDeviceStatEntry 21 }
+
+   ibEponDeviceStatDroppedFramesQueue5 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-5- frames drops
+                occurs. Increment the counter by one for each frame
+                dropped from -Queue-5-. The -Queue-5- marking matched
+                the REPORT MPCP message Queue-5 field, as defined in
+                [802.3ah] clause 64.
+                This counter is mandatory for an ONU."
+       ::= { ibEponDeviceStatEntry 22 }
+
+   ibEponDeviceStatDroppedFramesQueue6 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-6- frames drops
+                occurs. Increment the counter by one for each frame
+                dropped from -Queue-6-. The -Queue-6- marking matched
+                the REPORT MPCP message Queue-6 field, as defined in
+                [802.3ah] clause 64.
+                This counter is mandatory for an ONU."
+       ::= { ibEponDeviceStatEntry 23 }
+
+   ibEponDeviceStatDroppedFramesQueue7 OBJECT-TYPE
+       SYNTAX  Counter32
+       UNITS      "frames"
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A count of the number of times a -Queue-7- frames drops
+                occurs. Increment the counter by one for each frame
+                dropped from -Queue-7-. The -Queue-7- marking matched
+                the REPORT MPCP message Queue-7 field, as defined in
+                [802.3ah] clause 64.
+                This counter is mandatory for an ONU."
+       ::= { ibEponDeviceStatEntry 24 }
+
+   --Editor's Note use reference to event MIB modules [RFC2981] and
+   --docsis MIB modules [RFC2669]
+
+
+   ibEponDeviceEventObjectTable OBJECT-TYPE
+       SYNTAX     SEQUENCE OF IbEponDeviceEventObjectEntry
+       MAX-ACCESS not-accessible
+       STATUS     current
+       DESCRIPTION
+               "This table defines the Event Objects for EPON devices.
+                The attributes are relevant for an OLT and an ONU."
+       ::= { ibEponDeviceEventObjects 1 }
+
+   ibEponDeviceEventObjectEntry OBJECT-TYPE
+       SYNTAX     IbEponDeviceEventObjectEntry
+       MAX-ACCESS not-accessible
+       STATUS     current
+       DESCRIPTION
+               "Table entries for Table of Event objects for EPON
+                devices."
+       INDEX       { ifIndex }
+       ::= { ibEponDeviceEventObjectTable 1 }
+
+   IbEponDeviceEventObjectEntry ::=
+       SEQUENCE {
+   ibEponDeviceSampleMinimum                               Integer32,
+   ibEponDeviceDyingGaspAlarmState                         TruthValue,
+   ibEponDeviceDyingGaspAlarmEnabled                       TruthValue,
+   ibEponDeviceCriticalEventState                          TruthValue,
+   ibEponDeviceCriticalEventEnabled                        TruthValue,
+   ibEponDeviceLocalLinkFaultAlarmState                    TruthValue,
+   ibEponDeviceLocalLinkFaultAlarmEnabled                  TruthValue,
+   ibEponDeviceTemperatureEventIndicationState             TruthValue,
+   ibEponDeviceTemperatureEventIndicationEnabled           TruthValue,
+   ibEponDevicePowerVoltageEventIndicationState            TruthValue,
+   ibEponDevicePowerVoltageEventIndicationEnabled          TruthValue,
+   ibEponDeviceGlobalEventState                            TruthValue,
+   ibEponDeviceGlobalEventEnabled                          TruthValue,
+   ibEponDeviceErroredSymbolPeriodEventState               TruthValue,
+   ibEponDeviceErroredSymbolPeriodEventEnabled             TruthValue,
+   ibEponDeviceErroredFrameEventState                      TruthValue,
+   ibEponDeviceErroredFrameEventEnabled                    TruthValue,
+   ibEponDeviceErroredFramePeriodEventState                TruthValue,
+   ibEponDeviceErroredFramePeriodEventEnabled              TruthValue,
+   ibEponDeviceErroredFrameSecondsSummaryEventState        TruthValue,
+   ibEponDeviceErroredFrameSecondsSummaryEventEnabled      TruthValue,
+   ibEponDeviceOrganizationSpecificEventState              TruthValue,
+   ibEponDeviceOrganizationSpecificEventEnabled            TruthValue,
+   ibEponDeviceEventControl                                INTEGER
+       }
+
+   ibEponDeviceSampleMinimum OBJECT-TYPE
+       SYNTAX      Integer32 (1..2147483647)
+       UNITS       "seconds"
+       MAX-ACCESS  read-write
+       STATUS      current
+       DESCRIPTION
+               "The minimum Frequency of events this system will accept.
+                A system may use the larger values of this minimum to
+                lessen the impact of constant sampling. For larger
+                sampling intervals the system samples less often and
+                suffers less overhead.
+                Unless explicitly resource limited, a system's value for
+                this object SHOULD be 1, allowing as small as a 1 second
+                interval for ongoing trigger sampling.
+                Writing of the value can be done all the time."
+       DEFVAL { 1 }
+       ::= { ibEponDeviceEventObjectEntry 1 }
+
+   ibEponDeviceDyingGaspAlarmState OBJECT-TYPE
+       SYNTAX  TruthValue
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A read-only variable, which defines the state of the
+                Dying Gasp indication of the OAM alarm indications as
+                described in the [802.3ah] clause 57. When true the
+                device has a dying gasp alarm asserted. When false the
+                dying gasp alarm is reset "
+       ::= { ibEponDeviceEventObjectEntry 2 }
+
+
+
+   ibEponDeviceDyingGaspAlarmEnabled OBJECT-TYPE
+       SYNTAX      TruthValue
+       MAX-ACCESS  read-write
+       STATUS      current
+       DESCRIPTION
+               "A control to allow DyingGaspAlarm event to be used.
+                When the value is true the event is sampled. When the
+                value is false the event is not sampled.
+                Writing can be done all the time."
+       DEFVAL { false }
+       ::= { ibEponDeviceEventObjectEntry 3 }
+
+   ibEponDeviceCriticalEventState OBJECT-TYPE
+       SYNTAX  TruthValue
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A read-only variable, which defines the state of the
+                Critical Event indication of the OAM alarm indications
+                as described in the [802.3ah] clause 57. When true the
+                device has a Critical Event asserted. When false the
+                Critical Event is reset."
+       ::= { ibEponDeviceEventObjectEntry 4 }
+
+   ibEponDeviceCriticalEventEnabled OBJECT-TYPE
+       SYNTAX      TruthValue
+       MAX-ACCESS  read-write
+       STATUS      current
+       DESCRIPTION
+               "A control to allow CriticalEvent event to be used. When
+                the value is true the event is sampled. When the value
+                is false the event is not sampled.
+                Writing can be done all the time."
+       DEFVAL { false }
+       ::= { ibEponDeviceEventObjectEntry 5 }
+
+
+      ibEponDeviceLocalLinkFaultAlarmState OBJECT-TYPE
+       SYNTAX  TruthValue
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A read-only variable, which defines the state of the
+                Local Link Fault indication of the OAM alarm indications
+                as described in the [802.3ah] clause 57. When true the
+                device has a Local Link Fault alarm asserted. When
+                false the Local Link Fault alarm is reset."
+       ::= { ibEponDeviceEventObjectEntry 6 }
+
+
+
+   ibEponDeviceLocalLinkFaultAlarmEnabled OBJECT-TYPE
+       SYNTAX      TruthValue
+       MAX-ACCESS  read-write
+       STATUS      current
+       DESCRIPTION
+               "A control to allow LocalLinkFaultAlarm event to be used.
+                When the value is true the event is sampled. When the
+                value is false the event is not sampled.
+                Writing can be done all the time."
+       DEFVAL { false }
+       ::= { ibEponDeviceEventObjectEntry 7 }
+
+
+      ibEponDeviceTemperatureEventIndicationState OBJECT-TYPE
+       SYNTAX  TruthValue
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A read-only variable, which defines the state of the
+                Temperature Event indication of an EPON device. When
+                condition of box temperature is above the threshold
+                defined the alarm is asserted. When the condition is
+                below that threshold the alarm is de-asserted. When true
+                the device has a Temperature Event Indication asserted.
+                When false the Temperature Event Indication is reset."
+       ::= { ibEponDeviceEventObjectEntry 8 }
+
+   ibEponDeviceTemperatureEventIndicationEnabled OBJECT-TYPE
+       SYNTAX      TruthValue
+       MAX-ACCESS  read-write
+       STATUS      current
+       DESCRIPTION
+               "A control to allow TemperatureEventIndication event to
+                be used. When the value is true the event is sampled.
+                When the value is false the event is not sampled.
+                Writing can be done all the time."
+       DEFVAL { false }
+       ::= { ibEponDeviceEventObjectEntry 9 }
+
+   ibEponDevicePowerVoltageEventIndicationState OBJECT-TYPE
+       SYNTAX  TruthValue
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A read-only variable, which defines the state of the
+                Power/Voltage Event Indication of an EPON device. When
+                condition of box Power/voltage is above the threshold
+                defined the alarm is asserted. When the condition is
+                below that threshold the alarm is de-asserted. When true
+                the device has a Power/Voltage Event Indication
+                asserted. When false the Power/Voltage Event Indication
+                is reset. "
+       ::= { ibEponDeviceEventObjectEntry 10 }
+
+
+   ibEponDevicePowerVoltageEventIndicationEnabled OBJECT-TYPE
+       SYNTAX      TruthValue
+       MAX-ACCESS  read-write
+       STATUS      current
+       DESCRIPTION
+               "A control to allow PowerVoltageEventIndication event to
+                be used. When the value is true the event is sampled.
+                When the value is false the event is not sampled.
+                Writing can be done all the time."
+       DEFVAL { false }
+       ::= { ibEponDeviceEventObjectEntry 11 }
+
+
+      ibEponDeviceGlobalEventState OBJECT-TYPE
+       SYNTAX  TruthValue
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A read-only variable, which defines the state of the
+                Global Event indication of an EPON device. When the
+                indication of the event input occurs the event is
+                asserted. When the input is removed that event is
+                de-asserted. When true the device has a Global Event
+                asserted. When false the Global Event Indication is
+                reset."
+       ::= { ibEponDeviceEventObjectEntry 12 }
+
+   ibEponDeviceGlobalEventEnabled OBJECT-TYPE
+       SYNTAX      TruthValue
+       MAX-ACCESS  read-write
+       STATUS      current
+       DESCRIPTION
+               "A control to allow GlobalEvent event to be used. When
+                the value is true the event is sampled. When the value
+                is false the event is not sampled. Writing can be done
+                all the time."
+       DEFVAL { false }
+       ::= { ibEponDeviceEventObjectEntry 13 }
+
+   ibEponDeviceErroredSymbolPeriodEventState OBJECT-TYPE
+       SYNTAX  TruthValue
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A read-only variable, which defines the state of the
+                Errored Symbol Period Event indication of the OAM alarm
+                TLV indications as described in the [802.3ah]
+                clause 57.5.3. When true the device has an Errored
+                Symbol Period Event asserted. When false the Errored
+                Symbol Period Event is reset."
+       ::= { ibEponDeviceEventObjectEntry 14 }
+
+   ibEponDeviceErroredSymbolPeriodEventEnabled OBJECT-TYPE
+       SYNTAX      TruthValue
+       MAX-ACCESS  read-write
+       STATUS      current
+       DESCRIPTION
+               "A control to allow ErroredSymbolPeriodEvent event to be
+                used. When the value is true the event is sampled. When
+                the value is false the event is not sampled. Writing can
+                be done all the time."
+       DEFVAL { false }
+       ::= { ibEponDeviceEventObjectEntry 15 }
+
+   ibEponDeviceErroredFrameEventState OBJECT-TYPE
+       SYNTAX  TruthValue
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A read-only variable, which defines the state of the
+                Errored Frame Event indication of the OAM alarm TLV
+                indications as described in the [802.3ah] clause 57.5.3.
+                When true the device has an Errored Frame Event
+                asserted. When false the Errored Frame Event is reset."
+       ::= { ibEponDeviceEventObjectEntry 16 }
+
+   ibEponDeviceErroredFrameEventEnabled OBJECT-TYPE
+       SYNTAX      TruthValue
+       MAX-ACCESS  read-write
+       STATUS      current
+       DESCRIPTION
+               "A control to allow ErroredFrameEvent event to be used.
+                When the value is true the event is sampled. When the
+                value is false the event is not sampled.
+                Writing can be done all the time."
+       DEFVAL { false }
+       ::= { ibEponDeviceEventObjectEntry 17 }
+
+
+   ibEponDeviceErroredFramePeriodEventState OBJECT-TYPE
+       SYNTAX  TruthValue
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A read-only variable, which defines the state of the
+                Errored Frame Period Event indication of the OAM alarm
+                TLV indications as described in the [802.3ah] clause
+                57.5.3. When true the device has an Errored Frame Period
+                Event asserted. When false the Errored Frame Period
+                Event is reset."
+       ::= { ibEponDeviceEventObjectEntry 18 }
+
+   ibEponDeviceErroredFramePeriodEventEnabled OBJECT-TYPE
+       SYNTAX      TruthValue
+       MAX-ACCESS  read-write
+       STATUS      current
+       DESCRIPTION
+               "A control to allow ErroredFramePeriodEvent event to be
+                used. When the value is true the event is sampled. When
+                the value is false the event is not sampled. Writing can
+                be done all the time."
+       DEFVAL { false }
+       ::= { ibEponDeviceEventObjectEntry 19 }
+
+
+   ibEponDeviceErroredFrameSecondsSummaryEventState OBJECT-TYPE
+       SYNTAX  TruthValue
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A read-only variable, which defines the state of the
+                Errored Frame Seconds Summary Event indication of the
+                OAM alarm TLV indications as described in the [802.3ah]
+                clause 57.5.3. When true the device has an Errored Frame
+                Seconds Summary Event asserted. When false the Errored
+                Frame Seconds Summary Event is reset."
+       ::= { ibEponDeviceEventObjectEntry 20 }
+
+   ibEponDeviceErroredFrameSecondsSummaryEventEnabled OBJECT-TYPE
+       SYNTAX      TruthValue
+       MAX-ACCESS  read-write
+       STATUS      current
+       DESCRIPTION
+               "A control to allow ErroredFrameSecondsSummaryEvent event
+                to be used. When the value is true the event is sampled.
+                When the value is false the event is not sampled.
+                Writing can be done all the time."
+       DEFVAL { false }
+       ::= { ibEponDeviceEventObjectEntry 21 }
+
+
+   ibEponDeviceOrganizationSpecificEventState OBJECT-TYPE
+       SYNTAX  TruthValue
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A read-only variable, which defines the state of the
+                Organization Specific Event indication of the OAM alarm
+                TLV indications as described in the [802.3ah] clause
+                57.5.3. When true the device has an Organization
+                Specific Event asserted. When false the Organization
+                Specific Event is reset."
+       ::= { ibEponDeviceEventObjectEntry 22 }
+
+   ibEponDeviceOrganizationSpecificEventEnabled OBJECT-TYPE
+       SYNTAX      TruthValue
+       MAX-ACCESS  read-write
+       STATUS      current
+       DESCRIPTION
+               "A control to allow OrganizationSpecificEvent event to be
+                used. When the value is true the event is sampled. When
+                the value is false the event is not sampled.
+                Writing can be done all the time."
+       DEFVAL { false }
+       ::= { ibEponDeviceEventObjectEntry 23 }
+
+   ibEponDeviceEventControl OBJECT-TYPE
+       SYNTAX INTEGER {
+               none(1),
+               resetLog(2),
+               useDefaultReporting(3)
+       }
+       MAX-ACCESS  read-write
+       STATUS      current
+       DESCRIPTION
+               "Indicates and controls the resetting of the Event log.
+                Setting this object to none(1) has no action resetLog(2)
+                empties the event log. All data is deleted. Setting it
+                to useDefaultReporting(3) returns all event priorities
+                to their factory-default reporting. Reading this object
+                always returns useDefaultReporting(3)."
+       DEFVAL { 3 }
+       ::= { ibEponDeviceEventObjectEntry 24 }
+
+
+
+   -- Events Log Table
+
+   ibEponDeviceEventsLogTable OBJECT-TYPE
+       SYNTAX      SEQUENCE OF IbEponDeviceEventsLogEntry
+       MAX-ACCESS  not-accessible
+       STATUS      current
+       DESCRIPTION
+               "A table of objects provides a log of notification based
+                on the event as pointed to by entries in those tables.
+                The intent is a MAC level event log (set of events to
+                when they happened).
+                This attribute is relevant for an OLT and an ONU."
+       ::= { ibEponDeviceEventObjects 2 }
+
+   ibEponDeviceEventsLogEntry OBJECT-TYPE
+       SYNTAX      IbEponDeviceEventsLogEntry
+       MAX-ACCESS  not-accessible
+       STATUS      current
+       DESCRIPTION
+               "A group of Events. Applications create and delete
+                entries using ibEponDeviceEventsEntryStatus. When adding
+                objects to a notification they are added in the lexical
+                order of their index in this table."
+       INDEX       { ibEponDeviceEventsLogName, ibEponDeviceEventsLogIndex }
+       ::= { ibEponDeviceEventsLogTable 1 }
+
+   IbEponDeviceEventsLogEntry ::=
+       SEQUENCE {
+               ibEponDeviceEventsLogName            SnmpAdminString,
+               ibEponDeviceEventsLogIndex           Unsigned32,
+               ibEponDeviceEventsLogID              OBJECT IDENTIFIER,
+               ibEponDeviceEventsLogFirstTime       DateAndTime,
+               ibEponDeviceEventsLogLastTime        DateAndTime,
+               ibEponDeviceEventsLogCounts          Counter32,
+               ibEponDeviceEventsLogType            INTEGER,
+               ibEponDeviceEventsLogEntryStatus     RowStatus
+       }
+
+   ibEponDeviceEventsLogName OBJECT-TYPE
+       SYNTAX      SnmpAdminString (SIZE (1..32))
+       MAX-ACCESS  not-accessible
+       STATUS      current
+       DESCRIPTION
+               "A locally-unique, administratively assigned name for a
+                group of Events."
+       ::= { ibEponDeviceEventsLogEntry 1 }
+
+   ibEponDeviceEventsLogIndex OBJECT-TYPE
+       SYNTAX      Unsigned32 (1..4294967295)
+       MAX-ACCESS  not-accessible
+       STATUS      current
+       DESCRIPTION
+               "An arbitrary integer for the purpose of identifying
+                individual Events within a ibEponDeviceEventsLogName
+                group. Events within a group are placed in the
+                notification in the numerical order of this index."
+       ::= { ibEponDeviceEventsLogEntry 2 }
+
+   ibEponDeviceEventsLogID OBJECT-TYPE
+       SYNTAX      OBJECT IDENTIFIER
+       MAX-ACCESS  read-create
+       STATUS      current
+       DESCRIPTION
+               "The object identifier of a MIB module object to add to a
+                Notification that results from the event.
+                Writing can be done all the time."
+       DEFVAL { zeroDotZero }
+       ::= { ibEponDeviceEventsLogEntry 3 }
+
+   ibEponDeviceEventsLogFirstTime OBJECT-TYPE
+       SYNTAX      DateAndTime
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+               "The time that an entry was created."
+       ::= { ibEponDeviceEventsLogEntry 4 }
+
+   ibEponDeviceEventsLogLastTime OBJECT-TYPE
+       SYNTAX      DateAndTime
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+               "If multiple events are reported via the same entry, the
+                time that the last event for this entry occurred,
+                otherwise this should have the same value as
+                ibEponDeviceEventsLogFirstTime."
+       ::= { ibEponDeviceEventsLogEntry 5 }
+
+   ibEponDeviceEventsLogCounts OBJECT-TYPE
+       SYNTAX      Counter32
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+               "The number of consecutive event instances reported by
+                this entry. This starts at 1 with the creation of this
+                row and increments by 1 for each subsequent duplicate
+                event."
+       ::= { ibEponDeviceEventsLogEntry 6 }
+
+   ibEponDeviceEventsLogType OBJECT-TYPE
+       SYNTAX  INTEGER {
+               ibEponDeviceDyingGaspAlarmState (1),
+               ibEponDeviceCriticalEventState (2),
+               ibEponDeviceLocalLinkFaultAlarmState (3),
+               ibEponDeviceTemperatureEventIndicationState (4),
+               ibEponDevicePowerVoltageEventIndicationState (5),
+               ibEponDeviceGlobalEventState (6),
+               ibEponDeviceErroredSymbolPeriodEventState (7),
+               ibEponDeviceErroredFrameEventState (8),
+               ibEponDeviceErroredFramePeriodEventState (9),
+               ibEponDeviceErroredFrameSecondsSummaryEventState (10),
+               ibEponDeviceOrganizationSpecificEventState (11)
+       }
+       MAX-ACCESS  read-only
+       STATUS  current
+       DESCRIPTION
+               "A list of types for Events. Events are ordered according
+                to their significance where 1 is the highest severity.
+                ibEponDeviceDyingGaspAlarmState(1) indicates a Dying Gasp
+                 Alarm State,
+                ibEponDeviceCriticalEventState(2) indicates a Critical
+                 Event State,
+                ibEponDeviceLocalLinkFaultAlarmState(3) indicates a Local
+                 Link Fault Alarm State,
+                ibEponDeviceTemperatureEventIndicationState(4) indicates a
+                 Temperature Event Indication State,
+                ibEponDevicePowerVoltageEventIndicationState(5) indicates
+                 a Power Voltage Event Indication State,
+                ibEponDeviceGlobalEventState(6) indicates a Global Event
+                 State,
+                ibEponDeviceErroredSymbolPeriodEventState(7) indicates an
+                 Errored Symbol Period Event State,
+                ibEponDeviceErroredFrameEventState(8) indicates an Errored
+                 Frame Event State,
+                ibEponDeviceErroredFramePeriodEventState(9) indicates an
+                 Errored Frame Period Event State,
+                ibEponDeviceErroredFrameSecondsSummaryEventState(10)
+                 indicates an Errored Frame Seconds Summary Event State,
+                ibEponDeviceOrganizationSpecificEventState(11) indicates
+                 an Organization Specific Event State. "
+       ::= { ibEponDeviceEventsLogEntry 7 }
+
+
+   ibEponDeviceEventsLogEntryStatus OBJECT-TYPE
+       SYNTAX      RowStatus
+       MAX-ACCESS  read-create
+       STATUS      current
+       DESCRIPTION
+               "The control that allows creation and deletion of
+                entries. Once made active an entry MAY not be modified
+                except to delete it."
+       ::= { ibEponDeviceEventsLogEntry 8 }
+
+
+
+
+        -- Conformance Statements
+
+   -- Conformance Groups
+
+   ibEponDeviceGroups OBJECT IDENTIFIER ::= { ibEponDeviceConformance 1 }
+
+   ibEponDeviceGroupControl OBJECT-GROUP
+       OBJECTS {
+               ibEponDeviceObjectReset,
+               ibEponDeviceObjectModes,
+               ibEponDeviceObjectFecEnabled,
+               ibEponDeviceObjectOamMode,
+               ibEponDeviceObjectDeviceReadyMode,
+               ibEponDeviceObjectPowerDown,
+               ibEponDeviceObjectNumberOfLLIDs,
+               ibEponDeviceObjectReportThreshold,
+               ibEponDeviceRemoteMACAddressLLIDControl
+       }
+       STATUS  current
+       DESCRIPTION
+               "A collection of objects of ibEponDevice control
+                definition."
+       ::= { ibEponDeviceGroups 1 }
+
+
+   ibEponDeviceGroupRMadLTable OBJECT-GROUP
+       OBJECTS {
+               ibEponDeviceRMadlLLID,
+               ibEponDeviceRMadlLogID,
+               ibEponDeviceRMadlRemoteAddress,
+               ibEponDeviceRMadlType,
+               ibEponDeviceRMadlAction,
+               ibEponDeviceRMadlEntryStatus
+       }
+       STATUS  current
+       DESCRIPTION
+               "A collection of objects of ibEponDevice remote Mac address
+                to LLID table."
+       ::= { ibEponDeviceGroups 2 }
+
+
+   ibEponDeviceGroupStat OBJECT-GROUP
+       OBJECTS {
+               ibEponDeviceStatTxFramesQueue0,
+               ibEponDeviceStatTxFramesQueue1,
+               ibEponDeviceStatTxFramesQueue2,
+               ibEponDeviceStatTxFramesQueue3,
+               ibEponDeviceStatTxFramesQueue4,
+               ibEponDeviceStatTxFramesQueue5,
+               ibEponDeviceStatTxFramesQueue6,
+               ibEponDeviceStatTxFramesQueue7,
+               ibEponDeviceStatRxFramesQueue0,
+               ibEponDeviceStatRxFramesQueue1,
+               ibEponDeviceStatRxFramesQueue2,
+               ibEponDeviceStatRxFramesQueue3,
+               ibEponDeviceStatRxFramesQueue4,
+               ibEponDeviceStatRxFramesQueue5,
+               ibEponDeviceStatRxFramesQueue6,
+               ibEponDeviceStatRxFramesQueue7,
+               ibEponDeviceStatDroppedFramesQueue0,
+               ibEponDeviceStatDroppedFramesQueue1,
+               ibEponDeviceStatDroppedFramesQueue2,
+               ibEponDeviceStatDroppedFramesQueue3,
+               ibEponDeviceStatDroppedFramesQueue4,
+               ibEponDeviceStatDroppedFramesQueue5,
+               ibEponDeviceStatDroppedFramesQueue6,
+               ibEponDeviceStatDroppedFramesQueue7
+       }
+       STATUS  current
+       DESCRIPTION
+               "A collection of objects of EPON device Statistics"
+       ::= { ibEponDeviceGroups 3 }
+
+
+
+   ibEponDeviceGroupEvent OBJECT-GROUP
+       OBJECTS {
+               ibEponDeviceSampleMinimum,
+               ibEponDeviceDyingGaspAlarmState,
+               ibEponDeviceDyingGaspAlarmEnabled,
+               ibEponDeviceCriticalEventState,
+               ibEponDeviceCriticalEventEnabled,
+               ibEponDeviceLocalLinkFaultAlarmState,
+               ibEponDeviceLocalLinkFaultAlarmEnabled,
+               ibEponDeviceTemperatureEventIndicationState,
+               ibEponDeviceTemperatureEventIndicationEnabled,
+               ibEponDevicePowerVoltageEventIndicationState,
+               ibEponDevicePowerVoltageEventIndicationEnabled,
+               ibEponDeviceGlobalEventState,
+               ibEponDeviceGlobalEventEnabled,
+               ibEponDeviceErroredSymbolPeriodEventState,
+               ibEponDeviceErroredSymbolPeriodEventEnabled,
+               ibEponDeviceErroredFrameEventState,
+               ibEponDeviceErroredFrameEventEnabled,
+               ibEponDeviceErroredFramePeriodEventState ,
+               ibEponDeviceErroredFramePeriodEventEnabled  ,
+               ibEponDeviceErroredFrameSecondsSummaryEventState ,
+               ibEponDeviceErroredFrameSecondsSummaryEventEnabled,
+               ibEponDeviceOrganizationSpecificEventState  ,
+               ibEponDeviceOrganizationSpecificEventEnabled,
+               ibEponDeviceEventControl
+       }
+       STATUS  current
+       DESCRIPTION
+               "A collection of objects for EPON device Events"
+       ::= { ibEponDeviceGroups 4 }
+
+   ibEponDeviceGroupEventLog OBJECT-GROUP
+       OBJECTS {
+               ibEponDeviceEventsLogID,
+               ibEponDeviceEventsLogFirstTime,
+               ibEponDeviceEventsLogLastTime,
+               ibEponDeviceEventsLogCounts,
+               ibEponDeviceEventsLogType,
+               ibEponDeviceEventsLogEntryStatus
+       }
+       STATUS  current
+       DESCRIPTION
+               "A collection of objects for EPON device Events log"
+       ::= { ibEponDeviceGroups 5 }
+
+
+   -- Compliance
+
+   ibEponDeviceCompliances OBJECT IDENTIFIER ::= { ibEponDeviceConformance 2 }
+
+   ibEponDeviceCompliance MODULE-COMPLIANCE
+       STATUS      current
+       DESCRIPTION "The compliance statement for EPON Devices."
+       MODULE  -- this module
+       MANDATORY-GROUPS { ibEponDeviceGroupControl }
+       GROUP       ibEponDeviceGroupRMadLTable
+       DESCRIPTION " This group is mandatory for all
+                              OLT EPON devices supporting LLID-MAC
+                              address table."
+
+       GROUP       ibEponDeviceGroupStat
+       DESCRIPTION "This group is mandatory for all EPON devices
+                    supporting interfaces for Statistics collection."
+
+       GROUP       ibEponDeviceGroupEvent
+       DESCRIPTION "This group is mandatory for all EPON devices
+                    supporting interfaces for event collection."
+
+       GROUP       ibEponDeviceGroupEventLog
+       DESCRIPTION "This group is mandatory for all EPON devices
+                    supporting interfaces for event log collection."
+
+       ::= { ibEponDeviceCompliances 1 }
+
+
+
+   END

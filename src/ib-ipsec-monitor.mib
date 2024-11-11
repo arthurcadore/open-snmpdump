@@ -1,0 +1,1650 @@
+-- ====================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The MIB is designed to get IPSec tunnels' statistic information.
+-- Reference:
+-- Version: 1.5
+-- History:
+--   V1.0: The initial version created by Caixiansen, Renweichun and
+--         Maoyu.
+--   V1.1: Modified by Caixiansen Mar.3 2005
+--         Two values 'modp1536(5)' and 'modp2048(14)'are added for data
+--         type 'IbDiffHellmanGrp'.
+--   V1.2: Modified by Sunludong Sep.1 2005
+--         Descriptions of node 'ibIPSecTunIKETunnelIndex', 'ibIPSecTunLocalAddr',
+--         'ibIPSecTunRemoteAddr', 'ibIPSecTunLifeSize', 'ibIPSecTunLifeTime',
+--         'ibIPSecTunRemainTime', 'ibIPSecTunActiveTime', 'ibIPSecTunRemainSize'
+--         are modified.
+--         Ranges of node 'ibIPSecTunRemainTime', 'ibIPSecTunActiveTime',
+--         'ibIPSecTunRemainSize' are modified.
+--         Ranges of data type 'IbIPSecNegoType', 'IbEncapMode',
+--         'IbEncryptAlgo', 'IbAuthAlgo', 'IbDiffHellmanGrp' are modified.
+--   V1.3: Modified by Sunludong Feb.23 2006
+--         Range and description of node 'ibIPSecTunInitiator' are modified.
+--   V1.4: Modified by liukan Jan.12 2007
+--         Range of data type 'IbEncryptAlgo' are modified.
+--   V1.5: Modified by Liukan Dec.8 2008
+--         Three values 'aesCbc128(9)', 'aesCbc192(10)' and 'aesCbc256(11)' are added
+--         to data type 'IbEncryptAlgo'.
+--         Data type of node 'ibIPSecTunLifeSize' and 'ibIPSecTunRemainSize' are modified
+--         from Integer32 to Gauge32.
+-- =====================================================================
+IB-IPSEC-MONITOR-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        ifIndex
+            FROM RFC1213-MIB
+        DisplayString,TEXTUAL-CONVENTION
+            FROM SNMPv2-TC
+        IpAddress, Integer32, Counter32, Counter64, OBJECT-TYPE,
+        MODULE-IDENTITY, Gauge32, NOTIFICATION-TYPE, Unsigned32
+            FROM SNMPv2-SMI
+        MODULE-COMPLIANCE, OBJECT-GROUP, NOTIFICATION-GROUP
+            FROM SNMPv2-CONF
+        ibCommon
+            FROM IB-OID-MIB;
+
+    ibIPSecMonitor MODULE-IDENTITY
+        LAST-UPDATED "200410260000Z"            -- Oct. 26, 2004  GMT
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+            "The MIB is designed to get statistic information of
+             IPSec tunnels. With this MIB, we can get information of a certain
+             tunnel or all tunnels."
+        ::= { ibCommon 7 }
+
+    IbDiffHellmanGrp   ::= TEXTUAL-CONVENTION
+        STATUS     current
+        DESCRIPTION
+            "The Diffie Hellman Group used in the IKE and IPSec negotiations.
+             invalidGroup(2147483647) is defined as invalid value."
+        SYNTAX INTEGER {
+            none(0),
+            modp768(1),
+            modp1024(2),
+            modp1536(5),
+            modp2048(14),
+            invalidGroup(2147483647)
+        }
+
+    IbEncapMode        ::= TEXTUAL-CONVENTION
+        STATUS     current
+        DESCRIPTION
+            "The encapsulation mode used by an IPSec Phase-2 Tunnel.
+             invalidMode(2147483647) is defined as invalid value."
+        SYNTAX INTEGER {
+            tunnel(1),
+            transport(2),
+            invalidMode(2147483647)
+        }
+
+    IbEncryptAlgo   ::= TEXTUAL-CONVENTION
+        STATUS     current
+        DESCRIPTION
+            "The encryption algorithm used in the IKE and IPSec negotiations.
+             invalidAlg(2147483647) is defined as invalid value."
+        SYNTAX INTEGER {
+            none(0),
+            desCbc(1),
+            ideaCbc(2),
+            blowfishCbc(3),
+            rc5R16B64Cbc(4),
+            tripledesCbc(5),
+            castCbc(6),
+            aesCbc(7),
+            nsaCbc(8),
+            aesCbc128(9),
+            aesCbc192(10),
+            aesCbc256(11),
+            invalidAlg(2147483647)
+        }
+
+    IbAuthAlgo   ::= TEXTUAL-CONVENTION
+        STATUS     current
+        DESCRIPTION
+            "The authentication algorithm used in the IKE negotiations.
+             invalidAlg(2147483647) is defined as invalid value."
+        SYNTAX INTEGER {
+            none(0),
+            md5(1),
+            sha(2),
+            invalidAlg(2147483647)
+        }
+
+    IbSaProtocol   ::= TEXTUAL-CONVENTION
+        STATUS     current
+        DESCRIPTION
+            "The protocol of security association."
+        SYNTAX INTEGER {
+            reserved(0),
+            isakmp(1),
+            ah(2),
+            esp(3),
+            ipcomp(4)
+        }
+
+    IbTrapStatus   ::= TEXTUAL-CONVENTION
+        STATUS     current
+        DESCRIPTION
+            "The switch which determines whether send a trap or not."
+        SYNTAX INTEGER {
+            enabled(1),
+            disabled(2)
+        }
+
+    IbIPSecIDType   ::= TEXTUAL-CONVENTION
+        STATUS     current
+        DESCRIPTION
+            "The type of IPSec Identity."
+        SYNTAX INTEGER {
+            reserved(0),
+            ipv4Addr(1),
+            fqdn(2),         -- fully-qualified domain name
+            userFqdn(3),     -- fully-qualified username
+            ipv4AddrSubnet(4),
+            ipv6Addr(5),
+            ipv6AddrSubnet(6),
+            ipv4AddrRange(7),
+            ipv6AddrRange(8),
+            derAsn1Dn(9),    -- the binary DER encoding of an ASN.1 X.500 Distinguished
+                             -- Name [X.501] of the princIPal whose certificates are
+                             -- being exchanged to establish the SA.
+            derAsn1Gn(10),   -- the binary DER encoding of an ASN.1 X.500 GeneralName
+                             -- [X.509] of the princIPal whose certificates are being
+                             -- exchanged to establish the SA.
+            keyId(11)        -- specifies an opaque byte stream which may be used to
+                             -- pass vendor-specific information necessary to identify
+                             -- which pre-shared key should be used to authenticate
+                             -- Aggressive mode negotiations.
+        }
+
+    IbTrafficType   ::= TEXTUAL-CONVENTION
+        STATUS     current
+        DESCRIPTION
+            "The type of the data flow."
+        SYNTAX INTEGER {
+            ipv4Addr(1),
+            ipv4AddrSubnet(4),
+            ipv6Addr(5),
+            ipv6AddrSubnet(6),
+            ipv4AddrRange(7),
+            ipv6AddrRange(8)
+        }
+
+    IbIPSecNegoType   ::= TEXTUAL-CONVENTION
+        STATUS     current
+        DESCRIPTION
+            "The type of key used by an IPSec Phase-2 Tunnel. invalidType(2147483647)
+             is defined as invalid value."
+        SYNTAX INTEGER {
+            ike(1),
+            manual(2),
+            invalidType(2147483647)
+        }
+
+    IbIPSecTunnelState   ::= TEXTUAL-CONVENTION
+        STATUS     current
+        DESCRIPTION
+            "The state of IPSec tunnel."
+        SYNTAX INTEGER {
+            active(1),
+            timeout(2)
+        }
+
+-- ========================================================================
+-- Node definitions
+-- ========================================================================
+--Begin the node of ibIPSecObjects.
+
+    ibIPSecObjects OBJECT IDENTIFIER ::= { ibIPSecMonitor 1 }
+
+-- ===============================================
+-- Begin the table of ibIPSecTunnelTable.
+-- ===============================================
+
+    ibIPSecTunnelTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbIPSecTunnelEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The IPSec Phase-2 Tunnel Table. There is one
+             entry in this table for each active IPSec Phase-2 Tunnel."
+        ::= { ibIPSecObjects 1 }
+
+    ibIPSecTunnelEntry OBJECT-TYPE
+        SYNTAX IbIPSecTunnelEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Information about ibIPSecTunnelTable."
+        INDEX { ibIPSecTunIfIndex, ibIPSecTunEntryIndex,ibIPSecTunIndex }
+        ::= { ibIPSecTunnelTable 1 }
+
+    IbIPSecTunnelEntry ::=
+        SEQUENCE {
+            ibIPSecTunIfIndex
+                Integer32,
+            ibIPSecTunEntryIndex
+                Integer32,
+            ibIPSecTunIndex
+                Integer32,
+            ibIPSecTunIKETunnelIndex
+                Integer32,
+            ibIPSecTunLocalAddr
+                IpAddress,
+            ibIPSecTunRemoteAddr
+                IpAddress,
+            ibIPSecTunKeyType
+                IbIPSecNegoType,
+            ibIPSecTunEncapMode
+                IbEncapMode,
+            ibIPSecTunInitiator
+                INTEGER,
+            ibIPSecTunLifeSize
+                Gauge32,
+            ibIPSecTunLifeTime
+                Integer32,
+            ibIPSecTunRemainTime
+                Integer32,
+            ibIPSecTunActiveTime
+                Integer32,
+            ibIPSecTunRemainSize
+                Gauge32,
+            ibIPSecTunTotalRefreshes
+                Counter32,
+            ibIPSecTunCurrentSaInstances
+                Gauge32,
+            ibIPSecTunInSaEncryptAlgo
+                IbEncryptAlgo,
+            ibIPSecTunInSaAhAuthAlgo
+                IbAuthAlgo,
+            ibIPSecTunInSaEspAuthAlgo
+                IbAuthAlgo,
+            ibIPSecTunDiffHellmanGrp
+                IbDiffHellmanGrp,
+            ibIPSecTunOutSaEncryptAlgo
+                IbEncryptAlgo,
+            ibIPSecTunOutSaAhAuthAlgo
+                IbAuthAlgo,
+            ibIPSecTunOutSaEspAuthAlgo
+                IbAuthAlgo,
+            ibIPSecTunPolicyName
+                DisplayString,
+            ibIPSecTunPolicyNum
+                Integer32,
+            ibIPSecTunStatus
+                INTEGER
+        }
+
+    ibIPSecTunIfIndex OBJECT-TYPE
+        SYNTAX Integer32 (1..2147483647)
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The interface index( the ifIndex of ifTable )."
+        ::= { ibIPSecTunnelEntry 1 }
+
+    ibIPSecTunEntryIndex OBJECT-TYPE
+        SYNTAX Integer32 (1..2147483647)
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The index of IPSec policy applied in the interface."
+        ::= { ibIPSecTunnelEntry 2 }
+
+    ibIPSecTunIndex OBJECT-TYPE
+        SYNTAX Integer32 (1..2147483647)
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The index of IPSec Phase-2 Tunnel Table. The value of
+             the index is a number which begins at one and is
+             incremented with each tunnel that is created. The
+             value of this object will wrap at 2,147,483,647."
+        ::= { ibIPSecTunnelEntry 3 }
+
+    ibIPSecTunIKETunnelIndex OBJECT-TYPE
+        SYNTAX Integer32 (1..2147483647)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The index of the associated IPSec Phase-1 IKE Tunnel
+             (IKETunIndex in the IKETunnelTable). 2147483647 is defined as
+             invalid value. "
+        ::= { ibIPSecTunnelEntry 4 }
+
+    ibIPSecTunLocalAddr OBJECT-TYPE
+        SYNTAX IpAddress
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The IP address of the local peer for the IPSec Phase-2
+             Tunnel. 0.0.0.0 is defined as invalid value."
+        ::= { ibIPSecTunnelEntry 5 }
+
+    ibIPSecTunRemoteAddr OBJECT-TYPE
+        SYNTAX IpAddress
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The IP address of the remote peer for the IPSec Phase-2
+             Tunnel. 0.0.0.0 is defined as invalid value."
+        ::= { ibIPSecTunnelEntry 6 }
+
+    ibIPSecTunKeyType OBJECT-TYPE
+        SYNTAX IbIPSecNegoType
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The key negotiate mode used by the IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelEntry 7 }
+
+    ibIPSecTunEncapMode OBJECT-TYPE
+        SYNTAX IbEncapMode
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The encapsulation mode used by the IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelEntry 8 }
+
+    ibIPSecTunInitiator OBJECT-TYPE
+        SYNTAX INTEGER
+            {
+                local(1),
+                remote(2),
+                none(2147483647)
+            }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The initiator of this IPSec tunnel. Value none is used for manual
+             IPsec tunnel, for there is no initiator or responder in this method."
+        ::= { ibIPSecTunnelEntry 9 }
+
+    ibIPSecTunLifeSize OBJECT-TYPE
+        SYNTAX Gauge32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The negotiated LifeSize of the IPSec Phase-2 Tunnel in kilobytes.
+             0 is defined as invalid value."
+        ::= { ibIPSecTunnelEntry 10 }
+
+    ibIPSecTunLifeTime OBJECT-TYPE
+        SYNTAX Integer32 (1..2147483647)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The negotiated LifeTime of the IPSec Phase-2 Tunnel in seconds.
+             2147483647 is defined as invalid value."
+        ::= { ibIPSecTunnelEntry 11 }
+
+    ibIPSecTunRemainTime OBJECT-TYPE
+        SYNTAX Integer32 (0..2147483647)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The remain time of SA in seconds. 2147483647 is defined as invalid
+             value."
+        ::= { ibIPSecTunnelEntry 12 }
+
+    ibIPSecTunActiveTime OBJECT-TYPE
+        SYNTAX Integer32 (0..2147483647)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The duration the IPSec Phase-2 Tunnel has been active in
+             hundredths of seconds. 2147483647 is defined as invalid value."
+        ::= { ibIPSecTunnelEntry 13 }
+
+    ibIPSecTunRemainSize OBJECT-TYPE
+        SYNTAX Gauge32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The remain LifeSize of SA in kilobytes. 0 is defined as
+             invalid value."
+        ::= { ibIPSecTunnelEntry 14 }
+
+    ibIPSecTunTotalRefreshes OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of security association refreshing performed."
+        ::= { ibIPSecTunnelEntry 15 }
+
+    ibIPSecTunCurrentSaInstances OBJECT-TYPE
+        SYNTAX Gauge32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The number of security associations which are currently active
+             or expiring."
+        ::= { ibIPSecTunnelEntry 16 }
+
+    ibIPSecTunInSaEncryptAlgo OBJECT-TYPE
+        SYNTAX IbEncryptAlgo
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The encryption algorithm used by the inbound security association
+             of the IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelEntry 17 }
+
+    ibIPSecTunInSaAhAuthAlgo OBJECT-TYPE
+        SYNTAX IbAuthAlgo
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The authentication algorithm used by the inbound authentication
+             header (AH) security association of the IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelEntry 18 }
+
+    ibIPSecTunInSaEspAuthAlgo OBJECT-TYPE
+        SYNTAX IbAuthAlgo
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The authentication algorithm used by the inbound encapsulation
+             security protocol(ESP) security association of the IPSec
+             Phase-2 Tunnel."
+        ::= { ibIPSecTunnelEntry 19 }
+
+    ibIPSecTunDiffHellmanGrp OBJECT-TYPE
+        SYNTAX IbDiffHellmanGrp
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The Diffie Hellman Group used by the security association of the
+             IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelEntry 20 }
+
+    ibIPSecTunOutSaEncryptAlgo OBJECT-TYPE
+        SYNTAX IbEncryptAlgo
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The encryption algorithm used by the outbound security
+             association of the IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelEntry 21 }
+
+    ibIPSecTunOutSaAhAuthAlgo OBJECT-TYPE
+        SYNTAX IbAuthAlgo
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The authentication algorithm used by the outbound
+             authentication header (AH) security association of
+             the IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelEntry 22 }
+
+    ibIPSecTunOutSaEspAuthAlgo OBJECT-TYPE
+        SYNTAX IbAuthAlgo
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The authentication algorithm used by the outbound encapsulation
+             security protocol(ESP) security association of the IPSec
+             Phase-2 Tunnel."
+        ::= { ibIPSecTunnelEntry 23 }
+
+    ibIPSecTunPolicyName OBJECT-TYPE
+        SYNTAX DisplayString
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The policy name used by this IPSec tunnel."
+        ::= { ibIPSecTunnelEntry 24 }
+
+    ibIPSecTunPolicyNum OBJECT-TYPE
+        SYNTAX Integer32 (1..2147483647)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The sequence number of policy used by this IPSec tunnel."
+        ::= { ibIPSecTunnelEntry 25 }
+
+    ibIPSecTunStatus OBJECT-TYPE
+        SYNTAX INTEGER
+            {
+                initial(1),
+                ready(2),
+                rekeyed(3),
+                closed(4)
+            }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The status of the IPSec Tunnel."
+        ::= { ibIPSecTunnelEntry 26 }
+
+-- ===============================================
+-- Begin the table of ibIPSecTunnelStatTable.
+-- ===============================================
+
+    ibIPSecTunnelStatTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbIPSecTunnelStatEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The IPSec Phase-2 Tunnel Statistics Table. "
+        ::= { ibIPSecObjects 2 }
+
+    ibIPSecTunnelStatEntry OBJECT-TYPE
+        SYNTAX IbIPSecTunnelStatEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Information about ibIPSecTunnelStatTable."
+        INDEX { ibIPSecTunIfIndex,ibIPSecTunEntryIndex,ibIPSecTunIndex }
+        ::= { ibIPSecTunnelStatTable 1 }
+
+    IbIPSecTunnelStatEntry ::=
+        SEQUENCE {
+            ibIPSecTunInOctets
+                Counter64,
+            ibIPSecTunInDecompOctets
+                Counter64,
+            ibIPSecTunInPkts
+                Counter64,
+            ibIPSecTunInDropPkts
+                Counter64,
+            ibIPSecTunInReplayDropPkts
+                Counter32,
+            ibIPSecTunInAuthFails
+                Counter32,
+            ibIPSecTunInDecryptFails
+                Counter32,
+            ibIPSecTunOutOctets
+                Counter64,
+            ibIPSecTunOutUncompOctets
+                Counter64,
+            ibIPSecTunOutPkts
+                Counter64,
+            ibIPSecTunOutDropPkts
+                Counter64,
+            ibIPSecTunOutEncryptFails
+                Counter32,
+            ibIPSecTunNoMemoryDropPkts
+                Counter32,
+            ibIPSecTunQueueFullDropPkts
+                Counter32,
+            ibIPSecTunInvalidLenDropPkts
+                Counter32,
+            ibIPSecTunTooLongDropPkts
+                Counter32,
+            ibIPSecTunInvalidSaDropPkts
+                Counter32
+        }
+
+    ibIPSecTunInOctets OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of octets received by this IPSec Phase-2 Tunnel.
+             This value is accumulated BEFORE determining whether or not the
+             packet should be decompressed."
+        ::= { ibIPSecTunnelStatEntry 1 }
+
+    ibIPSecTunInDecompOctets OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of decompressed octets received by this IPSec
+             Phase-2 Tunnel. This value is accumulated AFTER the packet
+             is decompressed."
+        ::= { ibIPSecTunnelStatEntry 2 }
+
+    ibIPSecTunInPkts OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets received by this IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelStatEntry 3 }
+
+    ibIPSecTunInDropPkts OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped during receiving process
+             by this IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelStatEntry 4 }
+
+    ibIPSecTunInReplayDropPkts OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped during
+             receiving process due to Anti-Replay process
+             by this IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelStatEntry 5 }
+
+    ibIPSecTunInAuthFails OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of inbound authentication's
+             which ended in failure by this IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelStatEntry 6 }
+
+    ibIPSecTunInDecryptFails OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of inbound decryption's
+             which ended in failure by this IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelStatEntry 7 }
+
+    ibIPSecTunOutOctets OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of octets sent by this IPSec Phase-2 Tunnel.
+             This value is accumulated AFTER determining whether or not
+             the packet should be compressed."
+        ::= { ibIPSecTunnelStatEntry 8 }
+
+    ibIPSecTunOutUncompOctets OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of uncompressed octets sent by this IPSec Phase-2
+             Tunnel.This value is accumulated BEFORE the packet is compressed."
+        ::= { ibIPSecTunnelStatEntry 9 }
+
+    ibIPSecTunOutPkts OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets sent by this IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelStatEntry 10 }
+
+    ibIPSecTunOutDropPkts OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped during sending process
+             by this IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelStatEntry 11 }
+
+    ibIPSecTunOutEncryptFails OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of outbound encryption's which ended in failure
+             by this IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelStatEntry 12 }
+
+    ibIPSecTunNoMemoryDropPkts OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped due to no enough memory by this
+             IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelStatEntry 13 }
+
+    ibIPSecTunQueueFullDropPkts OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped due to queue full by this
+             IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelStatEntry 14 }
+
+    ibIPSecTunInvalidLenDropPkts OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped due to invalid length packet
+             by this IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelStatEntry 15 }
+
+    ibIPSecTunTooLongDropPkts OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped due to too long packet by this
+             IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelStatEntry 16 }
+
+    ibIPSecTunInvalidSaDropPkts OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped due to invalid SA by this
+             IPSec Phase-2 Tunnel."
+        ::= { ibIPSecTunnelStatEntry 17 }
+
+-- ===============================================
+-- Begin the table of ibIPSecSaTable.
+-- ===============================================
+
+    ibIPSecSaTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbIPSecSaEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The IPSec Phase-2 Security Protection Index Table.  This table
+             contains an entry for each active and expiring security association."
+        ::= { ibIPSecObjects 3 }
+
+    ibIPSecSaEntry OBJECT-TYPE
+        SYNTAX IbIPSecSaEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Information about ibIPSecSaTable."
+        INDEX { ibIPSecTunIfIndex,ibIPSecTunEntryIndex,ibIPSecTunIndex,ibIPSecSaIndex }
+        ::= { ibIPSecSaTable 1 }
+
+    IbIPSecSaEntry ::=
+        SEQUENCE {
+            ibIPSecSaIndex
+                Integer32,
+            ibIPSecSaDirection
+                INTEGER,
+            ibIPSecSaValue
+                Unsigned32,
+            ibIPSecSaProtocol
+                IbSaProtocol,
+            ibIPSecSaEncryptAlgo
+                IbEncryptAlgo,
+            ibIPSecSaAuthAlgo
+                IbAuthAlgo,
+            ibIPSecSaStatus
+                INTEGER
+        }
+
+    ibIPSecSaIndex OBJECT-TYPE
+        SYNTAX Integer32 (1..2147483647)
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The number of the Sa associated with the Phase-2 Tunnel
+             Table.  The value of this index is a number which begins
+             at one and is incremented with each Sa associated with
+             an IPSec Phase-2 Tunnel.  The value of this object will
+             wrap at 2,147,483,647."
+        ::= { ibIPSecSaEntry 1 }
+
+    ibIPSecSaDirection OBJECT-TYPE
+        SYNTAX INTEGER {
+            in(1),
+            out(2)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The direction of the SA."
+        ::= { ibIPSecSaEntry 2 }
+
+    ibIPSecSaValue OBJECT-TYPE
+        SYNTAX Unsigned32 (1..4294967295)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The value of the SPI."
+        ::= { ibIPSecSaEntry 3 }
+
+    ibIPSecSaProtocol OBJECT-TYPE
+        SYNTAX IbSaProtocol
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The security protocol of the SA."
+        ::= { ibIPSecSaEntry 4 }
+
+    ibIPSecSaEncryptAlgo OBJECT-TYPE
+        SYNTAX IbEncryptAlgo
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The encryption algorithm used by the security association
+             of the IPSec Phase-2 Tunnel."
+        ::= { ibIPSecSaEntry 5 }
+
+    ibIPSecSaAuthAlgo OBJECT-TYPE
+        SYNTAX IbAuthAlgo
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The authentication algorithm used by the SA."
+        ::= { ibIPSecSaEntry 6 }
+
+    ibIPSecSaStatus OBJECT-TYPE
+        SYNTAX INTEGER {
+            active(1),
+            expiring(2)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The status of the SA."
+        ::= { ibIPSecSaEntry 7 }
+
+-- ===============================================
+-- Begin the table of ibIPSecTrafficTable.
+-- ===============================================
+
+    ibIPSecTrafficTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbIPSecTrafficEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The IPSec Phase-2 Tunnel Traffic Table. "
+        ::= { ibIPSecObjects 4 }
+
+    ibIPSecTrafficEntry OBJECT-TYPE
+        SYNTAX IbIPSecTrafficEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Information about ibIPSecTrafficTable."
+        INDEX { ibIPSecTunIfIndex,ibIPSecTunEntryIndex,ibIPSecTunIndex }
+        ::= { ibIPSecTrafficTable 1 }
+
+    IbIPSecTrafficEntry ::=
+        SEQUENCE {
+            ibIPSecTrafficLocalType
+                IbTrafficType,
+            ibIPSecTrafficLocalAddr1
+                IpAddress,
+            ibIPSecTrafficLocalAddr2
+                IpAddress,
+            ibIPSecTrafficLocalProtocol
+                Integer32,
+            ibIPSecTrafficLocalPort
+                Integer32,
+            ibIPSecTrafficRemoteType
+                IbTrafficType,
+            ibIPSecTrafficRemoteAddr1
+                IpAddress,
+            ibIPSecTrafficRemoteAddr2
+                IpAddress,
+            ibIPSecTrafficRemoteProtocol
+                Integer32,
+            ibIPSecTrafficRemotePort
+                Integer32
+    }
+
+    ibIPSecTrafficLocalType OBJECT-TYPE
+        SYNTAX IbTrafficType
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The type of local peer. Possible values are: a single
+             IP address, or an IP address range, or an IP subnet."
+        ::= { ibIPSecTrafficEntry 1 }
+
+    ibIPSecTrafficLocalAddr1 OBJECT-TYPE
+        SYNTAX IpAddress
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The first specification of local peer's IP address. If
+             the local peer type is single IP address, then this is the
+             value of the IP address. If the local peer type is IP subnet,
+             then this is the value of the subnet. If the local peer type
+             is IP address range, then this is the value of beginning IP
+             address of the range."
+        ::= { ibIPSecTrafficEntry 2 }
+
+    ibIPSecTrafficLocalAddr2 OBJECT-TYPE
+        SYNTAX IpAddress
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The second specification of local peer's IP address. If the local
+             peer type is single IP address, then this is the value of the
+             IP address. If the local peer type is IP subnet, then this is
+             the value of the subnet mask. If the local peer type is IP
+             address range, then this is the value of ending IP address of
+             the range."
+        ::= { ibIPSecTrafficEntry 3 }
+
+    ibIPSecTrafficLocalProtocol OBJECT-TYPE
+        SYNTAX Integer32 (0..255)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The protocol number of the local peer's traffic."
+        ::= { ibIPSecTrafficEntry 4 }
+
+    ibIPSecTrafficLocalPort OBJECT-TYPE
+        SYNTAX Integer32 (0..65535)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The port number of the local peer's traffic."
+        ::= { ibIPSecTrafficEntry 5 }
+
+    ibIPSecTrafficRemoteType OBJECT-TYPE
+        SYNTAX IbTrafficType
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The type of remote peer. Possible values are: a single
+             IP address, or an IP address range, or an IP subnet."
+        ::= { ibIPSecTrafficEntry 6 }
+
+    ibIPSecTrafficRemoteAddr1 OBJECT-TYPE
+        SYNTAX IpAddress
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The first specification of remote peer's IP address.
+             If the remote peer type is single IP address, then
+             this is the value of the IP address. If the remote
+             peer type is IP subnet, then this is the value
+             of the subnet. If the remote peer type is IP
+             address range, then this is the value of beginning
+             IP address of the range."
+        ::= { ibIPSecTrafficEntry 7 }
+
+    ibIPSecTrafficRemoteAddr2 OBJECT-TYPE
+        SYNTAX IpAddress
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Single IP address, then this is the value of the IP
+             address. If the remote peer type is IP subnet,
+             then this is the value of the subnet mask. If the
+             remote peer type is IP address range, then this
+             is the value of ending IP address of the range."
+        ::= { ibIPSecTrafficEntry 8 }
+
+    ibIPSecTrafficRemoteProtocol OBJECT-TYPE
+        SYNTAX Integer32 (0..255)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The protocol number of the remote peer's traffic."
+        ::= { ibIPSecTrafficEntry 9 }
+
+    ibIPSecTrafficRemotePort OBJECT-TYPE
+        SYNTAX Integer32 (0..65535)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The port number of the remote peer's traffic."
+        ::= { ibIPSecTrafficEntry 10 }
+
+-- ===============================================
+-- Begin the ibIPSecGlobalStats.
+-- ===============================================
+
+    ibIPSecGlobalStats OBJECT IDENTIFIER ::= { ibIPSecObjects 5 }
+
+    ibIPSecGlobalActiveTunnels OBJECT-TYPE
+        SYNTAX Gauge32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of currently active  IPSec Phase-2 Tunnels."
+        ::= { ibIPSecGlobalStats 1 }
+
+    ibIPSecGlobalActiveSas OBJECT-TYPE
+        SYNTAX Gauge32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of currently active or expiring IPSec Phase-2 SA."
+        ::= { ibIPSecGlobalStats 2 }
+
+    ibIPSecGlobalInOctets OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of octets received by all current and previous
+             IPSec Phase-2 Tunnels. This value is accumulated BEFORE determining
+             whether or not the packet should be decompressed."
+        ::= { ibIPSecGlobalStats 3 }
+
+    ibIPSecGlobalInDecompOctets OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of decompressed octets received by all current
+             and previous IPSec Phase-2 Tunnels. This value is accumulated
+             AFTER the packet is decompressed."
+        ::= { ibIPSecGlobalStats 4 }
+
+    ibIPSecGlobalInPkts OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets received by all current and
+             previous IPSec Phase-2 Tunnels."
+        ::= { ibIPSecGlobalStats 5 }
+
+    ibIPSecGlobalInDrops OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped during receiving
+             process by all current and previous IPSec Phase-2
+             Tunnels. "
+        ::= { ibIPSecGlobalStats 6 }
+
+    ibIPSecGlobalInReplayDrops OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped during receiving
+             process due to Anti-Replay process by all
+             current and previous IPSec Phase-2 Tunnels."
+        ::= { ibIPSecGlobalStats 7 }
+
+    ibIPSecGlobalInAuthFails OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of inbound authentication's which ended
+             in failure by all current and previous IPSec Phase-2 Tunnels."
+        ::= { ibIPSecGlobalStats 8 }
+
+    ibIPSecGlobalInDecryptFails OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of inbound decryption's which ended in
+             failure by all current and previous IPSec Phase-2 Tunnels."
+        ::= { ibIPSecGlobalStats 9 }
+
+    ibIPSecGlobalOutOctets OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of octets sent by all current and previous
+             IPSec Phase-2 Tunnels. This value is accumulated AFTER
+             determining whether or not the packet should be compressed."
+        ::= { ibIPSecGlobalStats 10 }
+
+    ibIPSecGlobalOutUncompOctets OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of uncompressed octets sent by all current
+             and previous IPSec Phase-2 Tunnels. This value is accumulated
+             BEFORE the packet is compressed."
+        ::= { ibIPSecGlobalStats 11 }
+
+    ibIPSecGlobalOutPkts OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets sent by all current and previous
+             IPSec Phase-2 Tunnels."
+        ::= { ibIPSecGlobalStats 12 }
+
+    ibIPSecGlobalOutDrops OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped during sending process
+             by all current and previous IPSec Phase-2 Tunnels."
+        ::= { ibIPSecGlobalStats 13 }
+
+    ibIPSecGlobalOutEncryptFails OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of outbound encryption's which ended in failure
+             by all current and previous IPSec Phase-2 Tunnels."
+        ::= { ibIPSecGlobalStats 14 }
+
+    ibIPSecGlobalNoMemoryDropPkts OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped due to no enough memory
+             by all current and previous IPSec Phase-2 Tunnels."
+        ::= { ibIPSecGlobalStats 15 }
+
+    ibIPSecGlobalNoFindSaDropPkts OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped due to not find SA by
+             all current and previous IPSec Phase-2 Tunnels."
+        ::= { ibIPSecGlobalStats 16 }
+
+    ibIPSecGlobalQueueFullDropPkts OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped due to queue full by
+             all current and previous IPSec Phase-2 Tunnels."
+        ::= { ibIPSecGlobalStats 17 }
+
+    ibIPSecGlobalInvalidLenDropPkts OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped due to invalid packet
+             length by all current and previous IPSec Phase-2 Tunnels."
+        ::= { ibIPSecGlobalStats 18 }
+
+    ibIPSecGlobalTooLongDropPkts OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped due to too long packet by
+             all current and previous IPSec Phase-2 Tunnels."
+        ::= { ibIPSecGlobalStats 19 }
+
+    ibIPSecGlobalInvalidSaDropPkts OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total number of packets dropped due to invalid SA by all
+             current and previous IPSec Phase-2 Tunnels."
+        ::= { ibIPSecGlobalStats 20 }
+
+-- ===============================================
+-- Begin the ibIPSecTrapObject.
+-- ===============================================
+
+    ibIPSecTrapObject OBJECT IDENTIFIER ::= { ibIPSecObjects 6 }
+
+    ibIPSecPolicyName OBJECT-TYPE
+        SYNTAX DisplayString
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The IPSec policy name with a trap."
+        ::= { ibIPSecTrapObject 1 }
+
+    ibIPSecPolicySeqNum OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The IPSec policy sequence number with a trap."
+        ::= { ibIPSecTrapObject 2 }
+
+    ibIPSecPolicySize OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The number of IPSec policies with a trap."
+        ::= { ibIPSecTrapObject 3 }
+
+    ibIPSecSpiValue OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The SPI value associated with a trap."
+        ::= { ibIPSecTrapObject 4 }
+
+-- ===============================================
+-- Begin the ibIPSecTrapCntl.
+-- ===============================================
+
+
+    ibIPSecTrapCntl OBJECT IDENTIFIER ::= { ibIPSecObjects 7 }
+
+    ibIPSecTrapGlobalCntl OBJECT-TYPE
+        SYNTAX IbTrapStatus
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether all IPSec traps should be generated."
+        ::= { ibIPSecTrapCntl 1 }
+
+    ibIPSecTunnelStartTrapCntl OBJECT-TYPE
+        SYNTAX IbTrapStatus
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibIPSecTunnelStart traps should be generated."
+        ::= { ibIPSecTrapCntl 2 }
+
+    ibIPSecTunnelStopTrapCntl OBJECT-TYPE
+        SYNTAX IbTrapStatus
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibIPSecTunnelStop traps should be generated."
+        ::= { ibIPSecTrapCntl 3 }
+
+    ibIPSecNoSaTrapCntl OBJECT-TYPE
+        SYNTAX IbTrapStatus
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibIPSecNoSaFailure traps should be generated."
+        ::= { ibIPSecTrapCntl 4 }
+
+    ibIPSecAuthFailureTrapCntl OBJECT-TYPE
+        SYNTAX IbTrapStatus
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibIPSecAuthFailFailure traps should be generated."
+        ::= { ibIPSecTrapCntl 5 }
+
+    ibIPSecEncryFailureTrapCntl OBJECT-TYPE
+        SYNTAX IbTrapStatus
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibIPSecEncryFailFailure traps should be generated."
+        ::= { ibIPSecTrapCntl 6 }
+
+    ibIPSecDecryFailureTrapCntl OBJECT-TYPE
+        SYNTAX IbTrapStatus
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibIPSecDecryFailFailure traps should be generated."
+        ::= { ibIPSecTrapCntl 7 }
+
+    ibIPSecInvalidSaTrapCntl OBJECT-TYPE
+        SYNTAX IbTrapStatus
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibIPSec Invalid Sa Failure traps should be generated."
+        ::= { ibIPSecTrapCntl 8 }
+
+    ibIPSecPolicyAddTrapCntl OBJECT-TYPE
+        SYNTAX IbTrapStatus
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibIPSecPolicyAdd traps should be generated."
+        ::= { ibIPSecTrapCntl 9 }
+
+    ibIPSecPolicyDelTrapCntl OBJECT-TYPE
+        SYNTAX IbTrapStatus
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibIPSecPolicyDel traps should be generated."
+        ::= { ibIPSecTrapCntl 10 }
+
+    ibIPSecPolicyAttachTrapCntl OBJECT-TYPE
+        SYNTAX IbTrapStatus
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibIPSecPolicyAttach traps should be generated."
+        ::= { ibIPSecTrapCntl 11 }
+
+    ibIPSecPolicyDetachTrapCntl OBJECT-TYPE
+        SYNTAX IbTrapStatus
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibIPSecPolicyDetach traps should be generated."
+        ::= { ibIPSecTrapCntl 12 }
+
+-- ===============================================
+-- definition of traps.
+-- ===============================================
+
+    ibIPSecTrap OBJECT IDENTIFIER ::= { ibIPSecObjects 8 }
+
+    ibIPSecNotifications OBJECT IDENTIFIER ::= { ibIPSecTrap 1 }
+
+    ibIPSecTunnelStart NOTIFICATION-TYPE
+        OBJECTS { ibIPSecTunLocalAddr,
+                  ibIPSecTunRemoteAddr,
+                  ibIPSecTunLifeTime,
+                  ibIPSecTunLifeSize
+                }
+        STATUS     current
+        DESCRIPTION
+            "This notification is generated when an IPSec Phase-2
+             Tunnel is created."
+        ::= { ibIPSecNotifications 1 }
+
+    ibIPSecTunnelStop NOTIFICATION-TYPE
+        OBJECTS { ibIPSecTunLocalAddr,
+                  ibIPSecTunRemoteAddr,
+                  ibIPSecTunActiveTime
+                }
+        STATUS     current
+        DESCRIPTION
+            "This notification is generated when an IPSec Phase-2
+             Tunnel is deleted."
+        ::= { ibIPSecNotifications 2 }
+
+    ibIPSecNoSaFailure NOTIFICATION-TYPE
+        OBJECTS { ibIPSecTunLocalAddr,
+                  ibIPSecTunRemoteAddr
+                }
+        STATUS     current
+        DESCRIPTION
+            "This notification is generated when an IPSec Phase-2
+             non-existent SA error occurs."
+        ::= { ibIPSecNotifications 3 }
+
+    ibIPSecAuthFailFailure NOTIFICATION-TYPE
+        OBJECTS { ibIPSecTunLocalAddr,
+                  ibIPSecTunRemoteAddr
+                  }
+        STATUS     current
+        DESCRIPTION
+            "This notification is generated when the IPSec phase-2
+             authentication failure occurs."
+        ::= { ibIPSecNotifications 4 }
+
+    ibIPSecEncryFailFailure NOTIFICATION-TYPE
+        OBJECTS { ibIPSecTunLocalAddr,
+                  ibIPSecTunRemoteAddr
+                }
+        STATUS     current
+        DESCRIPTION
+            "This notification is generated when the IPSec phase-2
+             tunnel has an encrypting failure."
+        ::= { ibIPSecNotifications 5 }
+
+    ibIPSecDecryFailFailure NOTIFICATION-TYPE
+        OBJECTS { ibIPSecTunLocalAddr,
+                  ibIPSecTunRemoteAddr
+                }
+        STATUS     current
+        DESCRIPTION
+            "This notification is generated when the IPSec phase-2
+             tunnel has a decrypting failure."
+        ::= { ibIPSecNotifications 6 }
+
+    ibIPSecInvalidSaFailure NOTIFICATION-TYPE
+        OBJECTS { ibIPSecTunLocalAddr,
+                  ibIPSecTunRemoteAddr,
+                  ibIPSecSpiValue
+                }
+        STATUS     current
+        DESCRIPTION
+            "This notification is generated when the IPSec phase-2
+             invalid SA failure occurs."
+        ::= { ibIPSecNotifications 7 }
+
+    ibIPSecPolicyAdd NOTIFICATION-TYPE
+        OBJECTS { ibIPSecPolicyName,
+                  ibIPSecPolicySeqNum,
+                  ibIPSecPolicySize
+                }
+        STATUS     current
+        DESCRIPTION
+            "This notification is generated when an IPSec policy is added."
+        ::= { ibIPSecNotifications 8 }
+
+    ibIPSecPolicyDel NOTIFICATION-TYPE
+        OBJECTS { ibIPSecPolicyName,
+                  ibIPSecPolicySeqNum,
+                  ibIPSecPolicySize
+                }
+        STATUS     current
+        DESCRIPTION
+            "This notification is generated when an IPSec policy is deleted."
+        ::= { ibIPSecNotifications 9 }
+
+    ibIPSecPolicyAttach NOTIFICATION-TYPE
+        OBJECTS { ibIPSecPolicyName,
+                  ibIPSecPolicySize,
+                  ifIndex
+                }
+        STATUS     current
+        DESCRIPTION
+            "This notification is generated when an IPSec policy is attached
+             with one interface."
+        ::= { ibIPSecNotifications 10 }
+
+    ibIPSecPolicyDetach NOTIFICATION-TYPE
+        OBJECTS { ibIPSecPolicyName,
+                  ibIPSecPolicySize,
+                  ifIndex
+                }
+        STATUS     current
+        DESCRIPTION
+            "This notification is generated when an IPSec policy is detached
+             with one interface."
+        ::= { ibIPSecNotifications 11 }
+
+-- ===============================================
+-- Conformance Information
+-- ===============================================
+    ibIPSecConformance   OBJECT IDENTIFIER
+        ::= { ibIPSecMonitor 2 }
+    ibIPSecCompliances   OBJECT IDENTIFIER
+        ::= { ibIPSecConformance 1 }
+    ibIPSecGroups        OBJECT IDENTIFIER
+        ::= { ibIPSecConformance 2 }
+
+-- ===============================================
+-- Compliance Statements
+-- ===============================================
+    ibIPSecCompliance MODULE-COMPLIANCE
+        STATUS current
+        DESCRIPTION
+            " "
+        MODULE -- this module
+        MANDATORY-GROUPS
+            {
+                ibIPSecTunnelTableGroup,
+                ibIPSecTunnelStatGroup,
+                ibIPSecSaGroup,
+                ibIPSecTrafficTableGroup,
+                ibIPSecGlobalStatsGroup,
+                ibIPSecTrapObjectGroup,
+                ibIPSecTrapCntlGroup,
+                ibIPSecTrapGroup
+            }
+        ::= { ibIPSecCompliances 1 }
+
+    ibIPSecTunnelTableGroup OBJECT-GROUP
+        OBJECTS {
+                    ibIPSecTunIKETunnelIndex,
+                    ibIPSecTunLocalAddr,
+                    ibIPSecTunRemoteAddr,
+                    ibIPSecTunKeyType,
+                    ibIPSecTunEncapMode,
+                    ibIPSecTunInitiator,
+                    ibIPSecTunLifeSize,
+                    ibIPSecTunLifeTime,
+                    ibIPSecTunRemainTime,
+                    ibIPSecTunActiveTime,
+                    ibIPSecTunRemainSize,
+                    ibIPSecTunTotalRefreshes,
+                    ibIPSecTunCurrentSaInstances,
+                    ibIPSecTunInSaEncryptAlgo,
+                    ibIPSecTunInSaAhAuthAlgo,
+                    ibIPSecTunInSaEspAuthAlgo,
+                    ibIPSecTunDiffHellmanGrp,
+                    ibIPSecTunOutSaEncryptAlgo,
+                    ibIPSecTunOutSaAhAuthAlgo,
+                    ibIPSecTunOutSaEspAuthAlgo,
+                    ibIPSecTunPolicyName,
+                    ibIPSecTunPolicyNum,
+                    ibIPSecTunStatus
+                }
+        STATUS current
+        DESCRIPTION
+            "The group contains the IPSec tunnel's property information."
+        ::= { ibIPSecGroups 1 }
+
+    ibIPSecTunnelStatGroup OBJECT-GROUP
+        OBJECTS {
+                    ibIPSecTunInOctets,
+                    ibIPSecTunInDecompOctets,
+                    ibIPSecTunInPkts,
+                    ibIPSecTunInDropPkts,
+                    ibIPSecTunInReplayDropPkts,
+                    ibIPSecTunInAuthFails,
+                    ibIPSecTunInDecryptFails,
+                    ibIPSecTunOutOctets,
+                    ibIPSecTunOutUncompOctets,
+                    ibIPSecTunOutPkts,
+                    ibIPSecTunOutDropPkts,
+                    ibIPSecTunOutEncryptFails,
+                    ibIPSecTunNoMemoryDropPkts,
+                    ibIPSecTunQueueFullDropPkts,
+                    ibIPSecTunInvalidLenDropPkts,
+                    ibIPSecTunTooLongDropPkts,
+                    ibIPSecTunInvalidSaDropPkts
+                }
+        STATUS current
+        DESCRIPTION
+            "The group contains the IPSec tunnel's statistic information."
+        ::= { ibIPSecGroups 2 }
+
+    ibIPSecSaGroup OBJECT-GROUP
+        OBJECTS {
+                    ibIPSecSaDirection,
+                    ibIPSecSaValue,
+                    ibIPSecSaProtocol,
+                    ibIPSecSaEncryptAlgo,
+                    ibIPSecSaAuthAlgo,
+                    ibIPSecSaStatus
+                }
+        STATUS current
+        DESCRIPTION
+            "The group contains the SA's property information."
+        ::= { ibIPSecGroups 3 }
+
+    ibIPSecTrafficTableGroup OBJECT-GROUP
+        OBJECTS {
+                    ibIPSecTrafficLocalType,
+                    ibIPSecTrafficLocalAddr1,
+                    ibIPSecTrafficLocalAddr2,
+                    ibIPSecTrafficLocalProtocol,
+                    ibIPSecTrafficLocalPort,
+                    ibIPSecTrafficRemoteType,
+                    ibIPSecTrafficRemoteAddr1,
+                    ibIPSecTrafficRemoteAddr2,
+                    ibIPSecTrafficRemoteProtocol,
+                    ibIPSecTrafficRemotePort
+                }
+        STATUS current
+        DESCRIPTION
+            "The group contains the property information of the
+             data flow protected by IPSec tunnel."
+        ::= { ibIPSecGroups 4 }
+
+    ibIPSecGlobalStatsGroup OBJECT-GROUP
+        OBJECTS {
+                    ibIPSecGlobalActiveTunnels,
+                    ibIPSecGlobalActiveSas,
+                    ibIPSecGlobalInOctets,
+                    ibIPSecGlobalInDecompOctets,
+                    ibIPSecGlobalInPkts,
+                    ibIPSecGlobalInDrops,
+                    ibIPSecGlobalInReplayDrops,
+                    ibIPSecGlobalInAuthFails,
+                    ibIPSecGlobalInDecryptFails,
+                    ibIPSecGlobalOutOctets,
+                    ibIPSecGlobalOutUncompOctets,
+                    ibIPSecGlobalOutPkts,
+                    ibIPSecGlobalOutDrops,
+                    ibIPSecGlobalOutEncryptFails,
+                    ibIPSecGlobalNoMemoryDropPkts,
+                    ibIPSecGlobalNoFindSaDropPkts,
+                    ibIPSecGlobalQueueFullDropPkts,
+                    ibIPSecGlobalInvalidLenDropPkts,
+                    ibIPSecGlobalTooLongDropPkts,
+                    ibIPSecGlobalInvalidSaDropPkts
+                }
+        STATUS current
+        DESCRIPTION
+            "The group contains all of the IPSec tunnel's statistic
+             information."
+        ::= { ibIPSecGroups 5 }
+
+    ibIPSecTrapObjectGroup OBJECT-GROUP
+        OBJECTS {
+                    ibIPSecPolicyName,
+                    ibIPSecPolicySeqNum,
+                    ibIPSecPolicySize,
+                    ibIPSecSpiValue
+                }
+        STATUS current
+        DESCRIPTION
+            "The group contains all of trap objects of IPSec tunnels."
+        ::= { ibIPSecGroups 6 }
+
+    ibIPSecTrapCntlGroup OBJECT-GROUP
+        OBJECTS {
+                    ibIPSecTrapGlobalCntl,
+                    ibIPSecTunnelStartTrapCntl,
+                    ibIPSecTunnelStopTrapCntl,
+                    ibIPSecNoSaTrapCntl,
+                    ibIPSecAuthFailureTrapCntl,
+                    ibIPSecEncryFailureTrapCntl,
+                    ibIPSecDecryFailureTrapCntl,
+                    ibIPSecInvalidSaTrapCntl,
+                    ibIPSecPolicyAddTrapCntl,
+                    ibIPSecPolicyDelTrapCntl,
+                    ibIPSecPolicyAttachTrapCntl,
+                    ibIPSecPolicyDetachTrapCntl
+                }
+        STATUS current
+        DESCRIPTION
+            "The group contains all of trap switches of IPSec tunnels."
+        ::= { ibIPSecGroups 7 }
+
+    ibIPSecTrapGroup NOTIFICATION-GROUP
+        NOTIFICATIONS {
+                          ibIPSecTunnelStart,
+                          ibIPSecTunnelStop,
+                          ibIPSecNoSaFailure,
+                          ibIPSecAuthFailFailure,
+                          ibIPSecEncryFailFailure,
+                          ibIPSecDecryFailFailure,
+                          ibIPSecInvalidSaFailure,
+                          ibIPSecPolicyAdd,
+                          ibIPSecPolicyDel,
+                          ibIPSecPolicyAttach,
+                          ibIPSecPolicyDetach
+                      }
+        STATUS current
+        DESCRIPTION
+            "The group contains all of trap of IPSec tunnels."
+        ::= { ibIPSecGroups 8 }
+
+
+END
+

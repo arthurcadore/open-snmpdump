@@ -1,0 +1,269 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Ths mib is extracted from draft-ietf-isis-wg-mib-13.txt.
+--              Because the draft MIB is not proposed as a standard, so the
+--              content of this drafted MIB are moved under enterprises branch.
+-- Reference:
+-- Version: V1.3
+-- History:
+-- V1.0 2020-08-05 The initial version, created by Chen ZiChao
+-- V1.1 2021-04-06 updated by zhangyao
+--      Add the ibIsisAdjacencyProtocolChange NOTIFICATION of ibIsisNotifications.
+-- V1.2 2021-05-06 updated by zhangyao
+--      Add the ibIsisCircTable.
+-- V1.3 2021-12-31 updated by wanggaoyu
+--      Add the objects of ibIsisNotifications.
+-- =================================================================
+IB-ISIS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    ibCommon
+        FROM IB-OID-MIB
+    isisNotificationSysLevelIndex, isisNotificationCircIfIndex, isisPduLspId,
+    isisSysID
+        FROM ISIS-MIB
+    IndexInteger
+        FROM DIFFSERV-MIB            -- RFC3289
+    InterfaceIndex, ifName
+        FROM IF-MIB                  -- RFC2863
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB;
+
+ibIsis MODULE-IDENTITY
+    LAST-UPDATED "202112301002Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This document describes a management information base for
+         the IS-IS Routing protocol, as described in ISO 10589,
+         when it is used to construct routing tables for IP networks,
+         as described in RFC 1195.
+
+         This document defines an experimental portion of the
+         Management Information Base (MIB) for use with network
+         management protocols in the Internet community.
+
+         This document is based on a 1994 IETF draft by Chris Gunner.
+         This version has been modified to include MIB-II syntax, to
+         exclude portions of the protocol that are not relevant to IP,
+         and to add management support for current practice.
+         "
+    REVISION "202112301002Z"
+    DESCRIPTION
+        "Add the objects of ibIsisNotifications."
+    REVISION "202105061038Z"
+    DESCRIPTION
+        "Add the ibIsisCircTable."
+    REVISION "202104061038Z"
+    DESCRIPTION
+        "Add the ibIsisAdjacencyProtocolChange NOTIFICATION of ibIsisNotifications."
+    REVISION "202008051100Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 59 }
+
+-- Top-level structure of the MIB
+
+ibIsisNotifications       OBJECT IDENTIFIER ::= { ibIsis 0 }
+ibIsisObjects             OBJECT IDENTIFIER ::= { ibIsis 1 }
+
+-- ibIsisObjects definitions
+
+ibIsisSystem              OBJECT IDENTIFIER ::= { ibIsisObjects 1 }
+ibIsisNotification        OBJECT IDENTIFIER ::= { ibIsisObjects 2 }
+ibIsisCirc                OBJECT IDENTIFIER ::= { ibIsisObjects 3 }
+
+-- The System Table
+
+ibIsisSysTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbIsisSysEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The set of instance of the Integrated IS-IS
+         protocol existing on the system."
+    ::= { ibIsisSystem 1 }
+
+ibIsisSysEntry OBJECT-TYPE
+    SYNTAX IbIsisSysEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each row defines information specific to a single
+         instance of the IS-IS protocol existing on the system."
+    REFERENCE "ISIS.poi cLNSISISBasic-P (1)"
+    INDEX { ibIsisSysInstance }
+    ::= { ibIsisSysTable 1 }
+
+-- Type definitions
+
+IbIsisSysEntry ::=
+    SEQUENCE {
+        ibIsisSysInstance
+            Integer32
+    }
+
+ibIsisSysInstance OBJECT-TYPE
+    SYNTAX Integer32 (1..65535)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The unique identifier of the Integrated IS-IS
+         instance to which this row corresponds.
+         This object follows the index behavior."
+    ::= { ibIsisSysEntry 1 }
+
+-- The Circuit Table
+
+ibIsisCircTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbIsisCircEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The table of circuits used by this
+         Intermediate System."
+    ::= { ibIsisCirc 1 }
+
+ibIsisCircEntry OBJECT-TYPE
+    SYNTAX IbIsisCircEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An ibIsisCircEntry exists for each circuit configured
+         for Integrated IS-IS on this system."
+    INDEX { ibIsisSysInstance, ibIsisCircIndex }
+    ::= { ibIsisCircTable 1 }
+
+IbIsisCircEntry ::=
+    SEQUENCE {
+        ibIsisCircIndex
+            IndexInteger,
+        ibIsisCircIfIndex
+            InterfaceIndex
+    }
+
+ibIsisCircIndex OBJECT-TYPE
+        SYNTAX IndexInteger
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An index used to uniquely identify this circuit."
+    ::= { ibIsisCircEntry 1 }
+
+ibIsisCircIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The value of ifIndex for the interface to which this
+             circuit corresponds."
+    ::= { ibIsisCircEntry 2 }
+
+
+-- The IS-IS Notification Table
+
+-- The IS-IS Notification Table records fields that are
+-- required for notifications
+
+ibIsisNotificationObjects  OBJECT IDENTIFIER ::= { ibIsisNotification 1 }
+
+ibIsisAdjProtoType OBJECT-TYPE
+    SYNTAX INTEGER {
+       ipv4 (1),
+       ipv6 (2)
+    }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The adjacency protocol type for this notification."
+    ::= { ibIsisNotificationObjects 1 }
+
+ibIsisAdjProtoState OBJECT-TYPE
+    SYNTAX INTEGER {
+         down (1),
+         initializing (2),
+         up (3)
+    }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The state of the adjacency protocol."
+    ::= { ibIsisNotificationObjects 2 }
+
+ibIsisLocalAddressType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The address type of ibIsisLocalAddress."
+    ::= { ibIsisNotificationObjects 3 }
+
+ibIsisLocalAddress OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The local address."
+    ::= { ibIsisNotificationObjects 4 }
+
+ibIsisPeerAddressType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The address type of ibIsisPeerAddress."
+    ::= { ibIsisNotificationObjects 5 }
+
+ibIsisPeerAddress OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The address of peer."
+    ::= { ibIsisNotificationObjects 6 }
+
+-- Notification Configuration
+
+ibIsisAdjacencyProtocolChange NOTIFICATION-TYPE
+    OBJECTS {
+        isisNotificationSysLevelIndex,
+        isisNotificationCircIfIndex,
+        isisPduLspId,
+        ibIsisAdjProtoType,
+        ibIsisAdjProtoState,
+        ifName
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the IPv4 or IPv6 protocol
+         of an adjacency changes.
+         The first 6 bytes of the isisPduLspId are the
+         SystemID of the adjacent IS.
+         The ibIsisAdjProtoType is the type of adjacency protocol.
+         The ibIsisAdjProtoState is the state of adjacency protocol."
+    ::= { ibIsisNotifications 1 }
+
+ibIsisSystemIdConflict NOTIFICATION-TYPE
+    OBJECTS {
+        ibIsisSysInstance,
+        isisNotificationSysLevelIndex,
+        isisPduLspId,
+        isisSysID,
+        isisNotificationCircIfIndex,
+        ifName,
+        ibIsisLocalAddressType,
+        ibIsisLocalAddress,
+        ibIsisPeerAddressType,
+        ibIsisPeerAddress
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when system ID conflict."
+    ::= { ibIsisNotifications 2 }
+
+END

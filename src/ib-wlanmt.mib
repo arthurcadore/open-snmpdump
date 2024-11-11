@@ -1,0 +1,135 @@
+-- =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:
+--   The file defines a MIB to provide wlan access controler maitenace feature.
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 created by haoshitong 10530
+--     Initial version 2014-09-28
+-- =============================================================================
+IB-WLANMT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, Counter64
+        FROM SNMPv2-SMI
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibWlanMt MODULE-IDENTITY
+    LAST-UPDATED "201409281747Z"        -- September 28, 2014 at 14:50 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB provides information about WlanMt(Wlan Maintenance) feature.
+
+        WlanMt is designed to be employed in an area that is serviced
+        by an existing wireless network.
+        It reflect the running situation on VCpu whitch used to forward packets.
+        These information include: VCpu-Usage(Past 5 secons), Total Rx\Tx\Drop
+        packets per VCpu.
+        "
+    REVISION "201409281747Z"        -- September 28, 2014 at 14:50 GMT
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= {  ibCommon 157 }
+
+--
+-- Node definitions
+--
+
+ibWlanMtVCpuInfoGroup OBJECT IDENTIFIER ::= { ibWlanMt 1 }
+
+ibWlanMtVCpuInfoTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbWlanMtVCpuInfoEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The table represents the list of possible VCpu information."
+    ::= { ibWlanMtVCpuInfoGroup 1 }
+
+ibWlanMtVCpuInfoEntry OBJECT-TYPE
+    SYNTAX IbWlanMtVCpuInfoEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry contains possible information of each VCpu."
+    INDEX { ibWlanMtVcpuID }
+    ::= { ibWlanMtVCpuInfoTable 1 }
+
+IbWlanMtVCpuInfoEntry ::=
+    SEQUENCE {
+        ibWlanMtVcpuID
+            Unsigned32,
+        ibWlanMtVcpuUsage
+            Unsigned32,
+        ibWlanMtVcpuRx
+            Counter64,
+        ibWlanMtVcpuTx
+            Counter64,
+        ibWlanMtVcpuDrop
+            Counter64
+    }
+
+ibWlanMtVcpuID OBJECT-TYPE
+    SYNTAX Unsigned32 (0..255)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Represents the Id of the VCpu."
+    ::= { ibWlanMtVCpuInfoEntry 1 }
+
+ibWlanMtVcpuUsage OBJECT-TYPE
+    SYNTAX Unsigned32 (0..100)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Represents the usage of the VCpu."
+    ::= { ibWlanMtVCpuInfoEntry 2 }
+
+ibWlanMtVcpuRx OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Represents the number of packets whitch vcpu has recieved."
+    ::= { ibWlanMtVCpuInfoEntry 3 }
+
+ibWlanMtVcpuTx OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Represents the number of packets whitch vcpu has transmitted."
+    ::= { ibWlanMtVCpuInfoEntry 4 }
+
+ibWlanMtVcpuDrop OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Represents the number of packets whitch vcpu has Dropped."
+    ::= { ibWlanMtVCpuInfoEntry 5 }
+
+ibWlanMtFrameToCpu OBJECT IDENTIFIER ::= { ibWlanMt 2 }
+
+ibWlanMtToCpuTxFrameCnt OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total packets send to cpu successfully."
+    ::= { ibWlanMtFrameToCpu 1 }
+
+ibWlanMtToCpuDropFrameCnt OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total packets send to cpu failed."
+    ::= { ibWlanMtFrameToCpu 2 }
+
+END

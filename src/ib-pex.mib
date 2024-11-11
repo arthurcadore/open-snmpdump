@@ -1,0 +1,412 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Port Extender (PEX) information MIB
+-- Reference:
+-- Version: V1.2
+-- History:
+--   V1.0 2012-11-12 Initial version by Yang Fan
+--   V1.1 2014-03-31 Changed MIB node name to PEX by zushuzhi
+--   V1.2 2015-10-15 Added ibPexDeviceInfoTable and ibPexTopoTable
+--                   by zushuzhi
+-- ============================================================================
+IB-PEX-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    entPhysicalIndex, entPhysicalDescr
+        FROM ENTITY-MIB
+    Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    RowStatus, DisplayString
+        FROM SNMPv2-TC;
+
+ibPex MODULE-IDENTITY
+    LAST-UPDATED "201510151129Z"        -- 15th October, 2015 at 11:29 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB is used to manage Port Extender (PEX)
+         information.  This MIB is applicable to products that support PEX."
+    REVISION "201510151129Z"
+    DESCRIPTION
+        "Added ibPexDeviceInfoTable and ibPexTopoTable."
+    REVISION "201211121129Z"
+    DESCRIPTION
+        "Initial version of this MIB module."
+    ::= { ibCommon 129 }
+
+-- PEX Specification Information
+
+ibPexSpecInfo OBJECT IDENTIFIER ::= { ibPex 1 }
+
+ibPexPortMinId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Lowest PEX port ID that can be used to uniquely identify a PEX port."
+    ::= { ibPexSpecInfo 1 }
+
+ibPexPortMaxId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Highest PEX port ID that can be used to uniquely identify a PEX port."
+    ::= { ibPexSpecInfo 2 }
+
+ibPexMinAssociateId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Lowest ID that can be assigned to a port extender (PEX)."
+    ::= { ibPexSpecInfo 3 }
+
+ibPexMaxAssociateId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Highest ID that can be assigned to a PEX."
+    ::= { ibPexSpecInfo 4 }
+
+ibPexMaxPortPerPexPort OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of ports that can be bound to a PEX port."
+    ::= { ibPexSpecInfo 5 }
+
+-- PEX Information
+
+ibPexTable OBJECT IDENTIFIER ::= { ibPex 2 }
+
+ibPexPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPexPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects used to configure the PEX ports."
+    ::= { ibPexTable 1 }
+
+ibPexPortEntry OBJECT-TYPE
+    SYNTAX      IbPexPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a PEX."
+    INDEX
+        {
+            ibPexPortId
+        }
+    ::= { ibPexPortTable 1 }
+
+IbPexPortEntry ::= SEQUENCE
+    {
+        ibPexPortId               Integer32,
+        ibPexPortAssociateId      Integer32,
+        ibPexPortEntPhysicalIndex Integer32,
+        ibPexPortDescr            DisplayString,
+        ibPexPortStatus           INTEGER,
+        ibPexPortRowStatus        RowStatus
+    }
+
+ibPexPortId OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "ID that can be used to uniquely identify a PEX port.  The value range
+        is ibPexPortMinId to ibPexPortMaxId."
+    ::= { ibPexPortEntry 1 }
+
+ibPexPortAssociateId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "ID assigned to a PEX.  The
+        value range is ibPexMinAssociateId to ibPexMaxAssociateId.
+        The value is 0xffff if the PEX is not assigned an ID.
+        For a successful configuration, the ID should not be used by any
+        other PEX."
+    DEFVAL { 65535 }
+    ::= { ibPexPortEntry 2 }
+
+ibPexPortEntPhysicalIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Entity index of a PEX in the IRF.  A value of zero
+         indicates that the PEX is not online."
+    DEFVAL { 0 }
+    ::= { ibPexPortEntry 3 }
+
+ibPexPortDescr OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..79))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Description for the PEX port.  The default value is
+        'pex-port XXXX', where 'XXXX' is ibPexPortId.
+        Writing a zero-length string to this object resets the value to the
+        default."
+    ::= { ibPexPortEntry 4 }
+
+ibPexPortStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            offline(1),
+            loading(2),
+            online(3)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Status of the PEX.
+        offline: The PEX is absent or its configuration is incomplete.
+        loading: The PEX is loading software.
+        online: The PEX is operating correctly."
+    DEFVAL { offline }
+    ::= { ibPexPortEntry 5 }
+
+ibPexPortRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The control that allows creation and deletion of entries.
+        Values include createAndGo, active, and destroy.
+        If the row to be created or modified already exists,
+        an error message is returned.  If the row to be deleted does not exist,
+        a success message is returned."
+    ::= { ibPexPortEntry 6 }
+
+
+-- PEX PhyPort Information
+
+ibPexPhyPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPexPhyPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects used to manage physical ports
+        that can be bound or are already bound to a PEX port."
+    ::= { ibPexTable 2 }
+
+ibPexPhyPortEntry OBJECT-TYPE
+    SYNTAX      IbPexPhyPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a physical port that can be bound to or
+        has been bound to a PEX port."
+    INDEX
+        {
+            entPhysicalIndex
+        }
+    ::= { ibPexPhyPortTable 1 }
+
+IbPexPhyPortEntry ::= SEQUENCE
+    {
+        ibPexPhyPortStatus           INTEGER,
+        ibPexPhyPortBelongToPexPort  Integer32,
+        ibPexPhyPortNeighborEntIndex Integer32
+    }
+
+ibPexPhyPortStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            unknown(1),
+            down(2),
+            blocked(3),
+            forwarding(4)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Status of the physical port that is bound to a PEX port.
+        The following are status values:
+        unknown: The physical port is not bound to any PEX port.
+        down: The physical port is link down.
+        blocked: The physical port is blocked and cannot forward traffic.
+        forwarding: The physical port can forwarding traffic."
+    DEFVAL { unknown }
+    ::= { ibPexPhyPortEntry 1 }
+
+ibPexPhyPortBelongToPexPort OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "ID of the PEX port to which the physical port belongs.  The value
+        range is ibPexPortMinId to ibPexPortMaxId.  A value of zero
+        indicates that the port doesn't belong to any PEX port."
+    DEFVAL { 0 }
+    ::= { ibPexPhyPortEntry 2 }
+
+ibPexPhyPortNeighborEntIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Entity index of a physical port that connects the PEX to the parent
+        device.  This value is identical to entPhysicalIndex in ENTITY-MIB.
+        A value of zero indicates that the physical port is not bound to any
+        PEX port or is not up."
+    ::= { ibPexPhyPortEntry 3 }
+
+-- PEX Topology Information
+ibPexDeviceInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPexDeviceInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains online PEXs in the IRF system."
+    ::= { ibPexTable 3 }
+
+ibPexDeviceInfoEntry OBJECT-TYPE
+    SYNTAX      IbPexDeviceInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a PEX in the IRF system.  The index is the PEX
+        entity index."
+    INDEX
+        {
+            entPhysicalIndex
+        }
+    ::= { ibPexDeviceInfoTable 1 }
+
+IbPexDeviceInfoEntry ::= SEQUENCE
+    {
+        ibPexDeviceStatus           INTEGER,
+        ibPexDeviceAssociateId      Integer32
+    }
+
+ibPexDeviceStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            normal(1),
+            faulty(2)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Status of the PEX.
+        normal: The PEX is operating correctly.
+        faulty: The PEX is faulty."
+    ::= { ibPexDeviceInfoEntry 1 }
+
+ibPexDeviceAssociateId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "ID assigned to the PEX."
+    ::= { ibPexDeviceInfoEntry 2 }
+
+ibPexTopoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPexTopoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains information about the PEX physical ports and
+        neighbor ports on PEXs."
+    ::= { ibPexTable 4 }
+
+ibPexTopoEntry OBJECT-TYPE
+    SYNTAX      IbPexTopoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a PEX link."
+    INDEX
+        {
+            entPhysicalIndex
+        }
+    ::= { ibPexTopoTable 1 }
+
+IbPexTopoEntry ::= SEQUENCE
+    {
+        ibPexNeighborEntIndex Integer32
+    }
+
+ibPexNeighborEntIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Entity index of a PEX in the IRF system."
+    ::= { ibPexTopoEntry 1 }
+
+-- PEX Traps
+
+ibPexTraps OBJECT IDENTIFIER ::= { ibPex 3 }
+
+ibPexTrapPrefix OBJECT IDENTIFIER ::= { ibPexTraps 0 }
+
+ibPexPortOnline  NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibPexPortId,
+            ibPexPortDescr
+        }
+    STATUS      current
+    DESCRIPTION
+        "An ibPexPortOnline trap is sent when the PEX transitions to
+        online state."
+    ::= { ibPexTrapPrefix 1 }
+
+ibPexPortOffline  NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibPexPortId,
+            ibPexPortDescr
+        }
+    STATUS      current
+    DESCRIPTION
+        "An ibPexPortOnline trap is sent when the PEX transitions to
+        offline state."
+    ::= { ibPexTrapPrefix 2 }
+
+ibPexPhyPortForwarding  NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibPexEntPhysicalIndexBind,
+            entPhysicalDescr
+        }
+    STATUS      current
+    DESCRIPTION
+        "An ibPexPhyPortForwarding trap is sent when the PEX physical port
+        transitions to forwarding state."
+    ::= { ibPexTrapPrefix 3 }
+
+ibPexPhyPortBlocked  NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibPexEntPhysicalIndexBind,
+            entPhysicalDescr
+        }
+    STATUS      current
+    DESCRIPTION
+        "An ibPexPhyPortBlocked trap is sent when the PEX physical port
+        transitions from forwarding state to blocked state."
+    ::= { ibPexTrapPrefix 4 }
+
+ibPexTrapObjects OBJECT IDENTIFIER ::= { ibPex 4 }
+
+ibPexEntPhysicalIndexBind OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS     current
+    DESCRIPTION
+        "This index is identical to entPhysicalIndex in ENTITY-MIB."
+    ::= { ibPexTrapObjects 1 }
+END

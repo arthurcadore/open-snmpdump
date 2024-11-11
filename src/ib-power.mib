@@ -1,0 +1,168 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: This file describes the ib MIB implementation of
+--              redundancy power and fan
+-- Reference: 
+-- Version: V2.0
+-- History: 
+-- V2.0 2004-10-12 updated by gaolong
+--      Add MODULE-IDENTITY clause.
+--      Re-write with SMIv2 syntax.
+--      Re-write IMPORTS clause.
+-- ==================================================================
+
+IB-REDUNDANCY-POWER-MIB DEFINITIONS ::= BEGIN
+-- From file: "redundancy_power.mib"
+
+IMPORTS  
+    NOTIFICATION-TYPE, OBJECT-TYPE, MODULE-IDENTITY
+        FROM SNMPv2-SMI  
+    ibmlsr
+        FROM IB-OID-MIB;
+
+    ibredundancyPower MODULE-IDENTITY
+        LAST-UPDATED "200112200000Z"	
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION 
+                " "
+        ::= { ibmlsr 4 }
+
+ibredundancyFan    OBJECT IDENTIFIER ::= { ibmlsr 5 }
+
+ibredundancyPowerTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbRedundancyPowerEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The table describles the attributes of every power unit.
+        "
+    ::= { ibredundancyPower 1 }
+
+ibredundancyPowerEntry OBJECT-TYPE
+    SYNTAX IbRedundancyPowerEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry contains the attributes 
+        associated with a single power unit entity."
+    INDEX { ibredundancyPowerID }
+    ::= { ibredundancyPowerTable 1 }
+
+IbRedundancyPowerEntry ::= SEQUENCE {
+    ibredundancyPowerID 	        INTEGER,
+    ibredundancyPowerStatus 	INTEGER,
+    ibredundancyPowerPreviousStatus 	INTEGER
+     }
+
+ibredundancyPowerID OBJECT-TYPE
+    SYNTAX INTEGER 
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The identify of power uinit.
+        This is also the index of this table."
+    ::= { ibredundancyPowerEntry 1 }
+
+ibredundancyPowerStatus OBJECT-TYPE
+    SYNTAX INTEGER{
+                   space(1),
+                   normal(2),
+                   fail(3)
+                  } 
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The status of every redundancy power unit.
+        if power unit doesn't exists, take the value 'space';
+        if power unit is present and normal, take the value 'narmal'
+        if power unit is present but fail, take the value 'fail'"
+    ::= { ibredundancyPowerEntry 2 }
+
+ibredundancyPowerPreviousStatus OBJECT-TYPE
+    SYNTAX INTEGER{
+                   space(1),
+                   normal(2),
+                   fail(3)
+                  } 
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The last status of every redundancy power unit "
+    ::= { ibredundancyPowerEntry 3 }
+
+
+
+ibredundancyFanTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbRedundancyFanEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The table describles the attributes of every power unit.
+        "
+    ::= { ibredundancyFan 1 }
+
+ibredundancyFanEntry OBJECT-TYPE
+    SYNTAX IbRedundancyFanEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry contains the attributes 
+        associated with a single power unit entity."
+    INDEX { ibredundancyFanID }
+    ::= { ibredundancyFanTable 1 }
+
+IbRedundancyFanEntry ::= SEQUENCE {
+    ibredundancyFanID 	        INTEGER,
+    ibredundancyFanStatus 	INTEGER
+     }
+
+ibredundancyFanID OBJECT-TYPE
+    SYNTAX INTEGER 
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The identify of power uinit.
+        This is also the index of this table."
+    ::= { ibredundancyFanEntry 1 }
+
+ibredundancyFanStatus OBJECT-TYPE
+    SYNTAX INTEGER{
+                   normal(1),
+                   fail(2)                   
+                  } 
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The status of every redundancy power unit.
+        if power unit doesn't exists, take the value 'space';
+        if power unit is present and normal, take the value 'narmal'
+        if power unit is present but fail, take the value 'fail'"
+    ::= { ibredundancyFanEntry 2 }
+
+
+ibpowerTraps OBJECT IDENTIFIER ::= { ibredundancyPower 2 }
+
+ibpowerStatusChangedTrap NOTIFICATION-TYPE
+     OBJECTS { ibredundancyPowerID,ibredundancyPowerStatus,ibredundancyPowerPreviousStatus}
+     STATUS  current
+     DESCRIPTION
+	"This trap is generated when the satus of a power unit is changed."
+    ::= { ibpowerTraps 1 }
+
+
+ibfanTraps OBJECT IDENTIFIER ::= { ibredundancyFan 2 }
+
+ibfanStatusChangedTrap NOTIFICATION-TYPE
+     OBJECTS { ibredundancyFanID,ibredundancyFanStatus}
+     STATUS  current
+     DESCRIPTION
+	"This trap is generated when the satus of a power unit is changed."
+    ::= { ibfanTraps 1 }
+
+
+END
+

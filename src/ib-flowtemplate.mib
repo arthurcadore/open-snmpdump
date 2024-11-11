@@ -1,0 +1,410 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Flowtemplate Management Information Base.
+-- Reference: 
+-- Version: 1.0
+-- History:
+-- V1.0 created by tangshun.
+-- ============================================================================
+IB-FLOWTEMPLATE-MIB DEFINITIONS ::= BEGIN
+
+        IMPORTS
+            ibCommon
+                FROM IB-OID-MIB
+            ifIndex
+                FROM RFC1213-MIB
+            Integer32, OBJECT-TYPE, MODULE-IDENTITY
+                FROM SNMPv2-SMI
+            RowStatus, MacAddress
+                FROM SNMPv2-TC;
+
+--
+-- Nodes definitions
+--
+        ibFlowTemplate MODULE-IDENTITY 
+            LAST-UPDATED "200511241320Z"    -- Nov 24, 2005 at 13:20 GMT
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION 
+                "Flow template management information base."
+            ::= { ibCommon 64 }
+
+        ibFlowTemplateMibObject OBJECT IDENTIFIER ::= { ibFlowTemplate 1 }
+
+        ibFTConfigGroup OBJECT IDENTIFIER ::= { ibFlowTemplateMibObject 1 }
+
+        ibFTGroupNextIndex OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This object contains an appropriate value to be used for ibFTGroupIndex 
+                 when creating rows in the ibFTGroupTable.  If it is 2147483647, 
+                 it denotes that ibFTGroupTable can't create any instance. 
+                "
+            ::= { ibFTConfigGroup 1 }    
+
+        ibFTGroupTable OBJECT-TYPE   
+            SYNTAX SEQUENCE OF IbFTGroupEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "A table of flow template group.
+                 A flow template group, which is applied to interface,
+                 must use ibFTGroupTable to create a instance 
+                 and ibFTBasicGroupTable or ibFTExtendGroupTable 
+                 to configure flow template's need item.
+                 A basic flow template must use ibFTBasicGroupTable 
+                 to configure some basic flow template's need item, 
+                 such as: address, protocol, priority.
+                 A extend flow template must use ibFTExtendGroupTable
+                 to configure packet's type and offset and length.
+                "
+            ::= { ibFTConfigGroup 2 }
+
+        ibFTGroupEntry OBJECT-TYPE
+            SYNTAX IbFTGroupEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Flow template group information."
+            INDEX { ibFTGroupIndex }
+            ::= { ibFTGroupTable 1 }
+
+        IbFTGroupEntry ::=
+            SEQUENCE
+            {
+                ibFTGroupIndex
+                    Integer32,
+                ibFTGroupName
+                    OCTET STRING,
+                ibFTGroupType
+                    INTEGER,
+                ibFTGroupRowStatus
+                    RowStatus
+            }
+
+        ibFTGroupIndex OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Flow template group index."
+            ::= { ibFTGroupEntry 1 }
+
+        ibFTGroupName OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE(1..31))
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Flow template group name."
+            ::= { ibFTGroupEntry 2 }
+
+        ibFTGroupType OBJECT-TYPE
+            SYNTAX INTEGER 
+            {
+                basic(1),
+                extend(2)
+            }
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Type of flow template."
+            ::= { ibFTGroupEntry 3 }
+
+        ibFTGroupRowStatus OBJECT-TYPE
+            SYNTAX RowStatus
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "RowStatus."
+            ::= { ibFTGroupEntry 4 }
+--
+--nodes of ibFTBasicGroupTable
+--
+        ibFTBasicGroupTable OBJECT-TYPE   
+            SYNTAX SEQUENCE OF IbFTBasicGroupEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "A table of basic flow template group."
+            ::= { ibFTConfigGroup 3 }
+
+        ibFTBasicGroupEntry OBJECT-TYPE
+            SYNTAX IbFTBasicGroupEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Basic flow template group information."
+            INDEX { ibFTGroupIndex }
+            ::= { ibFTBasicGroupTable 1 }
+
+        IbFTBasicGroupEntry ::=
+            SEQUENCE
+            {
+                ibFTBasicGroupAddressType
+                    BITS,
+                ibFTBasicGroupPriorityType
+                    BITS,
+                ibFTBasicGroupProtocolType
+                    BITS,
+                ibFTBasicGroupSMacWildCard
+                    MacAddress,
+                ibFTBasicGroupDMacWildCard
+                    MacAddress,
+                ibFTBasicGroupRowStatus
+                    RowStatus
+            }
+
+        ibFTBasicGroupAddressType OBJECT-TYPE
+            SYNTAX BITS
+            {
+                sourceIpv4Address(0),
+                destIPv4Address(1),
+                sourceIPv6Address(2),
+                destIPv6Address(3),
+                sourceMacAddress(4),
+                destMacAddress(5)
+            }
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Type of MAC and IP address.
+                 This is a bit-map of possible conditions.
+                 The various bit positions are:
+                 sourceIpv4Address    source IPv4's address    
+                 destIPv4Address      destination IPv4's address
+                 sourceIPv6Address    source IPv6 address
+                 destIPv6Address      destination IPv6 address
+                 sourceMacAddress     source MAC address
+                 destMacAddress       destination MAC address
+                "
+            ::= { ibFTBasicGroupEntry 1 }
+
+        ibFTBasicGroupPriorityType OBJECT-TYPE
+            SYNTAX BITS
+            {
+                vlanID(0),
+                cos(1),
+                topVlanID(2),
+                topCos(3),
+                fragment(4),
+                tcpFlag(5),
+                tos(6),
+                dscp(7),
+                ipprecedence(8)
+            }
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Type of priority.
+                 This is a bit-map of possible conditions.
+                 The various bit positions are:
+                 vlanID         VlanID
+                 cos            802.1p priority
+                 topVlanID      VlanID of top layer
+                 topCos         802.1p priority of top layer
+                 fragment       fragment
+                 tcpFlag        TCP flag
+                 tos            type of service
+                 dscp           DSCP
+                 ipprecedence   IP precedence
+                "
+            ::= { ibFTBasicGroupEntry 2 }
+
+        ibFTBasicGroupProtocolType OBJECT-TYPE
+            SYNTAX BITS
+            {
+                l2Potocol(0),
+                ipv4L3Protocol(1),
+                ipv6L3Protocol(2),
+                icmpProtocolType(3),
+                icmpProtocolCode(4),
+                icmpv6ProtocolType(5),
+                icmpv6ProtocolCode(6),
+                sourceL4Port(7),
+                destL4Port(8)
+            }
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Type of protocol.
+                 This is a bit-map of possible conditions.
+                 The various bit positions are:
+                 l2Potocol               layer 2 protocol
+                 ipv4L3Protocol          layer 3 protocol of IPv4 
+                 ipv6L3Protocol          layer 3 protocol of IPv6
+                 icmpProtocolType        Type of ICMP protocol of IPv4
+                 icmpProtocolCode        Code of ICMP protocol of IPv4
+                 icmpv6ProtocolType      Type of ICMP protocol of IPv6
+                 icmpv6ProtocolCode      Code of ICMP protocol of IPv6
+                 sourceL4Port            port of layer 4 of source
+                 destL4Port              port of layer 4 of destination
+                "
+            ::= { ibFTBasicGroupEntry 3 }
+
+        ibFTBasicGroupSMacWildCard OBJECT-TYPE
+            SYNTAX MacAddress
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Source MAC address field in Ethernet packet head."
+            ::= { ibFTBasicGroupEntry 4 }
+
+        ibFTBasicGroupDMacWildCard OBJECT-TYPE
+            SYNTAX MacAddress
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Destination MAC address field in Ethernet packet head."
+            ::= { ibFTBasicGroupEntry 5 }
+
+        ibFTBasicGroupRowStatus OBJECT-TYPE
+            SYNTAX RowStatus
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "RowStatus."
+            ::= { ibFTBasicGroupEntry 6 }
+--
+--nodes of ibFTExtendGroupTable
+--
+        ibFTExtendGroupTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbFTExtendGroupEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "A table of extend flow template group information."
+            ::= { ibFTConfigGroup 4 }
+
+        ibFTExtendGroupEntry OBJECT-TYPE
+            SYNTAX IbFTExtendGroupEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Extend flow template group information entry."
+            INDEX { ibFTGroupIndex, ibFTExtendGroupOffsetType }
+            ::= { ibFTExtendGroupTable 1 }
+
+        IbFTExtendGroupEntry ::=
+            SEQUENCE
+            {
+                ibFTExtendGroupOffsetType
+                    INTEGER,
+                ibFTExtendGroupOffsetMaxValue
+                    Integer32,
+                ibFTExtendGroupLengthMaxValue
+                    Integer32,
+                ibFTExtendGroupRowStatus
+                    RowStatus
+            }
+
+        ibFTExtendGroupOffsetType OBJECT-TYPE
+            SYNTAX INTEGER
+            {
+                start(1),
+                mpls(2),
+                l2(3),
+                l4(4),
+                l5(5),
+                ipv4(6),
+                ipv6(7)
+            }
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Offset type of the packet.
+                 start    Offset from the start of the packet
+                 mpls     Offset from the head of MPLS
+                 l2       Offset from the head of the L2 frame
+                 l4       Offset from the head of L4 packet
+                 l5       Offset from the head of the L5 packet
+                 ipv4     Offset from the head of the IPv4 packet
+                 ipv6     Offset from the head of the IPv6 packet
+                "
+            ::= { ibFTExtendGroupEntry 1 }
+
+        ibFTExtendGroupOffsetMaxValue OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The max value of offset."
+            ::= { ibFTExtendGroupEntry 2 }    
+
+        ibFTExtendGroupLengthMaxValue OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The max value of length."
+            ::= { ibFTExtendGroupEntry 3 }
+
+        ibFTExtendGroupRowStatus OBJECT-TYPE
+            SYNTAX RowStatus
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "RowStatus."
+            ::= { ibFTExtendGroupEntry 4 }
+
+--
+--nodes of ibFTApplyGroup
+--
+        ibFTApplyGroup OBJECT IDENTIFIER ::= { ibFlowTemplateMibObject 2 }
+
+        ibFTIfApplyTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbFTIfApplyEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "A table of any interface with flowtemplate.
+                 A flow template, which will be applied interface,
+                 is an instance at ibFTGroupTable 
+                 and ibFTBasicGroupTable or ibFTExtendGroupTable.
+                 A basic flow template is an instance at ibFTGroupTable 
+                 and ibFTBasicGroupTable, and the instance's RowStatus 
+                 must be 'active' at each table.
+                 A extend flow template is an instance at ibFTGroupTable
+                 and ibFTExtendGroupTable, and the instance's RowStatus 
+                 must be 'active' at each table.  
+                "
+            ::= { ibFTApplyGroup 1 }
+
+        ibFTIfApplyEntry OBJECT-TYPE
+            SYNTAX IbFTIfApplyEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Any interface with flowtemplate information." 
+            INDEX { ifIndex, ibFTGroupIndex }
+            ::= { ibFTIfApplyTable 1 } 
+
+        IbFTIfApplyEntry ::=
+            SEQUENCE
+            {
+                ibFTIfApplyGroupName
+                    OCTET STRING,
+                ibFTIfApplyRowStatus
+                    RowStatus
+            }
+
+        ibFTIfApplyGroupName OBJECT-TYPE
+            SYNTAX OCTET STRING
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The name of flow template."
+            ::= { ibFTIfApplyEntry 1 }
+
+        ibFTIfApplyRowStatus OBJECT-TYPE
+            SYNTAX RowStatus
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "RowStatus."
+            ::= { ibFTIfApplyEntry 2 }
+END 

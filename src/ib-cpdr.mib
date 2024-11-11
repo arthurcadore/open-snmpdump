@@ -1,0 +1,120 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- Description:  Control Plane disaster recovery Information MIB.
+--               include :1.CPDR statistics information
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2020-11-13 created by tanjidong
+-- ============================================================================
+IB-CPDR-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC;
+
+ibCpdr MODULE-IDENTITY
+    LAST-UPDATED "202011130000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The latest baseline."
+    REVISION "202011130000Z"
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 199 }
+
+--
+-- Node definitions
+--
+--
+-- Definitions of significant branches
+--
+ibCpdrObjects         OBJECT IDENTIFIER  ::= { ibCpdr 1 }
+ibCpdrGroup           OBJECT IDENTIFIER  ::= { ibCpdrObjects 1 }
+
+--
+-- The ibCpdrGroupTable table
+--
+
+ibCpdrGroupTable  OBJECT-TYPE
+    SYNTAX        SEQUENCE OF IbCpdrGroupEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "A table containing control plane disaster recovery group specific variables
+        for this cp disaster recovery implementation."
+    ::= { ibCpdrGroup 1 }
+
+ibCpdrGroupEntry  OBJECT-TYPE
+    SYNTAX        IbCpdrGroupEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "Basic information about a particular control plane disaster recovery group."
+    INDEX     {IMPLIED ibCpdrGroupName }
+    ::= { ibCpdrGroupTable 1 }
+
+IbCpdrGroupEntry ::= SEQUENCE {
+    ibCpdrGroupName
+        DisplayString,
+    ibCpdrGroupRole
+        INTEGER,
+    ibCpdrMode
+        INTEGER
+    }
+
+ibCpdrGroupName  OBJECT-TYPE
+    SYNTAX        DisplayString (SIZE (1..32))
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The control plane disaster recovery group name."
+    ::= { ibCpdrGroupEntry 1 }
+
+ibCpdrGroupRole  OBJECT-TYPE
+    SYNTAX        INTEGER
+        {
+            invalid (1),
+            master (2),
+            standBy (3)
+        }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The control plane disaster recovery group role."
+    ::= { ibCpdrGroupEntry 2 }
+
+ibCpdrMode  OBJECT-TYPE
+    SYNTAX        INTEGER
+        {
+            hot (1),
+            cold (2)
+        }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The control plane disaster recovery group mode."
+    ::= { ibCpdrGroupEntry 3 }
+
+ibCpdrTraps      OBJECT IDENTIFIER  ::= { ibCpdr 2 }
+ibCpdrTrapsPrefix OBJECT IDENTIFIER ::= { ibCpdrTraps 0 }
+
+--
+-- The ibCpdrTraps trap
+--
+
+ibCpdrTrapRoleChange NOTIFICATION-TYPE
+    OBJECTS { ibCpdrGroupName,
+               ibCpdrGroupRole }
+    STATUS  current
+    DESCRIPTION
+        "This trap is generated when the role of control plane disaster recovery group changes."
+    ::= { ibCpdrTrapsPrefix 1 }
+
+END

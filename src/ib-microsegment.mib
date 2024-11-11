@@ -1,0 +1,351 @@
+-- =========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The MIB file is used for management of
+--              microsementation information.
+-- Reference:
+-- Version: 1.0
+-- History:
+-- V1.0 Initial version, created by lizhaocheng.
+-- ==========================================================================
+IB-MICROSEGMENT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Integer32, IpAddress, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    InetAddressPrefixLength
+        FROM INET-ADDRESS-MIB;
+
+ibMicroSegment MODULE-IDENTITY
+    LAST-UPDATED "202211141547Z"        --Nov 14, 2022 at 15:47 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB contains objects to manage configuration and
+         monitor running state for microsegmentation feature.
+
+            *********************************
+                    MIB Tables
+            **********************************
+         This MIB consists of the following tables:
+            1 :  ibMSegNotifications
+            2 :  ibMSegObjects
+        "
+    REVISION "202211141547Z"        --Nov 14, 2022 at 15:47 GMT
+    DESCRIPTION
+        "Initial revision.
+         Add ibMSegNotifications.
+         Add ibMSegObjects."
+    ::= { ibCommon 258 }
+
+--
+-- direction
+--
+IbMSegDirection ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "Inbound or outbound."
+    SYNTAX INTEGER
+    {
+        inbound(1),
+        outbound(2)
+    }
+
+--
+-- micseg apply type
+--
+IbMSegApplyObjType ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "Type of apply microsegment."
+    SYNTAX INTEGER
+    {
+        mqc(1),
+        pfilter(2),
+        pbr(3),
+        portal(4),
+        telemetryStream(5),
+        mod(6),
+        netStream(7),
+        other(8)
+    }
+
+--
+-- Top level structure
+--
+
+ibMSegNotifications  OBJECT IDENTIFIER ::= { ibMicroSegment 0 }
+ibMSegObjects        OBJECT IDENTIFIER ::= { ibMicroSegment 1 }
+
+--
+-- type definitions
+--
+-- Notification Objects
+--
+ibMSegNotifyVarObjects OBJECT IDENTIFIER ::= { ibMSegObjects 1 }
+
+ibMSegNotifyIPAddress OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "IPv4 address."
+    ::= { ibMSegNotifyVarObjects 1 }
+
+ibMSegNotifyIPMask OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Mask of IPv4 address."
+    ::= { ibMSegNotifyVarObjects 2 }
+
+ibMSegNotifyVpnInstanceName OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(1..31))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The VPN instance of microsegment member."
+    ::= { ibMSegNotifyVarObjects 3 }
+
+ibMSegNotifySegmentID OBJECT-TYPE
+    SYNTAX Integer32 (1..65535)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+
+    DESCRIPTION
+        "microsegment ID."
+    ::= { ibMSegNotifyVarObjects 4 }
+
+ibMSegNotifySlotID OBJECT-TYPE
+    SYNTAX Integer32 (0..65534)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The slot number."
+    ::= { ibMSegNotifyVarObjects 5 }
+
+ibMSegNotifyIPv6Address OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(0..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "IPv6 address."
+    ::= { ibMSegNotifyVarObjects 6 }
+
+ibMSegNotifyIPv6Mask OBJECT-TYPE
+    SYNTAX InetAddressPrefixLength
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The length of the prefix (in bits) associated with
+        the IPv6 address of this entry."
+    ::= { ibMSegNotifyVarObjects 7 }
+
+ibMSegNotifyIfName OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(1..47))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The interface name."
+    ::= { ibMSegNotifyVarObjects 8 }
+
+ibMSegNotifyDirection OBJECT-TYPE
+    SYNTAX IbMSegDirection
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Direction."
+    ::= { ibMSegNotifyVarObjects 9 }
+
+ibMSegNotifySrcSegmentID OBJECT-TYPE
+    SYNTAX Integer32 (1..65535)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "source microsegment ID."
+    ::= { ibMSegNotifyVarObjects 10 }
+
+ibMSegNotifyDstSegmentID OBJECT-TYPE
+    SYNTAX Integer32 (1..65535)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "destination microsegment ID."
+    ::= { ibMSegNotifyVarObjects 11 }
+
+ibMSegNotifyProtocol OBJECT-TYPE
+    SYNTAX Integer32 (0..255)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The protocol index."
+    ::= { ibMSegNotifyVarObjects 12 }
+
+ibMSegNotifySrcPort OBJECT-TYPE
+    SYNTAX Integer32 (0..65535)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "source port."
+    ::= { ibMSegNotifyVarObjects 13 }
+
+ibMSegNotifyDstPort OBJECT-TYPE
+    SYNTAX Integer32 (0..65535)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "destination port."
+    ::= { ibMSegNotifyVarObjects 14 }
+
+ibMSegApplyType OBJECT-TYPE
+    SYNTAX IbMSegApplyObjType
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Direction."
+    ::= { ibMSegNotifyVarObjects 15 }
+
+--
+-- MicoSegment notifications
+--
+ibMSegMemAlarm NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibMSegNotifyIPAddress,
+        ibMSegNotifyIPMask,
+        ibMSegNotifyVpnInstanceName,
+        ibMSegNotifySegmentID,
+        ibMSegNotifySlotID
+    }
+    STATUS current
+    DESCRIPTION
+        "Failed to add microsegment member."
+    ::= { ibMSegNotifications 1 }
+
+ibMSegMemAlarmRecover NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibMSegNotifyIPAddress,
+        ibMSegNotifyIPMask,
+        ibMSegNotifyVpnInstanceName,
+        ibMSegNotifySegmentID,
+        ibMSegNotifySlotID
+    }
+    STATUS current
+    DESCRIPTION
+        "recovered to add microsegment member."
+    ::= { ibMSegNotifications 2 }
+
+ibMSegMemIPv6Alarm NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibMSegNotifyIPv6Address,
+        ibMSegNotifyIPv6Mask,
+        ibMSegNotifyVpnInstanceName,
+        ibMSegNotifySegmentID,
+        ibMSegNotifySlotID
+    }
+    STATUS current
+    DESCRIPTION
+        "Failed to add microsegment ipv6 member."
+    ::= { ibMSegNotifications 3 }
+
+ibMSegMemIPv6AlarmRecover NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibMSegNotifyIPv6Address,
+        ibMSegNotifyIPv6Mask,
+        ibMSegNotifyVpnInstanceName,
+        ibMSegNotifySegmentID,
+        ibMSegNotifySlotID
+    }
+    STATUS current
+    DESCRIPTION
+        "recovered to add microsegment ipv6 member."
+    ::= { ibMSegNotifications 4 }
+
+ibMSegEnableAlarm NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibMSegNotifySlotID
+    }
+    STATUS current
+    DESCRIPTION
+        "Failed to enable the microsegment."
+    ::= { ibMSegNotifications 5 }
+
+ibMSegEnableAlarmRecover NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibMSegNotifySlotID
+    }
+    STATUS current
+    DESCRIPTION
+        "recovered to enable the microsegment."
+    ::= { ibMSegNotifications 6 }
+
+ibMSegCreateAlarm NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibMSegNotifySegmentID,
+        ibMSegNotifySlotID
+    }
+    STATUS current
+    DESCRIPTION
+        "Failed to add microsegment group."
+    ::= { ibMSegNotifications 7 }
+
+ibMSegCreateAlarmRecover NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibMSegNotifySegmentID,
+        ibMSegNotifySlotID
+    }
+    STATUS current
+    DESCRIPTION
+        "recovered to add microsegment group."
+    ::= { ibMSegNotifications 8 }
+
+ibMSegPolicyAlarm NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibMSegNotifyIfName,
+        ibMSegNotifyDirection,
+        ibMSegNotifySrcSegmentID,
+        ibMSegNotifyDstSegmentID,
+        ibMSegNotifyProtocol,
+        ibMSegNotifySrcPort,
+        ibMSegNotifyDstPort,
+        ibMSegNotifySlotID,
+        ibMSegApplyType
+    }
+    STATUS current
+    DESCRIPTION
+        "recovered to apply the microsegment group."
+    ::= { ibMSegNotifications 9 }
+
+ibMSegPolicyAlarmRecover NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibMSegNotifyIfName,
+        ibMSegNotifyDirection,
+        ibMSegNotifySrcSegmentID,
+        ibMSegNotifyDstSegmentID,
+        ibMSegNotifyProtocol,
+        ibMSegNotifySrcPort,
+        ibMSegNotifyDstPort,
+        ibMSegNotifySlotID,
+        ibMSegApplyType
+    }
+    STATUS current
+    DESCRIPTION
+        "recovered to apply the microsegment group."
+    ::= { ibMSegNotifications 10 }
+END

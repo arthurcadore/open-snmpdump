@@ -1,0 +1,355 @@
+-- =====================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: SAVA MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 2020-06-30
+--     Initial version
+-- =====================================================================
+IB-SAVA-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, Unsigned32, Counter64
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION, TruthValue
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB                         --RFC2863
+    InetVersion,InetAddressType
+        FROM INET-ADDRESS-MIB               --RFC4001
+    Ipv6AddressPrefix
+        FROM IPV6-TC                         --RFC2465
+        ;
+
+
+ibSava MODULE-IDENTITY
+    LAST-UPDATED "202006300000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB module for support configuration and monitoring of SAVA Module."
+    REVISION "202006300000Z"
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 191 }
+
+    IbSavaOwnerString ::= TEXTUAL-CONVENTION
+        DISPLAY-HINT "255a"
+        STATUS       current
+        DESCRIPTION
+           "This data type is used to indicate the subnet. "
+        SYNTAX       OCTET STRING (SIZE(0..255))
+--
+-- Node definitions
+--
+ibSavaObjects OBJECT IDENTIFIER ::= { ibSava 1 }
+
+-- System parameters for SAVA protocol
+
+ibSavaSystemTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbSavaSystemEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "The table containing SAVA system-wide parameters."
+    ::= { ibSavaObjects 1 }
+
+
+ibSavaSystemEntry OBJECT-TYPE
+    SYNTAX     IbSavaSystemEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "An entry containing SAVA system-wide parameters for a
+            particular IP version.
+           "
+    INDEX { ibSavaSystemIPVersion  }
+    ::=   { ibSavaSystemTable 1 }
+
+IbSavaSystemEntry ::=
+    SEQUENCE {
+        ibSavaSystemIPVersion              InetVersion,
+        ibSavaSystemNotify                 TruthValue,
+        ibSavaSystemNotifyInterval         Unsigned32,
+        ibSavaSystemNotifyNumber           Unsigned32
+    }
+
+ibSavaSystemIPVersion OBJECT-TYPE
+    SYNTAX     InetVersion
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "The IP version. "
+    ::= { ibSavaSystemEntry 1 }
+
+
+ibSavaSystemNotify OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+          "An log switch for spoofing Notify.
+            true, the attribute is set.
+            false, the attribute is not set.
+          "
+    ::= { ibSavaSystemEntry 2 }
+
+ibSavaSystemNotifyInterval OBJECT-TYPE
+    SYNTAX     Unsigned32 (0|5..3600)
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+          "Interval for log.0, 5 to 3600s.
+          "
+    ::= { ibSavaSystemEntry 3 }
+
+
+ibSavaSystemNotifyNumber OBJECT-TYPE
+    SYNTAX     Unsigned32 (1..128)
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+          "Number of spoofing notify: 1~128.
+          "
+    ::= { ibSavaSystemEntry 4 }
+
+-- interface parameters for SAVA
+
+ibSavaIfTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbSavaIfEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "The table containing SAVA parameters of each interface."
+    ::= { ibSavaObjects 2 }
+
+ibSavaIfEntry OBJECT-TYPE
+    SYNTAX     IbSavaIfEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "An entry containing SAVA running parameters of an interface."
+    INDEX {
+            ibSavaIfIPVersion,
+            ibSavaIfIndex
+          }
+    ::= { ibSavaIfTable 1 }
+
+
+IbSavaIfEntry ::=
+    SEQUENCE {
+        ibSavaIfIPVersion          InetVersion,
+        ibSavaIfIndex              InterfaceIndex,
+        ibSavaIfEnable             TruthValue,
+        ibSavaIfRemoteRoutetag     Unsigned32,
+        ibSavaIfAccessSubnet       IbSavaOwnerString
+    }
+
+ibSavaIfIPVersion      OBJECT-TYPE
+    SYNTAX     InetVersion
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "The IP version. "
+    ::= { ibSavaIfEntry 1 }
+
+ibSavaIfIndex  OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "The index value that uniquely identifies the interface to
+            which this entry is applicable.  The interface identified by
+            a particular value of this index is the same interface as
+            identified by the same value of the IF-MIB's ifIndex.
+           "
+    ::= { ibSavaIfEntry 2 }
+
+ibSavaIfEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+           "An attribute defined in SAVA protocol.
+            true, the attribute is set.
+            false, the attribute is not set.
+           "
+    ::= { ibSavaIfEntry 3 }
+
+ibSavaIfRemoteRoutetag OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+           "The number of route tag."
+    ::= { ibSavaIfEntry 4 }
+
+
+ibSavaIfAccessSubnet OBJECT-TYPE
+    SYNTAX     IbSavaOwnerString
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+          "An access-net which the interface connect to.
+          "
+    ::= { ibSavaIfEntry 5 }
+
+
+
+-- prefix Table for SAVA
+
+ibSavaPrefixTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbSavaPrefixEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "The table containing the prefix for SAVA.
+           "
+    ::= { ibSavaObjects 3 }
+
+ibSavaPrefixEntry OBJECT-TYPE
+    SYNTAX     IbSavaPrefixEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "An entry containing the prefix for SAVA.
+            Entries are keyed on the source IP address type,
+            binding type, anchor, and source IP address.
+           "
+    INDEX {
+            ibSavaPrefixAddressType,
+            ibSavaPrefixIfIndex,
+            ibSavaPrefixAddress,
+            ibSavaPrefixLength
+          }
+    ::= { ibSavaPrefixTable 1 }
+
+IbSavaPrefixEntry ::=
+    SEQUENCE {
+        ibSavaPrefixAddressType  InetAddressType,
+        ibSavaPrefixIfIndex      InterfaceIndex,
+        ibSavaPrefixAddress      Ipv6AddressPrefix,
+        ibSavaPrefixLength       Unsigned32,
+        ibSavaPrefixSource       INTEGER
+     }
+
+ibSavaPrefixAddressType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "IP address type of the  prefix ."
+    ::= { ibSavaPrefixEntry 1 }
+
+ibSavaPrefixIfIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "The index value that uniquely identifies the interface to
+            which this entry is applicable.  The interface identified by
+            a particular value of this index is the same interface as
+            identified by the same value of the IF-MIB's ifIndex.
+           "
+    ::= { ibSavaPrefixEntry 2 }
+
+ibSavaPrefixAddress OBJECT-TYPE
+    SYNTAX     Ipv6AddressPrefix
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "The prefix's IP address"
+    ::= { ibSavaPrefixEntry 3 }
+
+
+ibSavaPrefixLength OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "mask length of prefix."
+    ::= { ibSavaPrefixEntry 4 }
+
+ibSavaPrefixSource OBJECT-TYPE
+    SYNTAX     INTEGER  {
+                   localroute(1),
+                   remoteroute(2),
+                   otherif(3)
+              }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "The origin of the prefix. "
+    ::= { ibSavaPrefixEntry 5 }
+
+
+
+-- Count of packets dropped because of validation failure for each interface.
+
+ibSavaCountTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbSavaCountEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "The table containing count of packets dropped because of validation failure."
+    ::= { ibSavaObjects 4 }
+
+ibSavaCountEntry OBJECT-TYPE
+    SYNTAX     IbSavaCountEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "An entry containing count of packets dropped because of validation failure for each interface."
+    INDEX { ibSavaCountIPVersion,
+            ibSavaCountIfIndex
+          }
+    ::= { ibSavaCountTable 1 }
+
+IbSavaCountEntry ::=
+    SEQUENCE {
+        ibSavaCountIPVersion          InetVersion,
+        ibSavaCountIfIndex            InterfaceIndex,
+        ibSavaCountFilterPkt          Counter64,
+        ibSavaCountFilterOctets       Counter64
+    }
+
+ibSavaCountIPVersion      OBJECT-TYPE
+    SYNTAX     InetVersion
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "The IP version."
+    ::= { ibSavaCountEntry 1 }
+
+ibSavaCountIfIndex            OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+           "The Interface."
+    ::= { ibSavaCountEntry 2 }
+
+
+ibSavaCountFilterPkt OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "The count of packets dropped."
+    ::= { ibSavaCountEntry 3 }
+
+
+ibSavaCountFilterOctets OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "The octets of packets dropped."
+    ::= { ibSavaCountEntry 4 }
+END

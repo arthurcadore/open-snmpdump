@@ -1,0 +1,43 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:  ARP entry MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 Initial version created by z09684
+-- =================================================================
+IB-ARP-ENTRY-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, Counter32
+        FROM SNMPv2-SMI;
+
+ibARPEntry MODULE-IDENTITY
+    LAST-UPDATED "201703140000Z"            -- March 14, 2017 at 00:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB module is used for ARP entry."
+    REVISION    "201703140000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { ibCommon 168}
+
+--
+-- Define the ARP Entry GLOBAL.
+--
+ibARPEntryCountObjects OBJECT IDENTIFIER ::= { ibARPEntry 1 }
+
+ibARPEntryOpenFlowCount OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Count of ARP entries of type OpenFlow."
+    ::= { ibARPEntryCountObjects 1 }
+
+END

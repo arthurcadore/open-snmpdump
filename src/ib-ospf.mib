@@ -1,0 +1,298 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: OSPF (Open Shortest Path First) MIB
+-- Reference:
+-- Version: V1.2
+-- History:
+-- V1.0 2014-12-17 Created by Xu Jing
+-- V1.1 2021-12-31 updated by wanggaoyu
+--      Add the objects of ibOspf, ibOspfNotificationObjects, ibOspfNotifications.
+-- V1.2 2022-07-12 updated by pengqing
+--      Add ibOspfSrPrefixSidConflict, ibOspfSrPrefixSidConflictClear
+-- =================================================================
+IB-OSPF-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    IpAddress, Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibOspf MODULE-IDENTITY
+    LAST-UPDATED "202207121658Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Add ibOspfSrPrefixSidConflict, ibOspfSrPrefixSidConflictClear."
+    REVISION "202207121658Z"
+    DESCRIPTION
+        "This MIB file provides information about OSPF."
+    REVISION "202112301002Z"
+    DESCRIPTION
+        "Add the objects of ibOspf, ibOspfNotificationObjects, ibOspfNotifications."
+    REVISION "201412171700Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 161 }
+
+ibOspfNotifications        OBJECT IDENTIFIER ::= { ibOspf 0 }
+ibOspfNotificationObjects  OBJECT IDENTIFIER ::= { ibOspf 2 }
+
+ibOspfNetworkTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbOspfNetworkEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The table provides the configured parameters of OSPF networks."
+    ::= { ibOspf 1 }
+
+ibOspfNetworkEntry OBJECT-TYPE
+    SYNTAX IbOspfNetworkEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry contains information of each configured network."
+    INDEX { ibOspfProcessId, ibOspfAreaId, ibOspfNetworkIpAddr }
+    ::= { ibOspfNetworkTable 1 }
+
+IbOspfNetworkEntry ::=
+    SEQUENCE {
+        ibOspfProcessId
+            Integer32,
+        ibOspfAreaId
+            IpAddress,
+        ibOspfNetworkIpAddr
+            IpAddress,
+        ibOspfNetworkIpMask
+            IpAddress
+     }
+
+ibOspfProcessId OBJECT-TYPE
+    SYNTAX Integer32 (1..65535)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The process ID field indicates the OSPF process number."
+    ::= { ibOspfNetworkEntry 1 }
+
+ibOspfAreaId OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A 32-bit integer uniquely identifying an area.
+        Area ID 0.0.0.0 is used for the OSPF backbone."
+    ::= { ibOspfNetworkEntry 2 }
+
+ibOspfNetworkIpAddr OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This field is the address of the network."
+    ::= { ibOspfNetworkEntry 3 }
+
+ibOspfNetworkIpMask OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This field is the wildcard mask of the network."
+    ::= { ibOspfNetworkEntry 4 }
+
+ibOspfProcessIdForNotify OBJECT-TYPE
+    SYNTAX Integer32 (1..65535)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The process ID field indicates the OSPF process number."
+    ::= { ibOspfNotificationObjects 1 }
+
+ibOspfAreaIdForNotify OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "A 32-bit integer uniquely identifying an area.
+        Area ID 0.0.0.0 is used for the OSPF backbone."
+    ::= { ibOspfNotificationObjects 2 }
+
+ibOspfIfName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (1..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The interface name."
+    ::= { ibOspfNotificationObjects 3 }
+
+ibOspfRouterID OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The Router ID of OSPF protocol."
+    ::= { ibOspfNotificationObjects 4 }
+
+ibOspfNbrIpAddr OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The IP address of neighbor."
+    ::= { ibOspfNotificationObjects 5 }
+
+ibOspfLsaAdvRtr OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The Router ID for link state advertisement."
+    ::= { ibOspfNotificationObjects 6 }
+
+ibOspfLsaLsid OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The link state ID for link state advertisement."
+    ::= { ibOspfNotificationObjects 7 }
+
+ibOspfPeerFlappingStatus OBJECT-TYPE
+    SYNTAX INTEGER {
+       notSuppressed (1),
+       holdDown (2),
+       holdMaxCost (3)
+    }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The peer flapping suppression status."
+    ::= { ibOspfNotificationObjects 8 }
+
+ibOspfPeerFlappingReason OBJECT-TYPE
+    SYNTAX INTEGER {
+       resumed (1),
+       configurationChanged (2),
+       suppressed (3),
+       exitHoldDownIntoHoldMaxCost (4)
+    }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The reason of peer flapping suppression status change."
+    ::= { ibOspfNotificationObjects 9 }
+
+ibOspfPrefixSid OBJECT-TYPE
+    SYNTAX Integer32 (2048..1048575)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The prefix sid."
+    ::= { ibOspfNotificationObjects 10 }
+
+ibOspfPrefixAddress OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The IP address of prefix sid."
+    ::= { ibOspfNotificationObjects 11 }
+
+ibOspfPrefixMask OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The mask of prefix sid."
+    ::= { ibOspfNotificationObjects 12 }
+
+ibOspfSrConflictType OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (1..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The conflict type."
+    ::= { ibOspfNotificationObjects 13 }
+
+ibOspfSrConflictState OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (1..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The conflict state."
+    ::= { ibOspfNotificationObjects 14 }
+
+ibOspfIntraAreaRtrIdConflict NOTIFICATION-TYPE
+    OBJECTS {
+        ibOspfProcessIdForNotify,
+        ibOspfAreaIdForNotify,
+        ibOspfIfName,
+        ibOspfRouterID,
+        ibOspfNbrIpAddr
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when Router ID conflict"
+    ::= { ibOspfNotifications 1 }
+
+ibOspfDRIpAddressConflict NOTIFICATION-TYPE
+    OBJECTS {
+        ibOspfProcessIdForNotify,
+        ibOspfAreaIdForNotify,
+        ibOspfIfName,
+        ibOspfNbrIpAddr,
+        ibOspfLsaAdvRtr,
+        ibOspfLsaLsid
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when DR IP address conflict."
+    ::= { ibOspfNotifications 2 }
+
+ibOspfPeerFlappingStatusChange NOTIFICATION-TYPE
+    OBJECTS {
+        ibOspfProcessIdForNotify,
+        ibOspfAreaIdForNotify,
+        ibOspfIfName,
+        ibOspfPeerFlappingStatus,
+        ibOspfPeerFlappingReason
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when peer flapping suppression status changes."
+    ::= { ibOspfNotifications 3 }
+
+ibOspfSrPrefixSidConflict NOTIFICATION-TYPE
+    OBJECTS {
+        ibOspfProcessIdForNotify,
+        ibOspfPrefixSid,
+        ibOspfPrefixAddress,
+        ibOspfPrefixMask,
+        ibOspfSrConflictType,
+        ibOspfSrConflictState
+    }
+    STATUS current
+    DESCRIPTION
+        "The prefix-sid conflict is detected."
+    ::= { ibOspfNotifications 4 }
+
+ibOspfSrPrefixSidConflictClear NOTIFICATION-TYPE
+    OBJECTS {
+        ibOspfProcessIdForNotify,
+        ibOspfPrefixSid,
+        ibOspfPrefixAddress,
+        ibOspfPrefixMask,
+        ibOspfSrConflictType,
+        ibOspfSrConflictState
+    }
+    STATUS current
+    DESCRIPTION
+        "The prefix-sid conflict is resolved."
+    ::= { ibOspfNotifications 5 }
+
+END

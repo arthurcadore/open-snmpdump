@@ -1,0 +1,135 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The MIB of data and configuration on user plane.
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 Created by huanglei
+--     Initial version 2020-09-10
+-- =================================================================
+IB-CUPM-UP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        InetAddressType, InetAddress
+    FROM INET-ADDRESS-MIB
+        OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE,
+        Integer32
+    FROM SNMPv2-SMI;
+
+ibCupmUp MODULE-IDENTITY
+    LAST-UPDATED "202009110000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB provides config information of UP(User Plane)."
+    REVISION "202009110000Z"
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 195 }
+
+--
+-- Node definitions
+--
+
+-- Traps are defined below.
+ibCupmUpNotifications OBJECT IDENTIFIER ::= { ibCupmUp 0 }
+
+ibCupmUpProtoTnlUp NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCupmUpVbVxlanID,
+            ibCupmUpVbSrcAddrType,
+            ibCupmUpVbSrcAddr,
+            ibCupmUpVbDestAddrType,
+            ibCupmUpVbDestAddr,
+            ibCupmUpVbVpnName
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when
+         UP device connects to VXLAN tunnel."
+    ::= { ibCupmUpNotifications 1 }
+
+ibCupmUpProtoTnlDown NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCupmUpVbVxlanID,
+            ibCupmUpVbSrcAddrType,
+            ibCupmUpVbSrcAddr,
+            ibCupmUpVbDestAddrType,
+            ibCupmUpVbDestAddr,
+            ibCupmUpVbVpnName
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when
+         UP device disconnects to VXLAN tunnel."
+    ::= { ibCupmUpNotifications 2 }
+
+-- =================================================================
+-- TrapObjects are defined below.
+
+ibCupmUpNotifyVarObjects OBJECT IDENTIFIER ::= { ibCupmUp 1 }
+
+ibCupmUpVbVxlanID OBJECT-TYPE
+    SYNTAX      Integer32 (1..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Part of the index for this table, this value
+         identifies the VXLAN protocol tunnel."
+    ::= { ibCupmUpNotifyVarObjects 1 }
+
+ibCupmUpVbSrcAddrType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Specifies the type of local address to be used at a remote
+         host for connecting VXLAN protocol tunnel."
+    ::= { ibCupmUpNotifyVarObjects 2 }
+
+ibCupmUpVbSrcAddr OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Specifies the local address to be used at a remote
+         host for connecting VXLAN protocol tunnel.  The host
+         address type is determined by the object value of corresponding
+         ibCupmCpProtoTnlSrcAddrType."
+    ::= { ibCupmUpNotifyVarObjects 3 }
+
+ibCupmUpVbDestAddrType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Specifies the type of remote host for connecting the VXLAN
+         protocol tunnel."
+    ::= { ibCupmUpNotifyVarObjects 4 }
+
+ibCupmUpVbDestAddr OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Specifies the remote host for connecting the VXLAN
+         protocol tunnel."
+    ::= { ibCupmUpNotifyVarObjects 5 }
+
+ibCupmUpVbVpnName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..31))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The VPN name, to which the rule will be applied.
+         Default value is zero-length."
+    ::= { ibCupmUpNotifyVarObjects 6 }
+
+END

@@ -1,0 +1,992 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Segment Routing Traffic Engineering (SR-TE) policy MIB
+-- Reference:
+-- Version: V1.4
+-- History:
+-- V1.0 2019-12-06 The initial version, created by Xu Jing
+-- V1.1 2021-05-15 Add ibSrpolicyPathTable by lin hao
+--                 Add nodes ibSrpolicyBsidFailReason,
+--                 ibSrpolicyBsidConflictState
+--                 in ibSrpolicyTable
+--                 Add nodes ibSrpSeglistStatus, ibSrpSeglistDownReason
+--                 in ibSrpSeglistTable
+--                 Add Trap in IB-SRPOLICY-MIB
+-- V1.2 2022-03-15 Modifed the ibSrpolicyColor, ibSrpSeglistColor,
+--                 ibSrpFwdColor valid range by lin hao
+-- V1.3 2022-10-05 Deprecated ibSrpForwardingTable,
+--                 added ibSrpForwardingNewTable by liu yuejuan
+-- V1.4 2023-03-07 Add nodes ibSrpolicySrv6Bsid,
+--                 ibSrpolicySRv6InPackets,
+--                 ibSrpolicySRv6InOctets in IbSrpolicyEntry
+--                 Add Trap in IB_SRPOLICY_MIB by lin hao
+-- =================================================================
+IB-SRPOLICY-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    IpAddress, Integer32, Unsigned32, Counter64, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    InterfaceIndex
+        FROM IF-MIB
+    InetAddressType, InetAddress, InetAddressIPv6
+        FROM INET-ADDRESS-MIB
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibSrpolicy MODULE-IDENTITY
+    LAST-UPDATED "202303072000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB file provides information about SR-TE policies."
+    REVISION "202303072000Z"
+    DESCRIPTION
+        "Supported the SRv6 Binding Segment ID."
+    REVISION "202210051100Z"
+    DESCRIPTION
+        "Deprecated ibSrpForwardingTable,
+        added ibSrpForwardingNewTable"
+    REVISION "202203211100Z"
+    DESCRIPTION
+        "Modifed the ibSrpolicyColor, ibSrpSeglistColor
+        ,ibSrpFwdColor valid range"
+    REVISION "201912061100Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 186 }
+
+-- SR-TE policies information table
+ibSrpolicyTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSrpolicyEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table provides information about SR-TE policies."
+    ::= { ibSrpolicy 1 }
+
+ibSrpolicyEntry OBJECT-TYPE
+    SYNTAX IbSrpolicyEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry contains information about a policy."
+    INDEX { ibSrpolicyColor, ibSrpolicyEndPoint }
+    ::= { ibSrpolicyTable 1 }
+
+IbSrpolicyEntry ::=
+    SEQUENCE {
+        ibSrpolicyColor
+            Unsigned32,
+        ibSrpolicyEndPoint
+            IpAddress,
+        ibSrpolicyName
+          OCTET STRING,
+        ibSrpolicyBsid
+            Integer32,
+        ibSrpolicyInPackets
+            Counter64,
+        ibSrpolicyInOctets
+            Counter64,
+        ibSrpolicyOutPackets
+            Counter64,
+        ibSrpolicyOutOctets
+            Counter64,
+        ibSrpolicyStatus
+            OCTET STRING,
+        ibSrpolicyDownReason
+            OCTET STRING,
+        ibSrpolicyBsidFailReason
+            OCTET STRING,
+        ibSrpolicyBsidConflictState
+            INTEGER,
+        ibSrpolicySRv6Bsid
+            InetAddressIPv6,
+        ibSrpolicySRv6InPackets
+            Counter64,
+        ibSrpolicySRv6InOctets
+            Counter64
+     }
+
+ibSrpolicyColor OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The color associates the SR-TE Policy with certain intent."
+    ::= { ibSrpolicyEntry 1 }
+
+ibSrpolicyEndPoint OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The endpoint is the destination of the SR-TE policy."
+    ::= { ibSrpolicyEntry 2 }
+
+ibSrpolicyName OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (0..128))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Name of the SR policy."
+    ::= { ibSrpolicyEntry 3 }
+
+ibSrpolicyBsid OBJECT-TYPE
+    SYNTAX Integer32 (16..1048575)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Bound segment ID value of the SR policy."
+    ::= { ibSrpolicyEntry 4 }
+
+ibSrpolicyInPackets OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of inbound packets for the bound segment ID."
+    ::= { ibSrpolicyEntry 5 }
+
+ibSrpolicyInOctets OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of inbound bytes for the bound segment ID."
+    ::= { ibSrpolicyEntry 6 }
+
+ibSrpolicyOutPackets OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of outbound packets for the SR-TE policy."
+    ::= { ibSrpolicyEntry 7 }
+
+ibSrpolicyOutOctets OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of outbound bytes for the SR-TE policy."
+    ::= { ibSrpolicyEntry 8 }
+
+ibSrpolicyStatus OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..31))
+    MAX-ACCESS      read-only
+    STATUS      current
+    DESCRIPTION
+        "Status of the SR-TE policy."
+    ::= { ibSrpolicyEntry 9 }
+
+ibSrpolicyDownReason OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..51))
+    MAX-ACCESS      read-only
+    STATUS      current
+    DESCRIPTION
+        "Base identity for the reasons why SR-TE policy is operationally down."
+    ::= { ibSrpolicyEntry 10 }
+
+ibSrpolicyBsidFailReason OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..255))
+    MAX-ACCESS      read-only
+    STATUS      current
+    DESCRIPTION
+        "Reason why the binding SID is unavailable."
+    ::= { ibSrpolicyEntry 11 }
+
+ibSrpolicyBsidConflictState OBJECT-TYPE
+    SYNTAX      INTEGER {
+            inConflict(1),
+            conflictResolved(2)
+            }
+    MAX-ACCESS      read-only
+    STATUS      current
+    DESCRIPTION
+        "The conflict state of the binding SID."
+    ::= { ibSrpolicyEntry 12 }
+
+ibSrpolicySRv6Bsid OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS      read-only
+    STATUS      current
+    DESCRIPTION
+        "Binding segment ID IPv6 address of the SR-TE policy."
+    ::= { ibSrpolicyEntry 13 }
+
+ibSrpolicySRv6InPackets OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of inbound packets for the bound segment ID."
+    ::= { ibSrpolicyEntry 14 }
+
+ibSrpolicySRv6InOctets OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of inbound bytes for the bound segment ID."
+    ::= { ibSrpolicyEntry 15 }
+
+-- Segment list information table for the policy
+ibSrpSeglistTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSrpSeglistEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table provides information about the segment lists for the
+         SR-TE policy."
+    ::= { ibSrpolicy 2 }
+
+ibSrpSeglistEntry OBJECT-TYPE
+    SYNTAX IbSrpSeglistEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry contains information about segment lists."
+    INDEX { ibSrpSeglistColor, ibSrpSeglistEndPoint, ibSrpSeglistPathProto,
+            ibSrpSeglistPathInst,ibSrpSeglistPathOri, ibSrpSeglistPathDis,
+            ibSrpSeglistId }
+    ::= { ibSrpSeglistTable 1 }
+
+IbSrpSeglistEntry ::=
+    SEQUENCE {
+        ibSrpSeglistColor
+            Unsigned32,
+        ibSrpSeglistEndPoint
+            IpAddress,
+        ibSrpSeglistPathProto
+            INTEGER,
+        ibSrpSeglistPathInst
+            Integer32,
+        ibSrpSeglistPathOri
+            OCTET STRING,
+        ibSrpSeglistPathDis
+            Unsigned32,
+        ibSrpSeglistId
+            Unsigned32,
+        ibSrpolicySeglistName
+            OCTET STRING,
+        ibSrpSeglistOutPackets
+          Counter64,
+        ibSrpSeglistOutOctets
+            Counter64,
+        ibSrpSeglistStatus
+            OCTET STRING,
+        ibSrpSeglistDownReason
+            OCTET STRING
+     }
+
+ibSrpSeglistColor OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The color associates the SR-TE Policy with certain intent."
+    ::= { ibSrpSeglistEntry 1 }
+
+ibSrpSeglistEndPoint OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The endpoint is the destination of the SR-TE policy."
+    ::= { ibSrpSeglistEntry 2 }
+
+ibSrpSeglistPathProto OBJECT-TYPE
+    SYNTAX INTEGER{
+                   pcep(10),
+                   bgp(20),
+                   cli(30)
+               }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Protocol-Origin of a candidate path identifies the protocol that
+         originates or signals the candidate path."
+    ::= { ibSrpSeglistEntry 3 }
+
+ibSrpSeglistPathInst OBJECT-TYPE
+    SYNTAX Integer32 (0..65535)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The instance is a value of BGP instance number, when
+         the candidate path is originated by BGP."
+    ::= { ibSrpSeglistEntry 4 }
+
+ibSrpSeglistPathOri OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1..63))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Originator is the identifier of the node that instantiated or signalled
+         the candidate path on the headend."
+    ::= { ibSrpSeglistEntry 5 }
+
+ibSrpSeglistPathDis OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The discriminator uniquely identifies a candidate path from a
+         specific Protocol-Origin."
+    ::= { ibSrpSeglistEntry 6 }
+
+ibSrpSeglistId OBJECT-TYPE
+    SYNTAX Unsigned32 (1..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The ID uniquely identifies the segment list."
+    ::= { ibSrpSeglistEntry 7 }
+
+ibSrpolicySeglistName OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (0..128))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The name of the segment list."
+    ::= { ibSrpSeglistEntry 8 }
+
+ibSrpSeglistOutPackets OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of outbound packets for the segment list."
+    ::= { ibSrpSeglistEntry 9 }
+
+ibSrpSeglistOutOctets OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of outbound bytes for the segment list."
+    ::= { ibSrpSeglistEntry 10 }
+
+ibSrpSeglistStatus OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..31))
+    MAX-ACCESS      read-only
+    STATUS      current
+    DESCRIPTION
+        "The status of segment list."
+    ::= { ibSrpSeglistEntry 11 }
+
+ibSrpSeglistDownReason OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..51))
+    MAX-ACCESS      read-only
+    STATUS      current
+    DESCRIPTION
+        "Base identity for the reasons why segment list is down."
+    ::= { ibSrpSeglistEntry 12 }
+
+-- Forwarding paths information table for the policy
+ibSrpForwardingTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSrpForwardingEntry
+    MAX-ACCESS not-accessible
+    STATUS deprecated
+    DESCRIPTION
+        "This table provides information about forwarding paths for the
+        SR-TE policy.
+        To support IPv6 next hop addresses, deprecated the
+        ibSrpForwardingTable table and started to use the
+        ibSrpForwardingNewTable table.
+        The ibSrpForwardingNewTable table inherits the functions of
+        ibSrpForwardingTable, reduced the OutIf and Nexthop columns
+        in the index columns, and added the ibSrpNewFwdEndPointType and
+        ibSrpPathId columns in the index columns.
+        The ibSrpForwardingNewTable table supports IPv6 endpoints and
+        IPv6 next hop addresses."
+    ::= { ibSrpolicy 3 }
+
+ibSrpForwardingEntry OBJECT-TYPE
+    SYNTAX IbSrpForwardingEntry
+    MAX-ACCESS not-accessible
+    STATUS deprecated
+    DESCRIPTION
+        "Each entry contains information about forwarding paths."
+    INDEX { ibSrpFwdColor, ibSrpFwdEndPoint, ibSrpFwdPathProto,
+            ibSrpFwdPathInst, ibSrpFwdPathOri, ibSrpFwdPathDis,
+            ibSrpFwdSeglistId, ibSrpFwdOutIf, ibSrpFwdNexthop }
+    ::= { ibSrpForwardingTable 1 }
+
+IbSrpForwardingEntry ::=
+    SEQUENCE {
+        ibSrpFwdColor
+            Unsigned32,
+        ibSrpFwdEndPoint
+            IpAddress,
+        ibSrpFwdPathProto
+            INTEGER,
+        ibSrpFwdPathInst
+            Integer32,
+        ibSrpFwdPathOri
+            OCTET STRING,
+        ibSrpFwdPathDis
+            Unsigned32,
+        ibSrpFwdSeglistId
+            Unsigned32,
+        ibSrpFwdOutIf
+            InterfaceIndex,
+        ibSrpFwdNexthop
+            IpAddress,
+        ibSrpFwdOutPackets
+            Counter64,
+        ibSrpFwdOutOctets
+            Counter64
+     }
+
+ibSrpFwdColor OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS not-accessible
+    STATUS deprecated
+    DESCRIPTION
+        "The color associates the SR-TE policy with certain intent."
+    ::= { ibSrpForwardingEntry 1 }
+
+ibSrpFwdEndPoint OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS not-accessible
+    STATUS deprecated
+    DESCRIPTION
+        "The endpoint is the destination of the SR-TE policy."
+    ::= { ibSrpForwardingEntry 2 }
+
+ibSrpFwdPathProto OBJECT-TYPE
+    SYNTAX INTEGER{
+                   pcep(10),
+                   bgp(20),
+                   cli(30)
+               }
+    MAX-ACCESS not-accessible
+    STATUS deprecated
+    DESCRIPTION
+        "Protocol-Origin of a candidate path identifies the protocol that
+         originates or signals the candidate path."
+    ::= { ibSrpForwardingEntry 3 }
+
+ibSrpFwdPathInst OBJECT-TYPE
+    SYNTAX Integer32 (0..65535)
+    MAX-ACCESS not-accessible
+    STATUS deprecated
+    DESCRIPTION
+        "The instance is a value of BGP instance number, when
+         the candidate path is originated by BGP."
+    ::= { ibSrpForwardingEntry 4 }
+
+ibSrpFwdPathOri OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1..63))
+    MAX-ACCESS not-accessible
+    STATUS deprecated
+    DESCRIPTION
+        "Originator is the identifier of the node that instantiated or signalled
+        the candidate path on the headend."
+    ::= { ibSrpForwardingEntry 5 }
+
+ibSrpFwdPathDis OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS not-accessible
+    STATUS deprecated
+    DESCRIPTION
+        "The discriminator uniquely identifies a candidate path from a
+         specific Protocol-Origin."
+    ::= { ibSrpForwardingEntry 6 }
+
+ibSrpFwdSeglistId OBJECT-TYPE
+    SYNTAX Unsigned32 (1..4294967295)
+    MAX-ACCESS not-accessible
+    STATUS deprecated
+    DESCRIPTION
+        "The ID uniquely identifies the segment list."
+    ::= { ibSrpForwardingEntry 7 }
+
+ibSrpFwdOutIf OBJECT-TYPE
+    SYNTAX InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS deprecated
+    DESCRIPTION
+        "The value of ifIndex for the outbound interface."
+    ::= { ibSrpForwardingEntry 8 }
+
+ibSrpFwdNexthop OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS not-accessible
+    STATUS deprecated
+    DESCRIPTION
+        "The IP address of the next hop."
+    ::= { ibSrpForwardingEntry 9 }
+
+ibSrpFwdOutPackets OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS deprecated
+    DESCRIPTION
+        "The number of outbound packets for the outbound interface."
+    ::= { ibSrpForwardingEntry 10 }
+
+ibSrpFwdOutOctets OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS deprecated
+    DESCRIPTION
+        "The number of outbound bytes for the outbound interface."
+    ::= { ibSrpForwardingEntry 11 }
+
+-- SR-TE policy path table.
+
+ibSrpolicyPathTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSrpolicyPathEntry
+    MAX-ACCESS      not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table provides information about SR-TE policy candidate paths."
+    ::= { ibSrpolicy 4 }
+
+ibSrpolicyPathEntry OBJECT-TYPE
+    SYNTAX      IbSrpolicyPathEntry
+    MAX-ACCESS      not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry contains information about candidate paths of a policy."
+    INDEX       { ibSrpolicyPathColor, ibSrpolicyPathEndPoint,
+                  ibSrpolicyPathProto, ibSrpolicyPathInst,
+          ibSrpolicyPathOri,
+          ibSrpolicyPathDis }
+    ::= { ibSrpolicyPathTable 1 }
+
+IbSrpolicyPathEntry ::= SEQUENCE {
+    ibSrpolicyPathColor
+        Unsigned32,
+    ibSrpolicyPathEndPoint
+        IpAddress,
+    ibSrpolicyPathProto
+        INTEGER,
+    ibSrpolicyPathInst
+        Integer32,
+    ibSrpolicyPathOri
+        OCTET STRING,
+    ibSrpolicyPathDis
+        Unsigned32,
+    ibSrpolicyPathPref
+        Unsigned32,
+    ibSrpolicyPathPreviousRole
+        OCTET STRING,
+    ibSrpolicyPathDownReason
+        OCTET STRING
+    }
+
+ibSrpolicyPathColor OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..4294967295)
+    MAX-ACCESS      accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The color associates the SR-TE policy with certain intent."
+    ::= { ibSrpolicyPathEntry 1 }
+
+ibSrpolicyPathEndPoint OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS      accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The endpoint is the destination of the SR-TE policy."
+    ::= { ibSrpolicyPathEntry 2 }
+
+ibSrpolicyPathProto OBJECT-TYPE
+    SYNTAX      INTEGER{
+                   pcep(10),
+                   bgp(20),
+                   cli(30)
+               }
+    MAX-ACCESS      accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Protocol-Origin of a candidate path identifies the protocol that
+         originates or signals the candidate path."
+    ::= { ibSrpolicyPathEntry 3 }
+
+ibSrpolicyPathInst OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS      accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The instance is a value of BGP instance number, when
+         the candidate path is originated by BGP."
+    ::= { ibSrpolicyPathEntry 4 }
+
+ibSrpolicyPathOri OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..63))
+    MAX-ACCESS      accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Originator is the identifier of the node that instantiated or
+         signalled the candidate path on the headend."
+    ::= { ibSrpolicyPathEntry 5 }
+
+ibSrpolicyPathDis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS      accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The discriminator uniquely identifies a candidate path from a
+         specific Protocol-Origin."
+    ::= { ibSrpolicyPathEntry 6 }
+
+ibSrpolicyPathPref OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS      read-only
+    STATUS      current
+    DESCRIPTION
+        "The preference of the SR-TE policy candidate path."
+    ::= { ibSrpolicyPathEntry 7 }
+
+ibSrpolicyPathPreviousRole OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..31))
+    MAX-ACCESS      read-only
+    STATUS      current
+    DESCRIPTION
+        "The previous role of an SR-TE policy candidate path.
+         The value may be primary or backup."
+    ::= { ibSrpolicyPathEntry 8 }
+
+ibSrpolicyPathDownReason OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..51))
+    MAX-ACCESS      read-only
+    STATUS      current
+    DESCRIPTION
+        "Base identity for the reasons why SR-TE policy candidate path
+         is operationally down."
+    ::= { ibSrpolicyPathEntry 9 }
+
+-- Forwarding paths information new table for the policy
+ibSrpForwardingNewTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSrpForwardingNewEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table provides information about forwarding paths for the
+        SR-MPLS TE policy.
+        To support IPv6 next hop addresses, deprecated the
+        ibSrpForwardingTable table and started to use the
+        ibSrpForwardingNewTable table.
+        The ibSrpForwardingNewTable table inherits the functions of
+        ibSrpForwardingTable, reduced the OutIf and Nexthop columns
+        in the index columns, and added the ibSrpNewFwdEndPointType and
+        ibSrpPathId columns in the index columns.
+        The ibSrpForwardingNewTable table supports IPv6 endpoints and
+        IPv6 next hop addresses."
+    ::= { ibSrpolicy 5 }
+
+ibSrpForwardingNewEntry OBJECT-TYPE
+    SYNTAX IbSrpForwardingNewEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry contains information about forwarding paths."
+    INDEX { ibSrpNewFwdColor, ibSrpNewFwdEndPointType, ibSrpNewFwdEndPoint,
+          ibSrpNewFwdPathProto, ibSrpNewFwdPathInst, ibSrpNewFwdPathOri,
+          ibSrpNewFwdPathDis, ibSrpNewFwdSeglistId, ibSrpPathId }
+    ::= { ibSrpForwardingNewTable 1 }
+
+IbSrpForwardingNewEntry ::=
+    SEQUENCE {
+        ibSrpNewFwdColor
+            Unsigned32,
+        ibSrpNewFwdEndPointType
+            InetAddressType,
+        ibSrpNewFwdEndPoint
+            InetAddress,
+        ibSrpNewFwdPathProto
+            INTEGER,
+        ibSrpNewFwdPathInst
+            Integer32,
+        ibSrpNewFwdPathOri
+            OCTET STRING,
+        ibSrpNewFwdPathDis
+            Unsigned32,
+        ibSrpNewFwdSeglistId
+            Unsigned32,
+        ibSrpPathId
+            Unsigned32,
+        ibSrpNewFwdOutIf
+            InterfaceIndex,
+        ibSrpNewFwdNexthopType
+            InetAddressType,
+        ibSrpNewFwdNexthop
+            InetAddress,
+        ibSrpNewFwdOutPackets
+            Counter64,
+        ibSrpNewFwdOutOctets
+            Counter64
+     }
+
+ibSrpNewFwdColor OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Color associated with the SR-MPLS TE policy."
+    ::= { ibSrpForwardingNewEntry 1 }
+
+ibSrpNewFwdEndPointType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Type of the endpoint IP address."
+    ::= { ibSrpForwardingNewEntry 2 }
+
+ibSrpNewFwdEndPoint OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Destination node of the SR-MPLS TE policy.
+        The type of this address is determined by the value of
+        ibSrpFwdEndPointType."
+    ::= { ibSrpForwardingNewEntry 3 }
+
+ibSrpNewFwdPathProto OBJECT-TYPE
+    SYNTAX INTEGER{
+                   pcep(10),
+                   bgp(20),
+                   cli(30)
+               }
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Origin protocol of a candidate path, which identifies the protocol that
+         originated or signaled the candidate path."
+    ::= { ibSrpForwardingNewEntry 4 }
+
+ibSrpNewFwdPathInst OBJECT-TYPE
+    SYNTAX Integer32 (0..65535)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "BGP instance number when
+         the candidate path was originated by BGP."
+    ::= { ibSrpForwardingNewEntry 5 }
+
+ibSrpNewFwdPathOri OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1..63))
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Originator, which is the identifier of the headend node that
+        instantiated or signaled the candidate path."
+    ::= { ibSrpForwardingNewEntry 6 }
+
+ibSrpNewFwdPathDis OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Discriminator that uniquely identifies the candidate path generated by a
+         specific protocol."
+    ::= { ibSrpForwardingNewEntry 7 }
+
+ibSrpNewFwdSeglistId OBJECT-TYPE
+    SYNTAX Unsigned32 (1..4294967295)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "ID that uniquely identifies an SID list."
+    ::= { ibSrpForwardingNewEntry 8 }
+
+ibSrpPathId OBJECT-TYPE
+    SYNTAX Unsigned32 (0..255)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "ID that uniquely identifies a forwarding path."
+    ::= { ibSrpForwardingNewEntry 9 }
+
+ibSrpNewFwdOutIf OBJECT-TYPE
+    SYNTAX InterfaceIndex
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Output interface index."
+    ::= { ibSrpForwardingNewEntry 10 }
+
+ibSrpNewFwdNexthopType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Type of the next hop."
+    ::= { ibSrpForwardingNewEntry 11 }
+
+ibSrpNewFwdNexthop OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "IP address of the next hop.
+        The type of this address is determined by the value of
+        ibSrpFwdNexthopType."
+    ::= { ibSrpForwardingNewEntry 12 }
+
+ibSrpNewFwdOutPackets OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Total number of packets forwarded by the output interface."
+    ::= { ibSrpForwardingNewEntry 13 }
+
+ibSrpNewFwdOutOctets OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Total number of bytes forwarded by the output interface."
+    ::= { ibSrpForwardingNewEntry 14 }
+
+-- Notification Definitions
+ibSrpolicyNotifications  OBJECT IDENTIFIER ::= { ibSrpolicy 0 }
+
+-- The notifications need to be throttled so as to not overwhelm the
+-- management agent in case of rapid changes to the SR-TE Policy module.
+
+ibSrpolicyStatusChange NOTIFICATION-TYPE
+    OBJECTS { ibSrpolicyColor,
+        ibSrpolicyEndPoint,
+        ibSrpolicyStatus,
+        ibSrpolicyDownReason
+        }
+    STATUS       current
+    DESCRIPTION
+        "An ibSrpolicyStatusChange trap signifies that there
+         has been a change in the state of a policy.
+         This trap should be generated when the policy
+         state regresses (e.g., goes from active to Down)
+         or progresses to a terminal state
+         (i.e., down)."
+    ::= { ibSrpolicyNotifications 1 }
+
+ibSrpolicyBsidConflict NOTIFICATION-TYPE
+    OBJECTS { ibSrpolicyColor,
+        ibSrpolicyEndPoint,
+        ibSrpolicyBsid,
+        ibSrpolicyBsidFailReason,
+        ibSrpolicyBsidConflictState
+        }
+    STATUS       current
+    DESCRIPTION
+        "BSID conflicts."
+    ::= { ibSrpolicyNotifications 2 }
+
+ibSrpolicyBsidConflictClear NOTIFICATION-TYPE
+    OBJECTS  { ibSrpolicyColor,
+        ibSrpolicyEndPoint,
+        ibSrpolicyBsid,
+        ibSrpolicyBsidFailReason,
+        ibSrpolicyBsidConflictState
+        }
+    STATUS  current
+    DESCRIPTION
+        "BSID conflicts resolved"
+    ::= { ibSrpolicyNotifications 3 }
+
+ibSrpolicyDown NOTIFICATION-TYPE
+    OBJECTS { ibSrpolicyColor,
+        ibSrpolicyEndPoint,
+        ibSrpolicyDownReason
+        }
+    STATUS  current
+    DESCRIPTION
+        "Policy down"
+    ::= { ibSrpolicyNotifications 4 }
+
+ibSrpolicyDownClear NOTIFICATION-TYPE
+    OBJECTS { ibSrpolicyColor,
+        ibSrpolicyEndPoint
+    }
+    STATUS  current
+    DESCRIPTION
+              "Policy down cleared"
+    ::= { ibSrpolicyNotifications 5 }
+
+ibSrpolicyPathDown NOTIFICATION-TYPE
+    OBJECTS { ibSrpolicyPathColor,
+        ibSrpolicyPathEndPoint,
+        ibSrpolicyPathProto,
+        ibSrpolicyPathInst,
+        ibSrpolicyPathOri,
+        ibSrpolicyPathDis,
+        ibSrpolicyPathPref,
+        ibSrpolicyPathPreviousRole,
+        ibSrpolicyPathDownReason
+        }
+    STATUS       current
+    DESCRIPTION
+        "An ibSrpolicyPathDown trap signifies that there
+         has been a change in the state of a policy primary
+         or backup path."
+    ::= { ibSrpolicyNotifications 6 }
+
+ibSrpolicySeglistDown NOTIFICATION-TYPE
+    OBJECTS { ibSrpSeglistColor,
+        ibSrpSeglistEndPoint,
+        ibSrpSeglistPathProto,
+        ibSrpSeglistPathInst,
+        ibSrpSeglistPathOri,
+        ibSrpSeglistPathDis,
+        ibSrpSeglistId,
+        ibSrpSeglistStatus,
+        ibSrpSeglistDownReason
+        }
+    STATUS       current
+    DESCRIPTION
+        "An ibSrpSeglistDown trap signifies that there
+         has been a change in the state of a segment list."
+    ::= { ibSrpolicyNotifications 7 }
+
+ibSrpolicySeglistDownClear NOTIFICATION-TYPE
+    OBJECTS { ibSrpSeglistColor,
+        ibSrpSeglistEndPoint,
+        ibSrpSeglistPathProto,
+        ibSrpSeglistPathInst,
+        ibSrpSeglistPathOri,
+        ibSrpSeglistPathDis,
+        ibSrpSeglistId,
+        ibSrpSeglistStatus
+        }
+    STATUS       current
+    DESCRIPTION
+        "An ibSrSeglistDownClear trap signifies that there
+         has been a change in the state of a segment list."
+    ::= { ibSrpolicyNotifications 8 }
+
+ibSrpolicySRv6BsidConflict NOTIFICATION-TYPE
+    OBJECTS { ibSrpolicyColor,
+        ibSrpolicyEndPoint,
+        ibSrpolicySRv6Bsid,
+        ibSrpolicyBsidFailReason,
+        ibSrpolicyBsidConflictState
+        }
+    STATUS       current
+    DESCRIPTION
+        "BSID conflicts."
+    ::= { ibSrpolicyNotifications 9 }
+
+ibSrpolicySRv6BsidConflictClear NOTIFICATION-TYPE
+    OBJECTS  { ibSrpolicyColor,
+        ibSrpolicyEndPoint,
+        ibSrpolicySRv6Bsid,
+        ibSrpolicyBsidFailReason,
+        ibSrpolicyBsidConflictState
+        }
+    STATUS  current
+    DESCRIPTION
+        "BSID conflicts resolved"
+    ::= { ibSrpolicyNotifications 10 }
+
+END

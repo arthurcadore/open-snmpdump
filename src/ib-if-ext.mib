@@ -1,0 +1,4499 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: interface extension mib
+-- Reference: IF-MIB
+-- Version: V3.5
+-- History:
+--   V1.0 Created by gaolong
+--     Initial version 2004-11-13
+--   V1.1 2007-01-13 Modified by wanglirong
+--     Added ibIfStatGlobalFlowInterval and ibIfSpeedStatTable
+--   V1.2 Modified by chenxi
+--     Added ibRTParentIfTable, ibRTSubIfTable, and
+--     ibIfLinkModeTable 2007-10-15
+--   V1.3 2009-05-05 Added ibIfPhysicalNumber and ibIfTable
+--   V1.4 2009-08-08 Added ibIfMtu, ibIfBandwidth, ibIfDiscardPktRate,
+--     and ibIfExtTrapCfgTable
+--   V1.5 2010-09-04 Added ibIfInNUcastPkts, ibIfOutNUcastPkts, and ibIfStatusKeepTime by shuaixj
+--   V1.6 2011-09-16 Added ibIfHCFlowStatTable by xiedong
+--        2011-11-04 Added ibIfIsPoe by duyanbing
+--   V1.7 2013-09-13 Added ibIfOperStatus and ibIfDownTimes by duyanbing
+--   V1.8 2014-07-23 Added ibIfShutDownInterval and ibIfUsingTable by xiedong
+--        2014-09-19 Added ibIfDampeningSuppressed and ibIfDampeningNotSuppressed by yinzhonghong
+--   V1.9 2014-11-20 Added ibIfPortTypeTable, ibIfPfcStatus, and ibIfPfcDot1pNoDrop by songhao
+--   V2.0 2015-02-12 Added ibIfPortUp, ibIfPortDown by chenzhouhui
+--        2015-12-10 Added ibIfDescription by chenzhouhui
+--   V2.1 2016-07-01 Added the values 25GE and 50GE to ibIfUsingType and ibIfUsingSupportType by yuhaiyan
+--        2016-12-05 Added ibIfHCSpeedStatTable by songhao.
+--        2017-07-13 Added ibIfFwdErrDiscards by songhao.
+--        2017-12-13 Added ibIfThroughputInKbps and ibIfThroughputOutKbps by chenzhouhui.
+--        2018-01-09 Added ibIfMonScalarGroup, ibIfMonGroup, ibIfMonGroup and ibIfMonTrapPrex by guhangchao.
+--        2018-02-07 Added ibIfPortDot1pTable, ibIfPfcOutRising and ibIfPfcInRising by guhangchao.
+--   V2.2 2018-04-26 Modified ibIfMonScalarGroup, ibIfMonGroup, ibIfMonGroup and ibIfMonTrapPrex by guhangchao.
+--   V2.3 2018-06-05 Added ibIfQueBufferTable by zhuhaifeng.
+--        2019-08-06 Added ibIfSpeedStatInBits, ibIfSpeedStatOutBits, ibIfSpeedStatHCInBits
+--        and ibIfSpeedStatHCOutBits by matianming.
+--   V2.4 2020-06-09 modify ibIfMonGroup by guhangchao
+--   V2.5 2020-08-04 modify ibIfMonGroup and ibIfMonTrapPrex by guhangchao
+--        2020-08-05 Added ibIfFiberOrCopper by shuaixiaojuan.
+--   V2.6 2021-04-27 Added the values 200GE and 400GE to ibIfUsingType and ibIfUsingSupportType by zhaoqingtao.
+--        2021-05-14 Added ibIfTransferMode by lijinshuo.
+--   V2.7 2021-08-03 Added ibIfMappingIfStatusBackup and ibIfMappingIfStatusNormal by zhuhaifeng.
+--   V2.8 2021-11-08 Added ibIfMonTxPauseFrameEnableDown by mazhixing.
+--   V2.9 2022-03-28 Added ibIfPortRateDegrade, ibIfPortRateDegradeResume, ibIfHalfDuplex, ibIfRate by zhangjindong.
+--        2022-04-02 Added ibIfMonInputBufferDropRising, ibIfMonInputBufferDropResume, ibIfMonOutputBufferDropRising,
+--        ibIfMonOutputBufferResume, ibIfMonInputBufferDropStatistics, ibIfMonOutputBufferDropStatistics,
+--        ibIfMonInputBufferDropLowThres, ibIfMonInputBufferDropHighThres, ibIfMonInputBufferDropInterval,
+--        ibIfMonOutputBufferDropLowThres, ibIfMonOutputBufferDropHighThres, ibIfMonOutputBufferDropIntercal,
+--        and ibIfMonInputBufferDropEnableDown and ibIfMonOutputBufferDropEnableDown by zhangjindong.
+--   V3.0 2022-06-17  "Add ibIfChassisIndex, ibIfSlotIndex, ibIfSubSlotIndex,
+--        ibIfErrDownDesc to ibIfExtScalarGroup,
+--        Add ibIfBufferInDiscardAlarm, ibIfBufferInDiscardResume, ibIfHalfDuplexRising,
+--        ibIfChangeMultiChassis, ibIfChangeMultiChassisResume, ibIfCfgRecoverOverSlot,
+--        ibIfCfgRecoverOverSubSlot, ibIfInterfaceDelete, ibIfErrordown,
+--        ibIfErrordownRecovery to ibIfExtTrapPrex.
+--        2022-07-12 Added ibIfLoopBackType, ibIfTtlLoopThreshold, ibIfPreDataLowByte, ibIfPreDataHighByte,
+--        ibIfCurDataLowByte, ibIfCurDataHighByte, ibIfIntervalTime, ibIfSDHHpIndex, ibIfUNUCPortRealFlow,
+--        ibIfUNUCPortAlarmThreshold, ibIfBip8SdErrThreshold to ibIfExtScalarGroup.
+--        Added ibIfLosAlarm, ibIfLosAlarmResume, ibIfLofAlarm, ibIfLofAlarmResume, ibIfLFaultAlarm,
+--        ibIfLFaultAlarmResume, ibIfRFaultAlarm, ibIfRFaultAlarmResume, ibIfOofAlarm, ibIfOofAlarmResume,
+--        ibIfSfbereAlarm, ibIfSfbereAlarmResume, ibIfPaisAlarm, ibIfPaisAlarmResume, ibIfHpJ1TiuAlarm,
+--        ibIfHpJ1TiuAlarmResume, ibIfRroolAlarm, ibIfRroolAlarmResume, ibIfNegoFailedAlarm,
+--        ibIfNegoFailedAlarmResume, ibIfEthRxFlowFallAlarm, ibIfEthRxFlowFallAlarmResume, ibIfEthTxFlowFallAlarm,
+--        ibIfEthTxFlowFallAlarmResume, ibIfLoopbackAlarm, ibIfLoopbackAlarmResume, ibIfTtlLoop,
+--        ibIfTtlLoopResume to ibIfExtTrapPrex.
+--        Added ibIfMonInputUFlowFalling, ibIfMonInputUFlowRising, ibIfMonBip8SdError, ibIfMonBip8SdErrorResume to
+--        ibIfMonTrapPrex.
+--        2022-07-14 Added ibIfMonCRCBitErrorRising, ibIfMonCRCBitErrorResume,
+--        ibIfMonCRCBitErrorHighThresStr, ibIfMonCRCBitErrorLowThresStr, ibIfMonCRCBitErrorRatioStr by gaoyanping.
+--   V3.1 2022-08-08 Added ibIfCpuId, ibIfOldComboType, ibIfNewComboType, ibIfDropRateThreshold,
+--        ibIfCurrentDropRate, ibIfDropRateInterval, ibIfMessageProtocol, ibIfCurrentFlowThreshold,
+--        ibIfCurrentFlowValue to ibIfExtScalarGroup.
+--        Added ibIfMonJamDiscardStatistics, ibIfMonBadBytesStatistics, ibIfMonErrorRateStatistics to ibIfMonStatEntry.
+--        Added ibIfMonJamDiscardThres, ibIfMonJamDiscardInterval, ibIfMonBadBytesThres, ibIfMonBadBytesDiscardInterval,
+--        ibIfMonErrorRateThres, ibIfMonErrorRateDiscardInterval to ibIfMonThresholdEntry.
+--        Added ibIfHalfDuplexClear, ibIfEgressDropAlarm, ibIfEgressDropRecover, ibIfBoardEgressDropAlarm, ibIfBoardEgressDropRecover,
+--        ibIfComboTypeChange, ibIfIngressAgingDropAlarm,ibIfIngressAgingDropResume to ibIfExtTrapPrex.
+--        Added ibIfMonInputJamDiscardAlarm, ibIfMonInputJamDiscardResume, ibIfMonOutputJamDiscardAlarm, ibIfMonOutputJamDiscardResume,
+--        ibIfMonPktDropRateRising, ibIfMonPktDropRateRecover, ibIfMonBadBytesErrorRising, ibIfMonBadBytesErrorResume,
+--        ibIfMonPortCrcRateExceed, ibIfMonPortErrorRateExceed, ibIfMonInBCRapidChange, ibIfMonInBCRapidRecover to
+--        ibIfMonTrapPrex.
+--   V3.2 2022-09-07  "Added ibIfLinkFlapDown by guopeng.
+--        2022-10-11 Added ibIfMappingIfStatusBlock and ibIfMappingIfStatusLinkageDown by wangweiyi.
+--   V3.3 2022-11-01 Added ibIfCurrentUsedRatio, ibIfUsedRatioThreshold, ibIfDiscardType, ibIfDiscardThreshold to ibIfExtScalarGroup.
+--        Added ibIfFlowControlDLAlarm, ibIfFlowControlDLAlarmResume, ibIfOutputErrorAlarm, ibIfOutputErrorAlarmResume,
+--        ibIfCableSnrAbnormal, ibIfCableSnrNormal, ibIfCableSnrDetectNotSupport, ibIfSfpNotSupportSingleFiber, ibIfLRMStateAbnormal,
+--        ibIfSfpWorkOnlyNonNego, ibIfPfcTurnOffAlarm, ibIfPfcTurnOffResume, ibIfQueueAlarm, ibIfQueueResume,
+--        ibIfQueueStatDiscardAlarm, ibIfQueueStatDiscardResume, ibIfPfcDeadLockAlarm, ibIfPfcDeadLockResume to ibIfExtTrapPrex by zhangjindong.
+--        2022-12-06 Added ibIfQueueEgressCongestionAlarm and ibIfQueueEgressCongestionClear by tanshuai.
+--   V3.4 2023-01-09 Added ibIfAggPortBwChange, ibIfRateOfTrafficRising and ibIfMonPortCrcRateExceedResume by jiangyongjin.
+--   V3.5 2023-06-21 Added ibIfMonCRCErrorStatisticsExt by jiangyongjin.
+-- =================================================================
+IB-IF-EXT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        ifIndex, ifDescr, InterfaceIndex
+    FROM IF-MIB
+        Integer32, Counter64, Unsigned32, TimeTicks,
+        OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI
+        CounterBasedGauge64
+    FROM HCNUM-TC
+        DisplayString, RowStatus, TruthValue
+    FROM SNMPv2-TC;
+
+ibIfExt MODULE-IDENTITY
+    LAST-UPDATED "202306210000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB is an extension of interface MIBs such as IF-MIB.
+
+        This MIB is applicable to routers, switches, and other products.
+
+        Some objects in this MIB may be used only for some specific products,
+        so users should refer to the related documents to acquire more
+        detailed information.
+        "
+    REVISION "202306210000Z"
+    DESCRIPTION
+        "Added ibIfMonCRCErrorStatisticsExt."
+    REVISION "202301090000Z"
+    DESCRIPTION
+        "Added ibIfAggPortBwChange, ibIfRateOfTrafficRising and ibIfMonPortCrcRateExceedResume."
+    REVISION "202212060000Z"
+    DESCRIPTION
+        "Added ibIfQueueEgressCongestionAlarm and ibIfQueueEgressCongestionClear."
+    REVISION "202211010000Z"
+    DESCRIPTION
+        "Added ibIfCurrentUsedRatio, ibIfUsedRatioThreshold, ibIfDiscardType, ibIfDiscardThreshold to ibIfExtScalarGroup.
+        Added ibIfFlowControlDLAlarm, ibIfFlowControlDLAlarmResume, ibIfOutputErrorAlarm, ibIfOutputErrorAlarmResume,
+        ibIfCableSnrAbnormal, ibIfCableSnrNormal, ibIfCableSnrDetectNotSupport, ibIfSfpNotSupportSingleFiber, ibIfLRMStateAbnormal,
+        ibIfSfpWorkOnlyNonNego, ibIfPfcTurnOffAlarm, ibIfPfcTurnOffResume, ibIfQueueAlarm, ibIfQueueResume,
+        ibIfQueueStatDiscardAlarm, ibIfQueueStatDiscardResume, ibIfPfcDeadLockAlarm, ibIfPfcDeadLockResume to ibIfExtTrapPrex."
+    REVISION "202210110000Z"
+    DESCRIPTION
+        "Added ibIfMappingIfStatusBlock and ibIfMappingIfStatusLinkageDown."
+    REVISION "202209070000Z"
+    DESCRIPTION
+        "Added ibIfLinkFlapDown."
+    REVISION "202208080000Z"
+    DESCRIPTION
+        "Added ibIfCpuId, ibIfOldComboType, ibIfNewComboType, ibIfDropRateThreshold,
+        ibIfCurrentDropRate, ibIfDropRateInterval, ibIfMessageProtocol, ibIfCurrentFlowThreshold,
+        ibIfCurrentFlowValue to ibIfExtScalarGroup.
+        Added ibIfMonJamDiscardStatistics, ibIfMonBadBytesStatistics, ibIfMonErrorRateStatistics to ibIfMonStatEntry.
+        Added ibIfMonJamDiscardThres, ibIfMonJamDiscardInterval, ibIfMonBadBytesThres, ibIfMonBadBytesDiscardInterval,
+        ibIfMonErrorRateThres, ibIfMonErrorRateDiscardInterval to ibIfMonThresholdEntry.
+        Added ibIfHalfDuplexClear, ibIfEgressDropAlarm, ibIfEgressDropRecover, ibIfBoardEgressDropAlarm, ibIfBoardEgressDropRecover,
+        ibIfComboTypeChange, ibIfIngressAgingDropAlarm,ibIfIngressAgingDropResume to ibIfExtTrapPrex.
+        Added ibIfMonInputJamDiscardAlarm, ibIfMonInputJamDiscardResume, ibIfMonOutputJamDiscardAlarm, ibIfMonOutputJamDiscardResume,
+        ibIfMonPktDropRateRising, ibIfMonPktDropRateRecover, ibIfMonBadBytesErrorRising, ibIfMonBadBytesErrorResume,
+        ibIfMonPortCrcRateExceed, ibIfMonPortErrorRateExceed, ibIfMonInBCRapidChange, ibIfMonInBCRapidRecover to
+        ibIfMonTrapPrex."
+    REVISION "202207140000Z"
+    DESCRIPTION
+        "Added ibIfMonCRCBitErrorRising, ibIfMonCRCBitErrorResume, ibIfMonCRCBitErrorHighThresStr,
+        ibIfMonCRCBitErrorLowThresStr, ibIfMonCRCBitErrorRatioStr."
+    REVISION "202207120000Z"
+    DESCRIPTION
+        "Added ibIfLoopBackType, ibIfTtlLoopThreshold, ibIfPreDataLowByte, ibIfPreDataHighByte, ibIfCurDataLowByte,
+        ibIfCurDataHighByte, ibIfIntervalTime, ibIfSDHHpIndex, ibIfUNUCPortRealFlow, ibIfUNUCPortAlarmThreshold,
+        ibIfBip8SdErrThreshold to ibIfExtScalarGroup.
+        Added ibIfLosAlarm, ibIfLosAlarmResume, ibIfLofAlarm, ibIfLofAlarmResume, ibIfLFaultAlarm,
+        ibIfLFaultAlarmResume, ibIfRFaultAlarm, ibIfRFaultAlarmResume, ibIfOofAlarm, ibIfOofAlarmResume,
+        ibIfSfbereAlarm, ibIfSfbereAlarmResume, ibIfPaisAlarm, ibIfPaisAlarmResume, ibIfHpJ1TiuAlarm,
+        ibIfHpJ1TiuAlarmResume, ibIfRroolAlarm, ibIfRroolAlarmResume, ibIfNegoFailedAlarm,
+        ibIfNegoFailedAlarmResume, ibIfEthRxFlowFallAlarm, ibIfEthRxFlowFallAlarmResume, ibIfEthTxFlowFallAlarm,
+        ibIfEthTxFlowFallAlarmResume, ibIfLoopbackAlarm, ibIfLoopbackAlarmResume, ibIfMonTtlLoop,
+        ibIfMonTtlLoopResume to ibIfExtTrapPrex.
+        Added ibIfMonInputUFlowFalling, ibIfMonInputUFlowRising,ibIfMonBip8SdError, ibIfMonBip8SdErrorResume to
+        ibIfMonTrapPrex."
+    REVISION "202206170000Z"
+    DESCRIPTION
+        "Add ibIfChassisIndex, ibIfSlotIndex, ibIfSubSlotIndex,
+        ibIfErrDownDesc to ibIfExtScalarGroup,
+        Add ibIfBufferInDiscardAlarm, ibIfBufferInDiscardResume, ibIfHalfDuplexRising,
+        ibIfChangeMultiChassis, ibIfChangeMultiChassisResume, ibIfCfgRecoverOverSlot,
+        ibIfCfgRecoverOverSubSlot, ibIfInterfaceDelete, ibIfErrordown,
+        ibIfErrordownRecovery to ibIfExtTrapPrex."
+    REVISION "202204020000Z"
+    DESCRIPTION
+        "Added ibIfMonInputBufferDropRising, ibIfMonInputBufferDropResume, ibIfMonOutputBufferDropRising,
+        ibIfMonOutputBufferDropResume, ibIfMonInputBufferDropStatistics, ibIfMonOutputBufferDropStatistics,
+        ibIfMonInputBufferDropLowThres, ibIfMonInputBufferDropHighThres, ibIfMonInputBufferDropInterval,
+        ibIfMonOutputBufferDropLowThres, ibIfMonOutputBufferDropHighThres, ibIfMonOutputBufferDropInterval,
+        ibIfMonInputBufferDropEnableDown and ibIfMonOutputBufferDropEnableDown."
+    REVISION "202203280000Z"
+    DESCRIPTION
+        "Added ibIfPortRateDegrade, ibIfPortRateDegradeResume, ibIfHalfDuplex and ibIfRate."
+    REVISION "202111080000Z"
+    DESCRIPTION
+        "Added ibIfMonTxPauseFrameEnableDown."
+    REVISION "202108030000Z"
+    DESCRIPTION
+        "Added ibIfMappingIfStatusBackup and ibIfMappingIfStatusNormal."
+    REVISION "202105140000Z"
+    DESCRIPTION
+        "Added ibIfTransferMode to ibIfTable."
+    REVISION "202104270000Z"
+    DESCRIPTION
+        "Added the values 200GE and 400GE to ibIfUsingType and ibIfUsingSupportType."
+    REVISION "202008050000Z"
+    DESCRIPTION
+        "Added ibIfFiberOrCopper to ibIfTable."
+    REVISION "202008040000Z"
+    DESCRIPTION
+        "modify ibIfMonGroup and ibIfMonTrapPrex."
+    REVISION "202006090000Z"
+    DESCRIPTION
+        "modify ibIfMonGroup."
+    REVISION "201908060000Z"
+    DESCRIPTION
+        "Added ibIfSpeedStatInBits, ibIfSpeedStatOutBits, ibIfSpeedStatHCInBits
+        and ibIfSpeedStatHCOutBits."
+    REVISION "201806050000Z"
+    DESCRIPTION
+        "Added ibIfQueBufferTable."
+    REVISION "201804260000Z"
+    DESCRIPTION
+        "Modified ibIfMonScalarGroup, ibIfMonGroup, ibIfMonGroup and ibIfMonTrapPrex."
+    REVISION "201802070000Z"
+    DESCRIPTION
+        "Added ibIfPortDot1pTable, ibIfPfcOutRising and ibIfPfcInRising."
+    REVISION "201801090000Z"
+    DESCRIPTION
+        "Added ibIfMonScalarGroup, ibIfMonGroup, ibIfMonGroup and ibIfMonTrapPrex."
+    REVISION "201712131820Z"
+    DESCRIPTION
+        "Added ibIfThroughputInKbps and ibIfThroughputOutKbps."
+    REVISION "201707131040Z"
+    DESCRIPTION
+        "Added ibIfFwdErrDiscards."
+    REVISION "201612051800Z"
+    DESCRIPTION
+        "Added ibIfHCSpeedStatTable."
+    REVISION "201607011700Z"
+    DESCRIPTION
+        "Added the values 25GE and 50GE to ibIfUsingType and ibIfUsingSupportType."
+    REVISION "201512101000Z"
+    DESCRIPTION
+        "Added ibIfDescription."
+    REVISION "201504020458Z"
+    DESCRIPTION
+        "Added ibIfPortUp and ibIfPortDown"
+    REVISION "201411200800Z"
+    DESCRIPTION
+        "Added ibIfPortTypeTable, ibIfPfcStatus, and ibIfPfcDot1pNoDrop."
+    REVISION "200905061936Z"
+    DESCRIPTION
+        "Update this MIB module."
+    REVISION "200411131936Z"        -- December 13, 2004 at 19:36 GMT
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 40 }
+
+
+--
+-- Node definitions
+--
+
+-- Scalar MIB objects, which are considered as global variables
+-- to all interfaces on a device, are defined in this section.
+ibIfExtScalarGroup OBJECT IDENTIFIER ::= { ibIfExt 1 }
+
+ibIfStatGlobalFlowInterval OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "seconds"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Sampling interval for in/out flow of all interfaces.
+        Setting zero indicates closing the statistic function."
+    ::= { ibIfExtScalarGroup 1 }
+
+ibIfShutDownInterval OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "seconds"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set the port status detection timer.  The device starts a port status
+        detection timer when a port is shut down by a protocol.  Once the timer
+        expires, the device brings up the port so the port status reflects
+        the port's physical status."
+    ::= { ibIfExtScalarGroup 2 }
+
+ibIfThroughputInKbps OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Actual incoming throughput of the device in kbps."
+    ::= { ibIfExtScalarGroup 3 }
+
+ibIfThroughputOutKbps OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Actual outgoing throughput of the device in kbps."
+    ::= { ibIfExtScalarGroup 4 }
+
+ibIfRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The rate of the actual bandwidth for an interface."
+    ::= { ibIfExtScalarGroup 5 }
+
+ibIfChassisIndex   OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Chassis."
+    ::= { ibIfExtScalarGroup 6 }
+
+ibIfSlotIndex   OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Slot."
+    ::= { ibIfExtScalarGroup 7 }
+
+ibIfSubSlotIndex   OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Subslot."
+    ::= { ibIfExtScalarGroup 8 }
+
+ibIfErrDownDesc   OBJECT-TYPE
+    SYNTAX  DisplayString (SIZE (0..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Interface error down reason."
+    ::= { ibIfExtScalarGroup 9 }
+
+ibIfLoopBackType   OBJECT-TYPE
+    SYNTAX  INTEGER
+        {
+            noloopback(1),
+            internal(5),
+            external(6)
+        }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Loopback type."
+    ::= { ibIfExtScalarGroup 10 }
+
+ibIfTtlLoopThreshold   OBJECT-TYPE
+    SYNTAX  Integer32
+    UNITS   "seconds"
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Ttl threshold for loop prevention."
+    ::= { ibIfExtScalarGroup 11 }
+
+ibIfPreDataLowByte   OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Previous lower 32-bit value."
+    ::= { ibIfExtScalarGroup 12 }
+
+ibIfPreDataHighByte   OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Previous higher 32-bit value."
+    ::= { ibIfExtScalarGroup 13 }
+
+ibIfCurDataLowByte   OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Current lower 32-bit value."
+    ::= { ibIfExtScalarGroup 14 }
+
+ibIfCurDataHighByte   OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Current higher 32-bit value."
+    ::= { ibIfExtScalarGroup 15 }
+
+ibIfIntervalTime   OBJECT-TYPE
+    SYNTAX  Integer32
+    UNITS   "seconds"
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Interval."
+    ::= { ibIfExtScalarGroup 16 }
+
+ibIfSDHHpIndex   OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "SDH high-order path index."
+    ::= { ibIfExtScalarGroup 17 }
+
+ibIfUNUCPortRealFlow   OBJECT-TYPE
+    SYNTAX  Integer32(0..100)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Percentage of unknown unicast traffic to total traffic."
+    ::= { ibIfExtScalarGroup 18 }
+
+ibIfUNUCPortAlarmThreshold   OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Unknow unicast traffic threshold for an interface, in percentage."
+    ::= { ibIfExtScalarGroup 19 }
+
+ibIfBip8SdErrThreshold OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The threshold for BIP8 error-code."
+    ::= { ibIfExtScalarGroup 20 }
+
+ibIfCpuId   OBJECT-TYPE
+    SYNTAX  Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "CPU ID."
+    ::= { ibIfExtScalarGroup 21 }
+
+ibIfOldComboType   OBJECT-TYPE
+    SYNTAX  INTEGER
+    {
+        fiber(1),
+        copper(2)
+    }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Combo type before switching."
+    ::= { ibIfExtScalarGroup 22 }
+
+ibIfNewComboType   OBJECT-TYPE
+    SYNTAX  INTEGER
+    {
+        fiber(1),
+        copper(2)
+    }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Combo type after switching."
+    ::= { ibIfExtScalarGroup 23 }
+
+ibIfDropRateThreshold   OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Packet loss rate threshold."
+    ::= { ibIfExtScalarGroup 24 }
+
+ibIfCurrentDropRate   OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Current packet loss rate."
+    ::= { ibIfExtScalarGroup 25 }
+
+ibIfDropRateInterval   OBJECT-TYPE
+    SYNTAX  Integer32
+    UNITS   "seconds"
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Packet loss rate detection interval."
+    ::= { ibIfExtScalarGroup 26 }
+
+ibIfMessageProtocol   OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Message protocol."
+    ::= { ibIfExtScalarGroup 27 }
+
+ibIfCurrentFlowThreshold   OBJECT-TYPE
+    SYNTAX  CounterBasedGauge64
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Current bursty flow threshold."
+    ::= { ibIfExtScalarGroup 28 }
+
+ibIfCurrentFlowValue   OBJECT-TYPE
+    SYNTAX  Counter64
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Current bursty flow value."
+    ::= { ibIfExtScalarGroup 29 }
+
+ibIfCurrentUsedRatio   OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Current queue depth usage rate."
+    ::= { ibIfExtScalarGroup 30 }
+
+ibIfUsedRatioThreshold   OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Queue depth usage threshold."
+    ::= { ibIfExtScalarGroup 31 }
+
+ibIfDiscardType   OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        discardstat(1),
+        discardbyte(2),
+        discardrate(3)
+    }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Packet loss type."
+    ::= { ibIfExtScalarGroup 32 }
+
+ibIfDiscardThreshold   OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Packet loss threshold."
+    ::= { ibIfExtScalarGroup 33 }
+
+-- =================================================================
+-- All other groups are defined below.  Of course, scalar objects can
+-- also be defined in a subsection, but they must be one part of
+-- that subsection.
+
+-- Note that a scalar group should be defined firstly and all
+-- scalar objects are placed under that group when doing so.
+ibIfExtGroup OBJECT IDENTIFIER ::= { ibIfExt 2 }
+
+
+-- =================================================================
+-- The section below describes statistics of interfaces on a device.
+-- These statistics may not be included in standard MIBs.
+ibIfStat OBJECT IDENTIFIER ::= { ibIfExtGroup 1 }
+
+-- Define a scalar group that contains all scalar objects used for
+-- interface statistics.
+ibIfStatScalarGroup OBJECT IDENTIFIER ::= { ibIfStat 1 }
+
+ibIfStatTable OBJECT IDENTIFIER ::= { ibIfStat 2 }
+
+ibIfFlowStatTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbIfFlowStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects to get statistic information
+        of interfaces on a device."
+    ::= { ibIfStatTable 1 }
+
+ibIfFlowStatEntry OBJECT-TYPE
+    SYNTAX      IbIfFlowStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Entry items"
+    INDEX
+        {
+            ifIndex
+        }
+    ::= { ibIfFlowStatTable 1 }
+
+IbIfFlowStatEntry ::= SEQUENCE
+    {
+        ibIfStatFlowInterval    Integer32,
+        ibIfStatFlowInBits      Unsigned32,
+        ibIfStatFlowOutBits     Unsigned32,
+        ibIfStatFlowInPkts      Unsigned32,
+        ibIfStatFlowOutPkts     Unsigned32,
+        ibIfStatFlowInBytes     Unsigned32,
+        ibIfStatFlowOutBytes    Unsigned32
+    }
+
+ibIfStatFlowInterval OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "seconds"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Sampling interval for in/out flow of interface.
+        Setting zero indicates closing this statistic function
+        and objects in this table should return 0."
+    ::= { ibIfFlowStatEntry 1 }
+
+ibIfStatFlowInBits OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "In bits in the specified interval."
+    ::= { ibIfFlowStatEntry 2 }
+
+ibIfStatFlowOutBits OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Out bits in the specified interval."
+    ::= { ibIfFlowStatEntry 3 }
+
+ibIfStatFlowInPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "In packets in the specified interval."
+    ::= { ibIfFlowStatEntry 4 }
+
+ibIfStatFlowOutPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Out packets in the specified interval."
+    ::= { ibIfFlowStatEntry 5 }
+
+ibIfStatFlowInBytes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "In bytes in the specified interval."
+    ::= { ibIfFlowStatEntry 6 }
+
+ibIfStatFlowOutBytes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Out bytes in the specified interval."
+    ::= { ibIfFlowStatEntry 7 }
+
+
+-- =================================================================
+ibIfSpeedStatTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbIfSpeedStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects to get average speed information
+        in the specified interval for interfaces on a device."
+    ::= { ibIfStatTable 2 }
+
+ibIfSpeedStatEntry OBJECT-TYPE
+    SYNTAX      IbIfSpeedStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Entry items"
+    INDEX
+        {
+            ifIndex
+        }
+    ::= { ibIfSpeedStatTable 1 }
+
+IbIfSpeedStatEntry ::= SEQUENCE
+    {
+        ibIfSpeedStatInterval    Integer32,
+        ibIfSpeedStatInPkts      Unsigned32,
+        ibIfSpeedStatOutPkts     Unsigned32,
+        ibIfSpeedStatInBytes     Unsigned32,
+        ibIfSpeedStatOutBytes    Unsigned32,
+        ibIfSpeedStatInBits      Unsigned32,
+        ibIfSpeedStatOutBits     Unsigned32
+    }
+
+ibIfSpeedStatInterval OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "seconds"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Sampling interval for in/out flow of interface.
+        Setting zero indicates closing this statistic function
+        and objects in this table should return 0."
+    ::= { ibIfSpeedStatEntry 1 }
+
+ibIfSpeedStatInPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Average of input packets per second in the interval specified by
+        ibIfSpeedStatInterval."
+    ::= { ibIfSpeedStatEntry 2 }
+
+ibIfSpeedStatOutPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Average of output packets per second in the interval specified by
+        ibIfSpeedStatInterval."
+    ::= { ibIfSpeedStatEntry 3 }
+
+ibIfSpeedStatInBytes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Average of input bytes per second in the interval specified by
+        ibIfSpeedStatInterval."
+    ::= { ibIfSpeedStatEntry 4 }
+
+ibIfSpeedStatOutBytes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Average of output bytes per second in the interval specified by
+        ibIfSpeedStatInterval."
+    ::= { ibIfSpeedStatEntry 5 }
+
+ibIfSpeedStatInBits OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Average of input bits per second in the interval specified by
+        ibIfSpeedStatInterval."
+    ::= { ibIfSpeedStatEntry 6 }
+
+ibIfSpeedStatOutBits OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Average of output bits per second in the interval specified by
+        ibIfSpeedStatInterval."
+    ::= { ibIfSpeedStatEntry 7 }
+
+-- =================================================================
+ibIfHCFlowStatTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbIfHCFlowStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects to get statistic information
+         of interfaces on a device."
+    ::= { ibIfStatTable 3 }
+
+ibIfHCFlowStatEntry OBJECT-TYPE
+    SYNTAX      IbIfHCFlowStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Entry items"
+    INDEX
+        {
+            ifIndex
+        }
+    ::= { ibIfHCFlowStatTable 1 }
+
+IbIfHCFlowStatEntry ::= SEQUENCE
+    {
+        ibIfStatFlowHCInBits      CounterBasedGauge64,
+        ibIfStatFlowHCOutBits     CounterBasedGauge64,
+        ibIfStatFlowHCInPkts      CounterBasedGauge64,
+        ibIfStatFlowHCOutPkts     CounterBasedGauge64,
+        ibIfStatFlowHCInBytes     CounterBasedGauge64,
+        ibIfStatFlowHCOutBytes    CounterBasedGauge64
+    }
+
+ibIfStatFlowHCInBits OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "In bits in the specified interval.  This object is a 64-bit
+         version of ibIfStatFlowInBits."
+    ::= { ibIfHCFlowStatEntry 1 }
+
+ibIfStatFlowHCOutBits OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Out bits in the specified interval.  This object is a 64-bit
+         version of ibIfStatFlowOutBits."
+    ::= { ibIfHCFlowStatEntry 2 }
+
+ibIfStatFlowHCInPkts OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "In packets in the specified interval.  This object is a 64-bit
+         version of ibIfStatFlowInPkts."
+    ::= { ibIfHCFlowStatEntry 3 }
+
+ibIfStatFlowHCOutPkts OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Out packets in the specified interval.  This object is a 64-bit
+         version of ibIfStatFlowOutPkts."
+    ::= { ibIfHCFlowStatEntry 4 }
+
+ibIfStatFlowHCInBytes OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "In bytes in the specified interval.  This object is a 64-bit
+         version of ibIfStatFlowInBytes."
+    ::= { ibIfHCFlowStatEntry 5 }
+
+ibIfStatFlowHCOutBytes OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Out bytes in the specified interval.  This object is a 64-bit
+         version of ibIfStatFlowOutBytes."
+    ::= { ibIfHCFlowStatEntry 6 }
+
+-- =================================================================
+ibIfHCSpeedStatTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbIfHCSpeedStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects to get average speed information
+        in the specified interval for interfaces on a device.
+
+        This table is a 64-bit version of ibIfSpeedStatTable."
+    ::= { ibIfStatTable 4 }
+
+ibIfHCSpeedStatEntry OBJECT-TYPE
+    SYNTAX      IbIfHCSpeedStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Entry items"
+    INDEX
+        {
+            ifIndex
+        }
+    ::= { ibIfHCSpeedStatTable 1 }
+
+IbIfHCSpeedStatEntry ::= SEQUENCE
+    {
+        ibIfSpeedStatHCInPkts      CounterBasedGauge64,
+        ibIfSpeedStatHCOutPkts     CounterBasedGauge64,
+        ibIfSpeedStatHCInBytes     CounterBasedGauge64,
+        ibIfSpeedStatHCOutBytes    CounterBasedGauge64,
+        ibIfSpeedStatHCInBits      CounterBasedGauge64,
+        ibIfSpeedStatHCOutBits     CounterBasedGauge64
+    }
+
+ibIfSpeedStatHCInPkts OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Average of input packets per second in the interval specified by
+        ibIfSpeedStatInterval.
+
+        This object is a 64-bit version of ibIfSpeedStatInPkts."
+    ::= { ibIfHCSpeedStatEntry 1 }
+
+ibIfSpeedStatHCOutPkts OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Average of output packets per second in the interval specified by
+        ibIfSpeedStatInterval.
+
+        This object is a 64-bit version of ibIfSpeedStatOutPkts."
+    ::= { ibIfHCSpeedStatEntry 2 }
+
+ibIfSpeedStatHCInBytes OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Average of input bytes per second in the interval specified by
+        ibIfSpeedStatInterval.
+
+        This object is a 64-bit version of ibIfSpeedStatInBytes."
+    ::= { ibIfHCSpeedStatEntry 3 }
+
+ibIfSpeedStatHCOutBytes OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Average of output bytes per second in the interval specified by
+        ibIfSpeedStatInterval.
+
+        This object is a 64-bit version of ibIfSpeedStatOutBytes."
+    ::= { ibIfHCSpeedStatEntry 4 }
+
+ibIfSpeedStatHCInBits OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Average of input bits per second in the interval specified by
+        ibIfSpeedStatInterval.
+
+        This object is a 64-bit version of ibIfSpeedStatInBits."
+    ::= { ibIfHCSpeedStatEntry 5 }
+
+ibIfSpeedStatHCOutBits OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Average of output bits per second in the interval specified by
+        ibIfSpeedStatInterval.
+
+        This object is a 64-bit version of ibIfSpeedStatOutBits."
+    ::= { ibIfHCSpeedStatEntry 6 }
+
+-- =================================================================
+
+ibIfControl OBJECT IDENTIFIER ::= { ibIfExtGroup 2 }
+
+ibRTParentIfTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbRTParentIfEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains all interfaces that can create subinterfaces."
+    ::= { ibIfControl  1 }
+
+ibRTParentIfEntry OBJECT-TYPE
+    SYNTAX      IbRTParentIfEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This entry describes an interface that can create subinterfaces."
+    INDEX
+        {
+            ibRTParentIfIndex
+        }
+    ::= { ibRTParentIfTable 1}
+
+IbRTParentIfEntry    ::= SEQUENCE
+    {
+        ibRTParentIfIndex      Integer32,
+        ibRTMinSubIfOrdinal    Integer32,
+        ibRTMaxSubIfOrdinal    Integer32
+    }
+
+ibRTParentIfIndex OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The index of the interface that can create subinterfaces.  The value
+        is the same as the ifIndex value for this interface."
+    ::= { ibRTParentIfEntry 1 }
+
+ibRTMinSubIfOrdinal OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The min ordinal of the subinterface."
+    ::= { ibRTParentIfEntry 2 }
+
+ibRTMaxSubIfOrdinal OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The max ordinal of the subinterface."
+    ::= { ibRTParentIfEntry 3 }
+
+-- =================================================================
+
+ibRTSubIfTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbRTSubIfEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects to create or delete subinterfaces.
+        To create a subinterface, a valid parent interface must be
+        specified by ibRTSubIfParentIfIndex, and ibRTSubIfOrdinal
+        must be in the range between ibRTMinSubIfOrdinal and
+        ibRTMaxSubIfOrdinal of the parent interface from
+        ibRTParentIfTable.
+
+        Subinterfaces are logical virtual interfaces configured on a
+        main interface.  The main interface can be either a physical
+        interface (such as a Layer 3 Ethernet interface) or a logical
+        interface (such as an MFR interface).  The subinterfaces on a
+        main interface share the physical layer parameters of the main
+        interface but can have link layer and network layer parameters
+        of their own.  Disabling or enabling a subinterface doesn't
+        affect the main interface, but the main interface status change
+        affects the subinterfaces.  The subinterfaces can't operate
+        correctly unless the main interface is connected.
+        Creating multiple subinterfaces on a single interface
+        enables you to plan network in a more flexible way.
+
+        You can create subinterfaces for the following physical
+        interfaces:
+        Ethernet interface.  An Ethernet subinterface associated with no
+        VLAN supports only IPX, while an Ethernet subinterface associated
+        with a VLAN supports both IP and IPX.
+        WAN interfaces with their data link layer protocols being frame
+        relay, whose subinterfaces support IP and IPX.
+        WAN interfaces with their data link layer protocols being X.25,
+        whose subinterfaces support IP and IPX.
+        ATM interface, whose subinterfaces support only IP."
+    ::= { ibIfControl  2 }
+
+ibRTSubIfEntry OBJECT-TYPE
+    SYNTAX      IbRTSubIfEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "The ibRTSubIfTable entry items"
+    INDEX
+        {
+            ibRTSubIfParentIfIndex,
+            ibRTSubIfOrdinal
+        }
+    ::= { ibRTSubIfTable 1}
+
+IbRTSubIfEntry    ::= SEQUENCE
+    {
+        ibRTSubIfParentIfIndex    Integer32,
+        ibRTSubIfOrdinal          Integer32,
+        ibRTSubIfSubIfIndex       Integer32,
+        ibRTSubIfSubIfDesc        DisplayString,
+        ibRTSubIfRowStatus        RowStatus
+    }
+
+ibRTSubIfParentIfIndex OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The parent interface index.  The value should be the same as
+        ibRTParentIfIndex."
+    ::= { ibRTSubIfEntry 1 }
+
+ibRTSubIfOrdinal OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The ordinal of the subinterface.  It should between
+        ibRTMinSubIfOrdinal and ibRTMaxSubIfOrdinal of the parent
+        interface."
+    ::= { ibRTSubIfEntry 2 }
+
+ibRTSubIfSubIfIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ifIndex value of the subinterface"
+    ::= { ibRTSubIfEntry 3 }
+
+ibRTSubIfSubIfDesc OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the interface"
+    ::= { ibRTSubIfEntry 4 }
+
+ibRTSubIfRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status."
+    ::= { ibRTSubIfEntry 5 }
+
+-- =================================================================
+ibIfLinkModeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbIfLinkModeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects to get or set the link mode of an
+        interface.
+        According to the layer at which the device processes received
+        data packets, Ethernet interfaces can operate in bridge or route
+        mode."
+    ::= { ibIfControl  3 }
+
+ibIfLinkModeEntry OBJECT-TYPE
+    SYNTAX      IbIfLinkModeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "The interface link mode table entry"
+    INDEX
+        {
+            ibIfLinkModeIndex
+        }
+    ::= { ibIfLinkModeTable 1}
+
+IbIfLinkModeEntry    ::= SEQUENCE
+    {
+        ibIfLinkModeIndex            Integer32,
+        ibIfLinkMode                 INTEGER,
+        ibIfLinkModeSwitchSupport    TruthValue
+    }
+
+ibIfLinkModeIndex OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The value is the same as ifIndex."
+    ::= { ibIfLinkModeEntry 1 }
+
+
+ibIfLinkMode OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            bridgeMode(1),
+            routeMode(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The current link mode of the interface.
+        If ibIfLinkModeSwitchSupport is true, writing to the object can
+        change the link mode of the interface."
+    ::= { ibIfLinkModeEntry 2 }
+
+ibIfLinkModeSwitchSupport OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Whether the interface supports link mode switching.
+        If this object is true, the interface can operate in either
+        bridge mode or route mode.  Otherwise the interfaces can operate
+        only in bridge or route mode."
+    ::= { ibIfLinkModeEntry 3 }
+
+-- =================================================================
+ibIfPortTypeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbIfPortTypeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects to get or set the port type
+        of an interface."
+    ::= { ibIfControl  4 }
+
+ibIfPortTypeEntry OBJECT-TYPE
+    SYNTAX      IbIfPortTypeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "The interface port type table entry."
+    INDEX
+        {
+            ibIfPortTypeIndex
+        }
+    ::= { ibIfPortTypeTable 1}
+
+IbIfPortTypeEntry    ::= SEQUENCE
+    {
+        ibIfPortTypeIndex            InterfaceIndex,
+        ibIfPortType                 INTEGER
+    }
+
+ibIfPortTypeIndex OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The value is the same as ifIndex."
+    ::= { ibIfPortTypeEntry 1 }
+
+ibIfPortType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            other(1),
+            ethernet(2),
+            fc(3)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The current port type of the interface.
+        Don't set the port type to other for an interface."
+    ::= { ibIfPortTypeEntry 2 }
+
+-- =================================================================
+ibIfPfcDot1pTable   OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbIfPfcDot1pEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table can set the inbound and outbound rate thresholds for the specified dot1p values."
+    ::= { ibIfControl 5 }
+
+ibIfPfcDot1pEntry OBJECT-TYPE
+    SYNTAX      IbIfPfcDot1pEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Entry items"
+    INDEX
+        {
+            ifIndex,
+            ibIfPfcDot1pValue
+        }
+    ::= { ibIfPfcDot1pTable 1}
+
+IbIfPfcDot1pEntry ::= SEQUENCE
+    {
+       ibIfPfcDot1pValue                 INTEGER,
+       ibIfPfcDot1pInPps                 Unsigned32,
+       ibIfPfcDot1pOutPps                Unsigned32,
+       ibIfPfcDot1pInPpsThreshold        Unsigned32,
+       ibIfPfcDot1pOutPpsThreshold       Unsigned32
+    }
+
+ibIfPfcDot1pValue OBJECT-TYPE
+    SYNTAX INTEGER
+    {
+        pri0(1),
+        pri1(2),
+        pri2(3),
+        pri3(4),
+        pri4(5),
+        pri5(6),
+        pri6(7),
+        pri7(8)
+    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The PFC dot1p value list."
+    ::= { ibIfPfcDot1pEntry 1 }
+
+ibIfPfcDot1pInPps OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current inbound rate for the PFC dot1p."
+    ::= { ibIfPfcDot1pEntry 2 }
+
+ibIfPfcDot1pOutPps  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current outbound rate for the PFC dot1p."
+    ::= { ibIfPfcDot1pEntry 3 }
+
+ibIfPfcDot1pInPpsThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The threshold for the inbound rate.
+         If the ibIfPfcDot1pInPpsThreshold is set to 0, no ibIfPfcInRising will be generated."
+    ::= { ibIfPfcDot1pEntry 4 }
+
+ibIfPfcDot1pOutPpsThreshold  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The threshold for the outbound rate.
+         If the ibIfPfcDot1pOutPpsThreshold is set to 0, no ibIfPfcOutRising will be generated."
+    ::= { ibIfPfcDot1pEntry 5 }
+
+-- =================================================================
+ibIfQueBufferTable   OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbIfQueBufferEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects to get the usage info, thresholds, and
+        statistics of queue buffers and to set the thresholds of queue buffers."
+    ::= { ibIfControl 6 }
+
+ibIfQueBufferEntry OBJECT-TYPE
+    SYNTAX      IbIfQueBufferEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Entry items"
+    INDEX
+        {
+            ifIndex,
+            ibIfQueId
+        }
+    ::= { ibIfQueBufferTable 1}
+
+IbIfQueBufferEntry ::= SEQUENCE
+    {
+       ibIfQueId                         INTEGER,
+       ibIfQueOutUcastTotal              Unsigned32,
+       ibIfQueOutUcastFree               Unsigned32,
+       ibIfQueOutUcastUsedRatio          Unsigned32,
+       ibIfQueOutUcastUsedPeak           Unsigned32,
+       ibIfQueOutUcastThreshold          Unsigned32,
+       ibIfQueOutUcastOverThres          Unsigned32,
+       ibIfQueInTotal                    Unsigned32,
+       ibIfQueInFree                     Unsigned32,
+       ibIfQueInUsedRatio                Unsigned32,
+       ibIfQueInUsedPeak                 Unsigned32,
+       ibIfQueInThreshold                Unsigned32,
+       ibIfQueInOverThres                Unsigned32,
+       ibIfQueInHeadRoomTotal            Unsigned32,
+       ibIfQueInHeadRoomFree             Unsigned32,
+       ibIfQueInHeadRoomUsedRatio        Unsigned32,
+       ibIfQueInHeadRoomUsedPeak         Unsigned32
+    }
+
+ibIfQueId OBJECT-TYPE
+    SYNTAX INTEGER
+    {
+        que0(1),
+        que1(2),
+        que2(3),
+        que3(4),
+        que4(5),
+        que5(6),
+        que6(7),
+        que7(8)
+    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The buffer's queue ID."
+    ::= { ibIfQueBufferEntry 1 }
+
+ibIfQueOutUcastTotal  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total amount of outbound unicast queue buffer."
+    ::= { ibIfQueBufferEntry 2 }
+
+ibIfQueOutUcastFree  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The amount of free outbound unicast queue buffer."
+    ::= { ibIfQueBufferEntry 3 }
+
+ibIfQueOutUcastUsedRatio  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ratio of outbound unicast queue buffer which is used."
+    ::= { ibIfQueBufferEntry 4 }
+
+ibIfQueOutUcastUsedPeak  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The peak of outbound unicast queue buffer which is used."
+    ::= { ibIfQueBufferEntry 5 }
+
+ibIfQueOutUcastThreshold  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The alarm threshold of outbound unicast queue buffer which is used."
+    ::= { ibIfQueBufferEntry 6 }
+
+ibIfQueOutUcastOverThres  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times of exceeding the alarm threshold of outbound unicast queue buffer which is used."
+    ::= { ibIfQueBufferEntry 7 }
+
+ibIfQueInTotal  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total amount of inbound queue buffer."
+    ::= { ibIfQueBufferEntry 8 }
+
+ibIfQueInFree  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The amount of free inbound queue buffer."
+    ::= { ibIfQueBufferEntry 9 }
+
+ibIfQueInUsedRatio  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ratio of inbound queue buffer which is used."
+    ::= { ibIfQueBufferEntry 10 }
+
+ibIfQueInUsedPeak  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The peak of inbound queue buffer which is used."
+    ::= { ibIfQueBufferEntry 11 }
+
+ibIfQueInThreshold  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The alarm threshold of inbound queue buffer which is used."
+    ::= { ibIfQueBufferEntry 12 }
+
+ibIfQueInOverThres  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times over the alarm threshold of inbound queue buffer which is used."
+    ::= { ibIfQueBufferEntry 13 }
+
+ibIfQueInHeadRoomTotal  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total amount of inbound queue headroom buffer."
+    ::= { ibIfQueBufferEntry 14 }
+
+ibIfQueInHeadRoomFree  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The amount of free inbound queue headroom buffer."
+    ::= { ibIfQueBufferEntry 15 }
+
+ibIfQueInHeadRoomUsedRatio  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ratio of inbound queue headroom buffer which is used."
+    ::= { ibIfQueBufferEntry 16 }
+
+ibIfQueInHeadRoomUsedPeak  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The peak of inbound queue headroom buffer which is used."
+    ::= { ibIfQueBufferEntry 17 }
+
+-- =================================================================
+ibIfInterfaces OBJECT IDENTIFIER ::= { ibIfExtGroup 3 }
+
+ibIfPhysicalNumber OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the number of physical interfaces on the device."
+    ::= { ibIfInterfaces 1 }
+
+ibIfTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbIfEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A list of interface entries.  The number of entries is given by
+         the value of IfNumber."
+    ::= { ibIfInterfaces 2 }
+
+ibIfEntry OBJECT-TYPE
+    SYNTAX      IbIfEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable to a
+         particular interface."
+    INDEX
+        {
+            ifIndex
+        }
+    ::= { ibIfTable 1 }
+
+IbIfEntry ::= SEQUENCE
+    {
+        ibIfUpDownTimes      Integer32,
+        ibIfMtu              Integer32,
+        ibIfBandwidthRate    Integer32,
+        ibIfDiscardPktRate   Integer32,
+        ibIfStatusKeepTime   TimeTicks,
+        ibIfInNUcastPkts     Counter64,
+        ibIfOutNUcastPkts    Counter64,
+        ibIfIsPoe            TruthValue,
+        ibIfOperStatus       INTEGER,
+        ibIfDownTimes        Integer32,
+        ibIfPfcStatus        INTEGER,
+        ibIfPfcDot1pNoDrop   BITS,
+        ibIfDescription      DisplayString,
+        ibIfFwdErrDiscards   Unsigned32,
+        ibIfFiberOrCopper    INTEGER,
+        ibIfTransferMode     INTEGER
+    }
+
+ibIfUpDownTimes OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The interface's up/down times, since the device was initialized."
+    ::= { ibIfEntry 1 }
+
+ibIfMtu OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The size of the largest datagram that can be sent or received on the
+        interface, specified in octets.  For interfaces that are used for
+        transmitting network datagram, this is the size of the largest network
+        datagram that can be sent on the interfaces."
+    ::= { ibIfEntry 2 }
+
+ibIfBandwidthRate OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The rate of the bandwidth for an interface."
+    ::= { ibIfEntry 3 }
+
+ibIfDiscardPktRate OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The rate of the discarded packets for an interface."
+    ::= { ibIfEntry 4 }
+
+ibIfStatusKeepTime OBJECT-TYPE
+    SYNTAX      TimeTicks
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The time since the interface
+        entered its current operational state."
+    ::= { ibIfEntry 5 }
+
+ibIfInNUcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of non-unicast (i.e., subnetwork-
+        broadcast or subnetwork-multicast) packets
+        delivered to a higher-layer protocol."
+    ::= { ibIfEntry 6 }
+
+ibIfOutNUcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of packets that higher-level
+        protocols requested be transmitted to a non-
+        unicast (i.e., a subnetwork-broadcast or
+        subnetwork-multicast) address."
+    ::= { ibIfEntry 7 }
+
+ibIfIsPoe OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Whether the interface supports PoE."
+    ::= { ibIfEntry 8 }
+
+ibIfOperStatus OBJECT-TYPE
+    SYNTAX  INTEGER {
+                up(1),        -- ready to forward packets
+                down(2),
+                testing(3),   -- in a test mode
+                admindown(4)  -- shut down by administrator
+            }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Current status of the interface.  In testing state,
+            no operational packets can be forwarded.  If ifAdminStatus
+            is down, ibIfOperStatus should be admindown.  If
+            ifAdminStatus is changed to up, ibIfOperStatus should
+            change to up if the interface is ready to send and receive
+            network traffic; otherwise, it should stay in down state."
+    ::= { ibIfEntry 9 }
+
+ibIfDownTimes OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of times the interface went down, since the device was initialized."
+    ::= { ibIfEntry 10 }
+
+ibIfPfcStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            enable(1),
+            disable(2),
+            auto(3)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Pfc (Priority-based Flow Control) status.
+         Forcibly enable Pfc by enable(1).
+         Disable Pfc by disable(2).
+         Set Pfc to auto mode by auto(3).
+               In auto mode, the local end automatically negotiates
+               the Pfc status with its peer.
+         When congestion occurs in the network, the local device notifies
+         the peer to stop sending packets carrying the specified 802.1p
+         priority if all of the following conditions exist:
+         1. Both the local end and the remote end have Pfc enabled.
+         2. Both the local end and the remote end have the dot1p list specified
+         by ibIfPfcDot1pNoDrop.
+         3. The specified 802.1p priority is in the dot1p list of ibIfPfcDot1pNoDrop.
+         4. The local end receives a packet carrying the specified 802.1p priority."
+    DEFVAL { disable }
+    ::= { ibIfEntry 11 }
+
+ibIfPfcDot1pNoDrop OBJECT-TYPE
+    SYNTAX      BITS { pri0(0), pri1(1), pri2(2), pri3(3), pri4(4), pri5(5), pri6(6), pri7(7) }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Pfc (Priority-based Flow Control) dot1q list,
+        bit 0 through bit 7 corresponding to priority 0 through priority 7.
+        See ibIfPfcStatus."
+    DEFVAL{ { } }
+    ::= { ibIfEntry 12 }
+
+ibIfDescription OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE(0..255))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object is also an 'alias' name for the interface specified by a
+        network manager, like the object of ifAlias.  However, the size of
+        this object is larger than ifAlias.  When this object is set to a
+        string of more than 64 characters, only the first 64 characters of the
+        object are read for the IfAlias object."
+    ::= { ibIfEntry 13 }
+
+ibIfFwdErrDiscards OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets that were discarded when being forwarded."
+    ::= { ibIfEntry 14 }
+
+ibIfFiberOrCopper  OBJECT-TYPE
+    SYNTAX  INTEGER
+    {
+        unknown  (0),
+        fiber  (1),
+        copper   (2)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Type of the port,which can be copper or fiber."
+    ::= { ibIfEntry 15 }
+
+ibIfTransferMode   OBJECT-TYPE
+    SYNTAX  INTEGER
+    {
+        lan  (1),
+        wan  (2)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Transfer mode of the port, which can be lan or wan."
+    ::= { ibIfEntry 16 }
+
+ibIfUsingTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbIfUsingEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table containing management information applicable to splitting
+       interfaces.  To improve port density, reduce costs, and improve network
+       flexibility, a high-bandwidth interface can be split into multiple
+       low-bandwidth breakout interfaces, and the breakout interfaces can be
+       combined into a higher-bandwidth interface.
+       For example, a 40-GE interface can be split into four 10-GE breakout
+       interfaces.  After the operation takes effect on a 40-GE interface, the
+       system deletes the 40-GE interface and creates four 10-GE breakout
+       interfaces."
+    ::= { ibIfInterfaces 3 }
+
+ibIfUsingEntry OBJECT-TYPE
+    SYNTAX      IbIfUsingEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry of ibIfUsingTable."
+    INDEX { ibIfUsingIndex }
+    ::= { ibIfUsingTable 1 }
+
+IbIfUsingEntry ::= SEQUENCE
+    {
+        ibIfUsingIndex              Integer32,
+        ibIfUsingSupportType        Integer32,
+        ibIfUsingType               INTEGER,
+        ibIfUsingStatus             INTEGER
+    }
+
+ibIfUsingIndex OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Index of an interface that can be split into multiple low-bandwidth
+        breakout interfaces or be restored to a high-bandwidth interface."
+    ::= { ibIfUsingEntry 1 }
+
+ibIfUsingSupportType OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object specifies the port type which can be split into or restored to.
+        From lowest bit, each bit corresponds to a port type ('10GE', '20GE',
+        '40GE', '100GE', '25GE', '50GE', '200GE', '400GE').
+        For example, value 3 means this object can be split into 10GE or 20GE,
+        value 4 means this object can be split into 40GE, or can be restored to
+        40GE."
+    ::= { ibIfUsingEntry 2 }
+
+ibIfUsingType OBJECT-TYPE
+    SYNTAX  INTEGER {
+                noUsing(0),
+                using10GE(1),
+                using20GE(2),
+                using40GE(3),
+                using100GE(4),
+                using25GE(5),
+                using50GE(6),
+                using200GE(7),
+                using400GE(8)
+             }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object specifies the port type that can be split into or restored to.
+
+        After this object is set to a non-zero value, the operation returns
+        success in the following cases:
+        1.  The original instance still exists and is read as a non-zero value.
+            In this case, object ibIfUsingStatus change to needReboot(1),
+            which means that you need to reboot the line card (for distributed
+            devices) or device (for centralized devices) where the port is
+            located to make the operation take effect.
+            Set this object to noUsing(0) for cancelling the operation.
+        2.  The operation takes effect immediately.
+        Original instance is deleted and new instance is created while the
+        operation takes effect."
+    ::= { ibIfUsingEntry 3 }
+
+ibIfUsingStatus OBJECT-TYPE
+    SYNTAX  INTEGER {
+                noUsing(0),
+                needReboot(1)
+             }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        " After object ibIfUsingType is set to a non-zero value, the value
+         for this object is needReboot(1) until you reboot the line card (for
+         distributed devices) or device (for centralized devices) where the
+         port is located."
+    ::= { ibIfUsingEntry 4 }
+
+--
+-- Notification definitions
+--
+-- =================================================================
+-- Traps are defined below.
+
+ibIfExtTrap OBJECT IDENTIFIER ::= { ibIfExt 3 }
+ibIfExtTrapPrex OBJECT IDENTIFIER ::= { ibIfExtTrap 0 }
+-- All trap definitions should be placed under this object.
+
+ibIfBandwidthUsageHigh NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifDescr,
+            ibIfBandwidthRate,
+            ibIfBandwidthUpperLimit
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the rate of the bandwidth for the
+         interface exceeds the upper limit."
+    ::= { ibIfExtTrapPrex 1 }
+
+ibIfDiscardPktRateHigh NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifDescr,
+            ibIfDiscardPktRate,
+            ibIfDiscardPktRateUpperLimit
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the rate of the discarded packets
+         for the interface exceeds the upper limit."
+    ::= { ibIfExtTrapPrex 2 }
+
+ibIfDampeningSuppressed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the interface is suppressed
+         via dampening."
+    ::= { ibIfExtTrapPrex 3 }
+
+ibIfDampeningNotSuppressed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the interface is resumed to
+         not suppressed via dampening."
+    ::= { ibIfExtTrapPrex 4 }
+
+ibIfPortUp NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when physical state of the interface changes to up."
+    ::= { ibIfExtTrapPrex 5 }
+
+ibIfPortDown NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when physical state of the interface changes to down."
+    ::= { ibIfExtTrapPrex 6 }
+
+ibIfPfcOutRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfPfcDot1pValue,
+            ibIfPfcDot1pOutPps,
+            ibIfPfcDot1pOutPpsThreshold
+        }
+    STATUS current
+    DESCRIPTION
+    "The notification is generated when the outbound rate exceeds the threshold for the dot1p value.
+     If the ibIfPfcDot1pOutPpsThreshold is set to 0, no ibIfPfcOutRising will be generated."
+    ::= { ibIfExtTrapPrex 7 }
+
+ibIfPfcInRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfPfcDot1pValue,
+            ibIfPfcDot1pInPps,
+            ibIfPfcDot1pInPpsThreshold
+        }
+    STATUS current
+    DESCRIPTION
+    "The notification is generated when the inbound rate exceeds the threshold for the dot1p value.
+     If the ibIfPfcDot1pInPpsThreshold is set to 0, no ibIfPfcInRising will be generated."
+    ::= { ibIfExtTrapPrex 8 }
+
+ibIfMappingIfStatusBackup NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+    "The notification is generated when the mapping status of the interface changes to backup."
+    ::= { ibIfExtTrapPrex 9 }
+
+ibIfMappingIfStatusNormal NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+    "The notification is generated when the mapping status of the interface changes to normal."
+    ::= { ibIfExtTrapPrex 10 }
+
+ibIfPortRateDegrade NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfRate
+        }
+    STATUS current
+    DESCRIPTION
+    "The notification is generated when the negotiated interface rate decreases."
+    ::= { ibIfExtTrapPrex 11 }
+
+ibIfPortRateDegradeResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfRate
+        }
+    STATUS current
+    DESCRIPTION
+    "The notification is generated when the negotiated interface rate recovers."
+    ::= { ibIfExtTrapPrex 12 }
+
+ibIfHalfDuplex NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+    "The notification is generated when the half duplex mode is autonegotiated for the interface."
+    ::= { ibIfExtTrapPrex 13 }
+
+ibIfBufferInDiscardAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIfChassisIndex,
+            ibIfSlotIndex
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of ingress buffer discard exceeds the
+         upper threshold."
+    ::= { ibIfExtTrapPrex 14 }
+
+ibIfBufferInDiscardResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIfChassisIndex,
+            ibIfSlotIndex
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of ingress buffer discard from
+         above the upper threshold to below the lower threshold."
+    ::= { ibIfExtTrapPrex 15 }
+
+ibIfHalfDuplexRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when work mode change to half duplex."
+    ::= { ibIfExtTrapPrex 16 }
+
+ibIfChangeMultiChassis NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when centent or distributed expanded to
+         multiple enclosures, and the interface information is changes."
+    ::= { ibIfExtTrapPrex 17 }
+
+ibIfChangeMultiChassisResume NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when multiple rolled back to centent or
+         distributed , and the interface information changes."
+    ::= { ibIfExtTrapPrex 18 }
+
+ibIfCfgRecoverOverSlot NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIfChassisIndex,
+            ibIfSlotIndex
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when The slot is inserted successfully."
+    ::= { ibIfExtTrapPrex 19 }
+
+ibIfCfgRecoverOverSubSlot NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIfChassisIndex,
+            ibIfSlotIndex,
+            ibIfSubSlotIndex
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when The subslot is inserted successfully."
+    ::= { ibIfExtTrapPrex 20 }
+
+ibIfInterfaceDelete NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the interface to delete."
+    ::= { ibIfExtTrapPrex 21 }
+
+ibIfErrordown NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfErrDownDesc
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the interface error-down occured."
+    ::= { ibIfExtTrapPrex 22 }
+
+ibIfErrordownRecovery NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfErrDownDesc
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the interface error-down recover."
+    ::= { ibIfExtTrapPrex 23 }
+
+ibIfLosAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when no power is input."
+    ::= { ibIfExtTrapPrex 24 }
+
+ibIfLosAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the no power input error is removed."
+    ::= { ibIfExtTrapPrex 25 }
+
+ibIfLofAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when an out of frame (OOF) error occurs."
+    ::= { ibIfExtTrapPrex 26 }
+
+ibIfLofAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the OOF error is removed."
+    ::= { ibIfExtTrapPrex 27 }
+
+ibIfLFaultAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when local fault error occurs."
+    ::= { ibIfExtTrapPrex 28 }
+
+ibIfLFaultAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when local fault error is removed."
+    ::= { ibIfExtTrapPrex 29 }
+
+ibIfRFaultAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when remote fault error occurs."
+    ::= { ibIfExtTrapPrex 30 }
+
+ibIfRFaultAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when remote fault error is removed."
+    ::= { ibIfExtTrapPrex 31 }
+
+ibIfOofAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated if a frame header fails to be identified for five times."
+    ::= { ibIfExtTrapPrex 32 }
+
+ibIfOofAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the frame header identification failure is fixed."
+    ::= { ibIfExtTrapPrex 33 }
+
+ibIfSfbereAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the error-code count exceeds the threshold."
+    ::= { ibIfExtTrapPrex 34 }
+
+ibIfSfbereAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the error-code count drops to the normal range."
+    ::= { ibIfExtTrapPrex 35 }
+
+ibIfPaisAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfSDHHpIndex
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when error occurs on a high-order path."
+    ::= { ibIfExtTrapPrex 36 }
+
+ibIfPaisAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfSDHHpIndex
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the error removed from the figh-order path."
+    ::= { ibIfExtTrapPrex 37 }
+
+ibIfHpJ1TiuAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfSDHHpIndex
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the J1 byte is not steady."
+    ::= { ibIfExtTrapPrex 38 }
+
+ibIfHpJ1TiuAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfSDHHpIndex
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the J1 byte recovers from the unsteady condition."
+    ::= { ibIfExtTrapPrex 39 }
+
+ibIfRroolAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the clock is unlocked."
+    ::= { ibIfExtTrapPrex 40 }
+
+ibIfRroolAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the clock is locket."
+    ::= { ibIfExtTrapPrex 41 }
+
+ibIfNegoFailedAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the interface auto-negotiation fails."
+    ::= { ibIfExtTrapPrex 42 }
+
+ibIfNegoFailedAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the interface auto-negotiation succeeds"
+    ::= { ibIfExtTrapPrex 43 }
+
+ibIfEthRxFlowFallAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the inbound traffic volume drop below the threshold."
+    ::= { ibIfExtTrapPrex 44 }
+
+ibIfEthRxFlowFallAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the inbound traffic volume traffic volume increases to
+         the normal range."
+    ::= { ibIfExtTrapPrex 45 }
+
+ibIfEthTxFlowFallAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the outbound traffic volume drops below the threshold."
+    ::= { ibIfExtTrapPrex 46 }
+
+ibIfEthTxFlowFallAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the outbound traffic volume increases to the normal
+         range."
+    ::= { ibIfExtTrapPrex 47 }
+
+ibIfLoopbackAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfLoopBackType
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the loopback configration is issued."
+    ::= { ibIfExtTrapPrex 48 }
+
+ibIfLoopbackAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfLoopBackType
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the loopback configuration is removed."
+    ::= { ibIfExtTrapPrex 49 }
+
+ibIfTtlLoop NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIfChassisIndex,
+            ibIfSlotIndex,
+            ibIfPreDataHighByte,
+            ibIfPreDataLowByte,
+            ibIfCurDataHighByte,
+            ibIfCurDataLowByte,
+            ibIfIntervalTime,
+            ibIfTtlLoopThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when a TTL timeout alarm occurs."
+    ::= { ibIfExtTrapPrex 50 }
+
+ibIfTtlLoopResume  NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIfChassisIndex,
+            ibIfSlotIndex,
+            ibIfPreDataHighByte,
+            ibIfPreDataLowByte,
+            ibIfCurDataHighByte,
+            ibIfCurDataLowByte,
+            ibIfIntervalTime,
+            ibIfTtlLoopThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when TTL timeout alarm is cleared."
+    ::= { ibIfExtTrapPrex 51 }
+
+ibIfHalfDuplexClear NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated When the working mode changes from half duplex to full duplex."
+    ::= { ibIfExtTrapPrex 52 }
+
+ibIfEgressDropAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfQueId
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when packet loss occurs on a port."
+    ::= { ibIfExtTrapPrex 53 }
+
+ibIfEgressDropRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfQueId
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when packet loss recovers on a port."
+    ::= { ibIfExtTrapPrex 54 }
+
+ibIfBoardEgressDropAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIfChassisIndex,
+            ibIfSlotIndex,
+            ibIfCpuId
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the outgoing unicast traffic of the board is discarded."
+    ::= { ibIfExtTrapPrex 55 }
+
+ibIfBoardEgressDropRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIfChassisIndex,
+            ibIfSlotIndex,
+            ibIfCpuId
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the outgoing unicast traffic of the board is restored."
+    ::= { ibIfExtTrapPrex 56 }
+
+ibIfComboTypeChange NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfOldComboType,
+            ibIfNewComboType
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the combo type changes due to command line configuration."
+    ::= { ibIfExtTrapPrex 57 }
+
+ibIfIngressAgingDropAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIfChassisIndex,
+            ibIfSlotIndex,
+            ibIfCpuId
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when traffic in the slot ingress buffer is discarded for no schedule."
+    ::= { ibIfExtTrapPrex 58 }
+
+ibIfIngressAgingDropResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIfChassisIndex,
+            ibIfSlotIndex,
+            ibIfCpuId
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when traffic in the slot ingress buffer recovered from discard with no schedule."
+    ::= { ibIfExtTrapPrex 59 }
+
+ibIfLinkFlapDown NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the interface shutdown because the link vibrates frequently."
+    ::= { ibIfExtTrapPrex 60 }
+
+ibIfMappingIfStatusBlock NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+    "The notification is generated when the mapping status of the interface changes to block."
+    ::= { ibIfExtTrapPrex 61 }
+
+ibIfMappingIfStatusLinkageDown NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+    "The notification is generated when the mapping status of the interface changes to linkagedown."
+    ::= { ibIfExtTrapPrex 62 }
+
+ibIfFlowControlDLAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the port does not forward messages but receives a large number of pause frames
+         or the port continuously sends a large number of pause frames, but does not receive messages."
+    ::= { ibIfExtTrapPrex 63 }
+
+ibIfFlowControlDLAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the port does not forward messages and does not receive a large number of pause frames
+         or the port continuously sends a large number of pause frames and receives messages."
+    ::= { ibIfExtTrapPrex 64 }
+
+ibIfOutputErrorAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfSlotIndex,
+            ibIfSubSlotIndex
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when some service data on the port is discarded."
+    ::= { ibIfExtTrapPrex 65 }
+
+ibIfOutputErrorAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfSlotIndex,
+            ibIfSubSlotIndex
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when no service data is dropped on the port."
+    ::= { ibIfExtTrapPrex 66 }
+
+ibIfCableSnrAbnormal NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the working rate of the MultiGE interface is 2.5Gbit/s or above,
+         the network cable quality is poor, or there is signal interference."
+    ::= { ibIfExtTrapPrex 67 }
+
+ibIfCableSnrNormal NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the working rate of the MultiGE interface is 2.5Gbit/s or above,
+         the network cable is intact, or there is no signal interference."
+    ::= { ibIfExtTrapPrex 68 }
+
+ibIfCableSnrDetectNotSupport NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when network cable quality cannot be detected, and the
+         MultiGE interface changes from up to down."
+    ::= { ibIfExtTrapPrex 69 }
+
+ibIfSfpNotSupportSingleFiber NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the optical module inserted in the interface does not support the single fiber function."
+    ::= { ibIfExtTrapPrex 70 }
+
+ibIfLRMStateAbnormal NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the interface does not support the LRM optical module."
+    ::= { ibIfExtTrapPrex 71 }
+
+ibIfSfpWorkOnlyNonNego NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the GE optical module inserted into the XGE interface can only work in
+         the non-self-negotiated 1000Mbit/s mode, and the interface rate of the interconnection is configured as mandatory 1000Mbit/s."
+    ::= { ibIfExtTrapPrex 72 }
+
+ibIfPfcDeadLockAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when PFC deadlock may lead to blocked network traffic."
+    ::= { ibIfExtTrapPrex 73 }
+
+ibIfPfcDeadLockResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when PFC deadlock recovers network traffic."
+    ::= { ibIfExtTrapPrex 74 }
+
+ibIfPfcTurnOffAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfQueId
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of deadlock occurrences in a detection interval exceeds
+         the threshold value of PFC automatic shutdown."
+    ::= { ibIfExtTrapPrex 75 }
+
+ibIfPfcTurnOffResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfQueId
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of deadlock occurrences in a detection interval drops below
+         the threshold value of PFC automatic shutdown."
+    ::= { ibIfExtTrapPrex 76 }
+
+ibIfQueueAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfQueId,
+            ibIfCurrentUsedRatio,
+            ibIfUsedRatioThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the queue depth usage rate of the queue on the interface exceeds
+         the configured value on the interface."
+    ::= { ibIfExtTrapPrex 77 }
+
+ibIfQueueResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfQueId,
+            ibIfCurrentUsedRatio,
+            ibIfUsedRatioThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the queue depth usage rate of the queue on the interface drops below
+         the configured value on the interface."
+    ::= { ibIfExtTrapPrex 78 }
+
+ibIfQueueStatDiscardAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfQueId,
+            ibIfDiscardType,
+            ibIfDiscardThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of packets dropped/bytes dropped/packet loss rate in the port queue
+         reaches the alarm threshold."
+    ::= { ibIfExtTrapPrex 79 }
+
+ibIfQueueStatDiscardResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfQueId,
+            ibIfDiscardType,
+            ibIfDiscardThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of packets dropped/bytes dropped/packet loss rate in the port queue
+         drops below the alarm threshold."
+    ::= { ibIfExtTrapPrex 80 }
+
+ibIfQueueEgressCongestionAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfQueId
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when congestion occurs in the outgoing direction of the queue on the interface."
+    ::= { ibIfExtTrapPrex 81 }
+
+ibIfQueueEgressCongestionClear NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfQueId
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the congestion ofin the outgoing direction in the queue on the interface is removed."
+    ::= { ibIfExtTrapPrex 82 }
+
+ibIfAggPortBwChange NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the trunk interface bandwidth changes."
+    ::= { ibIfExtTrapPrex 83 }
+
+ibIfRateOfTrafficRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIfChassisIndex,
+            ibIfSlotIndex
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the interface slot flow is greater than the threshold."
+    ::= { ibIfExtTrapPrex 84 }
+
+ibIfExtTrapObject OBJECT IDENTIFIER ::= { ibIfExtTrap 1 }
+
+ibIfExtTrapCfgTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbIfExtTrapCfgEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The trap configuration table."
+    ::= { ibIfExtTrapObject 1 }
+
+ibIfExtTrapCfgEntry OBJECT-TYPE
+    SYNTAX      IbIfExtTrapCfgEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for this table."
+    INDEX
+        {
+            ifIndex
+        }
+    ::= { ibIfExtTrapCfgTable 1 }
+
+IbIfExtTrapCfgEntry ::= SEQUENCE
+    {
+        ibIfBandwidthUpperLimit      Integer32,
+        ibIfDiscardPktRateUpperLimit Integer32
+    }
+
+ibIfBandwidthUpperLimit OBJECT-TYPE
+    SYNTAX      Integer32(1..100)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The rate of the bandwidth upper limit for an interface."
+    ::= { ibIfExtTrapCfgEntry 1 }
+
+ibIfDiscardPktRateUpperLimit OBJECT-TYPE
+    SYNTAX      Integer32(1..100)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The rate of the discarded packets upper limit for an interface."
+    ::= { ibIfExtTrapCfgEntry 2 }
+
+-- =================================================================
+ibIfMonScalarGroup OBJECT IDENTIFIER ::= { ibIfExt 4 }
+
+-- =================================================================
+-- All other groups are defined below.  Of course, scalar objects can
+-- also be defined in a subsection, but they must be one part of
+-- that subsection.
+
+-- Note that a scalar group should be defined firstly and all
+-- scalar objects are placed under that group when doing so.
+
+ibIfMonGroup OBJECT IDENTIFIER ::= { ibIfExt 5 }
+
+-- =================================================================
+ibIfMonStat OBJECT IDENTIFIER ::= { ibIfMonGroup 1 }
+
+ibIfMonStatTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbIfMonStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table is about some types of statistics."
+    ::= { ibIfMonStat 1}
+
+ibIfMonStatEntry OBJECT-TYPE
+    SYNTAX      IbIfMonStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Entry items."
+    INDEX
+        {
+            ifIndex
+        }
+    ::= { ibIfMonStatTable 1}
+
+IbIfMonStatEntry ::= SEQUENCE
+    {
+        ibIfMonInputUsageStatistics         Unsigned32,
+        ibIfMonOutputUsageStatistics        Unsigned32,
+        ibIfMonInputErrorAlarmStatistics    Counter64,
+        ibIfMonOutputErrorAlarmStatistics   Counter64,
+        ibIfMonSdhErrorStatistics           Counter64,
+        ibIfMonSdhB1ErrorStatistics         Counter64,
+        ibIfMonSdhB2ErrorStatistics         Counter64,
+        ibIfMonCRCErrorStatistics           Counter64,
+        ibIfMonRxPauseFrameStatistics       Counter64,
+        ibIfMonTxPauseFrameStatistics       Counter64,
+        ibIfMonRuntStatistics               Counter64,
+        ibIfMonGiantStatistics              Counter64,
+        ibIfMonInputBufferDropStatistics    Counter64,
+        ibIfMonOutputBufferDropStatistics   Counter64,
+        ibIfMonJamDiscardStatistics         Counter64,
+        ibIfMonBadBytesStatistics           Counter64,
+        ibIfMonErrorRateStatistics          Counter64,
+        ibIfMonCRCErrorStatisticsExt        Counter64
+    }
+
+ibIfMonInputUsageStatistics OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics about the inbound bandwidth usage."
+    ::= { ibIfMonStatEntry 1 }
+
+ibIfMonOutputUsageStatistics OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics about the outbound bandwidth usage."
+    ::= { ibIfMonStatEntry 2 }
+
+ibIfMonInputErrorAlarmStatistics OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics about the number of inbound error packets."
+    ::= { ibIfMonStatEntry 3 }
+
+ibIfMonOutputErrorAlarmStatistics OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics  about the number of outbound error packets."
+    ::= { ibIfMonStatEntry 4 }
+
+ibIfMonSdhErrorStatistics OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics about the number of SDH error packets."
+    ::= { ibIfMonStatEntry 5 }
+
+ibIfMonSdhB1ErrorStatistics OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics about the number of SDH B1 error packets."
+    ::= { ibIfMonStatEntry 6 }
+
+ibIfMonSdhB2ErrorStatistics OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics about the number of SDH B2 error packets."
+    ::= { ibIfMonStatEntry 7 }
+
+ibIfMonCRCErrorStatistics OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics about the number of CRC error packets. "
+    ::= { ibIfMonStatEntry 8}
+
+ibIfMonRxPauseFrameStatistics OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics about the number of received pause frames."
+    ::= { ibIfMonStatEntry 9}
+
+ibIfMonTxPauseFrameStatistics OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics about the number of transmitted pause frames."
+    ::= { ibIfMonStatEntry 10}
+
+ibIfMonRuntStatistics OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics about the Runt packets."
+    ::= { ibIfMonStatEntry 11 }
+
+ibIfMonGiantStatistics OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics about the Giant packets."
+    ::= { ibIfMonStatEntry 12 }
+
+ibIfMonInputBufferDropStatistics OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics about the input buffer dropped packets."
+    ::= { ibIfMonStatEntry 13 }
+
+ibIfMonOutputBufferDropStatistics OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics about the output buffer dropped packets."
+    ::= { ibIfMonStatEntry 14 }
+
+ibIfMonJamDiscardStatistics  OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics of congestion and packet loss."
+    ::= { ibIfMonStatEntry 15 }
+
+ibIfMonBadBytesStatistics  OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Bad packet byte statistics."
+    ::= { ibIfMonStatEntry 16 }
+
+ibIfMonErrorRateStatistics  OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics of packet error rate."
+    ::= { ibIfMonStatEntry 17 }
+
+ibIfMonCRCErrorStatisticsExt  OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Non-periodic statistics about the number of CRC error packets."
+    ::= { ibIfMonStatEntry 18}
+
+-- =================================================================
+ibIfMonControl  OBJECT IDENTIFIER ::= { ibIfMonGroup 2 }
+
+ibIfMonThresholdTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbIfMonThresholdEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table is about the upper threshold, lower threshold, CRC type, and inspection interval.
+         The upper threshold and lower threshold must be bound together.  If the CRC type is configured,
+         node ibIfMonCRCErrType must be carried.  If there is no current configuration for a type, all
+         attributes of this type must be carried.  After modification, the table ibIfMonAlarmDownEnableTable
+         will be changed.If there is configuration for the current type, setting all attributes of this type to
+         invalid values indicates that the configuration of this type is deleted, and the table ibIfMonAlarmDownEnableTable
+         will be changed.  Take CRC as an example.  If there is no CRC configuration, nodes ibIfMonCRCErrorLowThres,
+         ibIfMonCRCErrorLowThres, ibIfMonCRCErrorLowThres, and ibIfMonCRCErrorLowThres must be carried.
+         After modification, the node ibIfMonCRCErrorEnableDown becomes false.  If there is CRC configuration,
+         settings the nodes ibIfMonCRCErrorLowThres, ibIfMonCRCErrorHighThres, ibIfMonCRCErrorInterval,
+         and ibIfMonCRCErrorInterval to invalid values indicates the CRC configuration is deleted, and the
+         node ibIfMonCRCErrorEnableDown becomes invalid."
+
+    ::= { ibIfMonControl 1 }
+
+ibIfMonThresholdEntry OBJECT-TYPE
+    SYNTAX      IbIfMonThresholdEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Entry items."
+    INDEX
+        {
+            ifIndex
+        }
+    ::= { ibIfMonThresholdTable 1}
+
+IbIfMonThresholdEntry ::= SEQUENCE
+    {
+        ibIfMonInputUsageLowThres               Unsigned32,
+        ibIfMonInputUsageHighThres              Unsigned32,
+        ibIfMonOutputUsageLowThres              Unsigned32,
+        ibIfMonOutputUsageHighThres             Unsigned32,
+        ibIfMonInputErrorAlarmLowThres          Unsigned32,
+        ibIfMonInputErrorAlarmHighThres         Unsigned32,
+        ibIfMonInputErrorAlarmInterval          Unsigned32,
+        ibIfMonOutputErrorAlarmLowThres         Unsigned32,
+        ibIfMonOutputErrorAlarmHighThres        Unsigned32,
+        ibIfMonOutputErrorAlarmInterval         Unsigned32,
+        ibIfMonSdhErrorLowThres                 Unsigned32,
+        ibIfMonSdhErrorHighThres                Unsigned32,
+        ibIfMonSdhErrorInterval                 Unsigned32,
+        ibIfMonSdhB1ErrorLowThres               Unsigned32,
+        ibIfMonSdhB1ErrorHighThres              Unsigned32,
+        ibIfMonSdhB1ErrorInterval               Unsigned32,
+        ibIfMonSdhB2ErrorLowThres               Unsigned32,
+        ibIfMonSdhB2ErrorHighThres              Unsigned32,
+        ibIfMonSdhB2ErrorInterval               Unsigned32,
+        ibIfMonCRCErrorLowThres                 Unsigned32,
+        ibIfMonCRCErrorHighThres                Unsigned32,
+        ibIfMonCRCErrorInterval                 Unsigned32,
+        ibIfMonCRCErrType                       INTEGER,
+        ibIfMonRxPauseFrameLowThres             Unsigned32,
+        ibIfMonRxPauseFrameHighThres            Unsigned32,
+        ibIfMonRxPauseFrameInterval             Unsigned32,
+        ibIfMonTxPauseFrameLowThres             Unsigned32,
+        ibIfMonTxPauseFrameHighThres            Unsigned32,
+        ibIfMonTxPauseFrameInterval             Unsigned32,
+        ibIfMonGiantLowThres                    Unsigned32,
+        ibIfMonGiantHighThres                   Unsigned32,
+        ibIfMonGiantInterval                    Unsigned32,
+        ibIfMonRuntLowThres                     Unsigned32,
+        ibIfMonRuntHighThres                    Unsigned32,
+        ibIfMonRuntInterval                     Unsigned32,
+        ibIfMonInputBufferDropLowThres          Unsigned32,
+        ibIfMonInputBufferDropHighThres         Unsigned32,
+        ibIfMonInputBufferDropInterval          Unsigned32,
+        ibIfMonOutputBufferDropLowThres         Unsigned32,
+        ibIfMonOutputBufferDropHighThres        Unsigned32,
+        ibIfMonOutputBufferDropInterval         Unsigned32,
+        ibIfMonJamDiscardThres                  Unsigned32,
+        ibIfMonJamDiscardInterval               Unsigned32,
+        ibIfMonBadBytesThres                    Unsigned32,
+        ibIfMonBadBytesDiscardInterval          Unsigned32,
+        ibIfMonErrorRateThres                   Unsigned32,
+        ibIfMonErrorRateDiscardInterval         Unsigned32
+    }
+
+ibIfMonInputUsageLowThres        OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Lower threshold for the inbound bandwidth usage."
+    DEFVAL { 80 }
+    ::= { ibIfMonThresholdEntry 1 }
+
+ibIfMonInputUsageHighThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Upper threshold for the inbound bandwidth usage."
+    DEFVAL { 90 }
+    ::= { ibIfMonThresholdEntry 2 }
+
+ibIfMonOutputUsageLowThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Lower threshold for the outbound bandwidth usage."
+    DEFVAL { 80 }
+    ::= { ibIfMonThresholdEntry 3 }
+
+ibIfMonOutputUsageHighThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Upper threshold for the outbound bandwidth usage."
+    DEFVAL { 90 }
+    ::= { ibIfMonThresholdEntry 4 }
+
+ibIfMonInputErrorAlarmLowThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Lower threshold for the number of inbound error packets."
+    DEFVAL { 100 }
+    ::= { ibIfMonThresholdEntry 5 }
+
+ibIfMonInputErrorAlarmHighThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Upper threshold for the number of inbound error packets."
+    DEFVAL { 1000 }
+    ::= { ibIfMonThresholdEntry 6 }
+
+ibIfMonInputErrorAlarmInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Inspection interval for the number of inbound error packets."
+    DEFVAL { 10 }
+    ::= { ibIfMonThresholdEntry 7 }
+
+ibIfMonOutputErrorAlarmLowThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Lower threshold for the number of outbound error packets."
+    DEFVAL { 100 }
+    ::= { ibIfMonThresholdEntry 8 }
+
+ibIfMonOutputErrorAlarmHighThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Upper threshold for the number of outbound error packets."
+    DEFVAL { 1000 }
+    ::= { ibIfMonThresholdEntry 9 }
+
+ibIfMonOutputErrorAlarmInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Inspection interval for the number of outbound error packets."
+    DEFVAL { 10 }
+    ::= { ibIfMonThresholdEntry 10 }
+
+ibIfMonSdhErrorLowThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Lower threshold for the number of SDH error packets."
+    DEFVAL { 100 }
+    ::= { ibIfMonThresholdEntry 11 }
+
+ibIfMonSdhErrorHighThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Upper threshold for the number of SDH error packets."
+    DEFVAL { 1000 }
+    ::= { ibIfMonThresholdEntry 12 }
+
+ibIfMonSdhErrorInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Inspection interval for the number of SDH error packets."
+    DEFVAL { 10 }
+    ::= { ibIfMonThresholdEntry 13 }
+
+ibIfMonSdhB1ErrorLowThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Lower threshold for the number of SDH B1 error packets."
+    DEFVAL { 100 }
+    ::= { ibIfMonThresholdEntry 14 }
+
+ibIfMonSdhB1ErrorHighThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Upper threshold for the number of SDH B1 error packets."
+    DEFVAL { 1000 }
+    ::= { ibIfMonThresholdEntry 15 }
+
+ibIfMonSdhB1ErrorInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Inspection interval for the number of SDH B1 error packets."
+    DEFVAL { 10 }
+    ::= { ibIfMonThresholdEntry 16 }
+
+ibIfMonSdhB2ErrorLowThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Lower threshold for the number of SDH B2 error packets."
+    DEFVAL { 100 }
+    ::= { ibIfMonThresholdEntry 17 }
+
+ibIfMonSdhB2ErrorHighThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Upper threshold for the number of SDH B2 error packets."
+    DEFVAL { 1000 }
+    ::= { ibIfMonThresholdEntry 18 }
+
+ibIfMonSdhB2ErrorInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Inspection interval for the number of SDH B2 error packets."
+    DEFVAL { 10 }
+    ::= { ibIfMonThresholdEntry 19 }
+
+ibIfMonCRCErrorLowThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Lower threshold for the number of CRC error packets."
+    ::= { ibIfMonThresholdEntry 20 }
+
+ibIfMonCRCErrorHighThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Upper threshold for the number of CRC error packets."
+    ::= { ibIfMonThresholdEntry 21 }
+
+ibIfMonCRCErrorInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Inspection interval for the number of CRC error packets."
+    DEFVAL { 10 }
+    ::= { ibIfMonThresholdEntry 22 }
+
+ibIfMonCRCErrType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        absolute(1),
+        ratio(2),
+        invalid(65535)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        " Inspection type for the CRC error packets."
+    ::= { ibIfMonThresholdEntry 23 }
+
+ibIfMonRxPauseFrameLowThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Lower threshold for the number of received pause frames."
+    DEFVAL { 100 }
+    ::= { ibIfMonThresholdEntry 24 }
+
+ibIfMonRxPauseFrameHighThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Upper threshold for the number of received pause frames."
+    DEFVAL { 500 }
+    ::= { ibIfMonThresholdEntry 25 }
+
+ibIfMonRxPauseFrameInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Inspection interval for the number of received pause frames."
+    DEFVAL { 10 }
+    ::= { ibIfMonThresholdEntry 26 }
+
+ibIfMonTxPauseFrameLowThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Lower threshold for the number of transmitted pause frames."
+    DEFVAL { 100 }
+    ::= { ibIfMonThresholdEntry 27 }
+
+ibIfMonTxPauseFrameHighThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Upper threshold for the number of transmitted pause frames."
+    DEFVAL { 500 }
+    ::= { ibIfMonThresholdEntry 28 }
+
+ibIfMonTxPauseFrameInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Inspection interval for the number of transmitted pause frames."
+    DEFVAL { 10 }
+    ::= { ibIfMonThresholdEntry 29 }
+
+ibIfMonGiantLowThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Lower threshold for the number of Giant error packets."
+    DEFVAL { 100 }
+    ::= { ibIfMonThresholdEntry 30 }
+
+ibIfMonGiantHighThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Upper threshold for the number of Giant error packets."
+    DEFVAL { 1000 }
+    ::= { ibIfMonThresholdEntry 31 }
+
+ibIfMonGiantInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Inspection interval for the number of Giant error packets."
+    DEFVAL { 10 }
+    ::= { ibIfMonThresholdEntry 32 }
+
+ibIfMonRuntLowThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Lower threshold for the number of Runt error packets."
+    DEFVAL { 100 }
+    ::= { ibIfMonThresholdEntry 33 }
+
+ibIfMonRuntHighThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Upper threshold for the number of Runt error packets."
+    DEFVAL { 1000 }
+    ::= { ibIfMonThresholdEntry 34 }
+
+ibIfMonRuntInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Inspection interval for the number of Runt packets."
+    DEFVAL { 10 }
+    ::= { ibIfMonThresholdEntry 35 }
+
+ibIfMonInputBufferDropLowThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Lower threshold for the number of input buffer dropped packets."
+    DEFVAL { 100 }
+    ::= { ibIfMonThresholdEntry 36 }
+
+ibIfMonInputBufferDropHighThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Upper threshold for the number of input buffer dropped packets."
+    DEFVAL { 1000 }
+    ::= { ibIfMonThresholdEntry 37 }
+
+ibIfMonInputBufferDropInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Inspection interval for the number of input buffer dropped packets."
+    DEFVAL { 10 }
+    ::= { ibIfMonThresholdEntry 38 }
+
+ibIfMonOutputBufferDropLowThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Lower threshold for the number of output buffer dropped packets."
+    DEFVAL { 100 }
+    ::= { ibIfMonThresholdEntry 39 }
+
+ibIfMonOutputBufferDropHighThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Upper threshold for the number of output buffer dropped packets."
+    DEFVAL { 1000 }
+    ::= { ibIfMonThresholdEntry 40 }
+
+ibIfMonOutputBufferDropInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Inspection interval for the number of output buffer dropped packets."
+    DEFVAL { 10 }
+    ::= { ibIfMonThresholdEntry 41 }
+
+ibIfMonJamDiscardThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Congestion packet loss threshold."
+    DEFVAL { 1000 }
+    ::= { ibIfMonThresholdEntry 42 }
+
+ibIfMonJamDiscardInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "seconds"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Time interval for counting congestion and packet loss."
+    DEFVAL { 10 }
+    ::= { ibIfMonThresholdEntry 43 }
+
+ibIfMonBadBytesThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Bad packet byte threshold."
+    DEFVAL { 1000 }
+    ::= { ibIfMonThresholdEntry 44 }
+
+ibIfMonBadBytesDiscardInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "seconds"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Time interval for counting bad packet bytes."
+    DEFVAL { 10 }
+    ::= { ibIfMonThresholdEntry 45 }
+
+ibIfMonErrorRateThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Packet error rate threshold."
+    DEFVAL { 1000 }
+    ::= { ibIfMonThresholdEntry 46 }
+
+ibIfMonErrorRateDiscardInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "seconds"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Time interval for statistics of packet error rate."
+    DEFVAL { 10 }
+    ::= { ibIfMonThresholdEntry 47 }
+
+-- =================================================================
+ibIfMonAlarmDownEnableTable   OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbIfMonAlarmDownEnableEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table can set or get whether to enable the interface down function."
+    ::= { ibIfMonControl 2 }
+
+ibIfMonAlarmDownEnableEntry OBJECT-TYPE
+    SYNTAX      IbIfMonAlarmDownEnableEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Entry items"
+    INDEX
+        {
+            ifIndex
+        }
+    ::= { ibIfMonAlarmDownEnableTable 1}
+
+IbIfMonAlarmDownEnableEntry ::= SEQUENCE
+    {
+        ibIfMonInputErrorAlarmEnableDown        TruthValue,
+        ibIfMonOutputErrorAlarmEnableDown       TruthValue,
+        ibIfMonSdhErrorEnableDown               TruthValue,
+        ibIfMonSdhB1ErrorEnableDown             TruthValue,
+        ibIfMonSdhB2ErrorEnableDown             TruthValue,
+        ibIfMonCRCErrorEnableDown               TruthValue,
+        ibIfMonGiantEnableDown                  TruthValue,
+        ibIfMonRuntEnableDown                   TruthValue,
+        ibIfMonTxPauseFrameEnableDown           TruthValue,
+        ibIfMonInputBufferDropEnableDown        TruthValue,
+        ibIfMonOutputBufferDropEnableDown       TruthValue
+    }
+
+ibIfMonInputErrorAlarmEnableDown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When the number of inbound error packets exceeds the upper threshold,
+         the physical interface goes down."
+    DEFVAL { false }
+    ::= { ibIfMonAlarmDownEnableEntry 1 }
+
+ibIfMonOutputErrorAlarmEnableDown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When the number of outbound error packets exceeds the upper threshold,
+         the physical interface goes down."
+    DEFVAL { false }
+    ::= { ibIfMonAlarmDownEnableEntry 2 }
+
+ibIfMonSdhErrorEnableDown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When the number of SDH error packets exceeds the upper threshold,
+         the physical interface goes down."
+    DEFVAL { false }
+    ::= { ibIfMonAlarmDownEnableEntry 3 }
+
+ibIfMonSdhB1ErrorEnableDown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When the number of SDH B1 error packets exceeds the upper threshold,
+         the physical interface goes down."
+    DEFVAL { false }
+    ::= { ibIfMonAlarmDownEnableEntry 4 }
+
+ibIfMonSdhB2ErrorEnableDown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When the number of SDH B2 error packets exceeds the upper threshold,
+         the physical interface goes down."
+    DEFVAL { false }
+    ::= { ibIfMonAlarmDownEnableEntry 5 }
+
+ibIfMonCRCErrorEnableDown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When the number of CRC error packets exceeds the upper threshold,
+         the physical interface goes down."
+    DEFVAL { false }
+    ::= { ibIfMonAlarmDownEnableEntry 6 }
+
+ibIfMonGiantEnableDown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When the number of Giant error packets exceeds the upper threshold,
+         the physical interface goes down."
+    DEFVAL { false }
+    ::= { ibIfMonAlarmDownEnableEntry 7 }
+
+ibIfMonRuntEnableDown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When the number of Runt error packets exceeds the upper threshold,
+         the physical interface goes down."
+    DEFVAL { false }
+    ::= { ibIfMonAlarmDownEnableEntry 8 }
+
+ibIfMonTxPauseFrameEnableDown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When the number of transmitted pause frames exceeds the upper threshold,
+         the physical interface goes down."
+    DEFVAL { false }
+    ::= { ibIfMonAlarmDownEnableEntry 9 }
+
+ibIfMonInputBufferDropEnableDown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When the number of input buffer dropped packets exceeds the upper threshold,
+         the physical interface goes down."
+    DEFVAL { false }
+    ::= { ibIfMonAlarmDownEnableEntry 10 }
+
+ibIfMonOutputBufferDropEnableDown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When the number of output buffer dropped packets exceeds the upper threshold,
+         the physical interface goes down."
+    DEFVAL { false }
+    ::= { ibIfMonAlarmDownEnableEntry 11 }
+
+-- =================================================================
+-- Traps are defined below.
+
+ibIfMonTrap OBJECT IDENTIFIER ::= { ibIfExt 6 }
+ibIfMonTrapPrex OBJECT IDENTIFIER ::= { ibIfMonTrap 0 }
+-- All trap definitions should be placed under this object.
+
+ibIfMonInputUsageRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonInputUsageLowThres,
+            ibIfMonInputUsageHighThres,
+            ibIfMonInputUsageStatistics
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the inbound bandwidth usage exceeds the
+         upper threshold."
+    ::= { ibIfMonTrapPrex 1 }
+
+ibIfMonInputUsageResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonInputUsageLowThres,
+            ibIfMonInputUsageHighThres,
+            ibIfMonInputUsageStatistics
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the inbound bandwidth usage drops from
+         above the upper threshold to below the lower threshold."
+    ::= { ibIfMonTrapPrex 2 }
+
+ibIfMonOutputUsageRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonOutputUsageLowThres,
+            ibIfMonOutputUsageHighThres,
+            ibIfMonOutputUsageStatistics
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the outbound bandwidth usage exceeds the
+         upper threshold."
+    ::= { ibIfMonTrapPrex 3 }
+
+ibIfMonOutputUsageResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonOutputUsageLowThres,
+            ibIfMonOutputUsageHighThres,
+            ibIfMonOutputUsageStatistics
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the outbound bandwidth usage drops from
+         above the upper threshold to below the lower threshold."
+    ::= { ibIfMonTrapPrex 4 }
+
+ibIfMonInputErrorAlarmRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonInputErrorAlarmHighThres,
+            ibIfMonInputErrorAlarmLowThres,
+            ibIfMonInputErrorAlarmStatistics,
+            ibIfMonInputErrorAlarmInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of inbound error packets exceeds the
+         upper threshold within the default interval."
+    ::= { ibIfMonTrapPrex 5 }
+
+ibIfMonInputErrorAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonInputErrorAlarmHighThres,
+            ibIfMonInputErrorAlarmLowThres,
+            ibIfMonInputErrorAlarmStatistics,
+            ibIfMonInputErrorAlarmInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of inbound error packets drops from
+         above the upper threshold to below the lower threshold within the default interval."
+    ::= { ibIfMonTrapPrex 6 }
+
+ibIfMonOutputErrorAlarmRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonOutputErrorAlarmHighThres,
+            ibIfMonOutputErrorAlarmLowThres,
+            ibIfMonOutputErrorAlarmStatistics,
+            ibIfMonOutputErrorAlarmInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of outbound error packets exceeds the
+         upper threshold within the default interval."
+    ::= { ibIfMonTrapPrex 7 }
+
+ibIfMonOutputErrorAlarmResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonOutputErrorAlarmHighThres,
+            ibIfMonOutputErrorAlarmLowThres,
+            ibIfMonOutputErrorAlarmStatistics,
+            ibIfMonOutputErrorAlarmInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of outbound error packets drops from
+         above the upper threshold to below the lower threshold within the default interval."
+    ::= { ibIfMonTrapPrex 8 }
+
+ibIfMonSdhErrorRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonSdhErrorLowThres,
+            ibIfMonSdhErrorHighThres,
+            ibIfMonSdhErrorStatistics,
+            ibIfMonSdhErrorInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of SDH error packets exceeds
+         the upper threshold within the default interval."
+    ::= { ibIfMonTrapPrex 9 }
+
+ibIfMonSdhErrorResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonSdhErrorLowThres,
+            ibIfMonSdhErrorHighThres,
+            ibIfMonSdhErrorStatistics,
+            ibIfMonSdhErrorInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of SDH error packets drops from
+         above the upper threshold to below the lower threshold within the default interval."
+    ::= { ibIfMonTrapPrex 10 }
+
+ibIfMonSdhB1ErrorRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonSdhB1ErrorLowThres,
+            ibIfMonSdhB1ErrorHighThres,
+            ibIfMonSdhB1ErrorStatistics,
+            ibIfMonSdhB1ErrorInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of SDH B1 error packets exceeds
+         the upper threshold within the default interval."
+    ::= { ibIfMonTrapPrex 11 }
+
+ibIfMonSdhB1ErrorResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonSdhB1ErrorLowThres,
+            ibIfMonSdhB1ErrorHighThres,
+            ibIfMonSdhB1ErrorStatistics,
+            ibIfMonSdhB1ErrorInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of SDH B1 error packets drops from
+         above the upper threshold to below the lower threshold within the default interval."
+    ::= { ibIfMonTrapPrex 12 }
+
+ibIfMonSdhB2ErrorRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonSdhB2ErrorLowThres,
+            ibIfMonSdhB2ErrorHighThres,
+            ibIfMonSdhB2ErrorStatistics,
+            ibIfMonSdhB2ErrorInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of SDH B2 error packets exceeds
+         the upper threshold within the default interval."
+    ::= { ibIfMonTrapPrex 13 }
+
+ibIfMonSdhB2ErrorResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonSdhB2ErrorLowThres,
+            ibIfMonSdhB2ErrorHighThres,
+            ibIfMonSdhB2ErrorStatistics,
+            ibIfMonSdhB2ErrorInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of SDH B2 error packets drops from
+         above the upper threshold to below the lower threshold within the default interval."
+    ::= { ibIfMonTrapPrex 14 }
+
+ibIfMonCRCErrorRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonCRCErrorHighThres,
+            ibIfMonCRCErrorLowThres,
+            ibIfMonCRCErrorStatistics,
+            ibIfMonCRCErrorInterval,
+            ibIfMonCRCErrType
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of CRC error packets exceeds
+         the upper threshold within the default interval."
+    ::= { ibIfMonTrapPrex 15 }
+
+ibIfMonCRCErrorResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonCRCErrorHighThres,
+            ibIfMonCRCErrorLowThres,
+            ibIfMonCRCErrorStatistics,
+            ibIfMonCRCErrorInterval,
+            ibIfMonCRCErrType
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of CRC error packets drops from
+         above the upper threshold to below the lower threshold within the default interval."
+    ::= { ibIfMonTrapPrex 16 }
+
+ibIfMonRxPauseFrameRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonRxPauseFrameHighThres,
+            ibIfMonRxPauseFrameLowThres,
+            ibIfMonRxPauseFrameStatistics,
+            ibIfMonRxPauseFrameInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of received pause frames exceeds the
+         upper threshold."
+    ::= { ibIfMonTrapPrex 17 }
+
+ibIfMonRxPauseFrameResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonRxPauseFrameHighThres,
+            ibIfMonRxPauseFrameLowThres,
+            ibIfMonRxPauseFrameStatistics,
+            ibIfMonRxPauseFrameInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of received pause frames drops from
+         above the upper threshold to below the lower-threshold."
+    ::= { ibIfMonTrapPrex 18 }
+
+ibIfMonTxPauseFrameRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonTxPauseFrameHighThres,
+            ibIfMonTxPauseFrameLowThres,
+            ibIfMonTxPauseFrameStatistics,
+            ibIfMonTxPauseFrameInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of transmitted pause frames exceeds
+         the upper threshold."
+    ::= { ibIfMonTrapPrex 19 }
+
+ibIfMonTxPauseFrameResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonTxPauseFrameHighThres,
+            ibIfMonTxPauseFrameLowThres,
+            ibIfMonTxPauseFrameStatistics,
+            ibIfMonTxPauseFrameInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of transmitted pause frames  drops from
+         above the upper threshold to below the lower threshold."
+    ::= { ibIfMonTrapPrex 20 }
+
+ibIfMonGiantRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonGiantLowThres,
+            ibIfMonGiantHighThres,
+            ibIfMonGiantStatistics,
+            ibIfMonGiantInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of Giant error packets exceeds
+         the upper threshold within the default interval."
+    ::= { ibIfMonTrapPrex 21 }
+
+ibIfMonGiantResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonGiantLowThres,
+            ibIfMonGiantHighThres,
+            ibIfMonGiantStatistics,
+            ibIfMonGiantInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of Giant error packets drops from
+         above the upper threshold to below the lower threshold within the default interval."
+    ::= { ibIfMonTrapPrex 22 }
+
+ibIfMonRuntRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonRuntLowThres,
+            ibIfMonRuntHighThres,
+            ibIfMonRuntStatistics,
+            ibIfMonRuntInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of Runt error packets exceeds
+         the upper threshold within the default interval."
+    ::= { ibIfMonTrapPrex 23 }
+
+ibIfMonRuntResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonRuntLowThres,
+            ibIfMonRuntHighThres,
+            ibIfMonRuntStatistics,
+            ibIfMonRuntInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of Runt error packets drops from
+         above the upper threshold to below the lower threshold within the default interval."
+    ::= { ibIfMonTrapPrex 24 }
+
+ibIfMonInputBufferDropRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonInputBufferDropLowThres,
+            ibIfMonInputBufferDropHighThres,
+            ibIfMonInputBufferDropStatistics,
+            ibIfMonInputBufferDropInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of input buffer dropped packets exceeds
+         the upper threshold within the default interval."
+    ::= { ibIfMonTrapPrex 25 }
+
+ibIfMonInputBufferDropResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonInputBufferDropLowThres,
+            ibIfMonInputBufferDropHighThres,
+            ibIfMonInputBufferDropStatistics,
+            ibIfMonInputBufferDropInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of input buffer dropped packets drops from
+         above the upper threshold to below the lower threshold within the default interval."
+    ::= { ibIfMonTrapPrex 26 }
+
+ibIfMonOutputBufferDropRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonOutputBufferDropLowThres,
+            ibIfMonOutputBufferDropHighThres,
+            ibIfMonOutputBufferDropStatistics,
+            ibIfMonOutputBufferDropInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of output buffer dropped packets exceeds
+         the upper threshold within the default interval."
+    ::= { ibIfMonTrapPrex 27 }
+
+ibIfMonOutputBufferDropResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonOutputBufferDropLowThres,
+            ibIfMonOutputBufferDropHighThres,
+            ibIfMonOutputBufferDropStatistics,
+            ibIfMonOutputBufferDropInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of output buffer dropped packets drops from
+         above the upper threshold to below the lower threshold within the default interval."
+    ::= { ibIfMonTrapPrex 28 }
+
+ibIfMonInputUFlowRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfUNUCPortRealFlow,
+            ibIfUNUCPortAlarmThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the unknown unicast traffic percentage exceeds the
+         threshold."
+    ::= { ibIfMonTrapPrex 29 }
+
+ibIfMonInputUFlowFalling NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfUNUCPortRealFlow,
+            ibIfUNUCPortAlarmThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the unknown unicast traffic percentage drops to the
+         normal range within the default interval."
+    ::= { ibIfMonTrapPrex 30 }
+
+ibIfMonBip8SdError NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfBip8SdErrThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the error code count exceeds the threshold."
+    ::= { ibIfMonTrapPrex 31 }
+
+ibIfMonBip8SdErrorResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfBip8SdErrThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the error code count drops to the normal range
+         within the default interval."
+    ::= { ibIfMonTrapPrex 32 }
+
+ibIfMonCRCBitErrorRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonCRCBitErrorHighThresStr,
+            ibIfMonCRCBitErrorLowThresStr,
+            ibIfMonCRCBitErrorRatioStr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the CRC bit error ratio exceeds the upper threshold."
+    ::= { ibIfMonTrapPrex 33 }
+
+ibIfMonCRCBitErrorResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonCRCBitErrorHighThresStr,
+            ibIfMonCRCBitErrorLowThresStr,
+            ibIfMonCRCBitErrorRatioStr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the CRC bit error ratio drops from above the upper threshold to below the lower threshold."
+    ::= { ibIfMonTrapPrex 34 }
+
+ibIfMonInputJamDiscardAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonJamDiscardStatistics,
+            ibIfMonJamDiscardThres,
+            ibIfMonJamDiscardInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of incoming packets lost due to network congestion
+     of the interface exceeds the threshold."
+    ::= { ibIfMonTrapPrex 35 }
+
+ibIfMonInputJamDiscardResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonJamDiscardStatistics,
+            ibIfMonJamDiscardThres,
+            ibIfMonJamDiscardInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of incoming packets lost due to network congestion
+     of the interface drops below the threshold."
+    ::= { ibIfMonTrapPrex 36 }
+
+ibIfMonOutputJamDiscardAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonJamDiscardStatistics,
+            ibIfMonJamDiscardThres,
+            ibIfMonJamDiscardInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of outgoing packets lost due to network congestion
+     of the interface exceeds the threshold."
+    ::= { ibIfMonTrapPrex 37 }
+
+ibIfMonOutputJamDiscardResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonJamDiscardStatistics,
+            ibIfMonJamDiscardThres,
+            ibIfMonJamDiscardInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of outgoing packets lost due to network congestion
+     of the interface drops below the threshold."
+    ::= { ibIfMonTrapPrex 38 }
+
+ibIfMonPktDropRateRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIfChassisIndex,
+            ibIfSlotIndex,
+            ibIfCpuId,
+            ibIfDropRateThreshold,
+            ibIfCurrentDropRate,
+            ibIfDropRateInterval,
+            ibIfMessageProtocol
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of messages discarded on
+     the interface board exceeds the configured alarm threshold."
+    ::= { ibIfMonTrapPrex 39 }
+
+ibIfMonPktDropRateRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIfChassisIndex,
+            ibIfSlotIndex,
+            ibIfCpuId,
+            ibIfDropRateThreshold,
+            ibIfCurrentDropRate,
+            ibIfDropRateInterval,
+            ibIfMessageProtocol
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of discarded messages on
+     the interface board drops below the configured alarm threshold."
+    ::= { ibIfMonTrapPrex 40 }
+
+ibIfMonBadBytesErrorRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonBadBytesStatistics,
+            ibIfMonBadBytesThres,
+            ibIfMonBadBytesDiscardInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of bad packet bytes
+     exceeds the set alarm threshold."
+    ::= { ibIfMonTrapPrex 41 }
+
+ibIfMonBadBytesErrorResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonBadBytesStatistics,
+            ibIfMonBadBytesThres,
+            ibIfMonBadBytesDiscardInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of bad packet bytes
+     drops below the set alarm threshold."
+    ::= { ibIfMonTrapPrex 42 }
+
+ibIfMonPortCrcRateExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonErrorRateStatistics,
+            ibIfMonErrorRateThres,
+            ibIfMonErrorRateDiscardInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the CRC packet error rate is greater than or equal to 1000 / s."
+    ::= { ibIfMonTrapPrex 43 }
+
+ibIfMonPortErrorRateExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonErrorRateStatistics,
+            ibIfMonErrorRateThres,
+            ibIfMonErrorRateDiscardInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the average rate of CRC errors, giants and
+     runts exceeded 1000 / s."
+    ::= { ibIfMonTrapPrex 44 }
+
+ibIfMonInBCRapidChange NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfCurrentFlowThreshold,
+            ibIfCurrentFlowValue
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the incoming broadcast traffic
+     of the interface suddenly exceeds the threshold."
+    ::= { ibIfMonTrapPrex 45 }
+
+ibIfMonInBCRapidRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfCurrentFlowThreshold,
+            ibIfCurrentFlowValue
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the incoming broadcast traffic of the interface
+     suddenly drops below the threshold."
+    ::= { ibIfMonTrapPrex 46 }
+
+ibIfMonPortCrcRateExceedResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibIfMonErrorRateStatistics,
+            ibIfMonErrorRateThres,
+            ibIfMonErrorRateDiscardInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the CRC packet error rate is less than 1000 / s."
+    ::= { ibIfMonTrapPrex 47 }
+
+ibIfMonTrapObject OBJECT IDENTIFIER ::= { ibIfMonTrap 1 }
+
+ibIfMonCRCBitErrorHighThresStr OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (1..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Upper threshold for the CRC bit error ratio"
+    ::= { ibIfMonTrapObject 1 }
+
+ibIfMonCRCBitErrorLowThresStr OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (1..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Lower threshold for the CRC bit error ratio"
+    ::= { ibIfMonTrapObject 2 }
+
+ibIfMonCRCBitErrorRatioStr OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Statistics about the CRC bit error ratio"
+    ::= { ibIfMonTrapObject 3 }
+
+END

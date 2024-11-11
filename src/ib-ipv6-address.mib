@@ -1,0 +1,359 @@
+-- =====================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: IPv6 address MIB
+-- Reference:
+-- Version: V1.2
+-- History:
+--   V1.0 2006-03-15 Created by Zhang Jun and Yu Hongqiang
+--     Initial version
+--   V1.1 2013-01-22 Modified by yuguoqing
+--     Modify the description of ibIpv6AddrSetSourceType
+--     and ibIpv6AddrReadSourceType
+--   V1.2 2022-09-13 Modified by wangyuqing
+--     Add 'ibIpv6AddrSetProEnableFailed'
+-- =====================================================================
+IB-IPV6-ADDRESS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, Unsigned32
+        FROM SNMPv2-SMI
+    RowStatus
+        FROM SNMPv2-TC
+    InetAddress, InetAddressType
+        FROM INET-ADDRESS-MIB;
+
+ibIpv6AddrMIB MODULE-IDENTITY
+    LAST-UPDATED "202209131700Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Add the trap node for managing IPv6 addresses: ibIpv6AddrSetProEnableFailed"
+    REVISION "202209131700Z"
+    DESCRIPTION
+        "The MIB module for managing IPv6 address"
+    REVISION "200603150000Z"
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 71 }
+
+
+--
+-- Node definitions
+--
+ibIpv6AddressObjects OBJECT IDENTIFIER ::= { ibIpv6AddrMIB 1 }
+
+ibIpv6AddressConfig OBJECT IDENTIFIER ::= { ibIpv6AddressObjects 1 }
+
+ibIpv6AddressMibTrap OBJECT IDENTIFIER ::= { ibIpv6AddressObjects 2 }
+
+ibIpv6AddrSetTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbIpv6AddrSetEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The table of address information is relevant to this
+        entity's IPv6 addresses for setting. The address information
+        that can be read and set in this table is a subset of the
+        address information that can be read in ibIpv6AddrReadTable
+        and ipv6AddrTable in IPV6-MIB. This table is used to configure IPv6
+        addresses of an interface identified by ibIpv6AddrSetIfIndex.
+        When users create or delete an entry in this table, the agent also
+        increases or reduces a corresponding entry in the
+        ibIpv6AddrReadTable and ipv6AddrTable in IPV6-MIB.
+        When an interface which has been assigned IPv6 address is deleted,
+        the agent also deletes the entry corresponding to
+        the interface in this table and ibIpv6AddrReadTable.
+        All IPv6 addresses in this table will also show in ipv6AddrTable in
+        IPV6-MIB."
+    REFERENCE
+        "RFC 2456"
+    ::= { ibIpv6AddressConfig 1 }
+
+ibIpv6AddrSetEntry OBJECT-TYPE
+    SYNTAX      IbIpv6AddrSetEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Define the IPv6 address information."
+    INDEX
+    {
+        ibIpv6AddrSetIfIndex,
+        ibIpv6AddrSetAddrType,
+        ibIpv6AddrSetAddr
+    }
+    ::= { ibIpv6AddrSetTable 1 }
+
+IbIpv6AddrSetEntry ::=
+SEQUENCE
+{
+    ibIpv6AddrSetIfIndex       Integer32,
+    ibIpv6AddrSetAddrType      InetAddressType,
+    ibIpv6AddrSetAddr          InetAddress,
+    ibIpv6AddrSetPfxLength     Integer32,
+    ibIpv6AddrSetSourceType    INTEGER,
+    ibIpv6AddrSetRowStatus     RowStatus
+}
+
+ibIpv6AddrSetIfIndex OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The index value which uniquely identifies the interface to
+        which this entry is applicable. The interface identified by
+        a particular value of this index is the same interface as
+        identified by the same value of RFC 1573's ifIndex."
+    ::= { ibIpv6AddrSetEntry 1 }
+
+ibIpv6AddrSetAddrType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The IP address type to which this entry's address
+        information pertains. The value must be ipv6."
+    ::= { ibIpv6AddrSetEntry 2 }
+
+ibIpv6AddrSetAddr OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The IPv6 address to which this entry's address
+        information pertains."
+    ::= { ibIpv6AddrSetEntry 3 }
+
+ibIpv6AddrSetPfxLength OBJECT-TYPE
+    SYNTAX      Integer32(1..128)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The length of the prefix (in bits) associated with
+        the IPv6 address of this entry."
+    ::= { ibIpv6AddrSetEntry 4 }
+
+ibIpv6AddrSetSourceType OBJECT-TYPE
+    SYNTAX      INTEGER
+                {
+                    assignedIp(1),
+                    assignedEUI64Ip(2),
+                    assignedLinklocalIp(3)
+                }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Indicate the type of source of IPv6 address.
+        The value can be one of following:
+        'assignedIp':
+            Assigned global/site-local IPv6 address;
+        'assignedEUI64Ip':
+            Assigned global/site-local IPv6 address
+            by using EUI-64 interface identifier;
+        'assignedLinklocalIp':
+            Assigned link-local IPv6 address.
+        The value of ibIpv6AddrSetSourceType is relevant to
+            ibIpv6AddrReadSourceType and ibIpv6AddrReadCatalog .
+        For example, if the value of ibIpv6AddrSetSourceType is set to
+            'assignedIp', then the value of ibIpv6AddrReadSourceType is
+            'assignedIp' and the value of ibIpv6AddrReadCatalog is
+            'global' or 'sitelocal'.
+        The relation listed in the following table.
+        ----------------------------------------------------------------
+         ibIpv6Addr-       | ibIpv6Addr-     | ibIpv6Addr-
+         SetSourceType       | ReadSourceType    | ReadCatalog
+        ----------------------------------------------------------------
+         assignedIp          | assignedIp        | global or sitelocal
+        ----------------------------------------------------------------
+         assignedEUI64Ip     | assignedEUI64Ip   | global or sitelocal
+        ----------------------------------------------------------------
+         assignedLinklocalIp | assignedIp        | linklocal
+        ----------------------------------------------------------------
+        "
+    ::= { ibIpv6AddrSetEntry 5 }
+
+ibIpv6AddrSetRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object is used to create a new row or delete an
+        existing row in this table, only supports active(1),
+        createAndGo(4) and destroy(6)."
+    ::= { ibIpv6AddrSetEntry 6 }
+
+ibIpv6AddrReadTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbIpv6AddrReadEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The table of address information is relevant to this
+        entity's IPv6 addresses for reading.
+        This is the extension of the ipv6AddrTable in IPV6-MIB.
+        All IPv6 addresses in this table will also show in ipv6AddrTable
+        in IPV6-MIB."
+    REFERENCE
+        "RFC 2456"
+    ::= { ibIpv6AddressConfig 2 }
+
+ibIpv6AddrReadEntry OBJECT-TYPE
+    SYNTAX      IbIpv6AddrReadEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Define the IPv6 address information."
+    INDEX
+    {
+        ibIpv6AddrReadIfIndex,
+        ibIpv6AddrReadAddrType,
+        ibIpv6AddrReadAddr
+    }
+    ::= { ibIpv6AddrReadTable 1 }
+
+IbIpv6AddrReadEntry ::=
+    SEQUENCE
+    {
+        ibIpv6AddrReadIfIndex       Integer32,
+        ibIpv6AddrReadAddrType      InetAddressType,
+        ibIpv6AddrReadAddr          InetAddress,
+        ibIpv6AddrReadPfxLength     Integer32,
+        ibIpv6AddrReadSourceType    INTEGER,
+        ibIpv6AddrReadCatalog       INTEGER
+    }
+
+ibIpv6AddrReadIfIndex OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The index value which uniquely identifies the interface to
+        which this entry is applicable. The interface identified by
+        a particular value of this index is the same interface as
+        identified by the same value of RFC 1573's ifIndex."
+    ::= { ibIpv6AddrReadEntry 1 }
+
+ibIpv6AddrReadAddrType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The IP address type to which this entry's address information
+        pertains. The value must be ipv6."
+    ::= { ibIpv6AddrReadEntry 2 }
+
+ibIpv6AddrReadAddr OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The IPv6 address to which this entry's address information
+        pertains."
+    ::= { ibIpv6AddrReadEntry 3 }
+
+ibIpv6AddrReadPfxLength OBJECT-TYPE
+    SYNTAX      Integer32(1..128)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The length of the prefix (in bits) associated with
+        the IPv6 address of this entry."
+    ::= { ibIpv6AddrReadEntry 4 }
+
+ibIpv6AddrReadSourceType OBJECT-TYPE
+    SYNTAX      INTEGER
+                {
+                    assignedIp(1),
+                    assignedEUI64Ip(2),
+                    assignedAutoIp(3),
+                    autoIp(4),
+                    dhcpv6(5),
+                    negotiate(6),
+                    cluster(7)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicate the type of source of IPv6 address.
+        The value can be one of following:
+            'assignedIp':      Assigned IPv6 address;
+            'assignedEUI64Ip': Assigned IPv6 address by using EUI-64
+                               interface identifier;
+            'assignedAutoIp':  Auto generated IPv6 address by user setting;
+            'autoIp':          Auto generated IPv6 address as a result
+                               of non-linklocal anycast/unicast address
+                               configuration;
+            'dhcpv6':          Assigned IPv6 address through DHCPv6
+                               protocol;
+            'negotiate':       Assigned IPv6 address through negotiation;
+            'cluster':         Assigned IPv6 address through cluster
+                               module."
+    ::= { ibIpv6AddrReadEntry 5 }
+
+ibIpv6AddrReadCatalog OBJECT-TYPE
+    SYNTAX      INTEGER
+                {
+                    nodelocal(1),
+                    linklocal(2),
+                    sitelocal(3),
+                    orglocal(4),
+                    global(5)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicate the category of the IPv6 address.
+        The value can be one of following:
+        'nodelocal': node-local scope;
+        'linklocal': link-local scope;
+        'sitelocal': site-local scope;
+        'orglocal': organization-local scope;
+        'global': global scope. "
+    ::= { ibIpv6AddrReadEntry 6 }
+
+-- ibIpv6AddressTraps
+ibIpv6AddressTraps OBJECT IDENTIFIER ::= { ibIpv6AddressMibTrap 0 }
+
+ibIpv6AddrSetProEnableFailed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIpv6AddrSetProEnableIfName,
+            ibIpv6AddrSetProEnableChassis,
+            ibIpv6AddrSetProEnableSlot
+        }
+    STATUS      current
+    DESCRIPTION
+        "IPv6 service is unavailable on the interface."
+    ::= { ibIpv6AddressTraps 1 }
+
+ibIpv6AddressTrapObjects OBJECT IDENTIFIER  ::= { ibIpv6AddressMibTrap 1 }
+
+ibIpv6AddrSetProEnableIfName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE (0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Interface name."
+        ::= { ibIpv6AddressTrapObjects 1 }
+
+ibIpv6AddrSetProEnableChassis OBJECT-TYPE
+    SYNTAX      Unsigned32(0..65535)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Chassis ID. If the value is 65535, the device is
+        not a stacked device ."
+    ::= { ibIpv6AddressTrapObjects 2 }
+
+ibIpv6AddrSetProEnableSlot OBJECT-TYPE
+    SYNTAX      Unsigned32(0..65535)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Slot number."
+    ::= { ibIpv6AddressTrapObjects 3 }
+
+END

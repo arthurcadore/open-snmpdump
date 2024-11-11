@@ -1,0 +1,251 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The purpose of this MIB file is to provide the definition of
+--              the tunnel trap.
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2022-05-16
+--   Initial version, created by shaojunjun
+--   Add ibTunnelTrapStatus
+--   Modify by yuanyuchen
+--   Add ibTunnelTrapVxlanCfg, ibTunnelTrapVxlanDecap,
+--   ibTunnelTrapIfNumExceed
+-- ============================================================================
+IB-TUNNEL-TRAP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, Integer32, Unsigned32
+    FROM SNMPv2-SMI
+        InetAddressType, InetAddress
+    FROM INET-ADDRESS-MIB;
+
+-- Node definitions
+ibTunnelTrap MODULE-IDENTITY
+    LAST-UPDATED "202205161800Z"        -- MAY 16, 2022 at 18:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB file defines the tunnel trap warning feature only."
+    REVISION "202205161800Z"
+    DESCRIPTION
+        "The initial version of this MIB file.
+         Add ibTunnelTrapVxlanCfg, ibTunnelTrapVxlanDecap,
+         ibTunnelTrapIfNumExceed, ibTunnelTrapStatus."
+    ::= { ibCommon 226}
+
+-- ibTunnelTrapStatus
+ibTunnelTrapStatus OBJECT IDENTIFIER ::= { ibTunnelTrap 1 }
+ibTunnelTrapVxlanStatus OBJECT IDENTIFIER  ::= { ibTunnelTrapStatus 1 }
+ibTunnelTrapsVxlanStatus OBJECT IDENTIFIER  ::= { ibTunnelTrapVxlanStatus 0 }
+
+-- ibTunnelTrapsVxlanStatus
+ibTunnelTrapVxlanStatusUp NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTunnelTrapVxlanStatusSType,
+            ibTunnelTrapVxlanStatusSrcIP,
+            ibTunnelTrapVxlanStatusDType,
+            ibTunnelTrapVxlanStatusDstIP
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the status of the VXLAN tunnel changes to up,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibTunnelTrapsVxlanStatus 1 }
+
+ibTunnelTrapVxlanStatusDown NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTunnelTrapVxlanStatusSType,
+            ibTunnelTrapVxlanStatusSrcIP,
+            ibTunnelTrapVxlanStatusDType,
+            ibTunnelTrapVxlanStatusDstIP
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the status of the VXLAN tunnel changes to down,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibTunnelTrapsVxlanStatus 2 }
+
+ibTunnelTrapStatusObjects OBJECT IDENTIFIER  ::= { ibTunnelTrapVxlanStatus 1 }
+
+-- ibTunnelTrapStatusObjects
+ibTunnelTrapVxlanStatusSType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VXLAN tunnel source address type."
+    ::= { ibTunnelTrapStatusObjects 1 }
+
+ibTunnelTrapVxlanStatusSrcIP OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VXLAN tunnel source address."
+    ::= { ibTunnelTrapStatusObjects 2 }
+
+ibTunnelTrapVxlanStatusDType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VXLAN tunnel destination address type."
+    ::= { ibTunnelTrapStatusObjects 3 }
+
+ibTunnelTrapVxlanStatusDstIP OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        " VXLAN tunnel destination address."
+    ::= { ibTunnelTrapStatusObjects 4 }
+
+ibTunnelTrapVxlanCfg OBJECT IDENTIFIER  ::= { ibTunnelTrap 2 }
+ibTunnelTrapsVxlanCfg OBJECT IDENTIFIER  ::= { ibTunnelTrapVxlanCfg 0 }
+
+-- ibTunnelTrapsVxlanCfg
+ibTunnelTrapVxlanCfgFailed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTunnelTrapVxlanCfgTunnelIfNo
+        }
+    STATUS      current
+    DESCRIPTION
+        "Vxlan tunnel configuration delivery failed."
+    ::= { ibTunnelTrapsVxlanCfg 1 }
+
+ibTunnelTrapVxlanCfgObjects OBJECT IDENTIFIER  ::= { ibTunnelTrapVxlanCfg 1 }
+
+-- ibTunnelTrapVxlanCfgObjects
+ibTunnelTrapVxlanCfgTunnelIfNo OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Tunnel interface number."
+    ::= { ibTunnelTrapVxlanCfgObjects 1 }
+
+ibTunnelTrapVxlanDecap OBJECT IDENTIFIER  ::= { ibTunnelTrap 3 }
+ibTunnelTrapsVxlanDecap OBJECT IDENTIFIER  ::= { ibTunnelTrapVxlanDecap 0 }
+
+-- ibTunnelTrapsVxlanDecap
+ibTunnelTrapVxlanFailDecapPkt NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTunnelTrapVxlanChassis,
+            ibTunnelTrapVxlanSlot,
+            ibTunnelTrapVxlanVni,
+            ibTunnelTrapVxlanSrcType,
+            ibTunnelTrapVxlanSrcIP,
+            ibTunnelTrapVxlanDstType,
+            ibTunnelTrapVxlanDstIP
+        }
+    STATUS      current
+    DESCRIPTION
+        "Failed to decapsulate VXLAN packet on the device."
+    ::= { ibTunnelTrapsVxlanDecap 1 }
+
+ibTunnelTrapVxlanDecapObjects OBJECT IDENTIFIER  ::= { ibTunnelTrapVxlanDecap 1 }
+
+-- ibTunnelTrapVxlanDecapObjects
+ibTunnelTrapVxlanChassis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of chassis ID. If the value is 65535, the device is
+         not a stacked device."
+    ::= { ibTunnelTrapVxlanDecapObjects 1 }
+
+ibTunnelTrapVxlanSlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of slot."
+    ::= { ibTunnelTrapVxlanDecapObjects 2 }
+
+ibTunnelTrapVxlanVni OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The network identifier of VXLAN."
+    ::= { ibTunnelTrapVxlanDecapObjects 3 }
+
+ibTunnelTrapVxlanSrcType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VXLAN tunnel source address type."
+    ::= { ibTunnelTrapVxlanDecapObjects 4 }
+
+ibTunnelTrapVxlanSrcIP OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VXLAN tunnel source address."
+    ::= { ibTunnelTrapVxlanDecapObjects 5 }
+
+ibTunnelTrapVxlanDstType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VXLAN tunnel destination address type."
+    ::= { ibTunnelTrapVxlanDecapObjects 6 }
+
+ibTunnelTrapVxlanDstIP OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VXLAN tunnel destination address."
+    ::= { ibTunnelTrapVxlanDecapObjects 7 }
+
+ibTunnelTrapIfNumExceed OBJECT IDENTIFIER  ::= { ibTunnelTrap 4 }
+ibTunnelTrapsIfNumExceed OBJECT IDENTIFIER  ::= { ibTunnelTrapIfNumExceed 0 }
+
+-- ibTunnelTrapsIfNumExceed
+ibTunnelTrapIfNumExceeded NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTunnelTrapIfNumExceedCurNum,
+            ibTunnelTrapIfNumExceedSpecNum
+        }
+    STATUS      current
+    DESCRIPTION
+        "The number of tunnel interfaces on the device exceeds the limit."
+    ::= { ibTunnelTrapsIfNumExceed 1 }
+
+ibTunnelTrapIfNumExceedObjects OBJECT IDENTIFIER  ::= { ibTunnelTrapIfNumExceed 1 }
+
+-- ibTunnelTrapIfNumExceedObjects
+ibTunnelTrapIfNumExceedCurNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Current number of tunnel interfaces."
+    ::= { ibTunnelTrapIfNumExceedObjects 1 }
+
+ibTunnelTrapIfNumExceedSpecNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of tunnel interfaces."
+    ::= { ibTunnelTrapIfNumExceedObjects 2 }
+
+END
+

@@ -1,0 +1,342 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: IDS Management MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+--     V1.00 2005/08/18 Created by Wang Hanlin
+-- ==================================================================
+IB-IDS-MIB DEFINITIONS ::= BEGIN
+
+        IMPORTS
+            ibCommon
+                FROM IB-OID-MIB
+            Integer32, Unsigned32, OBJECT-TYPE, NOTIFICATION-TYPE, MODULE-IDENTITY
+                FROM SNMPv2-SMI
+            InetAddressType, InetAddress
+                FROM INET-ADDRESS-MIB;
+
+        ibIDSMib MODULE-IDENTITY
+            LAST-UPDATED "200507141942Z"
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION
+                "This MIB describes IDS private information.
+                IDS(Instruction Detecting System) is used to detect intruder activity. "
+            ::= { ibIds 1 }
+
+--
+-- Node definitions
+--
+        ibIds OBJECT IDENTIFIER ::= { ibCommon 47 }
+
+        ibIDSTrapGroup OBJECT IDENTIFIER ::= { ibIDSMib 1 }
+
+        ibIDSTrapInfo OBJECT IDENTIFIER ::= { ibIDSTrapGroup 1 }
+
+        ibIDSTrapIPFragmentQueueLen OBJECT-TYPE
+            SYNTAX Unsigned32
+            MAX-ACCESS accessible-for-notify
+            STATUS current
+            DESCRIPTION
+                "The length of IP fragment queue."
+            ::= { ibIDSTrapInfo 1 }
+
+        ibIDSTrapStatSessionTabLen OBJECT-TYPE
+            SYNTAX Unsigned32
+            MAX-ACCESS accessible-for-notify
+            STATUS current
+            DESCRIPTION
+                "The length of status session table."
+            ::= { ibIDSTrapInfo 2 }
+
+        ibIDSTrapIPAddressType OBJECT-TYPE
+            SYNTAX InetAddressType
+            MAX-ACCESS accessible-for-notify
+            STATUS current
+            DESCRIPTION
+                "The type of IP Address."
+            ::= { ibIDSTrapInfo 3 }
+
+        ibIDSTrapIPAddress OBJECT-TYPE
+            SYNTAX InetAddress
+            MAX-ACCESS accessible-for-notify
+            STATUS current
+            DESCRIPTION
+                "IP Address."
+            ::= { ibIDSTrapInfo 4 }
+
+        ibIDSTrapUserName OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE(0..64))
+            MAX-ACCESS accessible-for-notify
+            STATUS current
+            DESCRIPTION
+                "User name."
+            ::= { ibIDSTrapInfo 5 }
+
+        ibIDSTrapLoginType OBJECT-TYPE
+            SYNTAX INTEGER {
+                telnet(1),
+                ssh(2),
+                web(3)
+                }
+            MAX-ACCESS accessible-for-notify
+            STATUS current
+            DESCRIPTION
+                "Login type, including telnet, ssh and web."
+            ::= { ibIDSTrapInfo 6 }
+
+        ibIDSTrapUpgradeType OBJECT-TYPE
+            SYNTAX INTEGER {
+                programme(1),    -- image file of system
+                crb(2),          -- custom rule base
+                vrb(3)           -- vendor rule base
+                }
+            MAX-ACCESS accessible-for-notify
+            STATUS current
+            DESCRIPTION
+                "Upgrade type, including programme(system image),
+                crb(custom rule base, one kind of configuration file),
+                vrb(vendor rule base, one kind of configuration file)."
+            ::= { ibIDSTrapInfo 7 }
+
+        ibIDSTrapCRLName OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE(0..64))
+            MAX-ACCESS accessible-for-notify
+            STATUS current
+            DESCRIPTION
+                "CRL(Certificate Revoke List) name."
+            ::= { ibIDSTrapInfo 8 }
+
+        ibIDSTrapCertName OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE(0..64))
+            MAX-ACCESS accessible-for-notify
+            STATUS current
+            DESCRIPTION
+                "Certificate name."
+            ::= { ibIDSTrapInfo 9 }
+
+        ibIDSTrapDetectRuleID OBJECT-TYPE
+            SYNTAX Unsigned32
+            MAX-ACCESS accessible-for-notify
+            STATUS current
+            DESCRIPTION
+                "The rule ID which is a unique identifier for a specified
+                detect rule."
+            ::= { ibIDSTrapInfo 10 }
+
+        ibIDSTrapEngineID OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS accessible-for-notify
+            STATUS current
+            DESCRIPTION
+                "A unique number used to identify an interface."
+            ::= { ibIDSTrapInfo 11 }
+
+        ibIDSTrapFileName OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE(0..256))
+            MAX-ACCESS accessible-for-notify
+            STATUS current
+            DESCRIPTION
+                "The file name."
+            ::= { ibIDSTrapInfo 12 }
+
+        ibIDSTrapCfgLineInFile OBJECT-TYPE
+            SYNTAX Unsigned32
+            MAX-ACCESS accessible-for-notify
+            STATUS current
+            DESCRIPTION
+                "The line number in the configuration file."
+            ::= { ibIDSTrapInfo 13 }
+
+        ibIDSTrapReasonForError OBJECT-TYPE
+           SYNTAX OCTET STRING (SIZE(0..256))
+           MAX-ACCESS accessible-for-notify
+           STATUS current
+           DESCRIPTION
+               "The information of the notification. Although the format and
+               content of this object are device specific, they should be
+               defined uniformly in the device."
+           ::= { ibIDSTrapInfo 14 }
+
+        ibIDSTrap OBJECT IDENTIFIER ::= { ibIDSTrapGroup 2 }
+
+        ibIDSTrapPrefix OBJECT IDENTIFIER ::= { ibIDSTrap 0 }
+
+        ibIDSTrapIPFragQueueFull NOTIFICATION-TYPE
+            OBJECTS {
+                ibIDSTrapIPFragmentQueueLen,
+                ibIDSTrapReasonForError
+                }
+            STATUS current
+            DESCRIPTION
+                "This notification will be generated when the IP fragment
+                queue is full.  The ibIDSTrapIPFragmentQueueLen describes
+                the length of current fragment queue.
+                The ibIDSTrapReasonForError describes reason for error."
+            ::= { ibIDSTrapPrefix 1 }
+
+        ibIDSTrapStatSessTabFull NOTIFICATION-TYPE
+            OBJECTS {
+                ibIDSTrapStatSessionTabLen,
+                ibIDSTrapReasonForError
+                }
+            STATUS current
+            DESCRIPTION
+                "This notification will be generated when the status session
+                table is full.  The ibIDSTrapStatSessionTabLen describes the
+                length of current status session table.
+                The ibIDSTrapReasonForError describes reason for error."
+            ::= { ibIDSTrapPrefix 2 }
+
+        ibIDSTrapDetectRuleParseFail NOTIFICATION-TYPE
+            OBJECTS {
+                ibIDSTrapDetectRuleID,
+                ibIDSTrapEngineID,
+                ibIDSTrapReasonForError
+                }
+            STATUS current
+            DESCRIPTION
+                "This notification will be generated when failing to parse
+                the rules for detecting.  The ibIDSTrapDetectRuleID object describes
+                rule ID. The ibIDSTrapEngineID object identifies an interface
+                the rule applies to. The ibIDSTrapReasonForError object
+                describes reason for error."
+            ::= { ibIDSTrapPrefix 3 }
+
+        ibIDSTrapDBConnLost NOTIFICATION-TYPE
+            OBJECTS {
+                ibIDSTrapIPAddressType,
+                ibIDSTrapIPAddress,
+                ibIDSTrapReasonForError
+                }
+            STATUS current
+            DESCRIPTION
+                "This notification will be generated when connecting with
+                database server fails. The ibIDSTrapIPAddressType object describes
+                the IP address type of database server.  The ibIDSTrapIPAddress
+                object describes the IP address of database server. The
+                ibIDSTrapReasonForError describes reason of connecting failure."
+            ::= { ibIDSTrapPrefix 4 }
+
+        ibIDSTrapCRLNeedUpdate NOTIFICATION-TYPE
+            OBJECTS {
+                ibIDSTrapCRLName,
+                ibIDSTrapReasonForError
+                }
+            STATUS current
+            DESCRIPTION
+                "This notification will be generated when IDS device detects
+                that CRL is out of date.  The ibIDSTrapCRLName object
+                describes the CRL(Certificate Revoke List) name.
+                The ibIDSTrapReasonForError object describes reason for error."
+            ::= { ibIDSTrapPrefix 5 }
+
+        ibIDSTrapCertOverdue NOTIFICATION-TYPE
+            OBJECTS {
+                ibIDSTrapCertName,
+                ibIDSTrapReasonForError
+                }
+            STATUS current
+            DESCRIPTION
+                "This notification will be generated when IDS device detects
+                that certificate is overdue.  The ibIDSTrapCertName object
+                describes the certificate name.  The ibIDSTrapReasonForError
+                object describes reason for error."
+            ::= { ibIDSTrapPrefix 6 }
+
+       ibIDSTrapTooManyLoginFail NOTIFICATION-TYPE
+            OBJECTS {
+                ibIDSTrapUserName,
+                ibIDSTrapIPAddressType,
+                ibIDSTrapIPAddress,
+                ibIDSTrapLoginType,
+                ibIDSTrapReasonForError
+                }
+            STATUS current
+            DESCRIPTION
+                "This notification will be generated when the login
+                failure times of a user over a certain number.
+                The ibIDSTrapUserName object describes the user name
+                when logging in.  The ibIDSTrapIPAddressType object
+                describes the IP address type of client. The
+                ibIDSTrapIPAddress object describes the IP address of
+                client.  The ibIDSTrapLoginType object describes
+                login type, including: telnet, ssh, web.
+                The ibIDSTrapReasonForError object describes reason for error."
+            ::= { ibIDSTrapPrefix 7 }
+
+       ibIDSTrapUpgradeError NOTIFICATION-TYPE
+            OBJECTS {
+                ibIDSTrapUpgradeType,
+                ibIDSTrapReasonForError
+                }
+            STATUS current
+            DESCRIPTION
+                "This notification will be generated when upgrading fails.
+                The ibIDSTrapUpgradeType object describes upgrade type,
+                including: programme, vrb. The ibIDSTrapReasonForError
+                object describes reason for error."
+            ::= { ibIDSTrapPrefix 8 }
+
+        ibIDSTrapFileAccessError NOTIFICATION-TYPE
+            OBJECTS {
+                ibIDSTrapFileName,
+                ibIDSTrapReasonForError
+                }
+            STATUS current
+            DESCRIPTION
+                "This notification will be generated when accessing file
+                fails.  The ibIDSTrapFileName object describes the name
+                of file accessed. The ibIDSTrapReasonForError object describes
+                reason for error."
+            ::= { ibIDSTrapPrefix 9 }
+
+        ibIDSTrapConsArithMemLow NOTIFICATION-TYPE
+            OBJECTS {
+                ibIDSTrapReasonForError
+                }
+            STATUS current
+            DESCRIPTION
+                "This notification will be generated when memory used by
+                constructing the arithmetic to seek content is lacking.
+                The ibIDSTrapReasonForError object describes reason for error."
+            ::= { ibIDSTrapPrefix 10 }
+
+        ibIDSTrapSSRAMOperFail NOTIFICATION-TYPE
+            OBJECTS {
+                ibIDSTrapReasonForError
+                }
+            STATUS current
+            DESCRIPTION
+                "This notification will be generated when reading or
+                writing SSRAM of CIE card fails. The ibIDSTrapReasonForError
+                object describes reason for error."
+            ::= { ibIDSTrapPrefix 11 }
+
+        ibIDSTrapPacketProcessDisorder NOTIFICATION-TYPE
+            OBJECTS {
+                ibIDSTrapReasonForError
+                }
+            STATUS current
+            DESCRIPTION
+                "This notification will be generated when packets processed
+                is in disorder. The ibIDSTrapReasonForError object describes
+                reason for error."
+            ::= { ibIDSTrapPrefix 12 }
+
+        ibIDSTrapCfgFileFormatError    NOTIFICATION-TYPE
+            OBJECTS { ibIDSTrapFileName, ibIDSTrapCfgLineInFile }
+            STATUS current
+            DESCRIPTION
+                "When devices startup and load the configuration file,
+                if format error is found, this notification will be generated.
+                The ibIDSTrapFileName object describes the name of
+                configuration file. The ibIDSTrapCfgLineInFile object
+                describes the line number in the file."
+            ::= { ibIDSTrapPrefix 13 }
+
+END

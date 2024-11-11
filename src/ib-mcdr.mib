@@ -1,0 +1,258 @@
+-- =========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Multicast Call Detail Record(CDR) MIB
+--              In IPTV application, user join in a multicast group to order
+--              video programme. Multicast CDR is implemented for record basic
+--              information that a user join in a multicast group.
+--              The information record will be sent to NMS.
+--              This new MIB is used for configured policy to send record and
+--              display online user information.
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 Created by Wangxiaodong, 2007.12.15
+--        Initial version.
+-- =========================================================================
+--
+-- ==================================================================
+--
+-- Variables and types be imported
+--
+-- ==================================================================
+IB-MCDR-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+
+        MODULE-IDENTITY,OBJECT-TYPE,Unsigned32
+    FROM SNMPv2-SMI
+
+        TEXTUAL-CONVENTION,DateAndTime
+    FROM SNMPv2-TC
+
+        InetAddressType, InetAddress
+    FROM INET-ADDRESS-MIB
+
+        ifIndex
+    FROM IF-MIB
+
+        VlanId
+    FROM Q-BRIDGE-MIB
+
+        ibCommon
+    FROM IB-OID-MIB;
+
+ibMultCDR MODULE-IDENTITY
+    LAST-UPDATED "200712150000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The initial version of this MIB file."
+    REVISION "200712150000Z"
+    DESCRIPTION
+        "The multicast call detail record MIB."
+    ::= { ibCommon  86 }
+
+-- ==================================================================
+--
+-- ======================= definition begin =========================
+--
+-- ==================================================================
+
+--
+-- ibMultCDRCfgObject
+--
+ibMultCDRCfgObject OBJECT IDENTIFIER ::= { ibMultCDR 1 }
+
+ibMultCDRStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            enabled(1),
+            disabled(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Configure to enable or disable multicast CDR function."
+    ::= { ibMultCDRCfgObject 1 }
+
+ibMultCDRReportInterval OBJECT-TYPE
+    SYNTAX      INTEGER(30..600)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Configure the multicast CDR report-interval. Unit: second."
+    ::= { ibMultCDRCfgObject 2 }
+
+ibMultCDRCacheLimit OBJECT-TYPE
+    SYNTAX      INTEGER(16..1024)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Configure the multicast CDR cache-limit."
+    ::= { ibMultCDRCfgObject 3 }
+
+ibMultCDRRecordDelay OBJECT-TYPE
+    SYNTAX      INTEGER(10..600)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Configure the multicast CDR record-delay. Unit: second"
+    ::= { ibMultCDRCfgObject 4 }
+
+ibMultCDRRecordSend OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            send(1),
+            caching(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Send record at once."
+    ::= { ibMultCDRCfgObject 5 }
+
+
+--
+--ibMultUserOnlineInfoTable
+--
+
+ibMultUserOnlineInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMultUserOnlineInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Multicast user online information table."
+    ::= { ibMultCDR 2 }
+
+ibMultUserOnlineInfoEntry OBJECT-TYPE
+    SYNTAX      IbMultUserOnlineInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The entry of multicast user online information table."
+    INDEX
+        {
+            ifIndex,
+            ibMultUserRecordID
+        }
+    ::= { ibMultUserOnlineInfoTable 1 }
+
+IbMultUserOnlineInfoEntry ::= SEQUENCE
+    {
+        ibMultUserRecordID         Unsigned32,
+        ibMultUserSubIfIndex       Unsigned32,
+        ibMultUserVlanID           VlanId,
+        ibMultUserJoinGAddrType    InetAddressType,
+        ibMultUserJoinGAddr        InetAddress,
+        ibMultUserJoinSAddrType    InetAddressType,
+        ibMultUserJoinSAddr        InetAddress,
+        ibMultUserStatus           INTEGER,
+        ibMultUserJoinTime         DateAndTime,
+        ibMultUserPreviewTimes     Unsigned32,
+        ibMultUserPreviewRemain    Unsigned32
+    }
+
+ibMultUserRecordID OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The index of online record."
+    ::= { ibMultUserOnlineInfoEntry 1 }
+
+ibMultUserSubIfIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index of sub-interface which is active.
+        If the value is zero, ibMultUserSubIfIndex should be ignored."
+    ::= { ibMultUserOnlineInfoEntry 2 }
+
+ibMultUserVlanID OBJECT-TYPE
+    SYNTAX      VlanId
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ID of VLAN in which the user joined the multicast group."
+    ::= { ibMultUserOnlineInfoEntry 3 }
+
+ibMultUserJoinGAddrType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Type of the multicast group IP address."
+    ::= { ibMultUserOnlineInfoEntry 4 }
+
+ibMultUserJoinGAddr OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The multicast group address which the user joined."
+    ::= { ibMultUserOnlineInfoEntry 5 }
+
+ibMultUserJoinSAddrType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Type of the multicast source IP address."
+    ::= { ibMultUserOnlineInfoEntry 6 }
+
+ibMultUserJoinSAddr OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The multicast source address which the user joined.
+        If the value is '0.0.0.0'(IPv4) or '::'(IPv6), ibMultUserJoinSAddr
+        should be ignored."
+    ::= { ibMultUserOnlineInfoEntry 7 }
+
+ibMultUserStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            permit(1),
+            preview(2)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current status of user.
+        permit - user in permit status.
+        preview - user in preview status."
+    ::= { ibMultUserOnlineInfoEntry 8 }
+
+ibMultUserJoinTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The time when the user joined the multicast group."
+    ::= { ibMultUserOnlineInfoEntry 9 }
+
+ibMultUserPreviewTimes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The times of multicast preview which the user joined.
+        If ibMultUserStatus is not preview, ibMultUserPreviewTimes
+        should be ignored."
+    ::= { ibMultUserOnlineInfoEntry 10 }
+
+ibMultUserPreviewRemain OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The remanent time slice of multicast preview which the user joined.
+        If ibMultUserStatus is not preview, ibMultUserPreviewRemain
+        should be ignored."
+    ::= { ibMultUserOnlineInfoEntry 11 }
+
+END

@@ -1,0 +1,302 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The purpose of this MIB file is to provide the definition of
+--              the MAC trap.
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2022-7-28
+--   Initial version, created by lichao
+-- ============================================================================
+IB-MAC-TRAP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI
+        MacAddress
+    FROM SNMPv2-TC;
+
+-- Node definitions
+ibMACTrap MODULE-IDENTITY
+    LAST-UPDATED "202207281800Z"        -- JUL 28, 2022 at 18:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB file defines the MAC trap warning feature only."
+    REVISION "202207281800Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 245}
+
+-- ibMACTrapEntry
+ibMACTrapEntry OBJECT IDENTIFIER ::= { ibMACTrap 1 }
+
+ibMACTrapsEntry OBJECT IDENTIFIER  ::= { ibMACTrapEntry 0 }
+
+-- ibMACTrapIfThresholdAlarm
+ibMACTrapIfThresholdAlarm  NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMACTrapEntryLearnIfName,
+            ibMACTrapEntryLearnThreshold,
+            ibMACTrapEntryChassis,
+            ibMACTrapEntrySlot
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the numbers of MAC entry learned on the interface exceeds the threshold,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibMACTrapsEntry 1 }
+
+ibMACTrapIfThresholdResume  NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMACTrapEntryLearnIfName,
+            ibMACTrapEntryLearnThreshold,
+            ibMACTrapEntryCurLearnCount,
+            ibMACTrapEntryChassis,
+            ibMACTrapEntrySlot
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the numbers of MAC entry learned by the interface drops below the threshold,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibMACTrapsEntry 2 }
+
+ibMACTrapVlanThresholdAlarm  NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMACTrapEntryLearnVlan,
+            ibMACTrapEntryLearnThreshold,
+            ibMACTrapEntryChassis,
+            ibMACTrapEntrySlot
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the numbers of MAC entry learned on the vlan exceeds the threshold,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibMACTrapsEntry 3 }
+
+ibMACTrapVlanThresholdResume  NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMACTrapEntryLearnVlan,
+            ibMACTrapEntryLearnThreshold,
+            ibMACTrapEntryCurLearnCount,
+            ibMACTrapEntryChassis,
+            ibMACTrapEntrySlot
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the numbers of MAC entry learned by the vlan drops below the threshold,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibMACTrapsEntry 4 }
+
+ibMACTrapVsiThresholdAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMACTrapEntryLearnVsiName,
+            ibMACTrapEntryLearnThreshold,
+            ibMACTrapEntryChassis,
+            ibMACTrapEntrySlot
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the numbers of MAC entry learned on the vsi exceeds the threshold,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibMACTrapsEntry 5 }
+
+ibMACTrapVsiThresholdResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMACTrapEntryLearnVsiName,
+            ibMACTrapEntryLearnThreshold,
+            ibMACTrapEntryCurLearnCount,
+            ibMACTrapEntryChassis,
+            ibMACTrapEntrySlot
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the numbers of MAC entry learned by the vsi drops below the threshold,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibMACTrapsEntry 6 }
+
+ibMACTrapEntryObjects OBJECT IDENTIFIER  ::= { ibMACTrapEntry 1 }
+
+-- ibMACTrapEntryObjects
+
+ibMACTrapEntryLearnIfName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE (0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of interface name."
+    ::= { ibMACTrapEntryObjects 1 }
+
+ibMACTrapEntryLearnVlan OBJECT-TYPE
+    SYNTAX      Unsigned32( 1..4094)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+    "The information of vlan id."
+    ::= { ibMACTrapEntryObjects 2 }
+
+ibMACTrapEntryLearnVsiName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE (1..31))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of vsi name."
+    ::= { ibMACTrapEntryObjects 3 }
+
+ibMACTrapEntryLearnThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Maximum learning limit of MAC table entry."
+    ::= { ibMACTrapEntryObjects 4 }
+
+ibMACTrapEntryCurLearnCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The numbers of MAC entry learned."
+    ::= { ibMACTrapEntryObjects 5 }
+
+ibMACTrapEntryChassis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of chassis ID. If the value is 65535, the device is
+        not a stacked device ."
+    ::= { ibMACTrapEntryObjects 6 }
+
+ibMACTrapEntrySlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of slot."
+    ::= { ibMACTrapEntryObjects 7 }
+
+
+ibMACTrapRecIllegalMacPkt OBJECT IDENTIFIER  ::= { ibMACTrap 2 }
+
+ibMACTrapsRecIllegalMacPkt OBJECT IDENTIFIER  ::= { ibMACTrapRecIllegalMacPkt 0 }
+
+ibMACTrapRcvIllegalMacPktAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMACTrapRcvIllegalPktIfName
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the port receives the packet that the source MAC or destination MAC is all 0,
+        a trap message is generated and sent to the remote monitoring device."
+    ::= { ibMACTrapsRecIllegalMacPkt 1 }
+
+ibMACTrapRecIllegalMacPktObjs OBJECT IDENTIFIER  ::= { ibMACTrapRecIllegalMacPkt 1 }
+
+ibMACTrapRcvIllegalPktIfName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE (0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of interface name that receives the
+        packet that the source MAC or destination MAC is all 0."
+    ::= { ibMACTrapRecIllegalMacPktObjs 1 }
+
+ibMACTrapHashConflict OBJECT IDENTIFIER  ::= { ibMACTrap 3 }
+
+ibMACTrapsHashConflict OBJECT IDENTIFIER  ::= { ibMACTrapHashConflict 0 }
+
+ibMACTrapVlanHashConflictAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMACHashConflictMac,
+            ibMACHashConflictMacVlan,
+            ibMACHashConflictMacIfName,
+            ibMACHashConflictChassis,
+            ibMACHashConflictSlot
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the MAC entries learned are discarded on the vlan due to hash conflicts,
+        a trap message is generated and sent to the remote monitoring device."
+    ::= { ibMACTrapsHashConflict 1 }
+
+ibMACTrapVsiHashConflictAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMACHashConflictMac,
+            ibMACHashConflictMacIfName,
+            ibMACHashConflictMacVsiName,
+            ibMACHashConflictChassis,
+            ibMACHashConflictSlot
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the MAC entries learned are discarded on the vsi due to hash conflicts,
+        a trap message is generated and sent to the remote monitoring device."
+    ::= { ibMACTrapsHashConflict 2 }
+
+ibMACTrapHashConflictObjs OBJECT IDENTIFIER  ::= { ibMACTrapHashConflict 1 }
+
+ibMACHashConflictMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Hash conflicting MAC address."
+    ::= { ibMACTrapHashConflictObjs 1 }
+
+ibMACHashConflictMacVlan OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..4094)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VLAN corresponding to MAC of hash conflict."
+    ::= { ibMACTrapHashConflictObjs 2 }
+
+ibMACHashConflictMacIfName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE (0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Interface name corresponding to MAC in hash conflict."
+    ::= { ibMACTrapHashConflictObjs 3 }
+
+ibMACHashConflictMacVsiName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE (1..31))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VSI name corresponding to MAC of hash conflict."
+    ::= { ibMACTrapHashConflictObjs 4 }
+
+ibMACHashConflictChassis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of chassis ID. If the value is 65535, the device is
+        not a stacked device ."
+    ::= { ibMACTrapHashConflictObjs 5 }
+
+ibMACHashConflictSlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of slot."
+    ::= { ibMACTrapHashConflictObjs 6 }
+
+END

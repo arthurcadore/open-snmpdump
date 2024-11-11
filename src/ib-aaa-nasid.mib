@@ -1,0 +1,68 @@
+-- ==========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: AAA Nas-id mib
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 2011-03-09 created by wangbin
+-- ==========================================================================
+IB-AAA-NASID-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE
+        FROM SNMPv2-SMI
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibAAANasId MODULE-IDENTITY
+    LAST-UPDATED "201103090945Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB contains objects to
+        manage configuration for AAA Nas-id feature.
+        AAA presents authentication, authorization and accouting.
+        NAS acts as the Network Access Server.
+        Nas-id is an identifier that contains some strings identifying the NAS."
+    REVISION "201103090945Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { ibCommon 114 }
+
+ibAAANasIdObjects OBJECT IDENTIFIER ::= { ibAAANasId 1 }
+
+-- ==========================================================================
+-- ibAAANasIdTable OBJECT
+-- ==========================================================================
+ibAAANasIdTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbAAANasIdEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+    "The AAA Nas-id table."
+::= { ibAAANasIdObjects 1 }
+
+ibAAANasIdEntry OBJECT-TYPE
+    SYNTAX IbAAANasIdEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+    "The AAA Nas-id entry."
+    INDEX { ibAAANasIdName }
+::= { ibAAANasIdTable 1 }
+
+IbAAANasIdEntry ::= SEQUENCE {
+    ibAAANasIdName             OCTET STRING }
+
+ibAAANasIdName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(1..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "The Nas-id name."
+::= { ibAAANasIdEntry 1 }
+
+END

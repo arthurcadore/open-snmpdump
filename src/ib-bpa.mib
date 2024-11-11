@@ -1,0 +1,250 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: BGP policy accounting MIB File
+-- Reference:
+-- Version: V1.3
+-- History:
+-- V1.0 2013-08-14 created by wangzhenjun
+-- V1.1 2013-11-13 modified by wangzhenjun
+--      Changed MAX-ACCESS of ibBpaDirection, and added this node to the
+--      index of ibBpaCfgEntry
+--      Deleted value 'none(0), both(3)' from data type 'ibBpaSrcOrDest'
+--      Deleted DEVAL of ibBpaSrcOrDest
+--      Deleted value 'none(0)' from data type 'ibBpaSrcOrDest'
+--      Modified descriptions of ibBpaDirection, ibBpaSrcOrDest and
+--      ibBpaTrafficIndex
+-- V1.2 2014-11-20 modified by gongqing
+--      Modified the value range of ibBpaTrafficIndex from
+--      (1..64) to (1..128)
+-- V1.3 2021-08-26 modified by xiebin
+--      Added node 'ibBpaInPktRateInLast30Sec' in IbBpaStatEntry
+--      Added node 'ibBpaInBitRateInLast30Sec' in IbBpaStatEntry
+--      Added node 'ibBpaOutPktRateInLast30Sec' in IbBpaStatEntry
+--      Added node 'ibBpaOutBitRateInLast30Sec' in IbBpaStatEntry
+-- =================================================================
+IB-BPA-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, Integer32, Counter64
+        FROM SNMPv2-SMI
+    RowStatus
+        FROM SNMPv2-TC
+    ifIndex
+        FROM IF-MIB
+    InetAddressType
+        FROM INET-ADDRESS-MIB;
+
+ibBpa MODULE-IDENTITY
+    LAST-UPDATED
+        "202108261525Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB contains objects that manage the configuration and information
+         of BGP policy accounting.  It accounts IP packets by user defined
+         BGP policy.
+        "
+    REVISION
+        "202108261525Z"
+    DESCRIPTION
+        "Add new node in IbBpaStatEntry"
+    REVISION
+        "201411200927Z"
+    DESCRIPTION
+        "Modified the value range of ibBpaTrafficIndex."
+    REVISION
+        "201311131128Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 144 }
+
+ibBpaObjects OBJECT IDENTIFIER ::= { ibBpa 1 }
+
+-- BGP policy accounting configuration table
+ibBpaCfgTable    OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbBpaCfgEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "A table for BGP policy accounting configuration."
+    ::= { ibBpaObjects 1 }
+
+ibBpaCfgEntry    OBJECT-TYPE
+    SYNTAX      IbBpaCfgEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "An entry for BGP policy accounting configuration."
+    INDEX {
+            ifIndex,
+            ibBpaDirection
+          }
+    ::= { ibBpaCfgTable 1 }
+
+IbBpaCfgEntry ::=
+    SEQUENCE
+    {
+            ibBpaDirection              INTEGER,
+            ibBpaSrcOrDest              INTEGER,
+            ibBpaRowStatus              RowStatus
+    }
+
+ibBpaDirection    OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+         input(1),
+         output(2)
+    }
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Identify the direction of IP packets on which BGP
+                 policy accounting takes effect.
+                 input  :input direction
+                 output :output direction"
+    ::= { ibBpaCfgEntry 1 }
+
+ibBpaSrcOrDest    OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+         source(1),
+         destination(2),
+         both(3)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Identify IP packet's Destination or Source IP address that
+                 BGP policy accounting relies on.
+                 source      :source IP address of the IP packet
+                 destination :destination IP address of the IP packet
+                 both        :both source and destination IP addresses"
+    DEFVAL      { destination }
+    ::= { ibBpaCfgEntry 2 }
+
+ibBpaRowStatus   OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+            "This object manages the creation, deletion, and modification
+             of rows in the ibBpaCfgTable, which supports the
+             active status, createAndGo operation, and destroy operation."
+    ::= { ibBpaCfgEntry 3 }
+
+-- BGP policy accounting statistics table
+ibBpaStatTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbBpaStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "A table for BGP policy accounting statistics."
+    ::= { ibBpaObjects 2 }
+
+ibBpaStatEntry OBJECT-TYPE
+    SYNTAX      IbBpaStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "An entry for BGP policy accounting statistics."
+    INDEX
+    {
+            ifIndex,
+            ibBpaTrafficType,
+            ibBpaTrafficIndex
+    }
+    ::= { ibBpaStatTable 1 }
+
+IbBpaStatEntry ::=
+    SEQUENCE
+    {
+            ibBpaTrafficType             InetAddressType,
+            ibBpaTrafficIndex            Integer32,
+            ibBpaInPacketCount           Counter64,
+            ibBpaInOctetCount            Counter64,
+            ibBpaOutPacketCount          Counter64,
+            ibBpaOutOctetCount           Counter64,
+            ibBpaInPktRateInLast30Sec    Counter64,
+            ibBpaInBitRateInLast30Sec    Counter64,
+            ibBpaOutPktRateInLast30Sec   Counter64,
+            ibBpaOutBitRateInLast30Sec   Counter64
+    }
+
+ibBpaTrafficType    OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Type of IP packets, IPv4 or IPv6."
+    ::= { ibBpaStatEntry 1 }
+
+ibBpaTrafficIndex    OBJECT-TYPE
+    SYNTAX      Integer32  (1..128)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Traffic index generated by a BGP policy."
+    ::= { ibBpaStatEntry 2 }
+
+ibBpaInPacketCount   OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The total number of received packets with the specified
+                 traffic type and traffic index."
+    ::= { ibBpaStatEntry 3 }
+
+ibBpaInOctetCount    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The total number of received bytes with the specified
+                 traffic type and traffic index."
+    ::= { ibBpaStatEntry 4 }
+
+ibBpaOutPacketCount   OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The total number of output packets with the specified
+                 traffic type and traffic index."
+    ::= { ibBpaStatEntry 5 }
+
+ibBpaOutOctetCount   OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The total number of output bytes with the specified
+                 traffic type and traffic index."
+    ::= { ibBpaStatEntry 6 }
+
+ibBpaInPktRateInLast30Sec   OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The rate of received packets with the specified
+                 traffic type and traffic index in last 30 seconds."
+    ::= { ibBpaStatEntry 7 }
+
+ibBpaInBitRateInLast30Sec   OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The rate of received bits with the specified
+                 traffic type and traffic index in last 30 seconds."
+    ::= { ibBpaStatEntry 8 }
+
+ibBpaOutPktRateInLast30Sec   OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The rate of sent packets with the specified
+                 traffic type and traffic index in last 30 seconds."
+    ::= { ibBpaStatEntry 9 }
+
+ibBpaOutBitRateInLast30Sec   OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The rate of sent bits with the specified
+                 traffic type and traffic index in last 30 seconds."
+    ::= { ibBpaStatEntry 10 }
+
+END

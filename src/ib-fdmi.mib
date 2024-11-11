@@ -1,0 +1,378 @@
+-- =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:
+--      This MIB module is for monitoring Fabric Device Management
+--      Interface(FDMI) related entities.
+-- Reference:
+-- Version: V1.1
+-- History:
+--      V1.0 created by c04378
+--      V1.1 Modified by q08977 2013-4-28
+--           Change the oid of 'ibFdmi' from ibCommon.131 to ibSan.7
+-- =============================================================================
+IB-FDMI-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibSan                                FROM IB-VSAN-MIB
+    MODULE-IDENTITY, OBJECT-TYPE,
+    Unsigned32                             FROM SNMPv2-SMI
+    SnmpAdminString                        FROM SNMP-FRAMEWORK-MIB
+    FcNameIdOrZero                         FROM FC-MGMT-MIB
+    T11FabricIndex                         FROM T11-TC-MIB         -- [RFC4439]
+    fcmInstanceIndex                       FROM FC-MGMT-MIB;       -- [RFC4044]
+
+ibFdmi MODULE-IDENTITY
+    LAST-UPDATED    "201206180000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB module is for monitoring Fabric Device Management
+        Interface (FDMI) related entities.  This MIB
+        module defines objects for managing the devices such as
+        Host Bus Adapter (HBA).  It provides device information
+        which has been registered with an Fibre Channel (FC) fabric using FDMI.
+        For more information on FDMI, refer to Fibre Channel
+        Generic Services-6 Section 6.7 : Fabric Device
+        Management Interface."
+    REVISION        "201206180000Z"
+    DESCRIPTION
+        "Initial version of this MIB module."
+    ::= { ibSan 7 }
+
+ibFdmiObjects OBJECT IDENTIFIER
+    ::= { ibFdmi 1 }
+
+ibFdmiInfo OBJECT IDENTIFIER
+    ::= { ibFdmiObjects 1 }
+
+--
+-- HBA information Table
+--
+
+ibFdmiHbaInfoTable  OBJECT-TYPE
+    SYNTAX       SEQUENCE OF IbFdmiHbaInfoEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "This table lists all the HBAs registered with the
+        Fabric Device Management Interface."
+    ::= { ibFdmiInfo 1 }
+
+ibFdmiHbaInfoEntry OBJECT-TYPE
+    SYNTAX      IbFdmiHbaInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry (conceptual row) in this table.  It
+        provides information that has been registered with FDMI
+        by a HBA, on the Virtual Storage Area Network (VSAN)
+        where the registration was received.
+        If the HBA has registered some but not all of the
+        information represented by the columnar objects in this
+        table, then the value of the unregistered objects will
+        be either the zero-length string (for string-based
+        objects) or the zero value (for integer-based objects)."
+    INDEX       {
+                    fcmInstanceIndex,
+                    ibFdmiHbaInfoFabricIndex,
+                    ibFdmiHbaInfoId
+                }
+    ::= { ibFdmiHbaInfoTable 1 }
+
+IbFdmiHbaInfoEntry ::= SEQUENCE {
+    ibFdmiHbaInfoFabricIndex    T11FabricIndex,
+    ibFdmiHbaInfoId             FcNameIdOrZero,
+    ibFdmiHbaInfoNodeName       FcNameIdOrZero,
+    ibFdmiHbaInfoMfg            SnmpAdminString,
+    ibFdmiHbaInfoSn             SnmpAdminString,
+    ibFdmiHbaInfoModel          SnmpAdminString,
+    ibFdmiHbaInfoModelDescr     SnmpAdminString,
+    ibFdmiHbaInfoHwVer          SnmpAdminString,
+    ibFdmiHbaInfoDriverVer      SnmpAdminString,
+    ibFdmiHbaInfoOptROMVer      SnmpAdminString,
+    ibFdmiHbaInfoFwVer          SnmpAdminString,
+    ibFdmiHbaInfoOSInfo         SnmpAdminString,
+    ibFdmiHbaInfoMaxCTPayload   Unsigned32
+}
+
+ibFdmiHbaInfoFabricIndex OBJECT-TYPE
+    SYNTAX                T11FabricIndex
+    MAX-ACCESS            not-accessible
+    STATUS                current
+    DESCRIPTION
+        "The ID of the VSAN."
+    ::= { ibFdmiHbaInfoEntry 1 }
+
+ibFdmiHbaInfoId OBJECT-TYPE
+    SYNTAX      FcNameIdOrZero
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The World Wide Name (WWN) of this HBA."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.5.1 ."
+    ::= {ibFdmiHbaInfoEntry  2}
+
+ibFdmiHbaInfoNodeName OBJECT-TYPE
+    SYNTAX      FcNameIdOrZero
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The WWN of the node containing this HBA. "
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.2.6 ."
+    ::= {ibFdmiHbaInfoEntry  3}
+
+ibFdmiHbaInfoMfg OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the manufacturer of this HBA."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.2.2 ."
+    ::= {ibFdmiHbaInfoEntry  4}
+
+ibFdmiHbaInfoSn OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The serial number of this HBA."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.2.3 ."
+    ::= {ibFdmiHbaInfoEntry  5}
+
+ibFdmiHbaInfoModel OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The model of this HBA."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.2.4 ."
+    ::= {ibFdmiHbaInfoEntry  6}
+
+ibFdmiHbaInfoModelDescr OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The string that describes the model of this HBA."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.2.5 ."
+    ::= {ibFdmiHbaInfoEntry  7}
+
+ibFdmiHbaInfoHwVer OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The hardware version of this HBA."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.2.8 ."
+    ::= {ibFdmiHbaInfoEntry  8}
+
+ibFdmiHbaInfoDriverVer OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The version of the driver software controlling
+        this HBA."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.2.9 ."
+    ::= {ibFdmiHbaInfoEntry  9}
+
+ibFdmiHbaInfoOptROMVer OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The version of the Option ROM or the BIOS of this HBA."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.2.10 ."
+    ::= {ibFdmiHbaInfoEntry  10}
+
+ibFdmiHbaInfoFwVer OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The version of the firmware executed by this HBA."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.2.11 ."
+    ::= {ibFdmiHbaInfoEntry  11}
+
+ibFdmiHbaInfoOSInfo OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The type and version of the operating system
+        controlling this HBA."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.2.12 ."
+    ::= {ibFdmiHbaInfoEntry  12}
+
+ibFdmiHbaInfoMaxCTPayload OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum size of the Common Transport (CT) payload
+        including all CT headers but no FC frame headers,
+        that may be sent or received by application software
+        resident in the host containing this HBA.
+        The unit is 32-bit words."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.2.13 ."
+    ::= {ibFdmiHbaInfoEntry  13}
+
+-- HBA port information
+
+ibFdmiHbaPortTable  OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbFdmiHbaPortEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "List of ports registered with Fabric Device
+        Management Interface."
+    ::= { ibFdmiInfo 2 }
+
+ibFdmiHbaPortEntry OBJECT-TYPE
+    SYNTAX     IbFdmiHbaPortEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "An entry (conceptual row) in this table.  It
+        contains information about the Nx_port on the HBA,
+        on the VSAN where the registration of the HBA
+        with FDMI was received.
+        If the HBA has registered some but not all of the
+        information represented by the columnar objects in this
+        table, then the value of the unregistered objects will
+        be either the zero-length string (for string-based
+        objects) or the zero value (for integer-based objects)."
+    INDEX      {
+                   fcmInstanceIndex,
+                   ibFdmiHbaInfoFabricIndex,
+                   ibFdmiHbaInfoId,
+                   ibFdmiHbaPortId
+               }
+    ::= { ibFdmiHbaPortTable 1 }
+
+IbFdmiHbaPortEntry ::= SEQUENCE {
+        ibFdmiHbaPortId                   FcNameIdOrZero,
+        ibFdmiHbaPortSupportedFC4Type     OCTET STRING,
+        ibFdmiHbaPortSupportedSpeed       Unsigned32,
+        ibFdmiHbaPortCurrentSpeed         Unsigned32,
+        ibFdmiHbaPortMaxFrameSize         Unsigned32,
+        ibFdmiHbaPortOsDevName            SnmpAdminString,
+        ibFdmiHbaPortHostName             SnmpAdminString
+}
+
+ibFdmiHbaPortId OBJECT-TYPE
+    SYNTAX      FcNameIdOrZero
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The WWN of the port."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.3.3 ."
+    ::= {ibFdmiHbaPortEntry  1}
+
+ibFdmiHbaPortSupportedFC4Type OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0 | 32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The supported FC-4 types attribute registered for this
+        port on this VSAN.  This is an array of 256 bits (32 bytes).
+        The order of the bits in the 256-bit (32-byte) value is
+        represented in network-byte order.
+        If no FC-4 types has been registered, then the
+        value of this object is the zero-length string."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.3.6 and Section 5.2.3.8 . "
+    ::= {ibFdmiHbaPortEntry  2}
+
+ibFdmiHbaPortSupportedSpeed OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The supported speed registered for this port on this
+        VSAN.  It is a bitmask that indicates the Fibre Channel
+        Transmission Speeds that are supported on this port."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.3.8 ."
+    ::= {ibFdmiHbaPortEntry  3}
+
+ibFdmiHbaPortCurrentSpeed OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current speed registered for this port on this
+        VSAN.  It is a bitmask that indicates the Fibre Channel
+        Transmission Speed at which this port is currently operating."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.3.9 ."
+    ::= {ibFdmiHbaPortEntry  4}
+
+ibFdmiHbaPortMaxFrameSize OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum frame size attribute registered for this
+        port on this VSAN.  The unit is bytes."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.3.10 ."
+    ::= {ibFdmiHbaPortEntry  5}
+
+ibFdmiHbaPortOsDevName OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The OS device name attribute registered for this port
+        on this VSAN."
+    REFERENCE
+        "Fibre Channel Generic Services-6 Rev 9.4
+        Section 6.7.4.4.3.11 ."
+    ::= {ibFdmiHbaPortEntry  6}
+
+ibFdmiHbaPortHostName OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the host associated with this port."
+    REFERENCE
+        "Fibre Channel Generic Services-6, Late Comment
+        Section 6.7.4.4.3.12 ."
+    ::= {ibFdmiHbaPortEntry  7}
+
+END

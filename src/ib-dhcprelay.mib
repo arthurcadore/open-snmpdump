@@ -1,0 +1,670 @@
+-- =====================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: DHCP Relay MIB.
+-- Reference:
+-- Version: V1.1
+-- History:
+-- V1.0 2005-4-11 created by wumingyu
+-- V1.1 2006-01-10 modified by xuyufei
+--      Add ibDHCPRConfigOption82IfTable
+-- =====================================================================
+IB-DHCPRELAY-MIB DEFINITIONS ::= BEGIN
+        IMPORTS
+                TruthValue, RowStatus, MacAddress
+                        FROM SNMPv2-TC
+                MODULE-IDENTITY, OBJECT-TYPE, Integer32, Unsigned32
+                        FROM SNMPv2-SMI
+                ifIndex
+                        FROM RFC1213-MIB
+                InetAddress, InetAddressType
+                        FROM INET-ADDRESS-MIB
+                ibCommon
+                        FROM IB-OID-MIB;
+
+-- ==================================================================
+--
+-- module identity part
+--
+-- ==================================================================
+        ibDhcpRelay MODULE-IDENTITY
+                LAST-UPDATED
+                        "200506080000Z"
+                ORGANIZATION
+                    "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+                CONTACT-INFO
+                    ""
+                DESCRIPTION "DHCPR MIB"
+                REVISION
+                        "200506080000Z"
+                DESCRIPTION
+                        "The initial version of this MIB module."
+                ::= { ibCommon 58 }
+
+-- ==================================================================
+--
+-- =====================object definition begin======================
+--
+-- ==================================================================
+        ibDHCPRMibObject      OBJECT IDENTIFIER ::= { ibDhcpRelay 1 }
+
+--ibDHCPRIfSelectTable--
+        ibDHCPRIfSelectTable  OBJECT-TYPE
+                SYNTAX      SEQUENCE OF IbDHCPRIfSelectEntry
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION "A table for configuring relay mode
+                            for interfaces.
+                            "
+                ::= { ibDHCPRMibObject 1 }
+
+        ibDHCPRIfSelectEntry  OBJECT-TYPE
+                SYNTAX      IbDHCPRIfSelectEntry
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION "An entry for configuring relay mode for an
+                            interface.
+                            "
+                INDEX
+                {
+                        ifIndex
+                }
+                ::= { ibDHCPRIfSelectTable 1 }
+
+        IbDHCPRIfSelectEntry ::=
+                SEQUENCE
+                {
+                        ibDHCPRIfSelectRelayMode INTEGER
+                }
+
+        ibDHCPRIfSelectRelayMode    OBJECT-TYPE
+                SYNTAX      INTEGER
+                {
+                            on(1),
+                            off(2)
+                }
+                MAX-ACCESS  read-write
+                STATUS      current
+                DESCRIPTION "If the value is on, the DHCP relay function
+                            would be enabled on this interface.
+                            "
+                DEFVAL      { off }
+
+                ::= { ibDHCPRIfSelectEntry 1 }
+
+--ibDHCPRIpToGroupTable--
+        ibDHCPRIpToGroupTable  OBJECT-TYPE
+                SYNTAX      SEQUENCE OF IbDHCPRIpToGroupEntry
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION "A table for configuring ip addresses for DHCP
+                            server groups.
+                            "
+                ::= { ibDHCPRMibObject 2 }
+
+        ibDHCPRIpToGroupEntry  OBJECT-TYPE
+                SYNTAX      IbDHCPRIpToGroupEntry
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION "An entry for configuring ip addresses for a DHCP
+                            server group.
+                            "
+                INDEX
+                {
+                        ibDHCPRIpToGroupGroupId,
+                        ibDHCPRIpToGroupServerIpType,
+                        ibDHCPRIpToGroupServerIp
+                }
+                ::= { ibDHCPRIpToGroupTable 1 }
+
+        IbDHCPRIpToGroupEntry ::=
+                SEQUENCE
+                {
+                        ibDHCPRIpToGroupGroupId        Integer32,
+                        ibDHCPRIpToGroupServerIpType   InetAddressType,
+                        ibDHCPRIpToGroupServerIp       InetAddress,
+                        ibDHCPRIpToGroupRowStatus      RowStatus
+                }
+
+        ibDHCPRIpToGroupGroupId    OBJECT-TYPE
+                SYNTAX      Integer32 (0..19)
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION "Group identifier of DHCP server group. "
+                ::= { ibDHCPRIpToGroupEntry 1 }
+
+        ibDHCPRIpToGroupServerIpType   OBJECT-TYPE
+                SYNTAX      InetAddressType
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION "Ip address type of DHCP server. "
+                ::= { ibDHCPRIpToGroupEntry 2 }
+
+        ibDHCPRIpToGroupServerIp   OBJECT-TYPE
+                SYNTAX      InetAddress (SIZE (1..64))
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION "Ip address of DHCP server. "
+                ::= { ibDHCPRIpToGroupEntry 3 }
+
+        ibDHCPRIpToGroupRowStatus  OBJECT-TYPE
+                SYNTAX      RowStatus
+                MAX-ACCESS  read-create
+                STATUS      current
+                DESCRIPTION
+                        "Operation status of this table entry.
+                        Three actions are used: active,
+                        createAndGo, destroy.
+                        "
+                ::= { ibDHCPRIpToGroupEntry 4 }
+
+--ibDHCPRIfToGroupTable--
+        ibDHCPRIfToGroupTable      OBJECT-TYPE
+                SYNTAX      SEQUENCE OF IbDHCPRIfToGroupEntry
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION "A table for configuring DHCP server groups
+                            for interfaces.
+                            "
+                ::= { ibDHCPRMibObject 3 }
+
+        ibDHCPRIfToGroupEntry  OBJECT-TYPE
+                SYNTAX      IbDHCPRIfToGroupEntry
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION "An entry for configuring DHCP server group for
+                            an interface.
+                            "
+                INDEX
+                {
+                        ifIndex
+                }
+                ::= { ibDHCPRIfToGroupTable 1 }
+
+        IbDHCPRIfToGroupEntry  ::=
+                SEQUENCE
+                {
+                        ibDHCPRIfToGroupGroupId        Integer32,
+                        ibDHCPRIfToGroupRowStatus      RowStatus
+                }
+
+        ibDHCPRIfToGroupGroupId    OBJECT-TYPE
+                SYNTAX      Integer32 (0..19)
+                MAX-ACCESS  read-write
+                STATUS      current
+                DESCRIPTION "The DHCP server group for this interface. "
+                ::= { ibDHCPRIfToGroupEntry 1 }
+
+        ibDHCPRIfToGroupRowStatus  OBJECT-TYPE
+                SYNTAX      RowStatus
+                MAX-ACCESS  read-create
+                STATUS      current
+                DESCRIPTION
+                        "Operation status of this table entry.
+                        Three actions are used: active,
+                        createAndGo, destroy"
+                ::= { ibDHCPRIfToGroupEntry 2 }
+
+--ibDHCPRAddrCheckTable--
+        ibDHCPRAddrCheckTable   OBJECT-TYPE
+                SYNTAX      SEQUENCE OF IbDHCPRAddrCheckEntry
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION
+                        "A table containing the states of dhcp security address
+                        check switchs for interfaces.
+                        "
+                ::= { ibDHCPRMibObject 4 }
+
+        ibDHCPRAddrCheckEntry   OBJECT-TYPE
+                SYNTAX      IbDHCPRAddrCheckEntry
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION
+                        "An entry containing the state of dhcp security address
+                        check switch for an interface.
+                        "
+                INDEX
+                {
+                        ifIndex
+                }
+                ::= { ibDHCPRAddrCheckTable 1 }
+
+        IbDHCPRAddrCheckEntry   ::=
+                SEQUENCE
+                {
+                        ibDHCPRAddrCheckSwitch  INTEGER
+                }
+
+        ibDHCPRAddrCheckSwitch  OBJECT-TYPE
+                SYNTAX  INTEGER
+                {
+                        enabled(1),
+                        disabled(2)
+                }
+                MAX-ACCESS  read-write
+                STATUS      current
+                DESCRIPTION
+                        "The state of dhcp security address check switch for
+                        this interface.
+                        It has two defined values: enabled and disabled.
+                        If the value is enabled, the address check function
+                        would be enabled. The default value is disabled.
+                        "
+                DEFVAL      { disabled }
+                ::= { ibDHCPRAddrCheckEntry 1 }
+
+--ibDHCPRSecurityTable--
+        ibDHCPRSecurityTable   OBJECT-TYPE
+                SYNTAX      SEQUENCE OF IbDHCPRSecurityEntry
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION "A table containing the information of
+                            DHCP security.
+                            "
+                ::= { ibDHCPRMibObject 5 }
+
+        ibDHCPRSecurityEntry  OBJECT-TYPE
+                SYNTAX      IbDHCPRSecurityEntry
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION "An entry containing the information of
+                            DHCP security.
+                            "
+                INDEX
+                {
+                        ibDHCPRSecurityClientIpAddrType,
+                        ibDHCPRSecurityClientIpAddr
+                }
+                ::= { ibDHCPRSecurityTable 1 }
+
+        IbDHCPRSecurityEntry   ::=
+                SEQUENCE
+                {
+                        ibDHCPRSecurityClientIpAddrType    InetAddressType,
+                        ibDHCPRSecurityClientIpAddr    InetAddress,
+                        ibDHCPRSecurityClientMacAddr    MacAddress,
+                        ibDHCPRSecurityClientProperty     INTEGER,
+                        ibDHCPRSecurityClientRowStatus     RowStatus
+                }
+
+        ibDHCPRSecurityClientIpAddrType OBJECT-TYPE
+                SYNTAX      InetAddressType
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION "DHCP client's net ip address type"
+                ::= { ibDHCPRSecurityEntry 1 }
+
+        ibDHCPRSecurityClientIpAddr     OBJECT-TYPE
+                SYNTAX      InetAddress (SIZE (1..64))
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION "DHCP client's net ip address"
+                ::= { ibDHCPRSecurityEntry 2 }
+
+        ibDHCPRSecurityClientMacAddr    OBJECT-TYPE
+                SYNTAX      MacAddress
+                MAX-ACCESS  read-write
+                STATUS      current
+                DESCRIPTION "DHCP client's mac address"
+                ::= { ibDHCPRSecurityEntry 3 }
+
+        ibDHCPRSecurityClientProperty      OBJECT-TYPE
+                SYNTAX  INTEGER
+                {
+                        static(1),
+                        dynamic(2)
+                }
+                MAX-ACCESS  read-write
+                STATUS      current
+                DESCRIPTION "Property of client address"
+                ::= { ibDHCPRSecurityEntry 4 }
+
+        ibDHCPRSecurityClientRowStatus     OBJECT-TYPE
+                SYNTAX      RowStatus
+                MAX-ACCESS  read-create
+                STATUS      current
+                DESCRIPTION
+                        "Operation status of this table entry.
+                        Three actions are used: active,
+                        createAndGo, destroy"
+                ::= { ibDHCPRSecurityEntry 5 }
+
+--ibDHCPRStatisticsGroup--
+        ibDHCPRStatisticsGroup     OBJECT IDENTIFIER ::= { ibDHCPRMibObject 6 }
+
+        ibDHCPRRxClientPktNum OBJECT-TYPE
+                SYNTAX      Unsigned32
+                MAX-ACCESS  read-only
+                STATUS      current
+                DESCRIPTION
+                        "The total number of the packets received from DHCP
+                        clients by DHCP relay.
+                        "
+                ::= { ibDHCPRStatisticsGroup 1 }
+
+        ibDHCPRTxClientPktNum OBJECT-TYPE
+                SYNTAX      Unsigned32
+                MAX-ACCESS  read-only
+                STATUS      current
+                DESCRIPTION
+                        "The total number of the brodcast packets transmitted
+                        to DHCP clients by DHCP relay.
+                        "
+                ::= { ibDHCPRStatisticsGroup 2 }
+
+        ibDHCPRRxServerPktNum OBJECT-TYPE
+                SYNTAX      Unsigned32
+                MAX-ACCESS  read-only
+                STATUS      current
+                DESCRIPTION
+                        "The total number of the packets received from
+                        DHCP Servers by DHCP relay.
+                        "
+                ::= { ibDHCPRStatisticsGroup 3 }
+
+        ibDHCPRTxServerPktNum OBJECT-TYPE
+                SYNTAX      Unsigned32
+                MAX-ACCESS  read-only
+                STATUS      current
+                DESCRIPTION
+                        "The total number of the packets transmitted to
+                        DHCP Servers by DHCP relay.
+                        "
+                ::= { ibDHCPRStatisticsGroup 4 }
+
+        ibDHCPRDiscoverPktNum OBJECT-TYPE
+                SYNTAX      Unsigned32
+                MAX-ACCESS  read-only
+                STATUS      current
+                DESCRIPTION
+                        "The total number of the DHCP Discover packets handled
+                        by DHCP relay.
+                        "
+                ::= { ibDHCPRStatisticsGroup 5 }
+
+        ibDHCPRRequestPktNum OBJECT-TYPE
+                SYNTAX      Unsigned32
+                MAX-ACCESS  read-only
+                STATUS      current
+                DESCRIPTION
+                        "The total number of the DHCP Request packets handled
+                        by DHCP relay.
+                        "
+                ::= { ibDHCPRStatisticsGroup 6 }
+
+        ibDHCPRDeclinePktNum OBJECT-TYPE
+                SYNTAX      Unsigned32
+                MAX-ACCESS  read-only
+                STATUS      current
+                DESCRIPTION
+                        "The total number of the DHCP Decline packets handled
+                        by DHCP relay.
+                        "
+                ::= { ibDHCPRStatisticsGroup 7 }
+
+        ibDHCPRReleasePktNum OBJECT-TYPE
+                SYNTAX      Unsigned32
+                MAX-ACCESS  read-only
+                STATUS      current
+                DESCRIPTION
+                        "The total number of the DHCP Release packets handled
+                        by DHCP relay.
+                        "
+                ::= { ibDHCPRStatisticsGroup 8 }
+
+        ibDHCPRInformPktNum OBJECT-TYPE
+                SYNTAX      Unsigned32
+                MAX-ACCESS  read-only
+                STATUS      current
+                DESCRIPTION
+                        "The total number of the DHCP Inform packets handled
+                        by DHCP relay.
+                        "
+                ::= { ibDHCPRStatisticsGroup 9 }
+
+        ibDHCPROfferPktNum OBJECT-TYPE
+                SYNTAX      Unsigned32
+                MAX-ACCESS  read-only
+                STATUS      current
+                DESCRIPTION
+                        "The total number of the DHCP Offer packets handled
+                        by DHCP relay.
+                        "
+                ::= { ibDHCPRStatisticsGroup 10 }
+
+        ibDHCPRAckPktNum OBJECT-TYPE
+                SYNTAX      Unsigned32
+                MAX-ACCESS  read-only
+                STATUS      current
+                DESCRIPTION
+                        "The total number of the DHCP Ack packets handled
+                        by DHCP relay.
+                        "
+                ::= { ibDHCPRStatisticsGroup 11 }
+
+        ibDHCPRNakPktNum OBJECT-TYPE
+                SYNTAX      Unsigned32
+                MAX-ACCESS  read-only
+                STATUS      current
+                DESCRIPTION
+                        "The total number of the DHCP Nak packets handled
+                        by DHCP relay.
+                        "
+                ::= { ibDHCPRStatisticsGroup 12 }
+
+        ibDHCPRStatisticsReset     OBJECT-TYPE
+                SYNTAX      TruthValue
+                MAX-ACCESS  read-write
+                STATUS      current
+                DESCRIPTION
+                        "This node only supports set operation.
+                        If the value is true,it will clear all of the packet
+                        statistics.
+                        "
+                ::= { ibDHCPRStatisticsGroup 13 }
+
+--ibDHCPRCycleGroup--
+        ibDHCPRCycleGroup  OBJECT IDENTIFIER ::= { ibDHCPRMibObject 7 }
+
+        ibDHCPRCycleStatus OBJECT-TYPE
+                SYNTAX INTEGER
+                {
+                        on(1),
+                        off(2)
+                }
+                MAX-ACCESS  read-write
+                STATUS      current
+                DESCRIPTION "If the value is on, the cycle function
+                            would be enabled.
+                            "
+                DEFVAL      { off }
+                ::= { ibDHCPRCycleGroup 1 }
+
+--ibDHCPRConfigOption82Group--
+        ibDHCPRConfigOption82Group OBJECT IDENTIFIER ::= { ibDHCPRMibObject 8 }
+
+        ibDHCPROption82Switch  OBJECT-TYPE
+                SYNTAX INTEGER
+                {
+                        enabled(1),
+                        disabled(2)
+                }
+                MAX-ACCESS  read-write
+                STATUS      current
+                DESCRIPTION "If the value is enabled,
+                            DHCP relay supporting option 82 function
+                            would be enabled.
+                            "
+                DEFVAL      { disabled }
+                ::= { ibDHCPRConfigOption82Group 1 }
+
+        ibDHCPROption82HandleStrategy  OBJECT-TYPE
+                SYNTAX INTEGER
+                {
+                        drop(1),
+                        keep(2),
+                        replace(3)
+                }
+                MAX-ACCESS  read-write
+                STATUS      current
+                DESCRIPTION "The strategies of DHCP relay handling option 82.
+
+                            'drop' indicates DHCP relay discarding the request
+                            packet including option 82.
+
+                            'keep' indicates DHCP relay accepting the request
+                            packet without any change of the option 82.
+
+                            'replace' indicates DHCP relay accepting the
+                            request packet on condition that it generates a new
+                            option 82 to replace the original one.
+                            "
+                DEFVAL      { replace }
+                ::= { ibDHCPRConfigOption82Group 2 }
+
+        ibDHCPRConfigOption82IfTable   OBJECT-TYPE
+                SYNTAX      SEQUENCE OF IbDHCPRConfigOption82IfEntry
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION "A table containing the information of DHCP
+                            option 82.
+                            This table depends on ibDHCPRIfToGroupTable.
+                            An entry of this table will be created when
+                            an entry of ibDHCPRIfToGroupTable is created.
+                            "
+                ::= { ibDHCPRConfigOption82Group 3 }
+
+        ibDHCPRConfigOption82IfEntry  OBJECT-TYPE
+                SYNTAX      IbDHCPRConfigOption82IfEntry
+                MAX-ACCESS  not-accessible
+                STATUS      current
+                DESCRIPTION "An entry containing the information of
+                            DHCP option 82.
+                            "
+                INDEX
+                {
+                        ifIndex
+                }
+                ::= { ibDHCPRConfigOption82IfTable 1 }
+
+        IbDHCPRConfigOption82IfEntry   ::=
+                SEQUENCE
+                {
+                        ibDHCPROption82IfSwitch    INTEGER,
+                        ibDHCPROption82IfStrategy    INTEGER,
+                        ibDHCPROption82IfFormat    INTEGER,
+                        ibDHCPROption82IfNodeType     INTEGER,
+                        ibDHCPROption82IfUsrDefString     OCTET STRING
+                }
+
+        ibDHCPROption82IfSwitch OBJECT-TYPE
+                SYNTAX      INTEGER
+                {
+                        enabled(1),
+                        disabled(2)
+                }
+                MAX-ACCESS  read-write
+                STATUS      current
+                DESCRIPTION "If DHCP relay supports option 82 functions, the
+                            value is 'enabled'.
+                            If DHCP relay does not support option 82 functions,
+                            the value is 'disabled'.
+                            "
+                DEFVAL      { disabled }
+                ::= { ibDHCPRConfigOption82IfEntry 1 }
+
+        ibDHCPROption82IfStrategy     OBJECT-TYPE
+                SYNTAX      INTEGER
+                {
+                        drop(1),
+                        keep(2),
+                        replace(3)
+                }
+                MAX-ACCESS  read-write
+                STATUS      current
+                DESCRIPTION "The strategies of DHCP relay handling option 82.
+
+                            'drop' indicates DHCP relay discarding the request
+                            packet including option 82.
+
+                            'keep' indicates DHCP relay accepting the request
+                            packet without any change of the option 82.
+
+                            'replace' indicates DHCP relay accepting the
+                            request packet on condition that it generates a new
+                            option 82 to replace the original one.
+                            "
+                DEFVAL      { replace }
+                ::= { ibDHCPRConfigOption82IfEntry 2 }
+
+        ibDHCPROption82IfFormat    OBJECT-TYPE
+                SYNTAX      INTEGER
+                {
+                        normal(1),
+                        verbose(2)
+                }
+                MAX-ACCESS  read-write
+                STATUS      current
+                DESCRIPTION "The format of DHCP relay option 82.
+
+                            'normal' is the standard format.
+
+                            'verbose' is the detailed format.
+                            "
+                DEFVAL      { normal }
+                ::= { ibDHCPRConfigOption82IfEntry 3 }
+
+        ibDHCPROption82IfNodeType      OBJECT-TYPE
+                SYNTAX  INTEGER
+                {
+                        invalid(1),
+                        mac(2),
+                        sysname(3),
+                        userdefine(4)
+                }
+                MAX-ACCESS  read-write
+                STATUS      current
+                DESCRIPTION "Property of DHCP relay option 82 verbose format.
+                            The value can be set by user only when the value
+                            of ibDHCPROption82IfFormat is set with 'verbose'.
+
+                            If the value of ibDHCPROption82IfFormat is
+                            'normal', the value is automatically set with
+                            'invalid'. the value can not be set with 'invalid'
+                            by user.
+
+                            'mac' indicates the option 82 verbose format is
+                            filled in with the mac of DHCP relay input
+                            interface. If the value of ibDHCPROption82IfFormat
+                            is set with 'verbose', the value is automatically
+                            set with 'mac'.
+
+                            'sysname' indicates the option 82 verbose format
+                            is filled in with the name of the DHCP relay.
+
+                            'userdefine' indicates the option 82 verbose format
+                            is filled in with the string defined by user.
+                            If the value is set with 'userdefine', the value of
+                            ibDHCPROption82IfUsrDefString must be set
+                            simultaneously.
+                            "
+                DEFVAL      { invalid }
+                ::= { ibDHCPRConfigOption82IfEntry 4 }
+
+        ibDHCPROption82IfUsrDefString      OBJECT-TYPE
+                SYNTAX      OCTET STRING (SIZE (0..256))
+                MAX-ACCESS  read-write
+                STATUS      current
+                DESCRIPTION "The string defined by user to fill in the
+                            option 82 verbose format. If the value of
+                            ibDHCPROption82IfFormat is 'normal', or the
+                            value of ibDHCPROption82IfNodeType is 'mac'
+                            or 'sysname', it is set with a null string
+                            automatically and can not be modified by user.
+                            It must be set with a non-zero length string
+                            when the value of ibDHCPROption82IfNodeType
+                            is set with 'userdefine'.
+                            "
+                ::= { ibDHCPRConfigOption82IfEntry 5 }
+END

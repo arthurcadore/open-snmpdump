@@ -1,0 +1,610 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:
+-- Reference:
+-- Version: V1.1
+-- History:
+-- V1.0 Created by Zhouzhihua, 2004.11.12
+-- V1.1 Bug fixed by songhao, 2015.04.30
+-- ============================================================================
+IB-NS-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        ibCommon
+            FROM IB-OID-MIB
+        TimeTicks, IpAddress, Integer32, Counter32, OBJECT-TYPE, MODULE-IDENTITY
+            FROM SNMPv2-SMI
+        RowStatus
+            FROM SNMPv2-TC;
+
+    ibNS MODULE-IDENTITY
+        LAST-UPDATED "200411071353Z"        -- November 07, 2004 at 13:53 GMT
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+            "This MIB contains objects to manage the configuration and status
+            information of network traffic statistics.  It classifies the IP
+            packets by source IP address, source port, destination IP address,
+            destination port, protocol, ToS and input interface, counts the
+            octets and packets, and sends the statistic information to the
+            specific collector.
+            "
+        REVISION "200409211415Z"        -- September 21, 2004 at 14:15 GMT
+        DESCRIPTION
+            "The initial revision of this MIB module."
+        ::= { ibCommon 20 }
+
+    ibNSMibObjects OBJECT IDENTIFIER ::= { ibNS 1 }
+
+    ibNSMibScalarObjects OBJECT IDENTIFIER ::= { ibNSMibObjects 1 }
+
+    ibNSActiveTime OBJECT-TYPE
+        SYNTAX Integer32 (1..60)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The stream will be aged when the active time of this stream
+            exceeds this value.  This object is in minute."
+        DEFVAL { 30 }
+        ::= { ibNSMibScalarObjects 1 }
+
+    ibNSInactiveTime OBJECT-TYPE
+        SYNTAX Integer32 (1..600)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The stream will be aged when the inactive time of this stream
+            exceeds this value.  This object is in second."
+        DEFVAL { 60 }
+        ::= { ibNSMibScalarObjects 2 }
+
+    ibNSVersion OBJECT-TYPE
+        SYNTAX Integer32 ( 5|9 )
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The version of the exported packet, which describes the format
+            of the exported packet.
+            It should export version 5 and version 8 when this object is 5,
+            but it should export version 9 only when the value of this object
+            is 9.
+            "
+        DEFVAL { 5 }
+        ::= { ibNSMibScalarObjects 3 }
+
+    ibNSAsType OBJECT-TYPE
+        SYNTAX INTEGER
+            {
+            peerAs(1),
+            originAs(2)
+            }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The number of autonomous system (AS).
+            This object can be origin or peer."
+        DEFVAL { peerAs }
+        ::= { ibNSMibScalarObjects 4 }
+
+    ibNSTemplateRefreshRate OBJECT-TYPE
+        SYNTAX Integer32 (1..600 )
+        MAX-ACCESS  read-write
+        STATUS current
+        DESCRIPTION
+            "This object specifies the refresh rate in number of
+            exported packets."
+        DEFVAL { 20 }
+        ::= { ibNSMibScalarObjects 5 }
+
+    ibNSTemplateTimeout OBJECT-TYPE
+        SYNTAX Integer32 ( 1..3600 )
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object specifies the timeout rate in minutes."
+        DEFVAL { 30 }
+        ::= { ibNSMibScalarObjects 6 }
+
+    ibNSExportVlanOrIfIndex OBJECT-TYPE
+        SYNTAX INTEGER
+            {
+            vlanId(1),
+            interfaceIndex(2)
+            }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object describes the interface index at the exported packet.
+             It can be interface index or vlan id according to the product."
+        DEFVAL { vlanId }
+        ::= { ibNSMibScalarObjects 7 }
+
+    ibNSProcessSlotTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IBNSProcessSlotEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This table describes the board which can enable network traffic
+            statistics at the switch or router."
+        ::= { ibNSMibObjects 2 }
+
+    ibNSProcessSlotEntry OBJECT-TYPE
+        SYNTAX IBNSProcessSlotEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The entry of ibNSProcessSlotEntry."
+        INDEX { ibNSProcessSlot }
+        ::= { ibNSProcessSlotTable 1 }
+
+    IBNSProcessSlotEntry ::=
+        SEQUENCE {
+            ibNSProcessSlot
+                Integer32
+            }
+
+    ibNSProcessSlot OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object describes all boards which can processes network
+            traffic statistics at the switch or router."
+        ::= { ibNSProcessSlotEntry 1 }
+
+    ibNSExportConfigTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IBNSExportConfigEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This table describes the configuration of the exported packets."
+        ::= { ibNSMibObjects 3 }
+
+    ibNSExportConfigEntry OBJECT-TYPE
+        SYNTAX IBNSExportConfigEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The entry of ibNSExportConfigTable."
+        INDEX { ibNSAggregationType }
+        ::= { ibNSExportConfigTable 1 }
+
+    IBNSExportConfigEntry ::=
+        SEQUENCE {
+            ibNSAggregationType
+                INTEGER,
+            ibNSHostIPAddr
+                IpAddress,
+            ibNSHostPort
+                Integer32,
+            ibNSSrcIpAddr
+                IpAddress,
+            ibNSState
+                INTEGER
+            }
+
+    ibNSAggregationType OBJECT-TYPE
+        SYNTAX INTEGER
+            {
+            v5Statistics(1),
+            as(2),
+            destinationPrefix(3),
+            sourcePrefix(4),
+            protocolPort(5),
+            prefix(6),
+            tosAs(7),
+            tosDestinationPrefix(8),
+            tosSourcePrefix(9),
+            tosProtocolPort(10),
+            tosPrefix(11),
+            prefixPort(12)
+            }
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The aggregation type.
+
+            v5Statistics type counts IP packets which have same source
+            IP address, destination IP address, source port, destination port,
+            protocol, ToS, input interface, output interface.
+
+            AS type counts IP packets which have same source AS, destination AS,
+            input interface and output interface.
+
+            destinationPrefix type counts IP packets which have same destination
+            AS, output interface, destination mask and destination prefix.
+
+            sourcePrefix type counts IP packets which have same source AS, input
+            interface, source mask and source prefix.
+
+            protocolPort type counts IP packets which have same protocol, source
+            port and destination port.
+
+            prefix type counts IP packets which have same source AS, destination
+            AS, input interface, output interface, source mask, source prefix,
+            destination mask, destination prefix.
+
+            tosAS type counts IP packets which have same tos, source AS, destination
+            AS, input interface and output interface.
+
+            tosDestinationPrefix type counts IP packets which have same tos,
+            destination AS, output interface, destination mask and destination prefix.
+
+            tosProtocolPort type counts IP packets which have same tos, protocol,
+            source port and destination port.
+
+            tosSourcePrefix type counts IP packets which have same tos, source AS,
+            input interface, source mask and source prefix.
+
+            tosPrefix type counts IP packets which have same tos, source AS,
+            destination AS, input interface, output interface, source mask, source
+            prefix, destination mask, destination prefix.
+
+            prefixPort type counts IP packets which have same tos, input interface,
+            output interface, source mask, source prefix, destination mask, destination
+            prefix, source port and destination port."
+        ::= { ibNSExportConfigEntry 1 }
+
+    ibNSHostIPAddr OBJECT-TYPE
+        SYNTAX IpAddress
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The destination IP address of the exported packet.
+             This destination IP address is a NSC (NS Collector) address."
+        ::= { ibNSExportConfigEntry 2 }
+
+    ibNSHostPort OBJECT-TYPE
+        SYNTAX Integer32 (0..65535)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The destination port of the exported packets.
+             This destination port is a NSC listening port."
+        ::= { ibNSExportConfigEntry 3 }
+
+    ibNSSrcIpAddr OBJECT-TYPE
+        SYNTAX IpAddress
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The source IP address of the exported packets."
+        ::= { ibNSExportConfigEntry 4 }
+
+    ibNSState OBJECT-TYPE
+        SYNTAX INTEGER
+            {
+            enabled(1),
+            disabled(2)
+            }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The state of aggregation is enabled or disabled."
+        ::= { ibNSExportConfigEntry 5 }
+
+    ibNSExportInformationTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IBNSExportInformationEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This table describes the Information of the exported packets."
+        ::= { ibNSMibObjects 4 }
+
+    ibNSExportInformationEntry OBJECT-TYPE
+        SYNTAX IBNSExportInformationEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The entry of ibNSExportInformationTable."
+        INDEX { ibNSExportType,
+                ibNSExportSlot }
+        ::= { ibNSExportInformationTable 1 }
+
+        IBNSExportInformationEntry ::=
+            SEQUENCE {
+                ibNSExportType
+                    INTEGER,
+                ibNSExportSlot
+                    Integer32,
+                ibNSExportStream
+                    Counter32,
+                ibNSExportNum
+                    Counter32,
+                ibNSExportFail
+                    Counter32
+                }
+
+    ibNSExportType OBJECT-TYPE
+        SYNTAX INTEGER  ( 1..12 )
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This object is equal to ibNSAggregationType."
+        ::= { ibNSExportInformationEntry 1 }
+
+    ibNSExportSlot OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This object is equal to ibNSProcessSlot."
+        ::= { ibNSExportInformationEntry 2 }
+
+    ibNSExportStream OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object counts the exported streams."
+        ::= { ibNSExportInformationEntry 3 }
+
+    ibNSExportNum OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object counts the exported packets."
+        ::= { ibNSExportInformationEntry 4 }
+
+    ibNSExportFail OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object counts the exported packets which failed to send.
+             The error may be unreachable destination IP address."
+        ::= { ibNSExportInformationEntry 5 }
+
+    ibNSConfigTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IBNSConfigEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This table describes current configurations."
+        ::= { ibNSMibObjects 5 }
+
+    ibNSConfigEntry OBJECT-TYPE
+        SYNTAX IBNSConfigEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The entry of ibNSAggregationTable."
+        INDEX { ibNSSourceSlot,
+                ibNSSourceIfIndex,
+                ibNSDestSlot }
+        ::= { ibNSConfigTable 1 }
+
+    IBNSConfigEntry ::=
+        SEQUENCE {
+            ibNSSourceSlot
+                Integer32,
+            ibNSSourceIfIndex
+                Integer32,
+            ibNSDestSlot
+                Integer32,
+            ibNSDirect
+                INTEGER,
+            ibNSACLNumber
+                Integer32,
+            ibNSACLName
+                OCTET STRING,
+            ibNSACLRule
+                Integer32,
+            ibNSConfigRowStatus
+                RowStatus
+            }
+
+    ibNSSourceSlot OBJECT-TYPE
+        SYNTAX Integer32 (1..65535)
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The IP packet will be counted when it is passing through this slot."
+        ::= { ibNSConfigEntry 1 }
+
+    ibNSSourceIfIndex OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The IP packet will be statistics when it through this interface.
+             This object is equal to ifIndex at ifTable."
+        ::= { ibNSConfigEntry 2 }
+
+    ibNSDestSlot OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This object is equal to ibNSProcessSlot."
+        ::= { ibNSConfigEntry 3 }
+
+    ibNSDirect OBJECT-TYPE
+        SYNTAX INTEGER
+            {
+            inbound(1),
+            outbound(2)
+            }
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "This object describes which packets will be counted.
+             It may be inbound or outbound packets through this interface."
+        DEFVAL { inbound }
+        ::= { ibNSConfigEntry 4 }
+
+    ibNSACLNumber OBJECT-TYPE
+        SYNTAX Integer32 (0 | 2000..3999)
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The number of number-acl group."
+        ::= { ibNSConfigEntry 5 }
+
+    ibNSACLName OBJECT-TYPE
+        SYNTAX OCTET STRING
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The name of name-acl group."
+        ::= { ibNSConfigEntry 6 }
+
+    ibNSACLRule OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The rule of acl group."
+        ::= { ibNSConfigEntry 7 }
+
+    ibNSConfigRowStatus OBJECT-TYPE
+        SYNTAX RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "SNMP Row Status Variable.
+             Writable objects in the table may be written in any RowStatus state."
+        ::= { ibNSConfigEntry 8 }
+
+    ibNSStatusTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IBNSStatusEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This table describes current information of network traffic."
+        ::= { ibNSMibObjects 6 }
+
+    ibNSStatusEntry OBJECT-TYPE
+        SYNTAX IBNSStatusEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The entry of ibNSAggregationTable."
+        INDEX { ibNSSlot }
+        ::= { ibNSStatusTable 1 }
+
+    IBNSStatusEntry ::=
+        SEQUENCE {
+            ibNSSlot
+                Integer32,
+            ibNSActiveStreamNumber
+                Counter32,
+            ibNSTotalStreamNumber
+                Counter32,
+            ibNSTotalPacketNumber
+                Counter32,
+            ibNSTotalOctetNumber
+                Counter32,
+            ibNSMPLSActiveStreamNumber
+                Counter32,
+            ibNSMPLSTotalStreamNumber
+                Counter32,
+            ibNSMPLSTotalPacketNumber
+                Counter32,
+            ibNSMPLSTotalOctetNumber
+                Counter32,
+            ibNSResetFlag
+                INTEGER,
+            ibNSResetTime
+                TimeTicks
+            }
+
+    ibNSSlot OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This object is equal to ibNSProcessSlot."
+        ::= { ibNSStatusEntry 1 }
+
+    ibNSActiveStreamNumber OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object counts current active streams."
+        ::= { ibNSStatusEntry 2 }
+
+    ibNSTotalStreamNumber OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object counts all statistic streams."
+        ::= { ibNSStatusEntry 3 }
+
+    ibNSTotalPacketNumber OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object counts all statistic packets."
+        ::= { ibNSStatusEntry 4 }
+
+    ibNSTotalOctetNumber OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object counts all statistic octets."
+        ::= { ibNSStatusEntry 5 }
+
+    ibNSMPLSActiveStreamNumber OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object counts current active MPLS streams."
+        ::= { ibNSStatusEntry 6 }
+
+    ibNSMPLSTotalStreamNumber OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object counts all statistic MPLS streams."
+        ::= { ibNSStatusEntry 7 }
+
+    ibNSMPLSTotalPacketNumber OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object counts all statistic MPLS packets."
+        ::= { ibNSStatusEntry 8 }
+
+    ibNSMPLSTotalOctetNumber OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object counts all statistic octets of MPLS packets."
+        ::= { ibNSStatusEntry 9 }
+
+    ibNSResetFlag OBJECT-TYPE
+        SYNTAX INTEGER
+            {
+            enabled(1),
+            disabled(2)
+            }
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "Reset all streams.  The default value is disabled,
+             and set this value to enabled when resetting."
+        DEFVAL { disabled }
+        ::= { ibNSStatusEntry 10 }
+
+    ibNSResetTime OBJECT-TYPE
+        SYNTAX TimeTicks
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The system up time when stream is reset."
+        ::= { ibNSStatusEntry 11 }
+
+END

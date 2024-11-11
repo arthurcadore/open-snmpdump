@@ -1,0 +1,157 @@
+-- =====================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- Description: Service loopback group MIB.
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 Initial version
+-- =====================================================================
+IB-SLBG-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    Unsigned32, OBJECT-TYPE, MODULE-IDENTITY
+        FROM SNMPv2-SMI
+    RowStatus
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibSlbg MODULE-IDENTITY
+    LAST-UPDATED "201210160000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Service loopback group MIB."
+    REVISION "201210160000Z"
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 130 }
+
+---------------------------------------------------------------
+-- Node definitions
+---------------------------------------------------------------
+
+ibSlbgMibTable OBJECT IDENTIFIER ::= { ibSlbg 1 }
+
+ibSlbgGroupTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSlbgGroupEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table of service loopback group objects."
+    ::= { ibSlbgMibTable 1 }
+
+ibSlbgGroupEntry OBJECT-TYPE
+    SYNTAX IbSlbgGroupEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The service loopback group entry."
+    INDEX { ibSlbgGroupNumber }
+    ::= { ibSlbgGroupTable 1 }
+
+IbSlbgGroupEntry ::=
+    SEQUENCE {
+        ibSlbgGroupNumber
+            Unsigned32,
+        ibSlbgGroupSrvType
+            BITS,
+        ibSlbgGroupRowStatus
+            RowStatus
+     }
+
+ibSlbgGroupNumber OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Serial number of the service loopback group."
+    ::= { ibSlbgGroupEntry 1 }
+
+ibSlbgGroupSrvType OBJECT-TYPE
+    SYNTAX BITS
+        {
+            ipv6(0),
+            ipv6mc(1),
+            tunnel(2),
+            multicastTunnel(3),
+            mpls(4)
+        }
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Service type of the service loopback group.
+         ipv6: IPv6 unicast service type.
+         ipv6mc: IPv6 multicast service type.
+         tunnel: Unicast tunnel service type.
+         multicastTunnel: Multicast tunnel service type.
+         mpls: MPLS service type."
+    ::= { ibSlbgGroupEntry 2 }
+
+ibSlbgGroupRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object is used to create, modify, or delete rows.
+         ibSlbgGroupNumber and ibSlbgGroupSrvType must have a valid value before a row can be activated."
+    ::= { ibSlbgGroupEntry 3 }
+
+ibSlbgPortTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSlbgPortEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table of port objects."
+    ::= { ibSlbgMibTable 2 }
+
+ibSlbgPortEntry OBJECT-TYPE
+    SYNTAX IbSlbgPortEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The service loopback group port entry."
+    INDEX { ibSlbgPortIndex }
+    ::= { ibSlbgPortTable 1 }
+
+IbSlbgPortEntry ::=
+    SEQUENCE {
+        ibSlbgPortIndex
+            InterfaceIndex,
+        ibSlbgPortAttachedGroupNumber
+            Unsigned32,
+        ibSlbgPortSelectedGroupNumber
+            Unsigned32
+    }
+
+ibSlbgPortIndex OBJECT-TYPE
+    SYNTAX InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Interface index of the port, which is defined in RFC1213 (MIB-II)."
+    ::= { ibSlbgPortEntry 1 }
+
+ibSlbgPortAttachedGroupNumber OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The value of the service group number to which this port is assigned.
+         The value is zero if the port is not assigned to any service loopback group."
+    ::= { ibSlbgPortEntry 2 }
+
+ibSlbgPortSelectedGroupNumber OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The value of the service group number to which this selected port is assigned.
+         The value is zero if the port is not selected or not assigned to any service loopback group."
+    ::= { ibSlbgPortEntry 3 }
+
+END

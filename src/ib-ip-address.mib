@@ -1,0 +1,441 @@
+-- ====================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: IPv4 address MIB
+-- Reference:
+-- Version: V1.6
+-- History:
+--   V1.0 2005-11-22 Created by Wang Hui and Liu Jinguang
+--        Initial version
+--   V1.1 2006-03-16 Modify by Yu Hongqiang
+--        Modify the description of some objects.
+--   V1.2 2007-12-18 Modify by Zhangyinfei
+--        Add enmu 'vrrp' for ibIpAddrReadSourceType and ibIpAddrReadCatalog
+--   V1.3 2009-8-11 Modify by lifei
+--        Add ip address change notify trap
+--   V1.4 2010-03-06 Modify by Jianzhuang Ge
+--        Add ipv4 address management table ibIpv4AddrTable
+--   V1.5 2011-11-28 Modify by zhangshuai
+--        Add ibIpAddrFirstTrapTime
+--   V1.6 2021-02-19 Modify by zhulisong
+--        Add enum cellar, mad and backup for ibIpAddrReadSourceType and ibIpAddrReadCatalog
+-- ====================================================================
+IB-IP-ADDRESS-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        ibCommon
+            FROM IB-OID-MIB
+        Integer32, IpAddress, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE,
+        TimeTicks
+            FROM SNMPv2-SMI
+        RowStatus
+            FROM SNMPv2-TC
+        InetAddressType,InetAddress
+            FROM INET-ADDRESS-MIB
+        ifIndex
+            FROM IF-MIB;
+
+    ibIpAddrMIB MODULE-IDENTITY
+        LAST-UPDATED "202102190000Z"
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+            "The MIB module for managing IPv4 address."
+        REVISION "202102190000Z"
+        DESCRIPTION
+            "Add enum cellar, mad and backup for ibIpAddrReadSourceType and ibIpAddrReadCatalog."
+        REVISION "200511220000Z"
+        DESCRIPTION
+            "The initial revision of this MIB module."
+        ::= { ibCommon 67 }
+
+
+--
+-- Node definitions
+--
+    ibIpAddressObjects OBJECT IDENTIFIER ::= { ibIpAddrMIB 1 }
+
+    ibIpAddressConfig OBJECT IDENTIFIER ::= { ibIpAddressObjects 1 }
+
+    ibIpAddrSetTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbIpAddrSetEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The table of address information is relevant to this
+            entity's IPv4 addresses for setting. The address information
+            that can be read and set in this table is a subset of the
+            address information that can be read in ibIpAddrReadTable
+            and ipAddrTable in IP-MIB. This table is used to configure IPv4
+            addresses of an interface identified by ibIpAddrSetIfIndex.
+            When users create or delete an entry in this table, the agent also
+            increases or reduces a corresponding entry in the
+            ibIpAddrReadTable and ipAddrTable in IP-MIB.
+            When an interface which has been assigned IPv6 address is deleted,
+            the agent also deletes the entry corresponding to the interface
+            in this table and ibIpAddrReadTable.
+            All IPv4 addresses in this table will also show in ipAddrTable in
+            IP-MIB.
+            "
+        REFERENCE
+            "RFC 2011"
+        ::= { ibIpAddressConfig 1 }
+
+    ibIpAddrSetEntry OBJECT-TYPE
+        SYNTAX IbIpAddrSetEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Define the IPv4 address information.
+            "
+        INDEX { ibIpAddrSetIfIndex, ibIpAddrSetAddrType, ibIpAddrSetAddr }
+        ::= { ibIpAddrSetTable 1 }
+
+    IbIpAddrSetEntry ::=
+        SEQUENCE
+        {
+            ibIpAddrSetIfIndex
+                Integer32,
+            ibIpAddrSetAddrType
+                InetAddressType,
+            ibIpAddrSetAddr
+                InetAddress,
+            ibIpAddrSetMask
+                IpAddress,
+            ibIpAddrSetSourceType
+                INTEGER,
+            ibIpAddrSetCatalog
+                INTEGER,
+            ibIpAddrSetRowStatus
+                RowStatus
+        }
+
+    ibIpAddrSetIfIndex OBJECT-TYPE
+        SYNTAX Integer32 (1..2147483647)
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The index value which uniquely identifies the interface to
+            which this entry is applicable. The interface identified by
+            a particular value of this index is the same interface as
+            identified by the same value of RFC 1573's ifIndex.
+            "
+        ::= { ibIpAddrSetEntry 1 }
+
+    ibIpAddrSetAddrType OBJECT-TYPE
+        SYNTAX InetAddressType
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The IP address type to which this entry's address information
+            pertains. The value must be ipv4.
+            "
+        ::= { ibIpAddrSetEntry 2 }
+
+    ibIpAddrSetAddr OBJECT-TYPE
+        SYNTAX InetAddress
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The IPv4 address to which this entry's address information
+            pertains.
+            "
+        ::= { ibIpAddrSetEntry 3 }
+
+    ibIpAddrSetMask OBJECT-TYPE
+        SYNTAX IpAddress
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The subnet mask associated with the IPv4 address of this
+            entry. The value of the mask is an IPv4 address with all the
+            network bits set to 1 and all the hosts bits set to 0.
+            "
+        ::= { ibIpAddrSetEntry 4 }
+
+    ibIpAddrSetSourceType OBJECT-TYPE
+        SYNTAX INTEGER
+        {
+            assignedIp(1)
+        }
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "Indicate the type of source of the IPv4 address."
+        DEFVAL { assignedIp }
+        ::= { ibIpAddrSetEntry 5 }
+
+    ibIpAddrSetCatalog OBJECT-TYPE
+        SYNTAX INTEGER
+        {
+            primary(1),
+            sub(2)
+        }
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "Indicate the category of the IPv4 address."
+        DEFVAL { primary }
+        ::= { ibIpAddrSetEntry 6 }
+
+    ibIpAddrSetRowStatus OBJECT-TYPE
+        SYNTAX RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "This object is used to create a new row or delete an
+            existing row in this table, only support active,
+            createAndGo and destroy.
+            "
+        ::= { ibIpAddrSetEntry 7 }
+
+    ibIpAddrReadTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbIpAddrReadEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The table of address information is relevant to this
+            entity's IP addresses for reading. This is the extension
+            of the ipAddrTable in IP-MIB.
+            All IPv4 addresses in this table will also show in ipAddrTable
+            in IP-MIB.
+            "
+        REFERENCE
+            "RFC 2011"
+        ::= { ibIpAddressConfig 2 }
+
+    ibIpAddrReadEntry OBJECT-TYPE
+        SYNTAX IbIpAddrReadEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Define the IPv4 address information.
+            "
+        INDEX { ibIpAddrReadIfIndex, ibIpAddrReadAddrType, ibIpAddrReadAddr }
+        ::= { ibIpAddrReadTable 1 }
+
+    IbIpAddrReadEntry ::=
+        SEQUENCE
+        {
+            ibIpAddrReadIfIndex
+                Integer32,
+            ibIpAddrReadAddrType
+                InetAddressType,
+            ibIpAddrReadAddr
+                InetAddress,
+            ibIpAddrReadMask
+                IpAddress,
+            ibIpAddrReadSourceType
+                INTEGER,
+            ibIpAddrReadCatalog
+                INTEGER
+        }
+
+    ibIpAddrReadIfIndex OBJECT-TYPE
+        SYNTAX Integer32 (1..2147483647)
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The index value which uniquely identifies the interface to
+            which this entry is applicable. The interface identified by
+            a particular value of this index is the same interface as
+            identified by the same value of RFC 1573's ifIndex.
+            "
+        ::= { ibIpAddrReadEntry 1 }
+
+    ibIpAddrReadAddrType OBJECT-TYPE
+        SYNTAX InetAddressType
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The IP address type to which this entry's address information
+            pertains. The value must be ipv4.
+            "
+        ::= { ibIpAddrReadEntry 2 }
+
+    ibIpAddrReadAddr OBJECT-TYPE
+        SYNTAX InetAddress
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The IPv4 address to which this entry's address information
+            pertains.
+            "
+        ::= { ibIpAddrReadEntry 3 }
+
+    ibIpAddrReadMask OBJECT-TYPE
+        SYNTAX IpAddress
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The subnet mask associated with the IPv4 address of this
+            entry. The value of the mask is an IPv4 address with all the
+            network bits set to 1 and all the hosts bits set to 0.
+            "
+        ::= { ibIpAddrReadEntry 4 }
+
+    ibIpAddrReadSourceType OBJECT-TYPE
+        SYNTAX INTEGER
+        {
+            assignedIp(1),
+            cluster(2),
+            dhcp(3),
+            bootp(4),
+            negotiate(5),
+            unnumbered(6),
+            vrrp(7),
+            cellar(8),
+            mad(9)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Indicate the type of source of the IPv4 address."
+        ::= { ibIpAddrReadEntry 5 }
+
+    ibIpAddrReadCatalog OBJECT-TYPE
+        SYNTAX INTEGER
+        {
+            primary(1),
+            sub(2),
+            cluster(3),
+            vrrp(4),
+            backup(5)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Indicate the category of the IPv4 address."
+        ::= { ibIpAddrReadEntry 6 }
+
+    ibIpv4AddrTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbIpv4AddrEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This table is used to configure primary IPv4 address of an
+             interface identified by ifIndex."
+        ::= { ibIpAddressConfig 3 }
+
+    ibIpv4AddrEntry OBJECT-TYPE
+        SYNTAX IbIpv4AddrEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Define the IPv4 address information.
+            "
+        INDEX { ifIndex }
+        ::= { ibIpv4AddrTable 1 }
+
+    IbIpv4AddrEntry ::=
+        SEQUENCE
+        {
+            ibIpv4AddrAddr
+                IpAddress,
+            ibIpv4AddrMask
+                IpAddress,
+            ibIpv4AddrRowStatus
+                RowStatus
+        }
+
+    ibIpv4AddrAddr OBJECT-TYPE
+        SYNTAX IpAddress
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The IPv4 address to which this entry's address information
+            pertains.
+            "
+        ::= { ibIpv4AddrEntry 1 }
+
+    ibIpv4AddrMask OBJECT-TYPE
+        SYNTAX IpAddress
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The subnet mask associated with the IPv4 address of this
+            entry.  The value of the mask is an IPv4 address with all the
+            network bits set to 1 and all the hosts bits set to 0.
+            "
+        ::= { ibIpv4AddrEntry 2 }
+
+    ibIpv4AddrRowStatus OBJECT-TYPE
+        SYNTAX RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "This object is used to create a new row or delete an
+            existing row in this table, only support active,
+            notInService, createAndGo and destroy.
+            "
+        ::= { ibIpv4AddrEntry 3 }
+
+--
+-- Define the IP Address Traps.
+--
+
+ibIpAddrNotify OBJECT IDENTIFIER ::= { ibIpAddrMIB 2 }
+
+-- Scalar Objects for Notify
+ibIpAddrNotifyScalarObjects OBJECT IDENTIFIER ::= { ibIpAddrNotify 1 }
+
+ibIpAddrNotifyIfIndex OBJECT-TYPE
+    SYNTAX      Integer32 (1..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The IP address IfIndex of specified interface on the device."
+    ::= { ibIpAddrNotifyScalarObjects 1 }
+
+ibIpAddrOldIpAddress OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The Old IP address of specified interface on the device."
+    ::= { ibIpAddrNotifyScalarObjects 2 }
+
+ibIpAddrNewIpAddress OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The New IP address of specified interface on the device."
+    ::= { ibIpAddrNotifyScalarObjects 3 }
+
+ibIpAddrFirstTrapTime OBJECT-TYPE
+    SYNTAX      TimeTicks
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the first trap time."
+    ::= { ibIpAddrNotifyScalarObjects 4 }
+
+
+-- Notification Objects
+ibIpAddrNotifyObjects OBJECT IDENTIFIER ::= { ibIpAddrNotify 2 }
+
+ibIpAddrNotifyObjectsPrefix OBJECT IDENTIFIER ::= { ibIpAddrNotifyObjects 0 }
+
+ibIpAddressChangeNotify NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIpAddrNotifyIfIndex,
+            ibIpAddrOldIpAddress,
+            ibIpAddrNewIpAddress,
+            ibIpAddrFirstTrapTime
+         }
+    STATUS      current
+    DESCRIPTION
+        "This notification will be generated when the IP address of interface
+        is changed.  The change maybe originate from NMS, DHCP server or
+        administrator.
+
+        This notification announces useful IP address change.  So it
+        is triggered by significative IP address change."
+
+    ::= { ibIpAddrNotifyObjectsPrefix 1 }
+
+END

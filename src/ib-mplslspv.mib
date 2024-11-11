@@ -1,0 +1,77 @@
+-- =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Multiprotocol Label Switching
+--              Label Switched Path Verification MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 2022-07-13 Initial version Created by Zhujieyi
+-- =============================================================================
+IB-MPLSLSPV-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    ibCommon
+        FROM IB-OID-MIB
+    ;
+
+-- =============================================================================
+-- module identity part
+-- =============================================================================
+ibMplsLspv MODULE-IDENTITY
+    LAST-UPDATED
+        "202207130853Z"   -- July 13, 2022 at 08:53 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Multiprotocol Label Switching Label Switched Path Verification MIB"
+    REVISION
+        "202207130853Z"   -- July 13, 2022 at 08:54 GMT
+    DESCRIPTION
+        "Initial version of this MIB."
+    ::= { ibCommon 241 }
+
+-- =============================================================================
+-- Top level components of this MIB module.
+-- =============================================================================
+ibMplsLspvNotifications OBJECT IDENTIFIER  ::= { ibMplsLspv 0 }
+
+ibMplsLspvObjects       OBJECT IDENTIFIER  ::= { ibMplsLspv 1 }
+
+ibMplsLspvScalarGroup   OBJECT IDENTIFIER  ::= { ibMplsLspvObjects 1 }
+
+ibMplsLspvBaseInfo    OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..127))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The base information of MPLS LSPV."
+    ::= { ibMplsLspvScalarGroup 1 }
+
+-- =============================================================================
+-- Notifications
+-- =============================================================================
+ibMplsLspvPingProbe  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsLspvBaseInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the device received
+       LSPV Ping message in no response mode."
+    ::= { ibMplsLspvNotifications 1 }
+
+ibMplsLspvTracertProbe   NOTIFICATION-TYPE
+    OBJECTS {  ibMplsLspvBaseInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the device received
+       LSPV Tracert message in no response mode."
+    ::= { ibMplsLspvNotifications 2 }
+
+-- =============================================================================
+-- End of notifications.
+-- =============================================================================
+
+END

@@ -1,0 +1,57 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Arp source suppression MIB.
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2013-10-14
+--   Initial version, created by yanjun
+-- ============================================================================
+IB-ARP-SOURCE-SUPPRESSION-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        Unsigned32, OBJECT-TYPE, MODULE-IDENTITY
+    FROM SNMPv2-SMI
+        TruthValue
+    FROM SNMPv2-TC;
+
+-- Node definitions
+ibARPSourceSuppression MODULE-IDENTITY
+    LAST-UPDATED "201310141800Z"        -- OCT 14, 2013 at 18:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB file is to provide the definition of the ARP source
+        suppression. "
+    REVISION "201310141800Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 146 }
+
+ibARPSourceSuppressionObjects OBJECT IDENTIFIER ::= { ibARPSourceSuppression 1 }
+
+ibARPSourceSuppressionGlobal OBJECT IDENTIFIER  ::= { ibARPSourceSuppressionObjects 1 }
+
+ibARPSourceSuppressionEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable or disable ARP source suppression function."
+    ::= { ibARPSourceSuppressionGlobal 1 }
+
+ibARPSourceSuppressionLimit OBJECT-TYPE
+    SYNTAX      Unsigned32(2..1024)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set the maximum number of unresolvable packets that the device
+         can receive from a device in five seconds."
+    DEFVAL { 10 }
+    ::= { ibARPSourceSuppressionGlobal 2 }
+END

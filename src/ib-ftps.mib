@@ -1,0 +1,76 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: ftps mib
+-- Reference:
+-- Version: V1.0
+-- History:
+--  V1.0 Created by zhangfeng
+--      2022-08-24 Initial version
+-- =================================================================
+IB-FTPS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, Unsigned32
+        FROM SNMPv2-SMI;
+
+ibFtps MODULE-IDENTITY
+    LAST-UPDATED "202208240000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB module is used for ftp server."
+    REVISION    "202208240000Z"
+    DESCRIPTION    "The initial version."
+    ::= { ibCommon 248 }
+
+-- ==================================================================
+--
+-- FTPS trap parameters
+--
+-- ==================================================================
+ibFtpsObjForTrap OBJECT IDENTIFIER ::= { ibFtps 1 }
+
+ibFtpsLoginFailedTimes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Users login failed times."
+    ::= { ibFtpsObjForTrap 1 }
+
+ibFtpsLoginFailedStatPeriod OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "minutes"
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Users login failed statistic period."
+    ::= { ibFtpsObjForTrap 2 }
+
+-- ==================================================================
+--
+-- FTPS traps
+--
+-- ==================================================================
+ibFtpsTraps OBJECT IDENTIFIER ::= { ibFtps 2 }
+ibFtpsTrapsPrefix OBJECT IDENTIFIER ::= { ibFtpsTraps 0 }
+
+ibFtpsLoginFailed NOTIFICATION-TYPE
+    OBJECTS { ibFtpsLoginFailedTimes, ibFtpsLoginFailedStatPeriod }
+    STATUS  current
+    DESCRIPTION
+        "Users failed to login ftp server too frequently."
+    ::= { ibFtpsTrapsPrefix 1 }
+
+ibFtpsLoginFailedClear NOTIFICATION-TYPE
+    STATUS  current
+    DESCRIPTION
+        "The ftp user login-failed alarm was cleared."
+    ::= { ibFtpsTrapsPrefix 2 }
+
+END

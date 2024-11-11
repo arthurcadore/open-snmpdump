@@ -1,0 +1,3630 @@
+-- =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:  DHCPv4 mib for server and relay
+-- Reference:
+-- Version:      V1.9
+-- History:
+-- V1.0 The initial version, created by lilin, 2012.5.24
+-- V1.1 Modified the mib description by lilin, 2013.4.24
+-- V1.2 Added ibDhcpServer2PoolVerifyClass ibDhcpServer2DefOptGrpTable
+--      ibDhcpServer2ValidClassTableby ibDhcpServer2RuleHwAddrTable
+--      ibDhcpServer2OptionGroupTable ibDhcpServer2OptionTable
+--      by yuguoqing, 2014.3.20
+-- V1.3 Add ibDhcpServer2AllocThreshold, ibDhcpServer2ReqCnt,
+--      ibDhcpServer2ReqSuccCnt, ibDhcpServer2PoolThreshold,
+--      ibDhcpServer2PoolUsage, ibDhcpServer2PoolReqCnt,
+--      ibDhcpServer2PoolReqSuccCnt, ibDhcpServer2PoolDiscoverCnt,
+--      ibDhcpServer2PoolOfferCnt, ibDhcpServer2PoolAckCnt,
+--      ibDhcpServer2AddrExhaust, ibDhcpServer2AddrExhaustRecov,
+--      ibDhcpServer2IpUsageOverflow, ibDhcpServer2AllocOverflow
+--      by zhangrenqiang, 2015.8.5
+-- V1.4 Modified ibDhcpServer2RuleNumber by heminhong, 2017.01.13
+-- V1.5 Add ibDhcpServer2IPTotalNum, ibDhcpServer2IPUsedNum,
+--      ibDhcpServer2IPIdleNum, ibDhcpServer2IPExcludeTotalNum,
+--      ibDhcpServer2PoolIPTotalNum, ibDhcpServer2PoolIPUsedNum,
+--      ibDhcpServer2PoolIPIdleNum,ibDhcpServer2PoolIPExcludeNum,
+--      ibDhcpServer2PoolConflictNum,ibDhcpServer2PoolAutoBindNum,
+--      ibDhcpServer2PoolManualBindNum,ibDhcpServer2PoolExpiredBindNum,
+--      ibDhcpServer2IpUsageOverflowRecov, ibDhcpServer2PoolNameInfo
+--      Modified ibDhcpServer2AddrExhaust, ibDhcpServer2AddrExhaustRecov,
+--      ibDhcpServer2IpUsageOverflow
+--      by limeng, 2017.6.3
+-- V1.6 Add ibDhcpServer2IPInUseSecondVlanId
+--      by lvlei, 2019.2.18
+-- V1.7 Add ibDhcpServer2PoolGroupTable, ibDhcpServer2PoolGroupExtTable,
+--      ibDhcpServer2PoolGroupStatTable
+--      Add ibDhcpServer2PoolReserveIpNum, ibDhcpServer2PoolGpReserveIpNum,
+--      ibDhcpServer2NetUsageOverflow,ibDhcpServer2NetUsageOverflowRecov,
+--      ibDhcpServer2NetExhaust,ibDhcpServer2NetExhaustRecov,
+--      by jiangzhijie, 2021.02.08
+-- V1.8 Add ibDhcpServer2OnlineFailReason,
+--      Add ibDhcpSvr2AllocIpFailed,ibDhcpServer2ServerDown,
+--      ibDhcpSvr2GpAddrExhaust,ibDhcpSvr2GpAddrExhaustRecov,
+--      ibDhcpServer2DevOdapFull,ibDhcpServer2OdapApplyFail,
+--      ibDhcpServer2OdapReleaseFail,ibDhcpSvr2GpUsageOverflow,
+--      ibDhcpSvr2GpUsageOverflowRecov
+--      by wangchao 2021-09-15
+-- V1.9 Add ibDhcpSvr2UserIpConflict,
+--      by wangchao 2022-07-22
+-- =============================================================================
+IB-DHCP4-MIB DEFINITIONS ::= BEGIN
+
+-- =============================================================================
+-- Imported variables and types
+-- =============================================================================
+IMPORTS
+    TruthValue, RowStatus, MacAddress
+        FROM SNMPv2-TC
+    OBJECT-TYPE, MODULE-IDENTITY, Integer32,
+    TimeTicks, Counter64, Unsigned32, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    ifIndex, InterfaceIndexOrZero
+        FROM IF-MIB
+    InetAddressIPv4
+        FROM INET-ADDRESS-MIB
+    ibCommon
+        FROM IB-OID-MIB;
+
+
+-- =============================================================================
+-- Module identity
+-- =============================================================================
+ibDhcp4 MODULE-IDENTITY
+    LAST-UPDATED "202207260000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION "DHCPv4 MIB"
+    REVISION
+        "202207260000Z"
+    DESCRIPTION
+        "Modified to add new trap."
+    REVISION
+        "202109150000Z"
+    DESCRIPTION
+        "Modified to add new nodes."
+    REVISION
+        "202102080000Z"
+    DESCRIPTION
+        "Modified to add new nodes."
+    REVISION
+        "201902180000Z"
+    DESCRIPTION
+        "Modified to add new nodes."
+    REVISION
+        "201706030000Z"
+    DESCRIPTION
+        "Modified to add new nodes."
+    REVISION
+        "201701130000Z"
+    DESCRIPTION
+        "Modified 'ibDhcpServer2RuleNumber' range."
+    REVISION
+        "201508050000Z"
+    DESCRIPTION
+        "Modified to add new nodes and a new table."
+    REVISION
+        "201304240000Z"
+    DESCRIPTION
+        "The private MIB file includes the DHCPv4 server and relay profile."
+    ::= { ibCommon 122 }
+
+-- =============================================================================
+-- DHCP server scalar objects definition.
+-- =============================================================================
+    ibDhcpServer2ScalarObjects OBJECT IDENTIFIER ::= { ibDhcp4 1 }
+
+-- =============================================================================
+-- ibDhcpServer2ScalarObjects: ibDhcpServer2ConfigGroup
+-- =============================================================================
+ibDhcpServer2ConfigGroup OBJECT IDENTIFIER ::= { ibDhcpServer2ScalarObjects 1 }
+
+ibDhcpServer2Enabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "If the value of this object is 'true', the DHCP service is enabled."
+    DEFVAL { false }
+    ::= { ibDhcpServer2ConfigGroup 1 }
+
+ibDhcpServer2AlwaysBroadcast OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When the value of this object is set to 'true',
+         the DHCP server always uses broadcast to reply the client."
+    DEFVAL { false }
+    ::= { ibDhcpServer2ConfigGroup 2 }
+
+ibDhcpServer2IgnoreBootp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When the value of this object is set to 'true',
+         the DHCP server ignores BOOTP requests."
+    DEFVAL { false }
+    ::= { ibDhcpServer2ConfigGroup 3 }
+
+ibDhcpServer2BootpReplyRfc1048 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When the value of this object is set to 'true',
+         the DHCP server use RFC 1048 format to reply to
+         BOOTP requests."
+    DEFVAL { false }
+    ::= { ibDhcpServer2ConfigGroup 4 }
+
+ibDhcpServer2Opt82Enabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When the value of this object is set to 'true',
+         the DHCP server handles DHCP option 82."
+    DEFVAL { true }
+    ::= { ibDhcpServer2ConfigGroup 5 }
+
+ibDhcpServer2PingNumber OBJECT-TYPE
+    SYNTAX      Unsigned32(0..10)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The number of ping packets sent out."
+    DEFVAL { 1 }
+    ::= { ibDhcpServer2ConfigGroup 6 }
+
+ibDhcpServer2PingTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32(0..10000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The delay for the reply of a ping packet in
+         milliseconds."
+    DEFVAL { 500 }
+    ::= { ibDhcpServer2ConfigGroup 7 }
+
+ibDhcpServer2AllocThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32(0..100)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Threshold of success rate of DHCP server IP address allocation
+         in 5 minutes."
+    DEFVAL { 0 }
+    ::= { ibDhcpServer2ConfigGroup 8 }
+
+-- =============================================================================
+-- ibDhcpServer2ScalarObjects: ibDhcpServer2StatGroup
+-- =============================================================================
+ibDhcpServer2StatGroup     OBJECT IDENTIFIER ::= { ibDhcpServer2ScalarObjects 2 }
+
+ibDhcpServer2BadNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the bad packets received."
+    ::= { ibDhcpServer2StatGroup 1 }
+
+ibDhcpServer2BootpRequestNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the BOOTREQUEST packets received."
+    ::= { ibDhcpServer2StatGroup 2 }
+
+ibDhcpServer2DiscoverNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the DHCPDISCOVER packets
+         received from the DHCP clients."
+    ::= { ibDhcpServer2StatGroup 3 }
+
+ibDhcpServer2RequestNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the DHCPREQUEST packets
+         received from the DHCP clients."
+    ::= { ibDhcpServer2StatGroup 4 }
+
+ibDhcpServer2DeclineNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the DHCPDECLINE packets
+         received from the DHCP clients."
+    ::= { ibDhcpServer2StatGroup 5 }
+
+ibDhcpServer2ReleaseNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the DHCPRELEASE packets
+         received from the DHCP clients."
+    ::= { ibDhcpServer2StatGroup 6 }
+
+ibDhcpServer2InformNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the DHCPINFORM packets
+         received from the DHCP clients."
+    ::= { ibDhcpServer2StatGroup 7 }
+
+ibDhcpServer2BootpReplyNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the BOOTREPLY packets
+         sent by the DHCP server."
+    ::= { ibDhcpServer2StatGroup 8 }
+
+ibDhcpServer2OfferNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the DHCPOFFER packets
+         sent by the DHCP server."
+    ::= { ibDhcpServer2StatGroup 9 }
+
+ibDhcpServer2AckNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the DHCPACK packets
+         sent by the DHCP server."
+    ::= { ibDhcpServer2StatGroup 10 }
+
+ibDhcpServer2NakNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the DHCPNAK packets
+         sent by the DHCP server."
+    ::= { ibDhcpServer2StatGroup 11 }
+
+ibDhcpServer2TotalPoolUsage OBJECT-TYPE
+    SYNTAX      Unsigned32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The percentage of IP addresses in use
+         of all DHCP server pools."
+    ::= { ibDhcpServer2StatGroup 12 }
+
+ibDhcpServer2PoolNumber OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of DHCP server pools."
+    ::= { ibDhcpServer2StatGroup 13 }
+
+ibDhcpServer2ConflictNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of conflict IP in all
+         DHCP server pools."
+    ::= { ibDhcpServer2StatGroup 14 }
+
+ibDhcpServer2AutoBindNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of auto binding IP in
+         DHCP server pools."
+    ::= { ibDhcpServer2StatGroup 15 }
+
+ibDhcpServer2ManualBindNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of manual binding IP in
+         DHCP server pools."
+    ::= { ibDhcpServer2StatGroup 16 }
+
+ibDhcpServer2ExpiredBindNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of expired binding IP in
+         DHCP server pools."
+    ::= { ibDhcpServer2StatGroup 17 }
+
+ibDhcpServer2ReqCnt OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of address allocation
+         requests received by the DHCP server."
+    ::= { ibDhcpServer2StatGroup 18 }
+
+ibDhcpServer2ReqSuccCnt OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of address allocation
+         requests success responses sent by the
+         DHCP server."
+    ::= { ibDhcpServer2StatGroup 19 }
+
+ibDhcpServer2IPTotalNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of addresses."
+    ::= { ibDhcpServer2StatGroup 20 }
+
+ibDhcpServer2IPUsedNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of used addresses."
+    ::= { ibDhcpServer2StatGroup 21 }
+
+ibDhcpServer2IPIdleNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of idle addresses."
+    ::= { ibDhcpServer2StatGroup 22 }
+
+ibDhcpServer2IPExcludeTotalNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of exclude addresses."
+    ::= { ibDhcpServer2StatGroup 23 }
+
+ibDhcpServer2OnlineFailReason OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..511))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The reason why DHCP server fail to alloc address."
+    ::= { ibDhcpServer2StatGroup 24 }
+
+ibDhcpServer2AllocConflictIP OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The Conflict IP."
+    ::= { ibDhcpServer2StatGroup 25 }
+-- =============================================================================
+-- DHCP server table definition.
+-- =============================================================================
+    ibDhcpServer2Tables OBJECT IDENTIFIER ::= { ibDhcp4 2 }
+
+-- =============================================================================
+-- 1st Table of ibDhcpServer2Tables: ibDhcpServer2PoolTable
+-- =============================================================================
+ibDhcpServer2PoolTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2PoolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table containing DHCP server pool configurations."
+    ::= { ibDhcpServer2Tables 1 }
+
+ibDhcpServer2PoolEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2PoolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing DHCP server pool configurations."
+    INDEX { ibDhcpServer2PoolIndex }
+    ::= { ibDhcpServer2PoolTable 1 }
+
+IbDhcpServer2PoolEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2PoolIndex                    Unsigned32,
+            ibDhcpServer2PoolName                     OCTET STRING,
+            ibDhcpServer2PoolVpnName                  OCTET STRING,
+            ibDhcpServer2PoolNetwork                  InetAddressIPv4,
+            ibDhcpServer2PoolNetworkMask              InetAddressIPv4,
+            ibDhcpServer2PoolStartAddr                InetAddressIPv4,
+            ibDhcpServer2PoolEndAddr                  InetAddressIPv4,
+            ibDhcpServer2PoolLeaseDay                 Integer32,
+            ibDhcpServer2PoolLeaseHour                Integer32,
+            ibDhcpServer2PoolLeaseMinute              Integer32,
+            ibDhcpServer2PoolLeaseSecond              Integer32,
+            ibDhcpServer2PoolLeaseUnlimit             TruthValue,
+            ibDhcpServer2PoolLeaseTime                TimeTicks,
+            ibDhcpServer2PoolDomainName               OCTET STRING,
+            ibDhcpServer2PoolGatewayIP                OCTET STRING,
+            ibDhcpServer2PoolDNSIP                    OCTET STRING,
+            ibDhcpServer2PoolPrimaryDNSIP             InetAddressIPv4,
+            ibDhcpServer2PoolSecondDNSIP              InetAddressIPv4,
+            ibDhcpServer2PoolNetbiosType              INTEGER,
+            ibDhcpServer2PoolNbnsIP                   OCTET STRING,
+            ibDhcpServer2PoolBootFileName             OCTET STRING,
+            ibDhcpServer2PoolBimsIP                   InetAddressIPv4,
+            ibDhcpServer2PoolBimsPort                 Unsigned32,
+            ibDhcpServer2PoolBimsKeyStr               OCTET STRING,
+            ibDhcpServer2PoolNextServer               InetAddressIPv4,
+            ibDhcpServer2PoolTftpDomName              OCTET STRING,
+            ibDhcpServer2PoolTftpIP                   InetAddressIPv4,
+            ibDhcpServer2PoolVoiceAsIP                InetAddressIPv4,
+            ibDhcpServer2PoolVoiceFailIP              InetAddressIPv4,
+            ibDhcpServer2PoolVoiceFailStr             OCTET STRING,
+            ibDhcpServer2PoolVoiceNCPIP               InetAddressIPv4,
+            ibDhcpServer2PoolVoiceVlanId              Unsigned32,
+            ibDhcpServer2PoolVoiceVlanEnbl            TruthValue,
+            ibDhcpServer2PoolRowStatus                RowStatus,
+            ibDhcpServer2PoolVerifyClass              TruthValue,
+            ibDhcpServer2PoolThreshold                Unsigned32
+        }
+
+ibDhcpServer2PoolIndex OBJECT-TYPE
+    SYNTAX      Unsigned32(1..4294967295)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "DHCP server pool index."
+    ::= { ibDhcpServer2PoolEntry 1 }
+
+ibDhcpServer2PoolName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..63))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "DHCP server pool name.
+
+         Once this object is created, the value of this object cannot
+         be modified."
+    ::= { ibDhcpServer2PoolEntry 2 }
+
+ibDhcpServer2PoolVpnName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..31))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Name of the VPN instance that the DHCP pool binds to.
+
+         The value of a zero-length string means the public network.
+
+         Once this object is created, the value of this object cannot
+         be modified."
+    ::= { ibDhcpServer2PoolEntry 3 }
+
+ibDhcpServer2PoolNetwork OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Network address of the primary subnet in a DHCP pool.
+
+         If the value of this object is set to 0.0.0.0,
+         ibDhcpServer2PoolNetworkMask is set with 0.0.0.0
+         automatically."
+    ::= { ibDhcpServer2PoolEntry 4 }
+
+ibDhcpServer2PoolNetworkMask OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Network mask of the primary subnet in a DHCP pool.
+
+         The SET operation to this object ought to be with
+         the SET of ibDhcpServer2PoolNetwork together,
+         and any SET operation alone to this object will be
+         regarded as an invalid operation."
+    ::= { ibDhcpServer2PoolEntry 5 }
+
+ibDhcpServer2PoolStartAddr OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Start IP of an address range of the DHCP pool.
+
+         If the value of this object is set to 0.0.0.0,
+         ibDhcpServer2PoolEndAddr is set with 0.0.0.0 automatically.
+         Otherwise ibDhcpServer2PoolEndAddr must be set with
+         an IP address NOT smaller than the value of this object."
+    ::= { ibDhcpServer2PoolEntry 6 }
+
+ibDhcpServer2PoolEndAddr OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "End IP of an address range of the DHCP pool,
+
+         The SET operation to this object ought to be with
+         the SET of ibDhcpServer2PoolStartAddr together,
+         and any SET operation alone to this object will be
+         regarded as an invalid operation."
+    ::= { ibDhcpServer2PoolEntry 7 }
+
+ibDhcpServer2PoolLeaseDay OBJECT-TYPE
+    SYNTAX      Integer32(0..365)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Number of days of the lease.
+
+         The SET operation to this object ought to be with
+         the SET of ibDhcpServer2PoolLeaseHour,
+         ibDhcpServer2PoolLeaseMinute,
+         ibDhcpServer2PoolLeaseSecond together,
+         and any SET operation alone to any of these objects
+         will be regarded as an invalid operation.
+
+         These objects cannot be set with 0 simultaneously."
+    DEFVAL { 1 }
+    ::= { ibDhcpServer2PoolEntry 8 }
+
+ibDhcpServer2PoolLeaseHour OBJECT-TYPE
+    SYNTAX      Integer32(0..23)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Number of hours of the lease."
+    DEFVAL { 0 }
+    ::= { ibDhcpServer2PoolEntry 9 }
+
+ibDhcpServer2PoolLeaseMinute OBJECT-TYPE
+    SYNTAX      Integer32(0..59)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Number of minutes of the lease."
+    DEFVAL { 0 }
+    ::= { ibDhcpServer2PoolEntry 10 }
+
+ibDhcpServer2PoolLeaseSecond OBJECT-TYPE
+    SYNTAX      Integer32(0..59)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Number of seconds of the lease."
+    DEFVAL { 0 }
+    ::= { ibDhcpServer2PoolEntry 11 }
+
+ibDhcpServer2PoolLeaseUnlimit OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "A flag denoting whether the lease time of
+         a DHCP pool is unlimited."
+    DEFVAL { false }
+    ::= { ibDhcpServer2PoolEntry 12 }
+
+ibDhcpServer2PoolLeaseTime OBJECT-TYPE
+    SYNTAX      TimeTicks
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The lease time of a DHCP pool in number of timeticks.
+
+         The value of this object cannot be set to 0
+         and must be set to 4294967295 or a multiple of 100.
+
+         If the object is set with 4294967295, the lease
+         time of a DHCP pool is unlimited."
+    ::= { ibDhcpServer2PoolEntry 13 }
+
+ibDhcpServer2PoolDomainName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..50))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Domain name for DHCP clients.
+
+         If the object is set with a zero-length string, the
+         configuration of the domain name is removed."
+    ::= { ibDhcpServer2PoolEntry 14 }
+
+ibDhcpServer2PoolGatewayIP OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Gateway IP addresses for DHCP clients.
+
+         IP addresses are space separated and the leading
+         or trailing space will be trimmed.
+
+         Since at most 8 gateway addresses can be configured
+         for a pool, a string is defined to get or configure
+         8 IP at a time.
+
+         If the object is set with a zero-length string, the
+         configuration of the gateway address is removed."
+    ::= { ibDhcpServer2PoolEntry 15 }
+
+ibDhcpServer2PoolDNSIP OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "DNS server IP addresses for DHCP clients.
+
+         IP addresses are space separated and the leading
+         or trailing space will be trimmed.
+
+         Since at most 8 DNS server addresses can be configured
+         for a pool, a string is defined to get or configure 8
+         IP at a time.
+
+         If the object is set with a zero-length string, the
+         configuration of the DNS address is removed."
+    ::= { ibDhcpServer2PoolEntry 16 }
+
+ibDhcpServer2PoolPrimaryDNSIP OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The primary DNS server IP address to be assigned to
+         the client."
+    ::= { ibDhcpServer2PoolEntry 17 }
+
+ibDhcpServer2PoolSecondDNSIP OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The secondary DNS server IP address to be assigned to
+         the client."
+    ::= { ibDhcpServer2PoolEntry 18 }
+
+ibDhcpServer2PoolNetbiosType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            null(0),
+            bnode(1),
+            pnode(2),
+            mnode(4),
+            hnode(8)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "NetBios node type for DHCP clients."
+    DEFVAL { null }
+    ::= { ibDhcpServer2PoolEntry 19 }
+
+ibDhcpServer2PoolNbnsIP OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "NetBios server IP addresses for DHCP clients.
+
+         IP addresses are space separated and the leading
+         or trailing space will be trimmed.
+
+         Since at most 8 NetBios server addresses can be
+         configured for a pool, a string is defined to get
+         or configure 8 IP at a time.
+
+         If the object is set with a zero-length string, the
+         configuration of the NBNS address is removed."
+    ::= { ibDhcpServer2PoolEntry 20 }
+
+ibDhcpServer2PoolBootFileName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..63))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Boot file name for DHCP clients.
+
+         If the object is set with a zero-length string, the
+         configuration of the boot file name is removed."
+    ::= { ibDhcpServer2PoolEntry 21 }
+
+ibDhcpServer2PoolBimsIP OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "BIMS server IP address.
+
+         If the object is set with 0.0.0.0, ibDhcpServer2PoolBimsPort
+         is set with 0 and ibDhcpServer2PoolBimsKeyStr is set with
+         a zero-length string automatically.
+         Otherwise ibDhcpServer2PoolBimsPort and ibDhcpServer2PoolBimsKeyStr
+         must be set at the same time while ibDhcpServer2PoolBimsKeyStr
+         must be set with a non-zero length string."
+    ::= { ibDhcpServer2PoolEntry 22 }
+
+ibDhcpServer2PoolBimsPort OBJECT-TYPE
+    SYNTAX      Unsigned32(0..65534)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "BIMS server port number.
+
+         The SET operation to this object ought to be with
+         the SET operation of ibDhcpServer2PoolBimsIP and
+         ibDhcpServer2PoolBimsKeyStr together,
+         and any SET operation alone to this object will be
+         regarded as an invalid operation."
+    ::= { ibDhcpServer2PoolEntry 23 }
+
+ibDhcpServer2PoolBimsKeyStr  OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..16))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "BIMS server key string.
+
+         The SET operation to this object ought to be with
+         the SET of ibDhcpServer2PoolBimsIP and
+         ibDhcpServer2PoolBimsPort together,
+         and any SET operation alone to this object will be
+         regarded as an invalid operation."
+    ::= { ibDhcpServer2PoolEntry 24 }
+
+ibDhcpServer2PoolNextServer OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Next DHCP server IP address for DHCP clients.
+
+         If the object is set with 0.0.0.0, the configuration
+         of the next server address is removed."
+    ::= { ibDhcpServer2PoolEntry 25 }
+
+ibDhcpServer2PoolTftpDomName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..63))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "TFTP server domain name for DHCP clients.
+
+         If the object is set with a zero-length string, the
+         configuration of the TFTP domain name is removed."
+    ::= { ibDhcpServer2PoolEntry 26 }
+
+ibDhcpServer2PoolTftpIP OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "TFTP server IP address for DHCP clients.
+
+         If the object is set with 0.0.0.0, the configuration
+         of the TFTP server address is removed."
+    ::= { ibDhcpServer2PoolEntry 27 }
+
+ibDhcpServer2PoolVoiceAsIP OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Voice backup server IP address for DHCP clients.
+
+         If the object is set with 0.0.0.0, the configuration
+         of voice backup server IP address is removed."
+    ::= { ibDhcpServer2PoolEntry 28 }
+
+ibDhcpServer2PoolVoiceFailIP OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Voice failover IP address for DHCP clients.
+
+         If the object is set with 0.0.0.0,
+         ibDhcpServer2PoolVoiceFailStr is set with a
+         zero-length string automatically.
+         Otherwise ibDhcpServer2PoolVoiceFailStr must be set
+         with a non-zero length string at the same time."
+    ::= { ibDhcpServer2PoolEntry 29 }
+
+ibDhcpServer2PoolVoiceFailStr OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..39))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Voice failover dialer string for DHCP clients.
+
+         The characters in the string must be '0' ~ '9',or '*'.
+         The SET operation to this object ought to be with
+         the SET operation of ibDhcpServer2PoolVoiceFailIP together,
+         and any SET operation alone to this object will be
+         regarded as an invalid operation."
+    ::= { ibDhcpServer2PoolEntry 30 }
+
+ibDhcpServer2PoolVoiceNCPIP OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Voice network calling processing IP address for DHCP clients.
+
+         If the object is set with 0.0.0.0, the configuration of
+         voice network calling processing IP address is removed."
+    ::= { ibDhcpServer2PoolEntry 31 }
+
+ibDhcpServer2PoolVoiceVlanId OBJECT-TYPE
+    SYNTAX      Unsigned32(2..4094 | 65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Voice VLAN ID for DHCP clients.
+
+         If the value of this object is set to 65535,
+         ibDhcpServer2PoolVoiceVlanEnbl is set with 'false' automatically.
+         Otherwise ibDhcpServer2PoolVoiceVlanEnbl must also be set."
+    ::= { ibDhcpServer2PoolEntry 32 }
+
+ibDhcpServer2PoolVoiceVlanEnbl OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Enable status of the specified voice VLAN for DHCP clients.
+
+         The SET operation to this object ought to be with
+         the SET operation of ibDhcpServer2PoolVoiceVlanId together,
+         and any SET operation alone to this object will be
+         regarded as an invalid operation."
+    DEFVAL { false }
+    ::= { ibDhcpServer2PoolEntry 33 }
+
+ibDhcpServer2PoolRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active,
+         createAndGo, destroy."
+    ::= { ibDhcpServer2PoolEntry 34 }
+
+ibDhcpServer2PoolVerifyClass OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Enable the user class verification.
+
+         When the value of this object is set to 'true', the DHCP server
+         processes packets from DHCP clients in the defined user classes.
+         The user class verification does not apply to packets from DHCP
+         clients with static bindings."
+    DEFVAL { false }
+    ::= { ibDhcpServer2PoolEntry 35 }
+
+ibDhcpServer2PoolThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32(0..100)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Threshold of IP usage of the DHCP server pool."
+    DEFVAL { 100 }
+    ::= { ibDhcpServer2PoolEntry 36 }
+
+-- =============================================================================
+-- 2nd Table of ibDhcpServer2Tables: ibDhcpServer2IfApplyPoolTable
+-- =============================================================================
+ibDhcpServer2IfApplyPoolTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2IfApplyPoolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for applying a DHCP pool on interfaces."
+    ::= { ibDhcpServer2Tables 2 }
+
+ibDhcpServer2IfApplyPoolEntry  OBJECT-TYPE
+    SYNTAX      IbDhcpServer2IfApplyPoolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for applying a DHCP pool on the interface."
+    INDEX { ifIndex }
+    ::= { ibDhcpServer2IfApplyPoolTable 1 }
+
+IbDhcpServer2IfApplyPoolEntry ::=
+    SEQUENCE
+    {
+        ibDhcpServer2IfApplyPoolName OCTET STRING
+    }
+
+ibDhcpServer2IfApplyPoolName    OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..63))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the DHCP pool that apply to the interface.
+         If the object is set with a zero-length string, the configuration
+         will be deleted."
+    ::= { ibDhcpServer2IfApplyPoolEntry 1 }
+
+-- =============================================================================
+-- 3rd Table of ibDhcpServer2Tables: ibDhcpServer2PoolSecNwTable
+-- =============================================================================
+ibDhcpServer2PoolSecNwTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2PoolSecNwEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table containing the secondary network configuration of
+         DHCP pools."
+    ::= { ibDhcpServer2Tables 3 }
+
+ibDhcpServer2PoolSecNwEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2PoolSecNwEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing the objects for configuring
+         the secondary network for DHCP pools."
+    INDEX
+        {
+            ibDhcpServer2PoolIndex,
+            ibDhcpServer2PoolSecNw,
+            ibDhcpServer2PoolSecNwMask
+        }
+    ::= { ibDhcpServer2PoolSecNwTable 1 }
+
+IbDhcpServer2PoolSecNwEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2PoolSecNw                InetAddressIPv4,
+            ibDhcpServer2PoolSecNwMask            InetAddressIPv4,
+            ibDhcpServer2PoolSecNwGwIP            OCTET STRING,
+            ibDhcpServer2PoolSecNwStatus          RowStatus
+        }
+
+ibDhcpServer2PoolSecNw OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Network address of the secondary subnets in a DHCP pool."
+    ::= { ibDhcpServer2PoolSecNwEntry 1 }
+
+ibDhcpServer2PoolSecNwMask OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Network mask of the secondary subnets in a DHCP pool."
+    ::= { ibDhcpServer2PoolSecNwEntry 2 }
+
+ibDhcpServer2PoolSecNwGwIP OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Gateway IP addresses of the secondary subnets in a DHCP pool.
+
+         IP addresses are space separated and the leading
+         or trailing space will be trimmed.
+
+         Since at most 8 gateway addresses can be configured
+         for a secondary network, a string is defined to get
+         or configure 8 IP at a time.
+
+         If the object is set with a zero-length string,
+         the configuration of the gateway address is removed."
+    ::= { ibDhcpServer2PoolSecNwEntry 3 }
+
+ibDhcpServer2PoolSecNwStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active,
+         createAndGo, destroy."
+    ::= { ibDhcpServer2PoolSecNwEntry 4 }
+
+-- =============================================================================
+-- 4th Table of ibDhcpServer2Tables: ibDhcpServer2PoolClassTable
+-- =============================================================================
+ibDhcpServer2PoolClassTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2PoolClassEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table containing address range of the DHCP
+         server pool for user classes."
+    ::= { ibDhcpServer2Tables 4 }
+
+ibDhcpServer2PoolClassEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2PoolClassEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing address range of DHCP pools
+         for user classes."
+    INDEX { ibDhcpServer2PoolIndex, ibDhcpServer2PoolClassName }
+    ::= { ibDhcpServer2PoolClassTable 1 }
+
+IbDhcpServer2PoolClassEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2PoolClassName            OCTET STRING,
+            ibDhcpServer2PoolClassStart           InetAddressIPv4,
+            ibDhcpServer2PoolClassEnd             InetAddressIPv4,
+            ibDhcpServer2PoolClassStatus          RowStatus
+        }
+
+ibDhcpServer2PoolClassName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..63))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "User class name."
+    ::= { ibDhcpServer2PoolClassEntry 1 }
+
+ibDhcpServer2PoolClassStart OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Start address of an address range for a DHCP user class.
+
+         The SET operation to this object ought to be with
+         the SET operation of ibDhcpServer2PoolClassEnd together,
+         and any SET operation alone to this object will be
+         regarded as an invalid operation."
+    ::= { ibDhcpServer2PoolClassEntry 2 }
+
+ibDhcpServer2PoolClassEnd OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "End address of an address range for a DHCP user class.
+
+         The SET operation to this object ought to be with
+         the SET of ibDhcpServer2PoolClassStart together,
+         and any SET operation alone to this object will be
+         regarded as an invalid operation.
+
+         This object must be set with an IP address NOT smaller
+         than the value of ibDhcpServer2PoolClassStart."
+    ::= { ibDhcpServer2PoolClassEntry 3 }
+
+ibDhcpServer2PoolClassStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active,
+         createAndGo, destroy.
+
+         If the value of this object is set to 'createAndGo',
+         ibDhcpServer2PoolClassStart and ibDhcpServer2PoolClassEnd
+         must also be set."
+    ::= { ibDhcpServer2PoolClassEntry 4 }
+
+-- =============================================================================
+-- 5th Table of ibDhcpServer2Tables: ibDhcpServer2PoolStaticTable
+-- =============================================================================
+ibDhcpServer2PoolStaticTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2PoolStaticEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table containing the static binding configurations
+         in DHCP pools."
+    ::= { ibDhcpServer2Tables 5 }
+
+ibDhcpServer2PoolStaticEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2PoolStaticEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing the objects for configuring
+         the static binding in DHCP pools."
+    INDEX { ibDhcpServer2PoolIndex, ibDhcpServer2PoolStaticIP}
+    ::= { ibDhcpServer2PoolStaticTable 1 }
+
+IbDhcpServer2PoolStaticEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2PoolStaticIP          InetAddressIPv4,
+            ibDhcpServer2PoolStaticMask        InetAddressIPv4,
+            ibDhcpServer2PoolStaticCID         OCTET STRING,
+            ibDhcpServer2PoolStaticHAddr       OCTET STRING,
+            ibDhcpServer2PoolStaticHType       INTEGER,
+            ibDhcpServer2PoolStaticStatus      RowStatus
+        }
+
+ibDhcpServer2PoolStaticIP OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Ip address of a static binding in a DHCP pool."
+    ::= { ibDhcpServer2PoolStaticEntry 1 }
+
+ibDhcpServer2PoolStaticMask OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Network mask of a static binding in a DHCP pool."
+    ::= { ibDhcpServer2PoolStaticEntry 2 }
+
+ibDhcpServer2PoolStaticCID OBJECT-TYPE
+    SYNTAX     OCTET STRING(SIZE(0|4..254))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Client identifier of a DHCP client that the IP
+         address binds to.
+
+         The structure of the OCTET STRING is
+         H-H-H... while H indicates 4 hexadecimal characters
+         except that the last H indicates 2 or 4 hexadecimal
+         characters."
+    ::= { ibDhcpServer2PoolStaticEntry 3 }
+
+ibDhcpServer2PoolStaticHAddr OBJECT-TYPE
+    SYNTAX     OCTET STRING(SIZE(0|4..39))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Hardware address of a DHCP client that the IP
+         address binds to.
+
+         The structure of the OCTET STRING is
+         H-H-H... while H indicates 4 hexadecimal characters
+         except that the last H indicates 2 or 4 hexadecimal
+         characters."
+    ::= { ibDhcpServer2PoolStaticEntry 4 }
+
+ibDhcpServer2PoolStaticHType OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            default(1),
+            ethernet(2),
+            tokenRing(3)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Hardware type of a DHCP client that the IP address binds to.
+
+         The SET operation to this object ought to be with
+         the SET operation of ibDhcpServer2PoolStaticHAddr,
+         and any SET operation alone to this object will be
+         regarded as an invalid operation.
+
+         'default' indicates that the hardware type is unknown.
+         If the value of ibDhcpServer2PoolStaticCID is set to a non-zero
+         length string, the object is set with 'default' automatically.
+         Otherwise it cannot be set with 'default'.
+
+         'ethernet' indicates that the hardware type is ethernet.
+         If the value of ibDhcpServer2PoolStaticHAddr is set with
+         a non-zero length string, the default value of this object
+         is 'ethernet'.
+
+         'tokenRing' indicates that the hardware type is token-ring."
+    ::= { ibDhcpServer2PoolStaticEntry 5 }
+
+ibDhcpServer2PoolStaticStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active,
+         createAndGo, destroy.
+
+         If the value of this object is set to 'createAndGo',
+         ibDhcpServer2PoolStaticCID or (ibDhcpServer2PoolStaticHardAddr
+         and ibDhcpServer2PoolStaticHardType) must also be set."
+    ::= { ibDhcpServer2PoolStaticEntry 6 }
+
+-- =============================================================================
+-- 6th Table of ibDhcpServer2Tables: ibDhcpServer2PoolOptionTable
+-- =============================================================================
+ibDhcpServer2PoolOptionTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2PoolOptionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring user-defined options for DHCP pools."
+    ::= { ibDhcpServer2Tables 6 }
+
+ibDhcpServer2PoolOptionEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2PoolOptionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing the objects for configuring user-defined
+         options for DHCP pools."
+    INDEX { ibDhcpServer2PoolIndex, ibDhcpServer2PoolOptCode }
+    ::= { ibDhcpServer2PoolOptionTable 1 }
+
+IbDhcpServer2PoolOptionEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2PoolOptCode         Integer32,
+            ibDhcpServer2PoolOptType         INTEGER,
+            ibDhcpServer2PoolOptAscii        OCTET STRING,
+            ibDhcpServer2PoolOptHexStr       OCTET STRING,
+            ibDhcpServer2PoolOptIPStr        OCTET STRING,
+            ibDhcpServer2PoolOptRowStatus    RowStatus
+        }
+
+ibDhcpServer2PoolOptCode OBJECT-TYPE
+    SYNTAX      Integer32(2..254)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Option code."
+    ::= { ibDhcpServer2PoolOptionEntry 1 }
+
+ibDhcpServer2PoolOptType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            ascii(1),
+            hex(2),
+            ip(3)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Option type.
+
+         'ascii' means using the ascii string that is defined
+         by ibDhcpServer2PoolOptAscii to fill in the option.
+
+         'hex' means using the hex string that is defined by
+         ibDhcpServer2PoolOptHexStr to fill in the option.
+
+         'ip' means using the IP string that is defined by
+         ibDhcpServer2PoolOptIPStr to fill in the option."
+    ::= { ibDhcpServer2PoolOptionEntry 2 }
+
+ibDhcpServer2PoolOptAscii OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..255))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Ascii string of an option.
+
+         If ibDhcpServer2PoolOptType is set with 'ascii',
+         this object must be set with a non-zero length
+         string."
+    ::= { ibDhcpServer2PoolOptionEntry 3 }
+
+ibDhcpServer2PoolOptHexStr OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..510))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Hex string of an option.
+
+         The length of the string must be even.
+         If ibDhcpServer2PoolOptType is set with 'hex',
+         this object must be set with a non-zero length
+         string."
+    ::= { ibDhcpServer2PoolOptionEntry 4 }
+
+ibDhcpServer2PoolOptIPStr OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "IP string of an option.
+
+         IP addresses are space separated and the leading
+         or trailing space will be trimmed.
+
+         1 to 8 IP addresses can be configured simultaneously.
+
+         If ibDhcpServer2PoolOptType is set with 'ip',
+         this object must be set with a non-zero length string
+         that must contain at least one IP address."
+    ::= { ibDhcpServer2PoolOptionEntry 5 }
+
+ibDhcpServer2PoolOptRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active, createAndGo,
+         destroy.
+
+         If the value of this object is set to 'createAndGo',
+         ibDhcpServer2PoolOptType must also be set."
+    ::= { ibDhcpServer2PoolOptionEntry 6 }
+
+-- =============================================================================
+-- 7th Table of ibDhcpServer2Tables: ibDhcpServer2PoolForbidTable
+-- =============================================================================
+ibDhcpServer2PoolForbidTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2PoolForbidEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring forbidden IP for a DHCP server pool."
+    ::= { ibDhcpServer2Tables 7 }
+
+ibDhcpServer2PoolForbidEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2PoolForbidEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for configuring forbidden IP for a DHCP server pool."
+    INDEX { ibDhcpServer2PoolIndex, ibDhcpServer2PoolForbidIP }
+    ::= { ibDhcpServer2PoolForbidTable 1 }
+
+IbDhcpServer2PoolForbidEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2PoolForbidIP             InetAddressIPv4,
+            ibDhcpServer2PoolForbidStatus         RowStatus
+        }
+
+ibDhcpServer2PoolForbidIP OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Forbidden IP of the DHCP pool."
+    ::= { ibDhcpServer2PoolForbidEntry 1 }
+
+ibDhcpServer2PoolForbidStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active,
+         createAndGo, destroy."
+    ::= { ibDhcpServer2PoolForbidEntry 2 }
+
+-- =============================================================================
+-- 8th Table of ibDhcpServer2Tables: ibDhcpServer2ClassTable
+-- =============================================================================
+ibDhcpServer2ClassTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2ClassEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring user class to DHCP server."
+    ::= { ibDhcpServer2Tables 8 }
+
+ibDhcpServer2ClassEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2ClassEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for configuring user class to DHCP server."
+    INDEX { ibDhcpServer2ClassName }
+    ::= { ibDhcpServer2ClassTable 1 }
+
+IbDhcpServer2ClassEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2ClassName           OCTET STRING,
+            ibDhcpServer2ClassRowStatus      RowStatus
+        }
+
+ibDhcpServer2ClassName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..63))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "DHCP user class name."
+    ::= { ibDhcpServer2ClassEntry 1 }
+
+ibDhcpServer2ClassRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active,
+         createAndGo, destroy."
+    ::= { ibDhcpServer2ClassEntry 2 }
+
+-- =============================================================================
+-- 9th Table of ibDhcpServer2Tables: ibDhcpServer2RuleTable
+-- =============================================================================
+ibDhcpServer2RuleTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2RuleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring option rules used to match DHCP users."
+    ::= { ibDhcpServer2Tables 9 }
+
+ibDhcpServer2RuleEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2RuleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for configuring option rules used to match DHCP users."
+    INDEX
+        {
+            ibDhcpServer2ClassName,
+            ibDhcpServer2RuleNumber
+        }
+    ::= { ibDhcpServer2RuleTable 1 }
+
+IbDhcpServer2RuleEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2RuleNumber           Integer32,
+            ibDhcpServer2RuleOptCode          Integer32,
+            ibDhcpServer2RuleOptHexStr        OCTET STRING,
+            ibDhcpServer2RuleOptMask          OCTET STRING,
+            ibDhcpServer2RuleOptOffset        Integer32,
+            ibDhcpServer2RuleOptLength        Integer32,
+            ibDhcpServer2RuleRowStatus        RowStatus
+        }
+
+ibDhcpServer2RuleNumber OBJECT-TYPE
+    SYNTAX      Integer32(1..128)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Rule number."
+    ::= { ibDhcpServer2RuleEntry 1 }
+
+ibDhcpServer2RuleOptCode OBJECT-TYPE
+    SYNTAX      Integer32(1..254)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Option code."
+    ::= { ibDhcpServer2RuleEntry 2 }
+
+ibDhcpServer2RuleOptHexStr OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..510))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Hex string of an option.
+
+         The length of the string must be even."
+    ::= { ibDhcpServer2RuleEntry 3 }
+
+ibDhcpServer2RuleOptMask OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..510))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The mask used to match options.
+
+         The length of this object must be same with that of
+         ibDhcpServer2RuleOptHexStr.
+
+         The SET operation of this object must be with
+         the SET operation of ibDhcpServer2RuleOptHexStr."
+    ::= { ibDhcpServer2RuleEntry 4 }
+
+ibDhcpServer2RuleOptOffset OBJECT-TYPE
+    SYNTAX      Integer32(0..254)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The option offset used to match users.
+
+         The SET operation of this object must be with
+         the SET operation of ibDhcpServer2RuleOptHexStr,
+         ibDhcpServer2RuleOptLength."
+    ::= { ibDhcpServer2RuleEntry 5 }
+
+ibDhcpServer2RuleOptLength OBJECT-TYPE
+    SYNTAX      Integer32(0..255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The option length used to match user options.
+
+         The SET operation of this object must be with
+         the SET operation of ibDhcpServer2RuleOptOffset."
+    ::= { ibDhcpServer2RuleEntry 6 }
+
+ibDhcpServer2RuleRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active,
+         createAndGo, destroy.
+
+         If the value of this object is set to 'createAndGo',
+         ibDhcpServer2RuleOptCode must also be set."
+    ::= { ibDhcpServer2RuleEntry 7 }
+
+-- =============================================================================
+-- 10th Table of ibDhcpServer2Tables: ibDhcpServer2ForbidTable
+-- =============================================================================
+ibDhcpServer2ForbidTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2ForbidEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring forbidden IP range to DHCP server."
+    ::= { ibDhcpServer2Tables 10 }
+
+ibDhcpServer2ForbidEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2ForbidEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for configuring forbidden IP range to DHCP server."
+    INDEX
+        {
+            ibDhcpServer2ForbidVpnName,
+            ibDhcpServer2ForbidStart,
+            ibDhcpServer2ForbidEnd
+        }
+    ::= { ibDhcpServer2ForbidTable 1 }
+
+IbDhcpServer2ForbidEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2ForbidVpnName      OCTET STRING,
+            ibDhcpServer2ForbidStart        InetAddressIPv4,
+            ibDhcpServer2ForbidEnd          InetAddressIPv4,
+            ibDhcpServer2ForbidRowStatus    RowStatus
+        }
+
+ibDhcpServer2ForbidVpnName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..31))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Name of the VPN instance that the forbidden IP range
+         binds to.
+
+         If the value of this object is 0x1, the network that
+         the forbidden IP range belongs to is the public network."
+    ::= { ibDhcpServer2ForbidEntry 1 }
+
+ibDhcpServer2ForbidStart OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Start IP of forbidden IP range."
+    ::= { ibDhcpServer2ForbidEntry 2 }
+
+ibDhcpServer2ForbidEnd OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "End IP of forbidden IP range."
+    ::= { ibDhcpServer2ForbidEntry 3 }
+
+ibDhcpServer2ForbidRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active,
+         createAndGo, destroy."
+    ::= { ibDhcpServer2ForbidEntry 4 }
+
+-- =============================================================================
+-- 11th Table of ibDhcpServer2Tables: ibDhcpServer2FreeTable
+-- =============================================================================
+ibDhcpServer2FreeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2FreeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for displaying free IP range for DHCP server."
+    ::= { ibDhcpServer2Tables 11 }
+
+ibDhcpServer2FreeEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2FreeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for displaying free IP range for DHCP server."
+    INDEX
+        {
+            ibDhcpServer2PoolIndex,
+            ibDhcpServer2FreeStart
+        }
+    ::= { ibDhcpServer2FreeTable 1 }
+
+IbDhcpServer2FreeEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2FreeStart             InetAddressIPv4,
+            ibDhcpServer2FreeEnd               InetAddressIPv4
+        }
+
+ibDhcpServer2FreeStart OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Start IP of free IP range."
+    ::= { ibDhcpServer2FreeEntry 1 }
+
+ibDhcpServer2FreeEnd OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "End IP of free IP range."
+    ::= { ibDhcpServer2FreeEntry 2 }
+
+-- =============================================================================
+-- 12th Table of ibDhcpServer2Tables: ibDhcpServer2ConflictTable
+-- =============================================================================
+ibDhcpServer2ConflictTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2ConflictEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for displaying the information of conflict
+         IP for DHCP server."
+    ::= { ibDhcpServer2Tables 12 }
+
+ibDhcpServer2ConflictEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2ConflictEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for displaying the information of
+         conflict IP for DHCP server."
+    INDEX { ibDhcpServer2PoolIndex, ibDhcpServer2ConflictIP }
+    ::= { ibDhcpServer2ConflictTable 1 }
+
+IbDhcpServer2ConflictEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2ConflictIP            InetAddressIPv4,
+            ibDhcpServer2ConflictType          INTEGER,
+            ibDhcpServer2ConflictTime          OCTET STRING,
+            ibDhcpServer2ConflictRowStatus     RowStatus
+        }
+
+ibDhcpServer2ConflictIP OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Conflict IP."
+    ::= { ibDhcpServer2ConflictEntry 1 }
+
+ibDhcpServer2ConflictType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            detectByServer(1),
+            detectByClient(2)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Type of the detection of conflict IP.
+         'detectByServer' denotes that the conflict is detected
+         by DHCP server.
+         'detectByClient' denotes that the conflict is detected
+         by DHCP client."
+    ::= { ibDhcpServer2ConflictEntry 2 }
+
+ibDhcpServer2ConflictTime OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..19))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Time when the conflict is detected.
+         The structure of the OCTET STRING is
+         month/day/year hour:munite:second
+         (MM/DD/YYYY hh:mm:ss)."
+    ::= { ibDhcpServer2ConflictEntry 3 }
+
+ibDhcpServer2ConflictRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Only destroy action is allow to use."
+    ::= { ibDhcpServer2ConflictEntry 4 }
+
+-- =============================================================================
+-- 13th Table of ibDhcpServer2Tables: ibDhcpServer2ExpiredTable
+-- =============================================================================
+ibDhcpServer2ExpiredTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbDhcpServer2ExpiredEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table for displaying the information of expired IP
+         for DHCP Server pools. "
+    ::= { ibDhcpServer2Tables 13 }
+
+ibDhcpServer2ExpiredEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2ExpiredEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry of objects for displaying information
+         of expired IP for DHCP server pools."
+    INDEX { ibDhcpServer2PoolIndex, ibDhcpServer2ExpiredIP }
+    ::= { ibDhcpServer2ExpiredTable 1 }
+
+IbDhcpServer2ExpiredEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2ExpiredIP                  InetAddressIPv4,
+            ibDhcpServer2ExpiredClientId            OCTET STRING,
+            ibDhcpServer2ExpiredTime                OCTET STRING,
+            ibDhcpServer2ExpiredRowStatus           RowStatus
+        }
+
+ibDhcpServer2ExpiredIP OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Expired IP address."
+    ::= { ibDhcpServer2ExpiredEntry 1 }
+
+ibDhcpServer2ExpiredClientId OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(4..254))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Client identifier or hardware address."
+    ::= { ibDhcpServer2ExpiredEntry 2 }
+
+ibDhcpServer2ExpiredTime OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..19))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Expired time.
+         The structure of the OCTET STRING is
+         month/day/year hour:munite:second
+         (MM/DD/YYYY hh:mm:ss)."
+    ::= { ibDhcpServer2ExpiredEntry 3 }
+
+ibDhcpServer2ExpiredRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Only destroy action is allow to use."
+    ::= { ibDhcpServer2ExpiredEntry 4 }
+
+-- =============================================================================
+-- 14th Table of ibDhcpServer2Tables: ibDhcpServer2IPInUseTable
+-- =============================================================================
+ibDhcpServer2IPInUseTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbDhcpServer2IPInUseEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table for displaying the information of IP in use
+         for DHCP Server pools. "
+    ::= { ibDhcpServer2Tables 14 }
+
+ibDhcpServer2IPInUseEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2IPInUseEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry of objects for displaying information
+         of IP in use for DHCP server pools."
+    INDEX { ibDhcpServer2PoolIndex, ibDhcpServer2IPInUseIP }
+    ::= { ibDhcpServer2IPInUseTable 1 }
+
+IbDhcpServer2IPInUseEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2IPInUseIP                  InetAddressIPv4,
+            ibDhcpServer2IPInUseClientId            OCTET STRING,
+            ibDhcpServer2IPInUseHardAddr            OCTET STRING,
+            ibDhcpServer2IPInUseHardType            INTEGER,
+            ibDhcpServer2IPInUseVlanId              Unsigned32,
+            ibDhcpServer2IPInUseEndLease            OCTET STRING,
+            ibDhcpServer2IPInUseType                INTEGER,
+            ibDhcpServer2IPInUseIfIndex             InterfaceIndexOrZero,
+            ibDhcpServer2IPInUseRowStatus           RowStatus,
+            ibDhcpServer2IPInUseSecondVlanId        Unsigned32
+        }
+
+ibDhcpServer2IPInUseIP OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Ip address in use."
+    ::= { ibDhcpServer2IPInUseEntry 1 }
+
+ibDhcpServer2IPInUseClientId OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0|4..254))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Client identifier."
+    ::= { ibDhcpServer2IPInUseEntry 2 }
+
+ibDhcpServer2IPInUseHardAddr OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0|4..39))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Hardware address."
+    ::= { ibDhcpServer2IPInUseEntry 3 }
+
+ibDhcpServer2IPInUseHardType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            default(1),
+            ethernet(2),
+            tokenRing(3)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Hardware address type."
+    ::= { ibDhcpServer2IPInUseEntry 4 }
+
+ibDhcpServer2IPInUseVlanId OBJECT-TYPE
+    SYNTAX      Unsigned32(1..4094|65535)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "User's VLAN ID.
+
+         65535 means that a client doesn't have VLAN ID or have an
+         invalid VLAN ID."
+    ::= { ibDhcpServer2IPInUseEntry 5 }
+
+ibDhcpServer2IPInUseEndLease OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..19))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "End time of lease.
+         The structure of the OCTET STRING is
+         month/day/year hour:munite:second
+         (MM/DD/YYYY hh:mm:ss)."
+    ::= { ibDhcpServer2IPInUseEntry 6 }
+
+ibDhcpServer2IPInUseType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            staticUnallocated(1),
+            staticOffered(2),
+            staticCommitted(3),
+            autoOffered(4),
+            autoCommitted(5)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Type of binding."
+    ::= { ibDhcpServer2IPInUseEntry 7 }
+
+ibDhcpServer2IPInUseIfIndex OBJECT-TYPE
+    SYNTAX      InterfaceIndexOrZero
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Interface index information.
+         If the value of this object is zero,
+         the interface is unknown."
+    ::= { ibDhcpServer2IPInUseEntry 8 }
+
+ibDhcpServer2IPInUseRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Only destroy action is allow to use."
+    ::= { ibDhcpServer2IPInUseEntry 9 }
+
+ibDhcpServer2IPInUseSecondVlanId OBJECT-TYPE
+    SYNTAX      Unsigned32(1..4094|65535)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "User's second VLAN ID.
+
+         65535 means that a client doesn't have second VLAN ID or has an
+         invalid second VLAN ID."
+    ::= { ibDhcpServer2IPInUseEntry 10 }
+
+-- =============================================================================
+-- 15th Table of ibDhcpServer2Tables: ibDhcpServer2DefOptGrpTable
+-- =============================================================================
+ibDhcpServer2DefOptGrpTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2DefOptGrpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table containing option group of the DHCP server pool for user
+         classes."
+    ::= { ibDhcpServer2Tables 15 }
+
+ibDhcpServer2DefOptGrpEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2DefOptGrpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing option group of DHCP pools for user classes."
+    INDEX {
+            ibDhcpServer2PoolIndex,
+            ibDhcpServer2DefOptGrpClass
+          }
+    ::= { ibDhcpServer2DefOptGrpTable 1 }
+
+IbDhcpServer2DefOptGrpEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2DefOptGrpClass        OCTET STRING,
+            ibDhcpServer2DefOptGrpId           Integer32,
+            ibDhcpServer2DefOptGrpStatus       RowStatus
+        }
+
+ibDhcpServer2DefOptGrpClass OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..63))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "User class name."
+    ::= { ibDhcpServer2DefOptGrpEntry 1 }
+
+ibDhcpServer2DefOptGrpId OBJECT-TYPE
+    SYNTAX      Integer32 (1..32768)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The option group ID."
+    ::= { ibDhcpServer2DefOptGrpEntry 2 }
+
+ibDhcpServer2DefOptGrpStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active, createAndGo, destroy.
+
+         If the value of this object is set to 'createAndGo',
+         ibDhcpServer2DefOptGrpId must also be set."
+    ::= { ibDhcpServer2DefOptGrpEntry 3 }
+
+-- =============================================================================
+-- 16th Table of ibDhcpServer2Tables: ibDhcpServer2ValidClassTable
+-- =============================================================================
+ibDhcpServer2ValidClassTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2ValidClassEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table containing valid user classes for DHCP server pool."
+    ::= { ibDhcpServer2Tables 16 }
+
+ibDhcpServer2ValidClassEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2ValidClassEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing valid user classes for DHCP server pool."
+    INDEX {
+      ibDhcpServer2PoolIndex,
+      ibDhcpServer2ValidClassName
+    }
+    ::= { ibDhcpServer2ValidClassTable 1 }
+
+IbDhcpServer2ValidClassEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2ValidClassName            OCTET STRING,
+            ibDhcpServer2ValidClassStatus          RowStatus
+        }
+
+ibDhcpServer2ValidClassName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..63))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "User class name."
+    ::= { ibDhcpServer2ValidClassEntry 1 }
+
+ibDhcpServer2ValidClassStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active, createAndGo, destroy."
+    ::= { ibDhcpServer2ValidClassEntry 2 }
+
+-- =============================================================================
+-- 17th Table of ibDhcpServer2Tables: ibDhcpServer2RuleHwAddrTable
+-- =============================================================================
+ibDhcpServer2RuleHwAddrTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2RuleHwAddrEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring hardware address rules used to match DHCP
+         users."
+    ::= { ibDhcpServer2Tables 17 }
+
+ibDhcpServer2RuleHwAddrEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2RuleHwAddrEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for configuring hardware address rules used to match DHCP
+         users."
+    INDEX
+        {
+          ibDhcpServer2ClassName,
+          ibDhcpServer2RuleHwAddrNumber
+        }
+    ::= { ibDhcpServer2RuleHwAddrTable 1 }
+
+IbDhcpServer2RuleHwAddrEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2RuleHwAddrNumber           Integer32,
+            ibDhcpServer2RuleHwAddress              OCTET STRING,
+            ibDhcpServer2RuleHwAddrMask             OCTET STRING,
+            ibDhcpServer2RuleHwAddrType             Integer32,
+            ibDhcpServer2RuleHwAddrStatus           RowStatus
+        }
+
+ibDhcpServer2RuleHwAddrNumber OBJECT-TYPE
+    SYNTAX      Integer32(1..16)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Rule number."
+    ::= { ibDhcpServer2RuleHwAddrEntry 1 }
+
+ibDhcpServer2RuleHwAddress OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(4..39))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Hardware address for a rule.
+
+         The structure of the OCTET STRING is H-H-H... while H indicates 4
+         hexadecimal characters except that the last H indicates 2 or 4
+         hexadecimal characters.
+
+         The SET operation to this object ought to be with the SET operation
+         of ibDhcpServer2RuleHwAddrMask together, and any SET operation
+         alone to this object will be regarded as an invalid operation."
+    ::= { ibDhcpServer2RuleHwAddrEntry 2 }
+
+ibDhcpServer2RuleHwAddrMask OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(4..39))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Mask of hardware address for a rule.
+
+         The structure of the OCTET STRING is the same with
+         ibDhcpServer2RuleHwAddress.
+
+         The SET operation to this object ought to be with the SET operation
+         of ibDhcpServer2RuleHwAddress together, and any SET operation
+         alone to this object will be regarded as an invalid operation."
+    ::= { ibDhcpServer2RuleHwAddrEntry 3 }
+
+ibDhcpServer2RuleHwAddrType OBJECT-TYPE
+    SYNTAX      Integer32(1..255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Hardware type for a rule.
+
+         The codes of all hardware types see ARP section in RFC 1700.
+
+         The SET operation alone to this object will be regarded as an
+         invalid operation."
+    DEFVAL { 1 }
+    ::= { ibDhcpServer2RuleHwAddrEntry 4 }
+
+ibDhcpServer2RuleHwAddrStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active, createAndGo, destroy.
+
+         If the value of this object is set to 'createAndGo',
+         ibDhcpServer2RuleHwAddrAddress and ibDhcpServer2RuleHwAddrMask
+         must also be set."
+    ::= { ibDhcpServer2RuleHwAddrEntry 5 }
+
+-- =============================================================================
+-- 18th Table of ibDhcpServer2Tables: ibDhcpServer2OptionGroupTable
+-- =============================================================================
+ibDhcpServer2OptionGroupTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2OptionGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for creating DHCP server option groups."
+    ::= { ibDhcpServer2Tables 18 }
+
+ibDhcpServer2OptionGroupEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2OptionGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing objects for creating or deleting an option
+         group."
+    INDEX { ibDhcpServer2OptionGroupId }
+    ::= { ibDhcpServer2OptionGroupTable 1 }
+
+IbDhcpServer2OptionGroupEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2OptionGroupId         Integer32,
+            ibDhcpServer2OptionGroupStatus     RowStatus
+        }
+
+ibDhcpServer2OptionGroupId OBJECT-TYPE
+    SYNTAX      Integer32 (1..32768)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The option group ID."
+    ::= { ibDhcpServer2OptionGroupEntry 1 }
+
+ibDhcpServer2OptionGroupStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active, createAndGo, destroy."
+    ::= { ibDhcpServer2OptionGroupEntry 2 }
+
+-- =============================================================================
+-- 19th Table of ibDhcpServer2Tables: ibDhcpServer2OptionTable
+-- =============================================================================
+ibDhcpServer2OptionTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpServer2OptionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring options in an option group."
+    ::= { ibDhcpServer2Tables 19 }
+
+ibDhcpServer2OptionEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2OptionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing objects for configuring an option in an option
+         group."
+    INDEX
+        {
+          ibDhcpServer2OptionGroupId,
+          ibDhcpServer2OptionCode
+        }
+    ::= { ibDhcpServer2OptionTable 1 }
+
+IbDhcpServer2OptionEntry ::=
+    SEQUENCE
+        {   ibDhcpServer2OptionCode         Integer32,
+            ibDhcpServer2OptionType         INTEGER,
+            ibDhcpServer2OptionAscii        OCTET STRING,
+            ibDhcpServer2OptionHexStr       OCTET STRING,
+            ibDhcpServer2OptionIPStr        OCTET STRING,
+            ibDhcpServer2OptionRowStatus    RowStatus
+        }
+
+ibDhcpServer2OptionCode OBJECT-TYPE
+    SYNTAX      Integer32 (2..254)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Option code."
+    ::= { ibDhcpServer2OptionEntry 1 }
+
+ibDhcpServer2OptionType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            ascii(1),
+            hex(2),
+            ip(3)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Option type.
+
+         'ascii' means using the ascii string that is defined by
+         ibDhcpServer2OptionAscii to fill in the option.
+
+         'hex' means using the hex string that is defined by
+         ibDhcpServer2OptionHexStr to fill in the option.
+
+         'ip' means using the IP string that is defined by
+         ibDhcpServer2OptionIPStr to fill in the option."
+    ::= { ibDhcpServer2OptionEntry 2 }
+
+ibDhcpServer2OptionAscii    OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..255))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Ascii string of an option.
+
+         If ibDhcpServer2OptionType is set with 'ascii', this object must
+         be set with a non-zero length string."
+    ::= { ibDhcpServer2OptionEntry 3 }
+
+ibDhcpServer2OptionHexStr    OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..510))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Hex string of an option.
+
+         The length of the string must be even.  If
+         ibDhcpServer2OptionType is set with 'hex', this object must be
+         set with a non-zero length string."
+    ::= { ibDhcpServer2OptionEntry 4 }
+
+ibDhcpServer2OptionIPStr    OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "IP string of an option.
+
+         IP addresses are space separated and the leading or trailing space
+         will be trimmed.
+
+         1 to 8 IP addresses can be configured simultaneously.
+
+         If ibDhcpServer2OptionType is set with 'ip', this object must be
+         set with a non-zero length string that must contain at least one IP
+         address."
+    ::= { ibDhcpServer2OptionEntry 5 }
+
+ibDhcpServer2OptionRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active, createAndGo, destroy.
+
+         If the value of this object is set to 'createAndGo',
+         ibDhcpServer2OptionType must also be set."
+    ::= { ibDhcpServer2OptionEntry 6 }
+
+-- =============================================================================
+-- 20th Table of ibDhcpServer2Tables: ibDhcpServer2PoolStatTable
+-- =============================================================================
+ibDhcpServer2PoolStatTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbDhcpServer2PoolStatEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table for displaying the statistics of
+         a DHCP Server pool."
+    ::= { ibDhcpServer2Tables 20 }
+
+ibDhcpServer2PoolStatEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2PoolStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry of objects for displaying the statistics of
+         a DHCP Server pool."
+    INDEX { ibDhcpServer2PoolIndex }
+    ::= { ibDhcpServer2PoolStatTable 1 }
+
+IbDhcpServer2PoolStatEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2PoolUsage                  Unsigned32,
+            ibDhcpServer2PoolReqCnt                 Counter64,
+            ibDhcpServer2PoolReqSuccCnt             Counter64,
+            ibDhcpServer2PoolDiscoverCnt            Counter64,
+            ibDhcpServer2PoolOfferCnt               Counter64,
+            ibDhcpServer2PoolAckCnt                 Counter64,
+            ibDhcpServer2PoolIPTotalNum             Unsigned32,
+            ibDhcpServer2PoolIPUsedNum              Unsigned32,
+            ibDhcpServer2PoolIPIdleNum              Unsigned32,
+            ibDhcpServer2PoolIPExcludeNum           Unsigned32,
+            ibDhcpServer2PoolConflictNum            Unsigned32,
+            ibDhcpServer2PoolAutoBindNum            Unsigned32,
+            ibDhcpServer2PoolManualBindNum          Unsigned32,
+            ibDhcpServer2PoolExpiredBindNum         Unsigned32,
+            ibDhcpServer2PoolNameInfo               OCTET STRING,
+            ibDhcpServer2PoolReserveIpNum           Unsigned32
+        }
+
+ibDhcpServer2PoolUsage OBJECT-TYPE
+    SYNTAX      Unsigned32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The percentage of IP addresses in use
+         of the DHCP server pool."
+    ::= { ibDhcpServer2PoolStatEntry 1 }
+
+ibDhcpServer2PoolReqCnt OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of address allocation
+         requests which matched the DHCP pool and
+         were received by the DHCP server."
+    ::= { ibDhcpServer2PoolStatEntry 2 }
+
+ibDhcpServer2PoolReqSuccCnt OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of address allocation
+         requests success responses which matched
+         the DHCP pool and were sent by the DHCP server."
+    ::= { ibDhcpServer2PoolStatEntry 3 }
+
+ibDhcpServer2PoolDiscoverCnt OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of DISCOVER packets which
+         matched the DHCP pool and were received by the
+         DHCP server."
+    ::= { ibDhcpServer2PoolStatEntry 4 }
+
+ibDhcpServer2PoolOfferCnt OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of OFFER packets which
+         matched the DHCP pool and were sent by the
+         DHCP server."
+    ::= { ibDhcpServer2PoolStatEntry 5 }
+
+ibDhcpServer2PoolAckCnt OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of ACK packets which
+         matched the DHCP pool and were sent by the
+         DHCP server."
+    ::= { ibDhcpServer2PoolStatEntry 6 }
+
+ibDhcpServer2PoolIPTotalNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of addresses in the
+         DHCP pool."
+    ::= { ibDhcpServer2PoolStatEntry 7 }
+
+ibDhcpServer2PoolIPUsedNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of used addresses in the
+         DHCP pool."
+    ::= { ibDhcpServer2PoolStatEntry 8 }
+
+ibDhcpServer2PoolIPIdleNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of idle addresses in the
+         DHCP pool."
+    ::= { ibDhcpServer2PoolStatEntry 9 }
+
+ibDhcpServer2PoolIPExcludeNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of addresses excluded from address
+         allocation in the DHCP pool."
+    ::= { ibDhcpServer2PoolStatEntry 10 }
+
+ibDhcpServer2PoolConflictNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of conflicting addresses in the
+         DHCP pool."
+    ::= { ibDhcpServer2PoolStatEntry 11 }
+
+ibDhcpServer2PoolAutoBindNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of auto binding addresses in the
+         DHCP pool."
+    ::= { ibDhcpServer2PoolStatEntry 12 }
+
+ibDhcpServer2PoolManualBindNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of manual binding addresses in
+         the DHCP pool."
+    ::= { ibDhcpServer2PoolStatEntry 13 }
+
+ibDhcpServer2PoolExpiredBindNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of expired addresses in
+         the DHCP pool."
+    ::= { ibDhcpServer2PoolStatEntry 14 }
+
+ibDhcpServer2PoolNameInfo OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..63))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "DHCP server pool name."
+    ::= { ibDhcpServer2PoolStatEntry 15 }
+
+ibDhcpServer2PoolReserveIpNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of reserved addresses in
+         the DHCP pool."
+    ::= { ibDhcpServer2PoolStatEntry 16 }
+
+-- =============================================================================
+-- 21th Table of ibDhcpServer2Tables: ibDhcpServer2PoolGpTable
+-- =============================================================================
+ibDhcpServer2PoolGpTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbDhcpServer2PoolGpEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table containing DHCP server pool group configurations."
+    ::= { ibDhcpServer2Tables 21 }
+
+ibDhcpServer2PoolGpEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2PoolGpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing DHCP server pool group configurations."
+    INDEX { ibDhcpServer2PoolGpName }
+    ::= { ibDhcpServer2PoolGpTable 1 }
+
+IbDhcpServer2PoolGpEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2PoolGpName              OCTET STRING,
+            ibDhcpServer2PoolGpVpnName           OCTET STRING,
+            ibDhcpServer2PoolGpIncUndo           TruthValue,
+            ibDhcpServer2PoolGpRowSta            RowStatus
+        }
+
+ibDhcpServer2PoolGpName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "DHCP server pool group name."
+    ::= { ibDhcpServer2PoolGpEntry 1 }
+
+ibDhcpServer2PoolGpVpnName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..31))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Name of the VPN instance  to which the pool group belongs."
+    ::= { ibDhcpServer2PoolGpEntry 2 }
+
+ibDhcpServer2PoolGpIncUndo OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set this object to 'true' to remove all pools from the pool group."
+    DEFVAL { false }
+    ::= { ibDhcpServer2PoolGpEntry 3 }
+
+ibDhcpServer2PoolGpRowSta OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry.  Two actions are used: createAndGo
+        and destroy."
+    ::= { ibDhcpServer2PoolGpEntry 4 }
+
+-- =============================================================================
+-- 22th Table of ibDhcpServer2Tables: ibDhcpServer2PoolGpExtTable
+-- =============================================================================
+ibDhcpServer2PoolGpExtTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbDhcpServer2PoolGpExtEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+         "A table containing the names of the pools in each DHCP server pool group."
+    ::= { ibDhcpServer2Tables 22 }
+
+ibDhcpServer2PoolGpExtEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2PoolGpExtEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing the names of the pools in
+         a DHCP Server pool group."
+    INDEX
+        {
+            ibDhcpServer2PoolGpName,
+            ibDhcpServer2PoolIndex
+        }
+    ::= { ibDhcpServer2PoolGpExtTable 1 }
+
+IbDhcpServer2PoolGpExtEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2PoolGpIncPoolNm                       OCTET STRING,
+            ibDhcpServer2PoolGpExtRowSta                       RowStatus
+        }
+
+ibDhcpServer2PoolGpIncPoolNm OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Name of a DHCP server pool in the DHCP server pool group."
+    ::= { ibDhcpServer2PoolGpExtEntry 1 }
+
+ibDhcpServer2PoolGpExtRowSta OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry.  Two actions are used: createAndGo and destroy."
+    ::= { ibDhcpServer2PoolGpExtEntry 2 }
+
+-- =============================================================================
+-- 23th Table of ibDhcpServer2Tables: ibDhcpServer2PoolGpStatTable
+-- =============================================================================
+ibDhcpServer2PoolGpStatTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbDhcpServer2PoolGpStatEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table containing DHCP server pool group statistics."
+    ::= { ibDhcpServer2Tables 23 }
+
+ibDhcpServer2PoolGpStatEntry OBJECT-TYPE
+    SYNTAX      IbDhcpServer2PoolGpStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing statistics for a DHCP server pool group."
+    INDEX { ibDhcpServer2PoolGpName }
+    ::= { ibDhcpServer2PoolGpStatTable 1 }
+
+IbDhcpServer2PoolGpStatEntry ::=
+    SEQUENCE
+        {
+            ibDhcpServer2PoolGpPoolNum                    Unsigned32,
+            ibDhcpServer2PoolGpBndDomNum                  Unsigned32,
+            ibDhcpServer2PoolGpUsage                      Unsigned32,
+            ibDhcpServer2PoolGpIPTotalNum                 Unsigned32,
+            ibDhcpServer2PoolGpIPUsedNum                  Unsigned32,
+            ibDhcpServer2PoolGpIPIdleNum                  Unsigned32,
+            ibDhcpServer2PoolGpIPExcNum                   Unsigned32,
+            ibDhcpServer2PoolGpConfNum                    Unsigned32,
+            ibDhcpServer2PoolGpAutoBndNum                 Unsigned32,
+            ibDhcpServer2PoolGpManuBndNum                 Unsigned32,
+            ibDhcpServer2PoolGpExpiBndNum                 Unsigned32,
+            ibDhcpServer2PoolGpReserverIpNum              Unsigned32
+        }
+
+ibDhcpServer2PoolGpPoolNum OBJECT-TYPE
+    SYNTAX      Unsigned32(0..1024)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of pools in the DHCP server pool group."
+    ::= { ibDhcpServer2PoolGpStatEntry 1 }
+
+ibDhcpServer2PoolGpBndDomNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of domain names bound to the DHCP server pool group."
+    ::= { ibDhcpServer2PoolGpStatEntry 2 }
+
+ibDhcpServer2PoolGpUsage OBJECT-TYPE
+    SYNTAX      Unsigned32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The percentage of IP addresses in use
+         in the DHCP server pool group."
+    ::= { ibDhcpServer2PoolGpStatEntry 3 }
+
+ibDhcpServer2PoolGpIPTotalNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of addresses in the
+         DHCP pool group."
+    ::= { ibDhcpServer2PoolGpStatEntry 4 }
+
+ibDhcpServer2PoolGpIPUsedNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of assigned addresses in the
+         DHCP pool group."
+    ::= { ibDhcpServer2PoolGpStatEntry 5 }
+
+ibDhcpServer2PoolGpIPIdleNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of idle addresses in the
+         DHCP pool group."
+    ::= { ibDhcpServer2PoolGpStatEntry 6 }
+
+ibDhcpServer2PoolGpIPExcNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of IP addresses excluded from DHCP allocation in the
+         DHCP pool group."
+    ::= { ibDhcpServer2PoolGpStatEntry 7 }
+
+ibDhcpServer2PoolGpConfNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of conflict addresses in the
+         DHCP pool group."
+    ::= { ibDhcpServer2PoolGpStatEntry 8 }
+
+ibDhcpServer2PoolGpAutoBndNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of dynamic address bindings in the
+         DHCP pool group."
+    ::= { ibDhcpServer2PoolGpStatEntry 9 }
+
+ibDhcpServer2PoolGpManuBndNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of static address bindings in the
+         DHCP pool group."
+    ::= { ibDhcpServer2PoolGpStatEntry 10 }
+
+ibDhcpServer2PoolGpExpiBndNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of expired addresses in the
+         DHCP pool group."
+    ::= { ibDhcpServer2PoolGpStatEntry 11 }
+
+ibDhcpServer2PoolGpReserverIpNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of reserved addresses in the
+         DHCP pool group."
+    ::= { ibDhcpServer2PoolGpStatEntry 12 }
+
+-- =============================================================================
+-- DHCP relay scalar object definition begin
+-- =============================================================================
+    ibDhcpRelay2ScalarObjects   OBJECT IDENTIFIER ::= { ibDhcp4 3 }
+
+-- =============================================================================
+-- ibDhcpRelay2ScalarObjects: ibDhcpRelay2ConfigGroup
+-- =============================================================================
+ibDhcpRelay2ConfigGroup  OBJECT IDENTIFIER ::= { ibDhcpRelay2ScalarObjects 1 }
+
+ibDhcpRelay2UserInfoRecord OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "If the value is 'true', user information will be recorded."
+    DEFVAL { false }
+    ::= { ibDhcpRelay2ConfigGroup 1 }
+
+ibDhcpRelay2UserInfoRefresh OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "If the value is 'true', user information will be refreshed
+         on timer."
+    DEFVAL { true }
+    ::= { ibDhcpRelay2ConfigGroup 2 }
+
+ibDhcpRelay2UserInfoFlushTime OBJECT-TYPE
+    SYNTAX      Unsigned32(0..120)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User information refresh interval in seconds.
+
+         If the value of the object is set to 0, the interval is
+         calculated automatically by the number of user
+         information entries."
+    DEFVAL { 0 }
+    ::= { ibDhcpRelay2ConfigGroup 3 }
+
+ibDhcpRelay2ReleaseAddr   OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..47))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User address to be released.
+
+         The structure of the OCTET STRING is
+         IP address:VPN name.
+         If the VPN instance name is NOT specified,
+         the IP address is in public network."
+    ::= { ibDhcpRelay2ConfigGroup 4 }
+
+-- =============================================================================
+-- ibDhcpRelay2ScalarObjects: ibDhcpRelay2StatisticsGroup
+-- =============================================================================
+ibDhcpRelay2StatisticsGroup  OBJECT IDENTIFIER ::= { ibDhcpRelay2ScalarObjects 2 }
+
+ibDhcpRelay2RxClientNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the packets received from DHCP
+         clients by DHCP relay."
+    ::= { ibDhcpRelay2StatisticsGroup 1 }
+
+ibDhcpRelay2TxClientNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the packets transmitted to
+         DHCP clients by DHCP relay."
+    ::= { ibDhcpRelay2StatisticsGroup 2 }
+
+ibDhcpRelay2RxServerNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the packets received from
+         DHCP Servers by DHCP relay."
+    ::= { ibDhcpRelay2StatisticsGroup 3 }
+
+ibDhcpRelay2TxServerNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the packets transmitted to
+         DHCP Servers by DHCP relay."
+    ::= { ibDhcpRelay2StatisticsGroup 4 }
+
+ibDhcpRelay2BadNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the bad packets received."
+    ::= { ibDhcpRelay2StatisticsGroup 5 }
+
+ibDhcpRelay2BootpRequestNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the BOOTREQUEST packets handled
+         by DHCP relay."
+    ::= { ibDhcpRelay2StatisticsGroup 6 }
+
+ibDhcpRelay2DiscoverNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the DHCPDISCOVER packets handled
+         by DHCP relay."
+    ::= { ibDhcpRelay2StatisticsGroup 7 }
+
+ibDhcpRelay2RequestNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the DHCPREQUEST packets handled
+         by DHCP relay."
+    ::= { ibDhcpRelay2StatisticsGroup 8 }
+
+ibDhcpRelay2DeclineNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the DHCPDECLINE packets handled
+         by DHCP relay."
+    ::= { ibDhcpRelay2StatisticsGroup 9 }
+
+ibDhcpRelay2ReleaseNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the DHCPRELEASE packets handled
+         by DHCP relay."
+    ::= { ibDhcpRelay2StatisticsGroup 10 }
+
+ibDhcpRelay2InformNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the DHCPINFORM packets handled
+         by DHCP relay."
+    ::= { ibDhcpRelay2StatisticsGroup 11 }
+
+ibDhcpRelay2BootpReplyNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the BOOTREPLY packets handled
+         by DHCP relay."
+    ::= { ibDhcpRelay2StatisticsGroup 12 }
+
+ibDhcpRelay2OfferNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the DHCPOFFER packets handled
+         by DHCP relay."
+    ::= { ibDhcpRelay2StatisticsGroup 13 }
+
+ibDhcpRelay2AckNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the DHCPACK packets handled
+         by DHCP relay."
+    ::= { ibDhcpRelay2StatisticsGroup 14 }
+
+ibDhcpRelay2NakNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of the DHCPNAK packets handled
+         by DHCP relay."
+    ::= { ibDhcpRelay2StatisticsGroup 15 }
+
+-- =============================================================================
+-- DHCP relay table definition.
+-- =============================================================================
+    ibDhcpRelay2Tables OBJECT IDENTIFIER ::= { ibDhcp4 4 }
+
+-- =============================================================================
+-- 1st Table of ibDhcpRelay2Tables: ibDhcpRelay2IfConfigTable
+-- =============================================================================
+ibDhcpRelay2IfConfigTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpRelay2IfConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring relay functions for interfaces."
+    ::= { ibDhcpRelay2Tables 1 }
+
+ibDhcpRelay2IfConfigEntry  OBJECT-TYPE
+    SYNTAX      IbDhcpRelay2IfConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for configuring relay functions for an interface."
+    INDEX { ifIndex }
+    ::= { ibDhcpRelay2IfConfigTable 1 }
+
+IbDhcpRelay2IfConfigEntry ::=
+    SEQUENCE
+        {
+            ibDhcpRelay2IfSelectRelay              TruthValue,
+            ibDhcpRelay2IfCheckMac                 TruthValue,
+            ibDhcpRelay2IfOpt82Enable              TruthValue,
+            ibDhcpRelay2IfOpt82Strategy            INTEGER,
+            ibDhcpRelay2IfOpt82CIDMode             INTEGER,
+            ibDhcpRelay2IfOpt82CIDNodeType         INTEGER,
+            ibDhcpRelay2IfOpt82CIDNodeStr          OCTET STRING,
+            ibDhcpRelay2IfOpt82CIDStr              OCTET STRING,
+            ibDhcpRelay2IfOpt82CIDFormat           INTEGER,
+            ibDhcpRelay2IfOpt82RIDMode             INTEGER,
+            ibDhcpRelay2IfOpt82RIDStr              OCTET STRING,
+            ibDhcpRelay2IfOpt82RIDFormat           INTEGER
+        }
+
+ibDhcpRelay2IfSelectRelay    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "If the value is 'true', the DHCP relay function
+         would be enabled on this interface."
+    DEFVAL      { false }
+    ::= { ibDhcpRelay2IfConfigEntry 1 }
+
+ibDhcpRelay2IfCheckMac    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "If the value is 'true', the function of checking MAC address
+         of packets received from the interface would be enabled."
+    DEFVAL      { false }
+    ::= { ibDhcpRelay2IfConfigEntry 2 }
+
+ibDhcpRelay2IfOpt82Enable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "If DHCP relay supports option 82 functions, the
+         value is 'true'.
+         If DHCP relay does NOT support option 82 functions,
+         the value is 'false'."
+    DEFVAL      { false }
+    ::= { ibDhcpRelay2IfConfigEntry 3 }
+
+ibDhcpRelay2IfOpt82Strategy     OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        drop(1),
+        keep(2),
+        replace(3)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The strategies of DHCP relay handling option 82.
+
+         'drop' indicates DHCP relay discarding the request
+         packet including option 82.
+
+         'keep' indicates DHCP relay accepting the request
+         packet without any change of the option 82.
+
+         'replace' indicates DHCP relay accepting the
+         request packet on condition that it generates a new
+         option 82 to replace the original one."
+    DEFVAL      { replace }
+    ::= { ibDhcpRelay2IfConfigEntry 4 }
+
+ibDhcpRelay2IfOpt82CIDMode OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        normal(1),
+        verbose(2),
+        userDefine(3)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The mode of the circuit ID suboption of DHCP option 82.
+
+         'normal' is the standard mode.
+
+         'verbose' is the detailed mode.
+
+         'userDefine' is the user-defined mode.
+
+         If the value of this object is set to 'userDefine',
+         ibDhcpRelay2IfOpt82CIDStr must also be set."
+    DEFVAL      { normal }
+    ::= { ibDhcpRelay2IfConfigEntry 5 }
+
+ibDhcpRelay2IfOpt82CIDNodeType OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        invalid(1),
+        mac(2),
+        sysname(3),
+        userDefine(4)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Type of access node identifier that is used to fill
+         in the circuit ID suboption of option 82 when the value
+         of ibDhcpRelay2IfOpt82CIDMode is set to 'verbose'.
+
+         The SET operation of this object must be with the SET
+         operation of ibDhcpRelay2IfOpt82CIDMode.
+
+         'invalid' indicates that the node identifier is NOT used
+         to fill in the circuit ID suboption of option 82.
+         If the value of ibDhcpRelay2IfOpt82CIDMode is NOT 'verbose',
+         the value of this object is set to 'invalid' automatically.
+         Otherwise the value of this object cannot be set to 'invalid'.
+
+         'mac' indicates that the node identifier is filled in with
+         the MAC of DHCP relay input interface.
+         If the value of ibDhcpRelay2IfOpt82CIDMode is set to
+         'verbose', the default value of this object is 'mac'.
+
+         'sysname' indicates that the node identifier is filled in with
+         the sysname of the DHCP relay device.
+
+         'userDefine' indicates that the node identifier is filled in with
+         the string defined by the object of ibDhcpRelay2IfOpt82CIDNodeStr.
+         If the value is set to 'userDefine', the value of
+         ibDhcpRelay2IfOpt82CIDNodeStr must be set to a non-zero
+         length string simultaneously."
+    ::= { ibDhcpRelay2IfConfigEntry 6 }
+
+ibDhcpRelay2IfOpt82CIDNodeStr      OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..50))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+         "The string defined by user to fill in the
+          node identifier in the verbose mode.
+
+          If the value of ibDhcpRelay2IfOpt82CIDMode is NOT 'verbose',
+          or the value of ibDhcpRelay2IfOpt82CIDNodeType is
+          NOT 'userDefine', it is set with a zero-length string
+          automatically.
+          Otherwise it must be set with a non-zero length string.
+
+          The SET operation of this object must be with the SET
+          operation of ibDhcpRelay2IfOpt82CIDMode and
+          ibDhcpRelay2IfOpt82CIDNodeType."
+    ::= { ibDhcpRelay2IfConfigEntry 7 }
+
+ibDhcpRelay2IfOpt82CIDStr      OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0|3..63))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The string defined by user to fill in the circuit ID
+         suboption of option 82 in the user-define mode.
+
+         If the value of ibDhcpRelay2IfOpt82CIDMode is NOT 'userDefine',
+         it is set to a zero-length string automatically.
+         Otherwise it must be set with a non-zero length string.
+
+         The SET operation of this object must be with the SET
+         operation of ibDhcpRelay2IfOpt82CIDMode."
+    ::= { ibDhcpRelay2IfConfigEntry 8 }
+
+ibDhcpRelay2IfOpt82CIDFormat    OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        hex(1),
+        ascii(2),
+        undefine(3)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The format of the circuit ID suboption of DHCP
+         option 82.
+
+         'hex' is the hex format.
+
+         'ascii' is the ascii format.
+
+         'undefine' is the undefine format.
+
+         If the value of ibDhcpRelay2IfOpt82CIDMode is
+         'normal', the value of this object is set to 'hex'
+         automatically and cannot be set to 'undefine'.
+
+         If the value of ibDhcpRelay2IfOpt82CIDMode is
+         'verbose', the default value of this object is 'undefine'.
+
+         If the value of ibDhcpRelay2IfOpt82CIDMode is
+         'userDefine', the value of this object is set to
+         'ascii' automatically and cannot be set to other value.
+
+         The SET operation of this object must be with the SET
+         operation of ibDhcpRelay2IfOpt82CIDMode."
+    ::= { ibDhcpRelay2IfConfigEntry 9 }
+
+ibDhcpRelay2IfOpt82RIDMode OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        normal(1),
+        sysname(2),
+        userDefine(3)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The mode of the remote ID suboption of DHCP
+         option 82.
+
+         'normal' is the standard mode.
+
+         'sysname' is the sysname mode.
+
+         'userDefine' is the user-defined mode.
+
+         If the value of this object is set to 'userDefine',
+         ibDhcpRelay2IfOpt82RIDStr must also be set."
+    DEFVAL      { normal }
+    ::= { ibDhcpRelay2IfConfigEntry 10 }
+
+ibDhcpRelay2IfOpt82RIDStr  OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..63))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The string defined by user to fill in the
+         remote ID in the user-defined mode.
+
+         If the value of ibDhcpRelay2IfOpt82RIDMode is NOT
+         'userDefine', it is set to a zero-length string automatically.
+         Otherwise it must be set with a non-zero length string.
+
+         The SET operation of this object must be with the SET
+         operation of ibDhcpRelay2IfOpt82RIDMode."
+    ::= { ibDhcpRelay2IfConfigEntry 11 }
+
+ibDhcpRelay2IfOpt82RIDFormat    OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        hex(1),
+        ascii(2)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The format of the remote ID suboption of DHCP option 82.
+
+         'hex' is the hex format.
+
+         'ascii' is the ascii format.
+
+         If the value of ibDhcpRelay2IfOpt82RIDMode is
+         'sysname' or 'userDefine', this object is set with 'ascii'
+         automatically and cannot be set with other value.
+
+         If the value of ibDhcpRelay2IfOpt82RIDMode is 'normal',
+         the default value of this object is 'hex'.
+
+         The SET operation of this object must be with the SET
+         operation of ibDhcpRelay2IfOpt82RIDMode."
+    ::= { ibDhcpRelay2IfConfigEntry 12 }
+
+-- =============================================================================
+-- 2nd Table of ibDhcpRelay2Tables: ibDhcpRelay2SrvAddrTable
+-- =============================================================================
+ibDhcpRelay2SrvAddrTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpRelay2SrvAddrEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring a DHCP
+         server address on the interface."
+    ::= { ibDhcpRelay2Tables 2 }
+
+ibDhcpRelay2SrvAddrEntry  OBJECT-TYPE
+    SYNTAX      IbDhcpRelay2SrvAddrEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for configuring a DHCP
+         server address on the interface."
+    INDEX
+        {
+            ifIndex,
+            ibDhcpRelay2SrvAddrIP
+        }
+    ::= { ibDhcpRelay2SrvAddrTable 1 }
+
+IbDhcpRelay2SrvAddrEntry ::=
+    SEQUENCE
+        {
+            ibDhcpRelay2SrvAddrIP                InetAddressIPv4,
+            ibDhcpRelay2SrvAddrRowStatus         RowStatus
+        }
+
+ibDhcpRelay2SrvAddrIP    OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Ip address of DHCP server."
+    ::= { ibDhcpRelay2SrvAddrEntry 1 }
+
+ibDhcpRelay2SrvAddrRowStatus    OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry.
+         Three actions are used: active,
+         createAndGo, destroy."
+    ::= { ibDhcpRelay2SrvAddrEntry 2 }
+
+-- =============================================================================
+-- 3rd Table of ibDhcpRelay2Tables: ibDhcpRelay2UserInfoTable
+-- =============================================================================
+ibDhcpRelay2UserInfoTable   OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcpRelay2UserInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table containing the user information of DHCP client."
+    ::= { ibDhcpRelay2Tables 3 }
+
+ibDhcpRelay2UserInfoEntry  OBJECT-TYPE
+    SYNTAX      IbDhcpRelay2UserInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing the user information of DHCP client."
+    INDEX
+    {
+        ibDhcpRelay2UserInfoVpnIndex,
+        ibDhcpRelay2UserInfoIpAddr
+    }
+    ::= { ibDhcpRelay2UserInfoTable 1 }
+
+IbDhcpRelay2UserInfoEntry   ::=
+    SEQUENCE
+    {
+        ibDhcpRelay2UserInfoVpnIndex      Unsigned32,
+        ibDhcpRelay2UserInfoIpAddr        InetAddressIPv4,
+        ibDhcpRelay2UserInfoMacAddr       MacAddress,
+        ibDhcpRelay2UserInfoIfIndex       InterfaceIndexOrZero,
+        ibDhcpRelay2UserInfoRowStatus     RowStatus
+    }
+
+ibDhcpRelay2UserInfoVpnIndex OBJECT-TYPE
+    SYNTAX      Unsigned32(0 .. 65534)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "VPN index of the DHCP client."
+    ::= { ibDhcpRelay2UserInfoEntry 1 }
+
+ibDhcpRelay2UserInfoIpAddr     OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "DHCP client's IP address."
+    ::= { ibDhcpRelay2UserInfoEntry 2 }
+
+ibDhcpRelay2UserInfoMacAddr    OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "DHCP client's MAC address."
+    ::= { ibDhcpRelay2UserInfoEntry 3 }
+
+ibDhcpRelay2UserInfoIfIndex      OBJECT-TYPE
+    SYNTAX      InterfaceIndexOrZero
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index of the interface that DHCP client adhered to.
+         0 means that no interface information is recorded in the
+         user information entry."
+    ::= { ibDhcpRelay2UserInfoEntry 4 }
+
+ibDhcpRelay2UserInfoRowStatus     OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry.
+         Only destroy action is allow to use."
+    ::= { ibDhcpRelay2UserInfoEntry 5 }
+
+-- =============================================================================
+-- DHCP server trap objects definition.
+-- =============================================================================
+ibDhcpServer2Traps OBJECT IDENTIFIER ::= { ibDhcp4 5 }
+
+ibDhcpServer2TrapNotify OBJECT IDENTIFIER ::= { ibDhcpServer2Traps 0 }
+
+ibDhcpServer2AddrExhaust NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2PoolIndex,
+        ibDhcpServer2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when addresses are exhausted
+         in the DHCP pool."
+    ::= { ibDhcpServer2TrapNotify 1 }
+
+ibDhcpServer2AddrExhaustRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2PoolIndex,
+        ibDhcpServer2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the DHCP pool recovers from
+         address exhaustion."
+    ::= { ibDhcpServer2TrapNotify 2 }
+
+ibDhcpServer2IpUsageOverflow NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2PoolIndex,
+        ibDhcpServer2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the IP address usage of DHCP
+         server pool above the threshold.  The value of the IP address
+         usage is sampled for every 5 minutes."
+    ::= { ibDhcpServer2TrapNotify 3 }
+
+ibDhcpServer2AllocOverflow NOTIFICATION-TYPE
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the success rate of allocation
+         of DHCP server IP address in 5 minutes below the threshold."
+    ::= { ibDhcpServer2TrapNotify 4 }
+
+ibDhcpServer2IpUsageOverflowRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2PoolIndex,
+        ibDhcpServer2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the IP address usage of DHCP
+         server pool reduced to 90% of the threshold.
+         The value of the IP address usage is sampled for every 5 minutes."
+    ::= { ibDhcpServer2TrapNotify 5 }
+
+ibDhcpServer2NetUsageOverflow NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2PoolIndex,
+        ibDhcpServer2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the subnet usage of DHCP
+         server pool has reached or exceeded the threshold. The IP address usage
+         data is polled every 5 minutes."
+    ::= { ibDhcpServer2TrapNotify 6 }
+
+ibDhcpServer2NetUsageOverflowRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2PoolIndex,
+        ibDhcpServer2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the subnet usage in the DHCP
+         server pool has dropped to or below 90% of the threshold.
+         The IP address usage data is polled every 5 minutes."
+    ::= { ibDhcpServer2TrapNotify 7 }
+
+ibDhcpServer2NetExhaust NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2PoolIndex,
+        ibDhcpServer2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when all IP addresses
+         in the DHCP pool are exhausted."
+    ::= { ibDhcpServer2TrapNotify 8 }
+
+ibDhcpServer2NetExhaustRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2PoolIndex,
+        ibDhcpServer2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the DHCP pool recovers from
+         IP address exhaustion."
+    ::= { ibDhcpServer2TrapNotify 9 }
+
+ibDhcpServer2GpNetExhaust NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2PoolGpName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when all IP addresses
+         in the DHCP pool group are exhausted."
+    ::= { ibDhcpServer2TrapNotify 10 }
+
+ibDhcpServer2GpNetExhaustRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2PoolGpName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the DHCP pool group recovers from
+         IP address exhaustion."
+    ::= { ibDhcpServer2TrapNotify 11 }
+
+ibDhcpSvr2AllocIpFailed NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2OnlineFailReason
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when DHCP servers fail to alloc address."
+    ::= { ibDhcpServer2TrapNotify 12 }
+
+ibDhcpServer2ServerDown NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2OnlineFailReason
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the DHCP servers fail to alloc address."
+    ::= { ibDhcpServer2TrapNotify 13 }
+
+ibDhcpSvr2GpAddrExhaus NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2PoolGpName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when all IP addresses
+         in the DHCP pool group are exhausted."
+    ::= { ibDhcpServer2TrapNotify 14 }
+
+ibDhcpSvr2GpAddrExhaustRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2PoolGpName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the DHCP pool group recovers from
+         IP address exhaustion."
+    ::= { ibDhcpServer2TrapNotify 15 }
+
+ibDhcpServer2DevOdapFull NOTIFICATION-TYPE
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when all ODAP
+        address pools on vBRAS device are full."
+    ::= { ibDhcpServer2TrapNotify 16 }
+
+ibDhcpServer2OdapApplyFail NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2OnlineFailReason
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when DHCP servers fail to apply for subnet."
+    ::= { ibDhcpServer2TrapNotify 17 }
+
+ibDhcpServer2OdapReleaseFail NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2OnlineFailReason
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when DHCP servers fail to release subnet."
+    ::= { ibDhcpServer2TrapNotify 18 }
+
+ibDhcpSvr2GpUsageOverflow NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2PoolGpName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the usage of DHCP
+         server pool group has reached or exceeded the threshold.
+         The IP address usage data is polled every 5 minutes."
+    ::= { ibDhcpServer2TrapNotify 19 }
+
+ibDhcpSvr2GpUsageOverflowRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2PoolGpName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the DHCP pool group recovers from
+         IP address exhaustion."
+    ::= { ibDhcpServer2TrapNotify 20 }
+
+ibDhcpSvr2UserIpConflict NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcpServer2PoolName,
+        ibDhcpServer2AllocConflictIP
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the DHCP Server received a decline
+        packet from the client."
+    ::= { ibDhcpServer2TrapNotify 21 }
+
+END

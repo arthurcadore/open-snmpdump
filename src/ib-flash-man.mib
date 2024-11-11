@@ -1,0 +1,1554 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: flash management mib
+-- Reference:
+-- Version: V3.6
+-- History:
+--     V1.0 initial version 2002-12-20
+--     V1.1 2004-6-15 add delete(4) to ibFlhOperType
+--     V1.2 2004-7-15 add some IbFlashOperationStatus types:
+--          opAuthFail(17),
+--          opTimeout(18),
+--          opDeleteFileOpenError(20),
+--          opDeleteInvalidDevice(21),
+--          opDeleteInvalidFunction(22),
+--          opDeleteOperationError(23),
+--          opDeleteInvalidFileName(24),
+--          opDeleteDeviceBusy(25),
+--          opDeleteParaError(26),
+--          opDeleteInvalidPath(27)
+--     V1.21 2004-8-19 modify the DESCRIPTION of ibFlhMinPartitionSize
+--         by fanxiaoxun
+--     V2.0 2004-10-12 updated by gaolong
+--         Fix ibFlhMIBCompliance MODULE name to IB-FLASH-MAN-MIB
+--     V2.1 2004-11-22 modify the SYNTAX of ibFlhSupportNum and ibFlhIndex
+--         by wangpengju
+--     V2.2 2005-01-11 updated by gaolong and weixinzhe
+--         File description updated
+--     V2.3 2005-01-11 add 'rename' operation type for ibFlhOperType,
+--         by wangpengju
+--     V2.4 2005-06-06 add enum value in SYNTAX of ibFlhOperProtocol
+--         by jinyongfeng. Adjust file format by gaolong
+--     V2.5 2005-08-18 change the value range of ibFlhFileIndex
+--         from (1..32) to (1..2147483647), by wangpengju
+--     V2.6 2006-03-03 updated by yangjianfeng
+--         correct some error words which are obvious clerical error.
+--     V2.7 2009-05-05 Add ibFlhOperServerPort by jinyi
+--     V2.8 2010-06-05 add ibFlhOperFailReason by shuaixiaojuan
+--                     add ibFlhKbyteSize by jinyi
+--     V2.9 2010-10-30 Deprecated ibFlhOperServerAddress,
+--                     added enum in IbFlashOperationStatus,
+--                     added ibFlhOperSrvAddrType, ibFlhOperSrvAddrRev and
+--                     ibFlhOperSrvVPNName by songhao.
+--     V3.0 2011-10-13 Modify syntax of ibFlhName and ibFlhPartName
+--                     by shuaixiaojuan.
+--     V3.1 2012-06-26 Add ibFlhPartBootable and ibFlhPartPathForGlobalOpt
+--                     by lisong.
+--     V3.2 2013-05-23 Add ibFlhHCSize, ibFlhPartHCSpace,
+--                     ibFlhPartHCSpaceFree and ibFlhFileHCSize to replace
+--                     ibFlhSize, ibFlhPartSpace, ibFlhPartSpaceFree
+--                     and ibFlhFileSize by lisong.
+--     V3.3 2014-08-11 Added mkdir(6), rmdir(7) to ibFlhOperType, added ibFlhFileType
+--                     to ibFlhFileEntry, modified description of
+--                     ibFlhFileName, ibFlhOperProtocol, ibFlhOperSourceFile
+--                     and IbFlashOperationStatus to support directory operation
+--                     by SongHao.
+--          2015-01-20 Added copy(8) to ibFlhOperType by SongHao.
+--     V3.4 2022-06-15 Added ibFlashTrapV2, ibFlashTrapV2Prefix, ibFlhUsageOverThreshold,
+--                     ibFlhUsageResume, ibFlashTrapInfor, ibFlhUsageRate,
+--                     ibFlhUsageRateThreshold, ibFlhNameForTrap by caohao.
+--     V3.5 2022-11-28 Added ibFlhStateSrcChassis, ibFlhStateSrcSlot, ibFlhStateSrcCpu,
+--                     ibFlhStateDestChassis, ibFlhStateDestSlot, ibFlhStateDestCpu,
+--                     ibFlhStateFailure, ibFlhStateResume by caohao.
+--     V3.6 2023-08-11 Added ibFlhAbnormal by liziyi.
+-- =================================================================
+IB-FLASH-MAN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    PhysicalIndex
+        FROM ENTITY-MIB
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP
+        FROM SNMPv2-CONF
+    TimeTicks, IpAddress, Integer32, Gauge32, Counter32,
+    OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB
+    DisplayString, TimeStamp, TruthValue, RowStatus, TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    CounterBasedGauge64
+        FROM HCNUM-TC;
+
+
+ibFlash MODULE-IDENTITY
+    LAST-UPDATED "202308110000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB contains objects to manage flash cards and flash
+        card operations.
+        There are no constraints on this MIB."
+    REVISION "202308110000Z"
+    DESCRIPTION
+        "Added ibFlhAbnormal"
+    REVISION "202211280000Z"
+    DESCRIPTION
+        "Added ibFlhStateSrcChassis, ibFlhStateSrcSlot, ibFlhStateSrcCpu,
+        ibFlhStateDestChassis, ibFlhStateDestSlot, ibFlhStateDestCpu,
+        ibFlhStateFailure, ibFlhStateResume."
+    REVISION "202206150000Z"
+    DESCRIPTION
+        "Added ibFlashTrapV2, ibFlashTrapV2Prefix,ibFlhUsageOverThreshold,
+        ibFlhUsageResume, ibFlashTrapInfor, ibFlhUsageRate,
+        ibFlhUsageRateThreshold, ibFlhNameForTrap."
+    REVISION "201501200808Z"
+    DESCRIPTION
+        "Added copy(8) to ibFlhOperType."
+    REVISION "201408110303Z"
+    DESCRIPTION
+        "Added mkdir(6), rmdir(7) to ibFlhOperType, added ibFlhFileType
+        to ibFlhFileEntry, modified description of
+        ibFlhFileName, ibFlhOperProtocol, ibFlhOperSourceFile
+        and IbFlashOperationStatus to support directory operation."
+    REVISION "201305230000Z"
+    DESCRIPTION
+        "Add ibFlhHCSize, ibFlhPartHCSpace, ibFlhPartHCSpaceFree and
+        ibFlhFileHCSize to replace ibFlhSize, ibFlhPartSpace,
+        ibFlhPartSpaceFree and ibFlhFileSize."
+    REVISION "201206260000Z"
+    DESCRIPTION
+        "Add ibFlhPartBootable and ibFlhPartPathForGlobalOpt."
+    REVISION "201110130000Z"
+    DESCRIPTION
+        "Modify syntax of ibFlhName and ibFlhPartName."
+    REVISION "201010300000Z"
+    DESCRIPTION
+        "Deprecated ibFlhOperServerAddress, added enum in
+        IbFlashOperationStatus, added ibFlhOperSrvAddrType,
+        ibFlhOperSrvAddrRev and ibFlhOperSrvVPNName."
+    REVISION "201006050000Z"
+    DESCRIPTION
+        "Add ibFlhOperFailReason and ibFlhKbyteSize."
+    REVISION "200905050000Z"
+    DESCRIPTION
+        "Add ibFlhOperServerPort."
+    REVISION "200603030000Z"
+    DESCRIPTION
+        "Correct some error words which are obvious clerical error."
+    REVISION "200508180000Z"
+    DESCRIPTION
+        "Change the value range of ibFlhFileIndex from (1..32)
+        to (1..2147483647)."
+    REVISION "200506060000Z"
+    DESCRIPTION
+        "Add enum value in SYNTAX of ibFlhOperProtocol.
+         Adjust file format."
+    REVISION "200501110800Z"
+    DESCRIPTION
+        "Add 'rename' operation type for ibFlhOperType."
+    REVISION "200501110000Z"
+    DESCRIPTION
+        "File description updated."
+    REVISION "200411220000Z"
+    DESCRIPTION
+        "Modify the SYNTAX of ibFlhSupportNum and ibFlhIndex."
+    REVISION "200410120000Z"
+    DESCRIPTION
+        "Fix ibFlhMIBCompliance MODULE name to IB-FLASH-MAN-MIB."
+    REVISION "200408190000Z"
+    DESCRIPTION
+        "Modify the DESCRIPTION of ibFlhMinPartitionSize."
+    REVISION "200407150000Z"
+    DESCRIPTION
+        "Add some IbFlashOperationStatus types:
+        opAuthFail(17),
+        opTimeout(18),
+        opDeleteFileOpenError(20),
+        opDeleteInvalidDevice(21),
+        opDeleteInvalidFunction(22),
+        opDeleteOperationError(23),
+        opDeleteInvalidFileName(24),
+        opDeleteDeviceBusy(25),
+        opDeleteParaError(26),
+        opDeleteInvalidPath(27)"
+    REVISION "200406150000Z"
+    DESCRIPTION
+        "add delete(4) to ibFlhOperType."
+    REVISION "200212200000Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { ibCommon 5 }
+
+
+--
+-- Textual conventions
+--
+
+IbFlashOperationStatus ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "The status of the specified operation can be one of
+        the following.
+
+        opInProgress : The operation is in process.
+        opSuccess : The operation has been completed successfully.
+        opInvalid : The command is invalid or command-protocol-device
+                    combination is unsupported by the system.
+        opInvalidProtocol : Invalid protocol is specified.
+        opInvalidSourceName : Invalid source name is specified.
+        opInvalidDestName : Invalid target name is specified.
+        opInvalidServerAddress : Invalid server address is specified.
+        opDeviceBusy : The device is in use and locked by another process.
+        opDeviceOpenError : Invalid device name is specified.
+        opDeviceError : Device read, write or erase error.
+        opDeviceNotProgrammable : Device is read-only but a write or
+                                  erase operation was specified.
+        opDeviceFull : Device is filled to capacity.
+        opFileOpenError : Invalid file/directory name,
+                          file/directory not found in partition.
+        opFileTransferError : File transfer was unsuccessful.
+        opFileChecksumError : File checksum in Flash is invalid.
+        opNoMemory : System is running in low on memory.
+        opUnknownFailure : Failure which is unknown.
+        opDeleteFileOpenError : File/Directory is in used by another process.
+        opDeleteInvalidDevice : Invalid device name is specified.
+        opDeleteInvalidFunction : Deleted operation is unsupported
+                                  by the device.
+        opDeleteOperationError : Operation is in a low error.
+        opDeleteInvalidFileName : Invalid name is specified.
+        opDeleteDeviceBusy : The device is in use and locked
+                            by another process.
+        opDeleteParaError : The parameters are invalid.
+        opDeleteInvalidPath : The path is invalid.
+        opDeleteFileNotExistInSlave : Failed to delete file, because the file
+                                      does not exist in the slave.
+        opDeleteFileFailedInSlave : Operation failed when deleting file in the slave.
+        opSlaveFull : Operation failed because the slave doesn't have enough space.
+        opCopyToSlaveFailure : Operation failed when copying file to the slave.
+        "
+    SYNTAX INTEGER
+        {
+            opInProgress(1),
+            opSuccess(2),
+            opInvalid(3),
+            opInvalidProtocol(4),
+            opInvalidSourceName(5),
+            opInvalidDestName(6),
+            opInvalidServerAddress(7),
+            opDeviceBusy(8),
+            opDeviceOpenError(9),
+            opDeviceError(10),
+            opDeviceNotProgrammable(11),
+            opDeviceFull(12),
+            opFileOpenError(13),
+            opFileTransferError(14),
+            opFileChecksumError(15),
+            opNoMemory(16),
+            opAuthFail(17),
+            opTimeout(18),
+            opUnknownFailure(19),
+            opDeleteFileOpenError(20),
+            opDeleteInvalidDevice(21),
+            opDeleteInvalidFunction(22),
+            opDeleteOperationError(23),
+            opDeleteInvalidFileName(24),
+            opDeleteDeviceBusy(25),
+            opDeleteParaError(26),
+            opDeleteInvalidPath(27),
+            opDeleteFileNotExistInSlave(28),
+            opDeleteFileFailedInSlave(29),
+            opSlaveFull(30),
+            opCopyToSlaveFailure(31)
+        }
+
+IbFlashPartitionUpgradeMode ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "
+        Flash partition upgrade method, i.e., method by which
+        new files can be downloaded into the partition.
+        FLH stands for Flash Load Helper, a feature provided
+        on run-from-Flash systems for upgrading Flash.  This
+        feature uses the bootstrap code in ROMs to help in
+        automatic download.
+        This object should be retrieved if the partition
+        status is runFromFlash(2).
+        If the partition status is readOnly(1), the upgrade
+        method would depend on the reason for the readOnly
+        status.  For example, it may simply be a matter of installing
+        the programming jumper, or it may require execution of a
+        later version of software that supports the Flash chips.
+
+        unknown      -  the current system image does not know
+                how Flash can be programmed.  A possible
+                method would be to reload the ROM image
+                and perform the upgrade manually.
+        rxbootFLH    -  the Flash Load Helper is available to
+                download files to Flash.  A copy-to-flash
+                command can be used and this system image
+                will automatically reload the Rxboot image
+                in ROM and direct it to carry out the
+                download request.
+        direct       -  will be done directly by this image.
+        "
+    SYNTAX INTEGER
+        {
+            unknown(1),
+            rxbootFLH(2),
+            direct(3)
+        }
+
+IbFlashPartitionStatus ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "If device is not programmable the value of it will be
+        'readOnly'; If the current image is running from
+        this partition the value of it will be 'runFromFlash'
+        If device is programmable the value of it will be 'readWrite'.
+        "
+    SYNTAX INTEGER
+        {
+            readOnly(1),
+            runFromFlash(2),
+            readWrite(3)
+        }
+
+
+--
+-- Node definitions
+--
+ibFlashManMIBObjects OBJECT IDENTIFIER ::= { ibFlash 1 }
+
+
+-- The flash device information.
+ibFlashDevice OBJECT IDENTIFIER ::= { ibFlashManMIBObjects 1 }
+
+
+ibFlhSupportNum OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        Specifies the total number of flash which the
+        system supported.
+
+        The MIB should not be loaded if there is no flash
+        in the system and so the value here will be a
+        minimum of 1.
+        "
+    ::= { ibFlashDevice 1 }
+
+
+ibFlashTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFlashEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "
+        This table gives the properties of all the flashes on
+        the system.
+        "
+    ::= { ibFlashDevice 2 }
+
+
+ibFlashEntry OBJECT-TYPE
+    SYNTAX IbFlashEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The entry of ibFlashTable."
+    INDEX { ibFlhIndex }
+    ::= { ibFlashTable 1 }
+
+
+IbFlashEntry ::=
+    SEQUENCE {
+        ibFlhIndex                 Integer32,
+        ibFlhSize                  Integer32,
+        ibFlhPos                   PhysicalIndex,
+        ibFlhName                  DisplayString,
+        ibFlhChipNum               Integer32,
+        ibFlhDescr                 DisplayString,
+        ibFlhInitTime              TimeStamp,
+        ibFlhRemovable             TruthValue,
+        ibFlhPartitionBool         TruthValue,
+        ibFlhMinPartitionSize      Integer32,
+        ibFlhMaxPartitions         Integer32,
+        ibFlhPartitionNum          Integer32,
+        ibFlhKbyteSize             Integer32,
+        ibFlhHCSize                CounterBasedGauge64
+     }
+
+ibFlhIndex OBJECT-TYPE
+    SYNTAX Integer32 (1..2147483647)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        The index of ibFlashTable.  There are two parts for this index
+        depicted as follows:
+        31                  15                  0
+        +++++++++++++++++++++++++++++++++++++++++
+        +   entity index    +    random index   +
+        +   ( bit 16..31 )       ( bit 0..15 )  +
+        +++++++++++++++++++++++++++++++++++++++++
+
+        From bit0 to bit15 (two bytes), it has a minimum value of 1, and
+        maximum value of the same as the value of ibFlhSupportNum.
+
+        From bit16 to bit31 (two bytes), it is the physical index the same as the
+        entPhysicalIndex specified in ENTITY-MIB.
+        "
+    ::= { ibFlashEntry 1 }
+
+
+ibFlhSize OBJECT-TYPE
+    SYNTAX Integer32
+    UNITS "bytes"
+    MAX-ACCESS read-only
+    STATUS deprecated
+    DESCRIPTION
+        "
+        Specifies the total size of the flash indexed by ibFlhIndex.
+        The value should be zero if the flash is removed for a removable
+        device.
+        If the total size of the flash exceeds 2,147,483,647 bytes,
+        ibFlhHCSize specifies the actual size.
+        "
+    ::= { ibFlashEntry 2 }
+
+
+ibFlhPos OBJECT-TYPE
+    SYNTAX PhysicalIndex
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        The position of the flash device in system.  This object is
+        an index of entPhysicalTable in ENTITY-MIB.
+        If the value of this object is 0,
+        the main processor is indicated.
+        "
+    ::= { ibFlashEntry 3 }
+
+
+ibFlhName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..255))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The flash name within the system."
+    ::= { ibFlashEntry 4 }
+
+
+ibFlhChipNum OBJECT-TYPE
+    SYNTAX Integer32 (1..64)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The chip numbers in the flash."
+    ::= { ibFlashEntry 5 }
+
+
+ibFlhDescr OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..64))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Description of the purpose of the flash in the system."
+    ::= { ibFlashEntry 6 }
+
+
+ibFlhInitTime OBJECT-TYPE
+    SYNTAX TimeStamp
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        The initialization time for the flash component or partition,
+        recorded using the system time.  This will be the boot time for
+        a fixed device.  For a removable component or a partition,
+        it will be the initialization time.
+        "
+    ::= { ibFlashEntry 8 }
+
+
+ibFlhRemovable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        The value indicates whether the flash indexed can be removed
+        or not.
+        The true(1) value indicates the flash device CAN be removed.
+        "
+    ::= { ibFlashEntry 9 }
+
+
+ibFlhPartitionBool OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "
+        The value indicates whether the flash indexed can be partitioned
+        or not.
+        The true(1) value indicates the flash CAN be partitioned.
+        "
+    ::= { ibFlashEntry 11 }
+
+
+ibFlhMinPartitionSize OBJECT-TYPE
+    SYNTAX Integer32
+    UNITS "bytes"
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        Minimum partition size supported.
+        If ibFlhDevicePartitionBool is false, the value
+        of this object is the same as ibFlhSize.
+        "
+    ::= { ibFlashEntry 12 }
+
+
+ibFlhMaxPartitions OBJECT-TYPE
+    SYNTAX Integer32 (1..8)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        The maximum count of partitions which the system supports
+        for this flash.  If ibFlhPartitionBool is false,
+        the object value is 1.
+        "
+    ::= { ibFlashEntry 13 }
+
+
+ibFlhPartitionNum OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        The actual number of partitions supported by the system for
+        this flash.  If ibFlhPartitionBool is false, this value is 1.
+        "
+    ::= { ibFlashEntry 14 }
+
+ibFlhKbyteSize OBJECT-TYPE
+    SYNTAX Integer32
+    UNITS "kbytes"
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        Specifies the total size of the flash device indexed
+        by ibFlhIndex.  The value should be zero if the flash is
+        removed for a removable device.
+        "
+    ::= { ibFlashEntry 15 }
+
+ibFlhHCSize OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    UNITS "bytes"
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        Specifies the total size of the flash indexed by ibFlhIndex.
+        This node is a 64-bit substitute for ibFlhSize.
+        "
+    ::= { ibFlashEntry 16 }
+
+ibFlashChips OBJECT IDENTIFIER ::= { ibFlashDevice 3 }
+
+
+ibFlhChipTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFlhChipEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "
+        Table of properties for all flash chips.
+        Used mainly for diagnostics.
+        "
+    ::= { ibFlashChips 1 }
+
+
+ibFlhChipEntry OBJECT-TYPE
+    SYNTAX IbFlhChipEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The entry of ibFlhChipTable"
+    INDEX { ibFlhIndex, ibFlhChipSerialNo }
+    ::= { ibFlhChipTable 1 }
+
+
+IbFlhChipEntry ::=
+    SEQUENCE {
+        ibFlhChipSerialNo              Integer32,
+        ibFlhChipID                    DisplayString,
+        ibFlhChipDescr                 DisplayString,
+        ibFlhChipWriteTimesLimit       Integer32,
+        ibFlhChipWriteTimes            Counter32,
+        ibFlhChipEraseTimesLimit       Integer32,
+        ibFlhChipEraseTimes            Counter32
+     }
+
+ibFlhChipSerialNo OBJECT-TYPE
+    SYNTAX Integer32 (1..64)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Index of ibFlhChipTable."
+    ::= { ibFlhChipEntry 1 }
+
+
+ibFlhChipID OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..5))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        The manufacturer code (the upper byte) and
+        device code (the lower byte) for a chip.
+        Unknown chip code is presented as 00:00.
+        "
+    ::= { ibFlhChipEntry 2 }
+
+
+ibFlhChipDescr OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        The description of the flash chip.
+        "
+    ::= { ibFlhChipEntry 3 }
+
+
+ibFlhChipWriteTimesLimit OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        The limit for the number of write times (retries)
+        for a flash chip.  If the limit
+        is exceeded an error should be reported by the management
+        station.
+        "
+    ::= { ibFlhChipEntry 4 }
+
+
+ibFlhChipWriteTimes OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        A count of write times (retries) for the flash chip since
+        initialization.
+        A count of 25 or more for a single chip indicates a write error.
+        Management stations should note the value of this MIB before and
+        after a write operation,
+        and report any errors accordingly.
+        "
+    ::= { ibFlhChipEntry 5 }
+
+
+ibFlhChipEraseTimesLimit OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        The limit for the number of erase times (retries) for a flash
+        chip.
+        If the limit is exceeded an error should be reported by the
+        management station.
+        "
+    ::= { ibFlhChipEntry 6 }
+
+
+ibFlhChipEraseTimes OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        A count of erase times (retries) for the flash chip since
+        initialization.
+        A count of 2000 or more for a single chip indicates a write
+        error.
+        Management stations should note the value of this MIB before and
+        after an erase operation, and report any errors accordingly.
+        "
+    ::= { ibFlhChipEntry 7 }
+
+
+ibFlashPartitions OBJECT IDENTIFIER ::= { ibFlashDevice 4 }
+
+
+ibFlhPartitionTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFlhPartitionEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "
+        Properties for the flash partitions.  Minimum of one entry in
+        this table.
+        "
+    ::= { ibFlashPartitions 1 }
+
+
+ibFlhPartitionEntry OBJECT-TYPE
+    SYNTAX IbFlhPartitionEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "
+        An entry of the ibFlhPartitionTable.Indexed by flash
+        number and partition number.
+        "
+    INDEX { ibFlhIndex, ibFlhPartIndex }
+    ::= { ibFlhPartitionTable 1 }
+
+
+IbFlhPartitionEntry ::=
+SEQUENCE {
+    ibFlhPartIndex                 Integer32,
+    ibFlhPartFirstChip             Integer32,
+    ibFlhPartLastChip              Integer32,
+    ibFlhPartSpace                 Integer32,
+    ibFlhPartSpaceFree             Gauge32,
+    ibFlhPartFileNum               Integer32,
+    ibFlhPartChecksumMethod        INTEGER,
+    ibFlhPartStatus                IbFlashPartitionStatus,
+    ibFlhPartUpgradeMode           IbFlashPartitionUpgradeMode,
+    ibFlhPartName                  DisplayString,
+    ibFlhPartRequireErase          TruthValue,
+    ibFlhPartFileNameLen           Integer32,
+    ibFlhPartBootable              TruthValue,
+    ibFlhPartPathForGlobalOpt      TruthValue,
+    ibFlhPartHCSpace               CounterBasedGauge64,
+    ibFlhPartHCSpaceFree           CounterBasedGauge64
+ }
+
+ibFlhPartIndex OBJECT-TYPE
+    SYNTAX Integer32 (1..8)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "
+        An index which specifies a sequenced partition in the system.
+        "
+    ::= { ibFlhPartitionEntry 1 }
+
+
+ibFlhPartFirstChip OBJECT-TYPE
+    SYNTAX Integer32 (1..64)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        The first chip's sequence number in the
+        partition, by which a chip can be indexed in
+        chip table.
+        "
+    ::= { ibFlhPartitionEntry 2 }
+
+
+ibFlhPartLastChip OBJECT-TYPE
+    SYNTAX Integer32 (1..64)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        The last chip's sequence number in the
+        partition, by which a chip can be indexed in
+        chip table.
+        "
+    ::= { ibFlhPartitionEntry 3 }
+
+
+ibFlhPartSpace OBJECT-TYPE
+    SYNTAX Integer32
+    UNITS "bytes"
+    MAX-ACCESS read-only
+    STATUS deprecated
+    DESCRIPTION
+        "
+        The total space of the flash partition.
+        The following should be satisfied:
+        ibFlhPartSpace = n*ibFlhMinPartitionSize
+        If the total size of the flash partition exceeds 2,147,483,647 bytes,
+        ibFlhPartHCSpace specifies the actual size.
+        "
+    ::= { ibFlhPartitionEntry 4 }
+
+
+ibFlhPartSpaceFree OBJECT-TYPE
+    SYNTAX Gauge32
+    UNITS "bytes"
+    MAX-ACCESS read-only
+    STATUS deprecated
+    DESCRIPTION
+        "
+        The flash partition's free space.
+        If the free space of the flash partition exceeds 2,147,483,647 bytes,
+        ibFlhPartHCSpaceFree specifies the actual free space.
+        "
+    ::= { ibFlhPartitionEntry 5 }
+
+
+ibFlhPartFileNum OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of all the files in the flash partition."
+    ::= { ibFlhPartitionEntry 6 }
+
+
+ibFlhPartChecksumMethod OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+            simpleChecksum(1),
+            undefined(2),
+            simpleCRC(3)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The Checksum method which the file system uses."
+    ::= { ibFlhPartitionEntry 7 }
+
+
+ibFlhPartStatus OBJECT-TYPE
+    SYNTAX IbFlashPartitionStatus
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The flash partition status."
+    ::= { ibFlhPartitionEntry 8 }
+
+
+ibFlhPartUpgradeMode OBJECT-TYPE
+    SYNTAX IbFlashPartitionUpgradeMode
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The upgrade mode of the Flash partition"
+    ::= { ibFlhPartitionEntry 9 }
+
+
+ibFlhPartName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..255))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The name of the flash partition given by the system."
+    ::= { ibFlhPartitionEntry 10 }
+
+
+ibFlhPartRequireErase OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        Shows whether a write operation is conditional on partition
+        erase.
+        "
+    ::= { ibFlhPartitionEntry 11 }
+
+
+ibFlhPartFileNameLen OBJECT-TYPE
+    SYNTAX Integer32 (1..256)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The maximum length of file name supported in the system."
+    ::= { ibFlhPartitionEntry 12 }
+
+ibFlhPartBootable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The value indicates whether the partition is a bootable partition.
+         The true(1) value indicates a bootable partition.
+        "
+    ::= { ibFlhPartitionEntry 13 }
+
+ibFlhPartPathForGlobalOpt OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The value indicates whether the partition is used in a global file
+         operation.  The true(1) value indicates that in one global file
+         operation files will be copied to or deleted from this partition.
+         When ibFlhPartPathForGlobalOpt in one entry is set to true(1),
+         ibFlhPartPathForGlobalOpt in other entries with the same entity
+         index will be set to false(0).
+        "
+    ::= { ibFlhPartitionEntry 14 }
+
+ibFlhPartHCSpace OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    UNITS "bytes"
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        The total space of the flash partition.
+        This node is a 64-bit substitute for ibFlhPartSpace.
+        "
+    ::= { ibFlhPartitionEntry 15 }
+
+
+ibFlhPartHCSpaceFree OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    UNITS "bytes"
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        The flash partition's free space.
+        This node is a 64-bit substitue for ibFlhPartSpace.
+        "
+    ::= { ibFlhPartitionEntry 16 }
+
+
+
+ibFlhFiles OBJECT IDENTIFIER ::= { ibFlashPartitions 2 }
+
+
+ibFlhFileTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFlhFileEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Table of file information."
+    ::= { ibFlhFiles 1 }
+
+
+ibFlhFileEntry OBJECT-TYPE
+    SYNTAX IbFlhFileEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "
+        An entry representing a file.  Indexed using flash number,
+        partition number, and file number.
+        "
+    INDEX { ibFlhIndex, ibFlhPartIndex, ibFlhFileIndex }
+    ::= { ibFlhFileTable 1 }
+
+
+IbFlhFileEntry ::=
+    SEQUENCE {
+        ibFlhFileIndex         Integer32,
+        ibFlhFileName          DisplayString,
+        ibFlhFileSize          Integer32,
+        ibFlhFileStatus        INTEGER,
+        ibFlhFileChecksum      OCTET STRING,
+        ibFlhFileHCSize        CounterBasedGauge64,
+        ibFlhFileType          INTEGER
+        }
+
+ibFlhFileIndex OBJECT-TYPE
+    SYNTAX Integer32 (1..2147483647)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Index of the table, whose range is from 1 to 2147483647"
+    ::= { ibFlhFileEntry 1 }
+
+
+ibFlhFileName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (1..255))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "A valid file/directory name supported by the file system."
+    ::= { ibFlhFileEntry 2 }
+
+
+ibFlhFileSize OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS deprecated
+    DESCRIPTION
+        "
+        The file size in bytes excluding the file
+        header of file system.  The value should be greater than zero.
+        If the file size exceeds 2,147,483,647 bytes, ibFlhFileHCSize
+        specifies the actual size.
+        "
+    ::= { ibFlhFileEntry 3 }
+
+
+ibFlhFileStatus OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+            deleted(1),
+            invalidChecksum(2),
+            valid(3)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        The status should be as follows:
+        deleted(1):  The file is in recycle bin.
+        invalidChecksum(2):  The checksum of file is invalid;
+        valid(3):  A valid file.
+        "
+    ::= { ibFlhFileEntry 4 }
+
+
+ibFlhFileChecksum OBJECT-TYPE
+    SYNTAX OCTET STRING
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The file checksum in the header of file."
+    ::= { ibFlhFileEntry 5 }
+
+
+ibFlhFileHCSize OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    UNITS "bytes"
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "
+        The file size in bytes.
+        This node is a 64-bit substitue for ibFlhFileSize.
+        "
+    ::= { ibFlhFileEntry 6 }
+
+ibFlhFileType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+            file(1),
+            directory(2)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates whether it is a file or directory."
+    ::= { ibFlhFileEntry 7 }
+
+
+-- The operation on the flash.
+ibFlashOperate OBJECT IDENTIFIER ::= { ibFlashManMIBObjects 2 }
+
+
+ibFlhOpTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFlhOpEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Table used to operate flash."
+    ::= { ibFlashOperate 1 }
+
+
+ibFlhOpEntry OBJECT-TYPE
+    SYNTAX IbFlhOpEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "
+        Note an operation cannot be stopped until it is finished.
+
+        If notification is configured, NMS will receive a notification
+        at the end of the operation.
+
+        Entries in the table will be removed automatically in 5 minutes.
+        It can also be deleted by NMS directly.
+        "
+    INDEX { ibFlhOperIndex }
+    ::= { ibFlhOpTable 1 }
+
+
+IbFlhOpEntry ::=
+    SEQUENCE {
+        ibFlhOperIndex                 Integer32,
+        ibFlhOperType                  INTEGER,
+        ibFlhOperProtocol              INTEGER,
+        ibFlhOperServerAddress         IpAddress,
+        ibFlhOperServerUser            DisplayString,
+        ibFlhOperPassword              DisplayString,
+        ibFlhOperSourceFile            DisplayString,
+        ibFlhOperDestinationFile       DisplayString,
+        ibFlhOperStatus                IbFlashOperationStatus,
+        ibFlhOperEndNotification       TruthValue,
+        ibFlhOperProgress              TimeTicks,
+        ibFlhOperRowStatus             RowStatus,
+        ibFlhOperServerPort            Integer32,
+        ibFlhOperFailReason            DisplayString,
+        ibFlhOperSrvAddrType           InetAddressType,
+        ibFlhOperSrvAddrRev            InetAddress,
+        ibFlhOperSrvVPNName            DisplayString
+        }
+
+ibFlhOperIndex OBJECT-TYPE
+    SYNTAX Integer32 (1..2147483647)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "
+        Specifies the index of an entry.  It is a
+        random value when creating an entry.
+        "
+    ::= { ibFlhOpEntry 1 }
+
+
+ibFlhOperType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+            net2FlashWithErase(1),
+            net2FlashWithoutErase(2),
+            flash2Net(3),
+            delete(4),
+            rename(5),
+            mkdir(6),
+            rmdir(7),
+            copy(8)
+        }
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "
+        Specifies the operation to be executed.
+
+        net2FlashWithErase  Copy a file to flash; erase flash beforehand.
+        net2FlashWithoutErase   Copy a file to flash; do not erase flash
+                                  beforehand.
+        flash2Net       Copy a file from flash.
+        delete          Delete a file that is specified by
+                          ibFlhOperSourceFile.
+        rename          Change a file's name.
+        mkdir           Create a directory that is specified by
+                          ibFlhOperSourceFile.
+        rmdir           Delete a directory that is specified by
+                          ibFlhOperSourceFile.
+        copy            Copy a file.
+        "
+    ::= { ibFlhOpEntry 2 }
+
+
+ibFlhOperProtocol OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+            ftp(1),
+            tftp(2),
+            clusterftp(3),
+            clustertftp(4),
+            sftp(5)
+        }
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "
+        Specifies the protocol used to transfer a file.
+        The default protocol is ftp.
+
+        A directory cannot be transferred.
+
+        when 'clusterftp' or 'clustertftp' is selected,
+        the ibFlhOperServerAddress needn't be set,
+        the server address can be acquired automatically, the value of
+        ibFlhOperServerAddress is uncertain during operation.
+        Both member switch and commander switch can use them if they
+        support HGMP v2.
+        "
+    DEFVAL { ftp }
+    ::= { ibFlhOpEntry 3 }
+
+
+ibFlhOperServerAddress OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-create
+    STATUS deprecated
+    DESCRIPTION
+        "
+        The address of remote host acting as server for operation.
+
+        The default value is 255.255.255.255
+
+        This object is replaced by ibFlhOperSrvAddrRev for it only support IPv4.
+        "
+    DEFVAL { 'FFFFFFFF'h }
+    ::= { ibFlhOpEntry 4 }
+
+
+ibFlhOperServerUser OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "
+        When using ftp to transfer files, the user name must be
+        specified through this node.
+        "
+    ::= { ibFlhOpEntry 5 }
+
+
+ibFlhOperPassword OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "
+        Remote user password for copying via ftp protocol.  Optionally,
+        This object may be ignored for protocols other than ftp. "
+    ::= { ibFlhOpEntry 6 }
+
+
+ibFlhOperSourceFile OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (1..255))
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "
+        Specifies the source file/directory name for this operation
+        that is specified by ibFlhOperType.
+
+        It may be located on flash or remote server.
+        It may include the file path if it is applicable.
+        It must be specified.
+        "
+    ::= { ibFlhOpEntry 7 }
+
+
+ibFlhOperDestinationFile OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "
+        Specifies the destination file name.
+        It may be located on flash or remote server.
+        It may include the file path if it is applicable.
+        If it is not specified, the destination file name
+        is the same as source file name for application.
+        "
+    ::= { ibFlhOpEntry 8 }
+
+
+ibFlhOperStatus OBJECT-TYPE
+    SYNTAX IbFlashOperationStatus
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The status of operation."
+    ::= { ibFlhOpEntry 9 }
+
+
+ibFlhOperEndNotification OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "
+        If the value of it is specified 'true', a notification
+        will be generated at the end of the operation.
+        Else no notification will be generated.
+        "
+    DEFVAL { false }
+    ::= { ibFlhOpEntry 10 }
+
+
+ibFlhOperProgress OBJECT-TYPE
+    SYNTAX TimeTicks
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The progress described as the time taken for the operation.
+        "
+    ::= { ibFlhOpEntry 11 }
+
+
+ibFlhOperRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The row status of this table entry."
+    ::= { ibFlhOpEntry 12 }
+
+ibFlhOperServerPort OBJECT-TYPE
+    SYNTAX Integer32 (0..65535)
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The port of remote host acting as server for operation.
+         If the value of this object is not specified, the server
+         port is the known protocol port."
+    ::= { ibFlhOpEntry 13 }
+
+ibFlhOperFailReason OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The failure reasons of operation."
+    ::= { ibFlhOpEntry 14 }
+
+ibFlhOperSrvAddrType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The type of IP address for ibFlhOperSrvAddrRev."
+    ::= { ibFlhOpEntry 15 }
+
+ibFlhOperSrvAddrRev OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The address of remote host acting as server for operation."
+    ::= { ibFlhOpEntry 16 }
+
+ibFlhOperSrvVPNName OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The VPN instance of this operation uses."
+    ::= { ibFlhOpEntry 17 }
+
+ibFlashNotification OBJECT IDENTIFIER ::= { ibFlashManMIBObjects 3 }
+
+
+ibFlhOperNotification NOTIFICATION-TYPE
+    OBJECTS { ibFlhOperStatus }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibFlhOperNotification is sent at the completion of a flash
+        copy operation if ibFlhOperEndNotification is true.
+        "
+    ::= { ibFlashNotification 1 }
+
+ibFlashTrapV2 OBJECT IDENTIFIER ::= { ibFlashManMIBObjects 4 }
+ibFlashTrapV2Prefix OBJECT IDENTIFIER ::= { ibFlashTrapV2 0 }
+
+ibFlhUsageOverThreshold NOTIFICATION-TYPE
+    OBJECTS { ibFlhUsageRate, ibFlhUsageRateThreshold, ibFlhNameForTrap }
+    STATUS current
+    DESCRIPTION
+        "The disk usage exceeded the threshold."
+    ::= { ibFlashTrapV2Prefix 1 }
+
+ibFlhUsageResume NOTIFICATION-TYPE
+    OBJECTS { ibFlhUsageRate, ibFlhUsageRateThreshold, ibFlhNameForTrap }
+    STATUS current
+    DESCRIPTION
+        "The disk usage dropped below the threshold."
+    ::= { ibFlashTrapV2Prefix 2 }
+
+ibFlhStateFailure NOTIFICATION-TYPE
+    OBJECTS { ibFlhStateSrcChassis, ibFlhStateSrcSlot, ibFlhStateSrcCpu,
+              ibFlhStateDestChassis, ibFlhStateDestSlot, ibFlhStateDestCpu }
+    STATUS current
+    DESCRIPTION
+        "The filesystem state is failure."
+    ::= { ibFlashTrapV2Prefix 3 }
+
+ibFlhStateResume NOTIFICATION-TYPE
+    OBJECTS { ibFlhStateSrcChassis, ibFlhStateSrcSlot, ibFlhStateSrcCpu,
+              ibFlhStateDestChassis, ibFlhStateDestSlot, ibFlhStateDestCpu }
+    STATUS current
+    DESCRIPTION
+        "The filesystem state is resume."
+    ::= { ibFlashTrapV2Prefix 4 }
+
+ibFlhAbnormal NOTIFICATION-TYPE
+    OBJECTS { ibFlhNameForTrap }
+    STATUS current
+    DESCRIPTION
+        "The disk is abnormal."
+    ::= { ibFlashTrapV2Prefix 5 }
+
+ibFlashTrapInfor OBJECT IDENTIFIER ::= { ibFlashManMIBObjects 5 }
+
+ibFlhUsageRate OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Disk usage"
+    ::= { ibFlashTrapInfor 1}
+
+ibFlhUsageRateThreshold OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Disk usage threshold"
+    ::= { ibFlashTrapInfor 2}
+
+ibFlhNameForTrap OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Disk name."
+    ::= { ibFlashTrapInfor 3}
+
+ibFlhStateSrcChassis OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Src chassis"
+    ::= { ibFlashTrapInfor 4}
+
+ibFlhStateSrcSlot OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Src slot"
+    ::= { ibFlashTrapInfor 5}
+
+ibFlhStateSrcCpu OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Src cpu"
+    ::= { ibFlashTrapInfor 6}
+
+ibFlhStateDestChassis OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Dest chassis"
+    ::= { ibFlashTrapInfor 7}
+
+ibFlhStateDestSlot OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Dest slot"
+    ::= { ibFlashTrapInfor 8}
+
+ibFlhStateDestCpu OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Dest cpu"
+    ::= { ibFlashTrapInfor 9}
+
+ibFlashMIBConformance OBJECT IDENTIFIER ::= { ibFlash 2 }
+
+
+ibFlhMIBCompliances OBJECT IDENTIFIER ::= { ibFlashMIBConformance 1 }
+
+
+ibFlhMIBCompliance MODULE-COMPLIANCE
+    STATUS current
+    DESCRIPTION
+        "
+        The statement of compliance for those implementing this MIB.
+        "
+    MODULE IB-FLASH-MAN-MIB
+    MANDATORY-GROUPS { ibFlhGroup, ibFlhPartitionGroup,
+      ibFlhFileGroup, ibFlhOperationGroup, ibFlhNotificationGroup
+         }
+    GROUP ibFlhChipGroup
+    DESCRIPTION
+        " "
+    ::= { ibFlhMIBCompliances 1 }
+
+
+ibFlashMIBGroups OBJECT IDENTIFIER ::= { ibFlashMIBConformance 2 }
+
+
+ibFlhGroup OBJECT-GROUP
+    OBJECTS { ibFlhSupportNum, ibFlhSize, ibFlhPos, ibFlhName,
+        ibFlhChipNum, ibFlhDescr, ibFlhInitTime, ibFlhRemovable,
+        ibFlhPartitionBool, ibFlhMinPartitionSize,
+        ibFlhMaxPartitions, ibFlhPartitionNum, ibFlhIndex, ibFlhKbyteSize }
+    STATUS current
+    DESCRIPTION
+        "A collection of objects on Flash level information."
+    ::= { ibFlashMIBGroups 1 }
+
+
+ibFlhChipGroup OBJECT-GROUP
+    OBJECTS { ibFlhChipID, ibFlhChipDescr, ibFlhChipWriteTimesLimit,
+        ibFlhChipWriteTimes, ibFlhChipEraseTimesLimit,
+        ibFlhChipEraseTimes }
+    STATUS current
+    DESCRIPTION
+        "A collection of objects on chip level information."
+    ::= { ibFlashMIBGroups 3 }
+
+
+ibFlhPartitionGroup OBJECT-GROUP
+    OBJECTS { ibFlhPartFirstChip, ibFlhPartLastChip, ibFlhPartSpace,
+        ibFlhPartSpaceFree, ibFlhPartFileNum,
+        ibFlhPartChecksumMethod, ibFlhPartStatus,
+        ibFlhPartUpgradeMode, ibFlhPartName, ibFlhPartRequireErase,
+        ibFlhPartFileNameLen, ibFlhPartBootable,
+        ibFlhPartPathForGlobalOpt}
+    STATUS current
+    DESCRIPTION
+        "A collection of objects providing on partition
+        level information."
+    ::= { ibFlashMIBGroups 4 }
+
+
+ibFlhFileGroup OBJECT-GROUP
+    OBJECTS { ibFlhFileName, ibFlhFileSize, ibFlhFileStatus,
+        ibFlhFileChecksum }
+    STATUS current
+    DESCRIPTION
+        "A collection of objects on file level information."
+    ::= { ibFlashMIBGroups 5 }
+
+
+ibFlhOperationGroup OBJECT-GROUP
+    OBJECTS { ibFlhOperType, ibFlhOperProtocol,
+        ibFlhOperServerAddress, ibFlhOperServerUser,
+        ibFlhOperPassword, ibFlhOperSourceFile,
+        ibFlhOperDestinationFile, ibFlhOperStatus,
+        ibFlhOperEndNotification, ibFlhOperProgress,
+        ibFlhOperRowStatus, ibFlhOperServerPort,
+        ibFlhOperFailReason }
+    STATUS current
+    DESCRIPTION
+        "A collection of objects of flash operations."
+    ::= { ibFlashMIBGroups 6 }
+
+
+ibFlhNotificationGroup NOTIFICATION-GROUP
+    NOTIFICATIONS { ibFlhOperNotification }
+    STATUS current
+    DESCRIPTION
+        "The collection of notifications in the module"
+    ::= { ibFlashMIBGroups 7 }
+
+END

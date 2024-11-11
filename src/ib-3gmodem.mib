@@ -1,0 +1,1361 @@
+-- =============================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:
+-- Reference:
+-- Version: V1.9
+-- History:
+--   V1.0 2009-04-30 Initial Version by jinyi
+--   V1.1 2009-12-30 Added ibAccessMediaChanged by jinyi
+--   V1.2 2011-07-22 Added ibWirelessCardInterfaceIndex,
+--                   ibWirelessCardModemStatus in ibWirelessCardTable.
+--                   Added ib3GCdma1xRttTable, ib3GCdmaEvDoTable, ib3GGsmInfoTable
+--                   ib3GCurrentService, ib3GCurrentRssiBind, ib3GImsiBind,
+--                   ib3GRssiStrongSignalTrap, ib3GRssiMediumSignalTrap and
+--                   ib3GRssiWeakSignalTrap.
+--                   Changed MAX-ACCESS of ibWirelessCardIndex by songhao.
+--   V1.3 2012-08-02 Added ibWirelessCardModemMode, ibWirelessCardCurNetConn in
+--                   ibWirelessCardEntry.
+--                   Added ibSmsGroup and ibWirelessCardOnlineTable under ibWirelessCard.
+--                   Added ib3GGsmMcc, ib3GGsmMnc in ib3GGsmInfoEntry
+--                   Added ibLte under ib3GModemObjects
+--                   Added ibSmsSrcNumberBind, ibSmsTimeBind, ibSmsEncodeBind,
+--                   ibSmsContentBind, ibSmsTxNotifation, ibSmsRxNotifation by songhao.
+--   V1.4 2013-08-13 Added ibLteCurrentRssi,ibLteRssiMediumThreshold and
+--                   ibLteRssiWeakThreshold in IbLteInfoEntry.
+--                   Added lte(5) in ib3GCurrentService by zuowenzhong.
+--   V1.5 2014-09-04 Added ib3GCdma1xRttBID, ib3GCdma1xRttSID and
+--                   ib3GCdma1xRttNID in ib3GCdma1xRttTable.
+--                   Added ib3GCdmaEvDoSubNetID in ib3GCdmaEvDoTable by lijuan.
+--   V1.6 2015-12-01 Modified description and added lte(5) in
+--                   ibWirelessCardModemMode by maqianli.
+--   V1.7 2021-12-07 Modified description and added ibWirelessBackupStatus in
+--                   ibWirelessCardTable by zhengdawei.
+--   V1.8 2022-11-11 Modified description and added ib3GWcdmaCurrentEcio in
+--                   ib3GGsmInfoTable by fengshuxiang.
+--   V1.9 2023-07-07 Added ibUIMPhoneNumber, ibUIMFrequencyBand, ibUIMOnlineTime in
+--                   ibUIMInfoTable by wangzhenjun.
+-- =============================================================
+IB-3GMODEM-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE,
+    Integer32, Unsigned32
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION, DateAndTime, TruthValue
+        FROM SNMPv2-TC
+    SnmpAdminString
+        FROM SNMP-FRAMEWORK-MIB
+    InterfaceIndex
+        FROM IF-MIB
+    ibCommon
+        FROM IB-OID-MIB;
+
+ib3GModem MODULE-IDENTITY
+    LAST-UPDATED    "202307071200Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The information about The Current Ecio of Wcdma"
+    REVISION        "202307071200Z"
+    DESCRIPTION
+        "Added ibUIMPhoneNumber, ibUIMFrequencyBand, ibUIMOnlineTime in
+         ibUIMInfoTable."
+    REVISION        "202211111200Z"
+    DESCRIPTION
+        "The information about the wireless card and the UIM
+         (User Identification Module)."
+    REVISION        "202112071200Z"
+    DESCRIPTION
+        "Modified description and added ibWirelessBackupStatus in ibWirelessCardTable."
+    REVISION        "201512011200Z"
+    DESCRIPTION
+        "Modified description and added lte(5) in ibWirelessCardModemMode."
+    REVISION        "201409091200Z"
+    DESCRIPTION
+        "Added ib3GCdma1xRttTable and ib3GCdmaEvDoTable."
+    REVISION        "200904301200Z"
+    DESCRIPTION
+        "Initial version of this MIB module."
+    ::= { ibCommon 98 }
+
+IbUIMStatusType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The status of the UIM."
+    SYNTAX      INTEGER
+        {
+            absent(1),      -- the UIM is absent
+            initial(2),     -- the UIM is initial
+            fault(3),       -- something wrong in UIM
+            unprotected(4), -- the UIM is not protected with PIN
+                            -- (Personal Identification Number) and can be
+                            -- used normally
+            protected(5),   -- the UIM is protected with PIN and can be
+                            -- used normally
+            pinLocked(6),   -- the UIM is locked, and need be unlocked with PIN
+            pukLocked(7),   -- the UIM is locked, and need be unlocked with PUK
+                            -- (PIN Unblocking Key)
+            selfDestruct(8) -- the UIM is destruct by itself
+        }
+
+IbSmsEncodeType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The encode type of Sms (short message service)."
+    SYNTAX      INTEGER
+        {
+            ascii(1),
+            ucs2(2)
+        }
+
+
+ib3GModemObjects     OBJECT IDENTIFIER ::= { ib3GModem 1 }
+
+ibWirelessCard OBJECT IDENTIFIER ::= { ib3GModemObjects 1 }
+ibUIM OBJECT IDENTIFIER ::= { ib3GModemObjects 2 }
+ib3GCdma OBJECT IDENTIFIER ::= { ib3GModemObjects 3 }
+ib3GGsm OBJECT IDENTIFIER ::= { ib3GModemObjects 4 }
+ibLte OBJECT IDENTIFIER ::= { ib3GModemObjects 5 }
+
+
+-- The wireless card table
+ibWirelessCardTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbWirelessCardEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains one row per wireless card."
+    ::= { ibWirelessCard 1 }
+
+ibWirelessCardEntry OBJECT-TYPE
+    SYNTAX      IbWirelessCardEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a particular wireless card."
+    INDEX { ibWirelessCardIndex }
+    ::= { ibWirelessCardTable 1 }
+
+IbWirelessCardEntry ::= SEQUENCE
+    {
+        ibWirelessCardIndex                Integer32,
+        ibWirelessCardModelName            SnmpAdminString,
+        ibWirelessCardMfgName              SnmpAdminString,
+        ibWirelessCardDescription          SnmpAdminString,
+        ibWirelessCardSerialNumber         SnmpAdminString,
+        ibWirelessCardCMIIID               SnmpAdminString,
+        ibWirelessCardHardwareVersion      SnmpAdminString,
+        ibWirelessCardFirmwareVersion      SnmpAdminString,
+        ibWirelessCardPRLVersion           SnmpAdminString,
+        ibWirelessCardInterfaceIndex       InterfaceIndex,
+        ibWirelessCardModemStatus          INTEGER,
+        ibWirelessCardModemMode            INTEGER,
+        ibWirelessCardCurNetConn           INTEGER,
+        ibWirelessCardBackupStatus         INTEGER
+    }
+
+ibWirelessCardIndex OBJECT-TYPE
+    SYNTAX      Integer32 (1..2147483647)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index for this entry."
+    ::= { ibWirelessCardEntry 1 }
+
+ibWirelessCardModelName OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The model name of this card."
+    ::= { ibWirelessCardEntry 2 }
+
+ibWirelessCardMfgName OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the manufacturer of this card."
+    ::= { ibWirelessCardEntry 3 }
+
+ibWirelessCardDescription OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The textual description of this card."
+    ::= { ibWirelessCardEntry 4 }
+
+ibWirelessCardSerialNumber OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The vendor-specific serial number string for this card."
+    ::= { ibWirelessCardEntry 5 }
+
+ibWirelessCardCMIIID OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The card ID of CMII (Ministry of Information Industry of China)."
+    ::= { ibWirelessCardEntry 6 }
+
+ibWirelessCardHardwareVersion OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The vendor-specific hardware version string for this card."
+    ::= { ibWirelessCardEntry 7 }
+
+ibWirelessCardFirmwareVersion OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The vendor-specific firmware version string for this card."
+    ::= { ibWirelessCardEntry 8 }
+
+ibWirelessCardPRLVersion OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The preferred roaming list version for this card."
+    ::= { ibWirelessCardEntry 9 }
+
+ibWirelessCardInterfaceIndex OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The interface index in IF-MIB of this card."
+    ::= { ibWirelessCardEntry 10 }
+
+ibWirelessCardModemStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        unknown(1),
+                        onLine(2),
+                        offLine(3)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The status of modem."
+    ::= { ibWirelessCardEntry 11 }
+
+ibWirelessCardModemMode OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        unknown(1),
+                        tdscdma(2),
+                        wcdma(3),
+                        cdma(4),
+                        lte(5)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The mode of the 3G and 4G Modem."
+    ::= { ibWirelessCardEntry 12 }
+
+ibWirelessCardCurNetConn OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        unknown(1),
+                        noService(2),
+                        gsm(3),
+                        gprs(4),
+                        edge(5),
+                        hsdpa(6),
+                        hsupa(7),
+                        hsupaAndhsdpa(8),
+                        hspaPlus(9),
+                        umts(10),
+                        dchspaPlus(11),
+                        lte(12),
+                        onexrtt(13),
+                        evdo(14),
+                        onexrttAndevdo(15),
+                        tdscdma(16)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current network connection."
+    ::= { ibWirelessCardEntry 13 }
+
+ibWirelessCardBackupStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        notSupport(1),
+                        main(2),
+                        backup(3),
+                        both(4),
+                        none(5)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The status of sim card."
+    ::= { ibWirelessCardEntry 14 }
+
+-- SMS group
+ibSmsGroup OBJECT IDENTIFIER ::= { ibWirelessCard 2 }
+
+-- SMS scalar objects
+ibSmsScalarObjects OBJECT IDENTIFIER ::= { ibSmsGroup 1 }
+
+ibSmsRxNotifSwitch OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The switch of notification when a short message received."
+    ::= { ibSmsScalarObjects 1 }
+
+
+-- SMS operation table
+ibSmsOperationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSmsOperationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains one row per short message."
+    ::= { ibSmsGroup 2 }
+
+ibSmsOperationEntry OBJECT-TYPE
+    SYNTAX      IbSmsOperationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The information about the short message."
+    INDEX { ibWirelessCardIndex }
+    ::= { ibSmsOperationTable 1 }
+
+IbSmsOperationEntry ::= SEQUENCE
+    {
+        ibSmsDestNumber        SnmpAdminString,
+        ibSmsEncode            IbSmsEncodeType,
+        ibSmsContent           OCTET STRING,
+        ibSmsSendStatus        INTEGER
+    }
+
+
+ibSmsDestNumber OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..20))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The destination number of the short message."
+    ::= { ibSmsOperationEntry 1 }
+
+ibSmsEncode OBJECT-TYPE
+    SYNTAX      IbSmsEncodeType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The encoded type of the short message."
+    DEFVAL      { 1 }
+    ::= { ibSmsOperationEntry 2 }
+
+ibSmsContent OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..255))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Content of the short message."
+    ::= { ibSmsOperationEntry 3 }
+
+ibSmsSendStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            set2Send(1),
+            ready2Send(2),
+            sending(3),
+            sentAlready(4),
+            telnumberInvalid(5),
+            paramInvalid(6),
+            contentTooLong(7),
+            codeError(8),
+            unknown(9),
+            busy(10),
+            notPresent(11),
+            notSupport(12),
+            initializing(13),
+            noCenterNum(14),
+            noSim(15),
+            simNotReady(16),
+            sendAtFailed(17),
+            sendDisable(18)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Status of the short message sent."
+    ::= { ibSmsOperationEntry 4 }
+
+-- Wireless card online table
+ibWirelessCardOnlineTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbWirelessCardOnlineEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains one row per wireless card."
+    ::= { ibWirelessCard 3 }
+
+ibWirelessCardOnlineEntry OBJECT-TYPE
+    SYNTAX      IbWirelessCardOnlineEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about online time of a wireless card."
+    INDEX { ibWirelessCardIndex, ibWirelessCardOnlineTime }
+    ::= { ibWirelessCardOnlineTable 1 }
+
+IbWirelessCardOnlineEntry ::= SEQUENCE
+    {
+        ibWirelessCardOnlineTime       Unsigned32,
+        ibWirelessCardOnlineType       INTEGER
+    }
+
+ibWirelessCardOnlineTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The index for this entry."
+    ::= { ibWirelessCardOnlineEntry 1 }
+
+ibWirelessCardOnlineType OBJECT-TYPE
+    SYNTAX    INTEGER
+        {
+            up(1),
+            down(2)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The online type of this wireless card."
+    ::= { ibWirelessCardOnlineEntry 2 }
+
+
+-- The UIM information table
+ibUIMInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbUIMInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains one row per UIM."
+    ::= { ibUIM 1 }
+
+ibUIMInfoEntry OBJECT-TYPE
+    SYNTAX      IbUIMInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The information about the UIM."
+    INDEX { ibWirelessCardIndex, ibUIMIndex }
+    ::= { ibUIMInfoTable 1 }
+
+IbUIMInfoEntry ::= SEQUENCE
+    {
+        ibUIMIndex          Integer32,
+        ibUIMStatus         IbUIMStatusType,
+        ibUIMImsi           SnmpAdminString,
+        ibUIMPin            SnmpAdminString,
+        ibUIMVoltage        Unsigned32,
+        ibUIMProvider       SnmpAdminString,
+        ibUIMSignal         Integer32,
+        ibUIMTryPinPukTimes Unsigned32,
+        ibUIMOldPin         SnmpAdminString,
+        ibUIMPhoneNumber    SnmpAdminString,
+        ibUIMFrequencyBand  SnmpAdminString,
+        ibUIMOnlineTime     DateAndTime
+    }
+
+ibUIMIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The index for this entry."
+    ::= { ibUIMInfoEntry 1 }
+
+ibUIMStatus OBJECT-TYPE
+    SYNTAX      IbUIMStatusType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The status about this UIM."
+    ::= { ibUIMInfoEntry 2 }
+
+ibUIMImsi OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The IMSI (International Mobile Subscriber Identification Number) about
+        this UIM.  If this information is unknown to the agent, then this object
+        will be returned a zero-length string."
+    ::= { ibUIMInfoEntry 3 }
+
+ibUIMPin OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..9))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The PIN about this UIM.  If this information is unknown to the agent,
+        then this object will be returned a zero-length string."
+    ::= { ibUIMInfoEntry 4 }
+
+ibUIMVoltage OBJECT-TYPE
+    SYNTAX      Unsigned32(0..4294967295)
+    UNITS       "milli-volt"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The voltage about this UIM.  If this information is unknown to the
+        agent, then this object will be returned 4294967295."
+    ::= { ibUIMInfoEntry 5 }
+
+ibUIMProvider OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The provider of mobile network.  If this information is unknown to the
+        agent, then this object will be returned a zero-length string."
+    ::= { ibUIMInfoEntry 6 }
+
+ibUIMSignal OBJECT-TYPE
+    SYNTAX      Integer32(0..31 | 99)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The intensity of the signal about this UIM.
+        A value of '99' means no signal."
+    ::= { ibUIMInfoEntry 7 }
+
+ibUIMTryPinPukTimes OBJECT-TYPE
+    SYNTAX      Unsigned32(0..4294967295)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of remaining times for unlocking PIN or PUK.
+        The value is associated the same instance of ibUIMStatus.  If this
+        information is unknown to the agent, then this object will be
+        returned 4294967295."
+    ::= { ibUIMInfoEntry 8 }
+
+ibUIMOldPin OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..9))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "The old PIN for this UIM."
+    ::= { ibUIMInfoEntry 9 }
+
+ibUIMPhoneNumber OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The phone number for this UIM."
+    ::= { ibUIMInfoEntry 10 }
+
+ibUIMFrequencyBand OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The frequency band for this UIM."
+    ::= { ibUIMInfoEntry 11 }
+
+ibUIMOnlineTime OBJECT-TYPE
+    SYNTAX      DateAndTime (SIZE (8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object contains the online time of the modem."
+    ::= { ibUIMInfoEntry 12 }
+
+-- The CDMA information table of 1xRTT
+ib3GCdma1xRttTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF Ib3GCdma1xRttEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "CDMA 1xRTT table."
+    ::= { ib3GCdma 1 }
+
+ib3GCdma1xRttEntry OBJECT-TYPE
+    SYNTAX      Ib3GCdma1xRttEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry of ib3GCdma1xRttTable."
+    INDEX { ibWirelessCardIndex }
+    ::= { ib3GCdma1xRttTable 1 }
+
+Ib3GCdma1xRttEntry ::= SEQUENCE
+    {
+        ib3GCdma1xRttCurrentRssi           Integer32,
+        ib3GCdma1xRttRssiMediumThreshold   Integer32,
+        ib3GCdma1xRttRssiWeakThreshold     Integer32,
+        ib3GCdma1xRttCurServiceStatus      INTEGER,
+        ib3GCdma1xRttCurRoamingStatus      INTEGER,
+        ib3GCdma1xRttBID                   Unsigned32,
+        ib3GCdma1xRttSID                   Unsigned32,
+        ib3GCdma1xRttNID                   Unsigned32
+    }
+
+ib3GCdma1xRttCurrentRssi OBJECT-TYPE
+    SYNTAX      Integer32 (-2147483648 | -150..0)
+    UNITS       "dBm"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Received Signal Strength Indicator(RSSI) of CDMA 1xRTT."
+    ::= { ib3GCdma1xRttEntry 1 }
+
+ib3GCdma1xRttRssiMediumThreshold OBJECT-TYPE
+    SYNTAX      Integer32 (-150..0)
+    UNITS       "dBm"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The medium signal threshold of CMDA 1xRTT RSSI.  The absolute
+        value of ib3GCdma1xRttRssiMediumThreshold should be less than
+        or equal to the absolute value of ib3GCdma1xRttRssiWeakThreshold
+        (|ib3GCdma1xRttRssiMediumThreshold| <= |ib3GCdma1xRttRssiWeakThreshold|)."
+    DEFVAL      { 0 }
+    ::= { ib3GCdma1xRttEntry 2 }
+
+ib3GCdma1xRttRssiWeakThreshold OBJECT-TYPE
+    SYNTAX      Integer32 (-150..0)
+    UNITS       "dBm"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The weak signal threshold of CMDA 1xRTT RSSI.  The absolute
+        value of ib3GCdma1xRttRssiMediumThreshold should be less than
+        or equal to the absolute value of ib3GCdma1xRttRssiWeakThreshold
+        (|ib3GCdma1xRttRssiMediumThreshold| <= |ib3GCdma1xRttRssiWeakThreshold|)."
+    DEFVAL      { -150 }
+    ::= { ib3GCdma1xRttEntry 3 }
+
+ib3GCdma1xRttCurServiceStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        unknown(1),
+                        available(2),
+                        emergency(3),
+                        lowPower(4),
+                        noService(5)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The status of service."
+    ::= { ib3GCdma1xRttEntry 4 }
+
+ib3GCdma1xRttCurRoamingStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        unknown(1),
+                        roaming(2),
+                        home(3)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The status of roaming."
+    ::= { ib3GCdma1xRttEntry 5 }
+
+ib3GCdma1xRttBID OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..4294967295)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Base Station ID(BID) of CDMA 1xRTT.
+        The invalid value is 4294967295(0xFFFFFFFF)."
+    ::= { ib3GCdma1xRttEntry 6 }
+
+ib3GCdma1xRttSID OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..4294967295)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The System ID(SID) of CDMA 1xRTT.
+        The invalid value is 4294967295(0xFFFFFFFF)."
+    ::= { ib3GCdma1xRttEntry 7 }
+
+ib3GCdma1xRttNID OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..4294967295)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Network ID(NID) of CDMA 1xRTT.
+        The invalid value is 4294967295(0xFFFFFFFF)."
+    ::= { ib3GCdma1xRttEntry 8 }
+
+-- The CDMA information table of EvDo
+ib3GCdmaEvDoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF Ib3GCdmaEvDoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "CDMA EvDo table."
+    ::= { ib3GCdma 2 }
+
+ib3GCdmaEvDoEntry OBJECT-TYPE
+    SYNTAX      Ib3GCdmaEvDoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry of ib3GCdmaEvDoTable."
+    INDEX { ibWirelessCardIndex }
+    ::= { ib3GCdmaEvDoTable 1 }
+
+Ib3GCdmaEvDoEntry ::= SEQUENCE
+    {
+        ib3GCdmaEvDoCurrentRssi           Integer32,
+        ib3GCdmaEvDoRssiMediumThreshold   Integer32,
+        ib3GCdmaEvDoRssiWeakThreshold     Integer32,
+        ib3GCdmaEvDoCurServiceStatus      INTEGER,
+        ib3GCdmaEvDoCurRoamingStatus      INTEGER,
+        ib3GCdmaEvDoSubNetID              SnmpAdminString
+    }
+
+ib3GCdmaEvDoCurrentRssi OBJECT-TYPE
+    SYNTAX      Integer32 (-2147483648 | -150..0)
+    UNITS       "dBm"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Received Signal Strength Indicator(RSSI) of CDMA EvDo."
+    ::= { ib3GCdmaEvDoEntry 1 }
+
+ib3GCdmaEvDoRssiMediumThreshold OBJECT-TYPE
+    SYNTAX      Integer32 (-150..0)
+    UNITS       "dBm"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The medium signal threshold of CMDA EvDo RSSI.  The absolute
+        value of ib3GCdmaEvDoRssiMediumThreshold should be less than
+        or equal to the absolute value of ib3GCdmaEvDoRssiWeakThreshold
+        (|ib3GCdmaEvDoRssiMediumThreshold| <= |ib3GCdmaEvDoRssiWeakThreshold|)."
+    DEFVAL      { 0 }
+    ::= { ib3GCdmaEvDoEntry 2 }
+
+ib3GCdmaEvDoRssiWeakThreshold OBJECT-TYPE
+    SYNTAX      Integer32 (-150..0)
+    UNITS       "dBm"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The weak signal threshold of CMDA EvDo RSSI.  The absolute
+        value of ib3GCdmaEvDoRssiMediumThreshold should be less than
+        or equal to the absolute value of ib3GCdmaEvDoRssiWeakThreshold
+        (|ib3GCdmaEvDoRssiMediumThreshold| <= |ib3GCdmaEvDoRssiWeakThreshold|)."
+    DEFVAL      { -150 }
+    ::= { ib3GCdmaEvDoEntry 3 }
+
+ib3GCdmaEvDoCurServiceStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        unknown(1),
+                        available(2),
+                        emergency(3),
+                        lowPower(4),
+                        noService(5)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The status of service."
+    ::= { ib3GCdmaEvDoEntry 4 }
+
+ib3GCdmaEvDoCurRoamingStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        unknown(1),
+                        roaming(2),
+                        home(3)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The status of roaming."
+    ::= { ib3GCdmaEvDoEntry 5 }
+
+ib3GCdmaEvDoSubNetID OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Sub Net ID of CDMA EvDo.
+        The invalid value is a zero-length string."
+    ::= { ib3GCdmaEvDoEntry 6 }
+
+-- The GSM information table
+ib3GGsmInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF Ib3GGsmInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "GSM information table."
+    ::= { ib3GGsm 1 }
+
+ib3GGsmInfoEntry OBJECT-TYPE
+    SYNTAX      Ib3GGsmInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry of ib3GGsmInfoTable."
+    INDEX { ibWirelessCardIndex }
+    ::= { ib3GGsmInfoTable 1 }
+
+Ib3GGsmInfoEntry ::= SEQUENCE
+    {
+        ib3GGsmCurrentRssi             Integer32,
+        ib3GGsmRssiMediumThreshold     Integer32,
+        ib3GGsmRssiWeakThreshold       Integer32,
+        ib3GGsmImsi                    SnmpAdminString,
+        ib3GGsmImei                    SnmpAdminString,
+        ib3GGsmApn                     SnmpAdminString,
+        ib3GGsmPacketSessionStatus     INTEGER,
+        ib3GGsmNetworkSelectionMode    INTEGER,
+        ib3GGsmMobileNetworkName       SnmpAdminString,
+        ib3GGsmLac                     SnmpAdminString,
+        ib3GGsmCellId                  SnmpAdminString,
+        ib3GGsmSimStatus               INTEGER,
+        ib3GGsmCurServiceStatus        INTEGER,
+        ib3GGsmCurRoamingStatus        INTEGER,
+        ib3GGsmMcc                     SnmpAdminString,
+        ib3GGsmMnc                     SnmpAdminString,
+        ib3GWcdmaCurrentEcio           Integer32
+    }
+
+ib3GGsmCurrentRssi OBJECT-TYPE
+    SYNTAX      Integer32 (-2147483648 | -150..0)
+    UNITS       "dBm"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Received Signal Strength Indicator(RSSI) of GSM."
+    ::= { ib3GGsmInfoEntry 1 }
+
+ib3GGsmRssiMediumThreshold OBJECT-TYPE
+    SYNTAX      Integer32 (-150..0)
+    UNITS       "dBm"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The medium signal threshold of GSM RSSI.  The absolute
+        value of ib3GGsmRssiMediumThreshold should be less than
+        or equal to the absolute value of ib3GGsmRssiWeakThreshold
+        (|ib3GGsmRssiMediumThreshold| <= |ib3GGsmRssiWeakThreshold|)."
+    DEFVAL      { 0 }
+    ::= { ib3GGsmInfoEntry 2 }
+
+ib3GGsmRssiWeakThreshold OBJECT-TYPE
+    SYNTAX      Integer32 (-150..0)
+    UNITS       "dBm"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The weak signal threshold of GSM RSSI.  The absolute
+        value of ib3GGsmRssiMediumThreshold should be less than
+        or equal to the absolute value of ib3GGsmRssiWeakThreshold
+        (|ib3GGsmRssiMediumThreshold| <= |ib3GGsmRssiWeakThreshold|)."
+    DEFVAL      { -150 }
+    ::= { ib3GGsmInfoEntry 3 }
+
+ib3GGsmImsi OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The International Mobile Subscriber Identity(IMSI) of GSM."
+    ::= { ib3GGsmInfoEntry 4 }
+
+ib3GGsmImei OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The International Mobile Equipment Identity(IMEI) of GSM."
+    ::= { ib3GGsmInfoEntry 5 }
+
+ib3GGsmApn OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..100))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The Access Point Name(APN) of GSM."
+    ::= { ib3GGsmInfoEntry 6 }
+
+ib3GGsmPacketSessionStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        unknown(1),
+                        active(2),
+                        inactive(3)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The packet session status of GSM."
+    ::= { ib3GGsmInfoEntry 7 }
+
+ib3GGsmNetworkSelectionMode    OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        unknown(1),
+                        automatic(2),
+                        manual(3)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The network selection mode of GSM."
+    ::= { ib3GGsmInfoEntry 8 }
+
+ib3GGsmMobileNetworkName OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The mobile network name of GSM."
+    ::= { ib3GGsmInfoEntry 9 }
+
+ib3GGsmLac OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Location Area Code(LAC) of GSM."
+    ::= { ib3GGsmInfoEntry 10 }
+
+ib3GGsmCellId OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ID of cell."
+    ::= { ib3GGsmInfoEntry 11 }
+
+ib3GGsmSimStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        unknown(1),
+                        ok(2),
+                        notInsert(3),
+                        networkReject(4),
+                        blocked(5)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The status of SIM."
+    ::= { ib3GGsmInfoEntry 12 }
+
+ib3GGsmCurServiceStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        unknown(1),
+                        available(2),
+                        emergency(3),
+                        lowPower(4),
+                        noService(5)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The status of service."
+    ::= { ib3GGsmInfoEntry 13 }
+
+ib3GGsmCurRoamingStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        unknown(1),
+                        roaming(2),
+                        home(3)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The status of roaming."
+    ::= { ib3GGsmInfoEntry 14 }
+
+ib3GGsmMcc OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Mobile Country Code(MCC) of GSM."
+    ::= { ib3GGsmInfoEntry 15 }
+
+ib3GGsmMnc OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Mobile Network Code of GSM."
+    ::= { ib3GGsmInfoEntry 16 }
+
+ib3GWcdmaCurrentEcio OBJECT-TYPE
+    SYNTAX      Integer32 (-2147483648 | -150..0)
+    UNITS       "dBm"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current WCDMA Ecio."
+    ::= { ib3GGsmInfoEntry 17}
+
+-- The LTE infomation table
+ibLteInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbLteInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The quality of signal table."
+    ::= { ibLte 1 }
+
+ibLteInfoEntry OBJECT-TYPE
+    SYNTAX      IbLteInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The quality about the signal."
+    INDEX { ibWirelessCardIndex }
+    ::= { ibLteInfoTable 1 }
+
+IbLteInfoEntry ::= SEQUENCE
+    {
+        ibLteCurrentRsrp     Integer32,
+        ibLteCurrentRsrq     Integer32,
+        ibLteCurrentSinr     Integer32,
+        ibLteTxPower         Integer32,
+        ibLteCurrentRssi           Integer32,
+        ibLteRssiMediumThreshold   Integer32,
+        ibLteRssiWeakThreshold     Integer32
+    }
+
+ibLteCurrentRsrp OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "dBm"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Reference signal receiving power."
+    ::= { ibLteInfoEntry 1 }
+
+ibLteCurrentRsrq OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "dB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Reference signal receiving quality."
+    ::= { ibLteInfoEntry 2 }
+
+ibLteCurrentSinr OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "dB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Signal to interface plus noise ratio."
+    ::= { ibLteInfoEntry 3 }
+
+ibLteTxPower OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "dB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmit power, 0x8000 means invalid."
+    ::= { ibLteInfoEntry 4 }
+
+ibLteCurrentRssi OBJECT-TYPE
+    SYNTAX      Integer32 (-2147483648 | -150..0)
+    UNITS       "dBm"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Received Signal Strength Indicator(RSSI) of LTE."
+    ::= { ibLteInfoEntry 5 }
+
+ibLteRssiMediumThreshold OBJECT-TYPE
+    SYNTAX      Integer32 (-150..0)
+    UNITS       "dBm"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The medium signal threshold of LTE RSSI.  The absolute
+        value of ibLteRssiMediumThreshold should be less than
+        or equal to the absolute value of ibLteRssiWeakThreshold
+        (|ibLteRssiMediumThreshold| <= |ibLteRssiWeakThreshold|)."
+    DEFVAL      { 0 }
+    ::= { ibLteInfoEntry 6 }
+
+ibLteRssiWeakThreshold OBJECT-TYPE
+    SYNTAX      Integer32 (-150..0)
+    UNITS       "dBm"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The weak signal threshold of LTE RSSI.  The absolute
+        value of ibLteRssiMediumThreshold should be less than
+        or equal to the absolute value of ibLteRssiWeakThreshold
+        (|ibLteRssiMediumThreshold| <= |ibLteRssiWeakThreshold|)."
+    DEFVAL      { -150 }
+    ::= { ibLteInfoEntry 7 }
+
+
+-- MIB trap definitions
+ib3GModemTrap       OBJECT IDENTIFIER ::= { ib3GModem 2 }
+ib3GModemTraps       OBJECT IDENTIFIER ::= { ib3GModem 3 }
+ib3GModemTrapPrefix  OBJECT IDENTIFIER ::= { ib3GModemTraps 0 }
+
+ibDevSerialNumber OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "The serial number of the current device."
+    ::= { ib3GModemTrap 1 }
+
+ibDeviceOUI OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..64))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "The OUI (Organizational Unique Identifier) of the current device."
+    ::= { ib3GModemTrap 2 }
+
+ibAccessMedia OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            unknown(1),
+            air(2),
+            cable(3)
+        }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "The current access media."
+    ::= { ib3GModemTrap 3 }
+
+ib3GCurrentService OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            unknown(1),
+            oneXRtt(2),
+            evDo(3),
+            gsm(4),
+            lte(5)
+        }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "The current service type that is bound in the notifications."
+    ::= { ib3GModemTrap 4 }
+
+ib3GCurrentRssiBind OBJECT-TYPE
+    SYNTAX      Integer32 (-2147483648 | -150..0)
+    UNITS       "dBm"
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "The current RSSI that is bound in the notifications."
+    ::= { ib3GModemTrap 5 }
+
+ib3GImsiBind OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE (0..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "The IMSI that is bound in the notifications."
+    ::= { ib3GModemTrap 6 }
+
+ibSmsSrcNumberBind OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..20))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "The source number that is bound in the notifications."
+    ::= { ib3GModemTrap 7 }
+
+ibSmsTimeBind OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(1..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "The sending time that is bound in the notifications."
+    ::= { ib3GModemTrap 8 }
+
+ibSmsEncodeBind OBJECT-TYPE
+    SYNTAX      IbSmsEncodeType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "The encoded type that is bound in the notifications."
+    ::= { ib3GModemTrap 9 }
+
+ibSmsContentBind OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..512))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "The content of short message that is bound in the notifications."
+    ::= { ib3GModemTrap 10 }
+
+
+ibWirelessCardInserted NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDeviceOUI,
+            ibDevSerialNumber,
+            ibWirelessCardSerialNumber,
+            ibUIMImsi
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibWirelessCardInserted notification is generated when a wireless
+        card is inserted."
+   ::= { ib3GModemTrapPrefix 1 }
+
+ibWirelessCardPulledOut NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDeviceOUI,
+            ibDevSerialNumber,
+            ibWirelessCardSerialNumber,
+            ibUIMImsi
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibWirelessCardPulledOut notification is generated when a wireless
+        card is pulled out."
+   ::= { ib3GModemTrapPrefix 2 }
+
+ibUIMPinInvalid NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDeviceOUI,
+            ibDevSerialNumber,
+            ibWirelessCardSerialNumber,
+            ibUIMImsi
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibUIMPinInvalid notification is generated when UIM PIN is invalid."
+   ::= { ib3GModemTrapPrefix 3 }
+
+ibUIMPinChanged NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDeviceOUI,
+            ibDevSerialNumber,
+            ibWirelessCardSerialNumber,
+            ibUIMImsi,
+            ibUIMOldPin,
+            ibUIMPin
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibUIMPinInvalid notification is generated when UIM PIN is changed."
+   ::= { ib3GModemTrapPrefix 4 }
+
+ibAccessMediaChanged NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDeviceOUI,
+            ibDevSerialNumber,
+            ibWirelessCardSerialNumber,
+            ibUIMImsi,
+            ibAccessMedia
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibAccessMediaChanged notification is generated when access media
+         is changed."
+   ::= { ib3GModemTrapPrefix 5 }
+
+ib3GRssiStrongSignalTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibWirelessCardIndex,
+            ibDeviceOUI,
+            ibDevSerialNumber,
+            ibWirelessCardSerialNumber,
+            ib3GCurrentService,
+            ib3GCurrentRssiBind,
+            ib3GImsiBind
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ib3GRssiStrongSignalTrap notification is generated when current RSSI
+        exceeds the medium signal threshold."
+   ::= { ib3GModemTrapPrefix 6 }
+
+ib3GRssiMediumSignalTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibWirelessCardIndex,
+            ibDeviceOUI,
+            ibDevSerialNumber,
+            ibWirelessCardSerialNumber,
+            ib3GCurrentService,
+            ib3GCurrentRssiBind,
+            ib3GImsiBind
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ib3GRssiMediumSignalTrap notification is generated when the current RSSI
+        falls or rises to a value between the medium and weak signal thresholds."
+   ::= { ib3GModemTrapPrefix 7 }
+
+
+ib3GRssiWeakSignalTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibWirelessCardIndex,
+            ibDeviceOUI,
+            ibDevSerialNumber,
+            ibWirelessCardSerialNumber,
+            ib3GCurrentService,
+            ib3GCurrentRssiBind,
+            ib3GImsiBind
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ib3GRssiWeakSignalTrap notification is generated when current RSSI
+        falls below the weak signal threshold."
+   ::= { ib3GModemTrapPrefix 8 }
+
+ibSmsTxNotification NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibWirelessCardIndex,
+            ibSmsSendStatus
+        }
+    STATUS  current
+    DESCRIPTION
+        "A ibSmsTxNotification notification is generated
+        when a short message is sent."
+    ::= { ib3GModemTrapPrefix 9 }
+
+ibSmsRxNotification NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibWirelessCardIndex,
+            ibSmsSrcNumberBind,
+            ibSmsTimeBind,
+            ibSmsEncodeBind,
+            ibSmsContentBind
+        }
+    STATUS  current
+    DESCRIPTION
+        "A ibSmsRxNotification notification is generated
+        when a short message is received."
+    ::= { ib3GModemTrapPrefix 10 }
+
+END

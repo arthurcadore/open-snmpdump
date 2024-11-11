@@ -1,0 +1,420 @@
+-- ===========================================================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: EC(Encoder) Feature Configuration management MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 Initial version 2007-09-05 created by zhoujianming
+--- ============================================================================================================
+IB-PU-MAN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    Unsigned32,IpAddress, Counter32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    TruthValue, DisplayString
+        FROM SNMPv2-TC
+    ibSurveillanceMIB
+        FROM IB-OID-MIB;
+
+
+ibPUMan MODULE-IDENTITY
+    LAST-UPDATED "200709050000Z"        -- September 5, 2007  GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The PU includes those device like EC(Encoder), DC(Decoder) and
+        ECR(Encoder Recorder). The PU will survey the remote video and
+        audio. This MIB is defined to manage the PU as our
+        private MIB node according to its specific capability."
+    ::= { ibSurveillanceMIB 2 }
+
+--
+-- EC and DC Common Node definitions
+--
+
+ibPUCommonMan OBJECT IDENTIFIER ::= { ibPUMan 1 }
+
+ibPUCommonManObjects OBJECT IDENTIFIER ::= { ibPUCommonMan 1 }
+
+ibPUisOnline        OBJECT-TYPE
+    SYNTAX       TruthValue
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "The PU online status indicates whether the PU is normally
+        registered into the VM. True indicates that the PU is
+        normally registered into the VM."
+    ::= { ibPUCommonManObjects 1 }
+
+ibPUCMSAddr        OBJECT-TYPE
+    SYNTAX       IpAddress
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "The IP address of the CMS.
+        All zero address indicates the CMS address is not configured."
+    ::= { ibPUCommonManObjects 2 }
+
+ibPUVersionServerAddr      OBJECT-TYPE
+    SYNTAX       IpAddress
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "The IP address of the version server.
+        All zero address indicates the version server is not configured
+        or does not support remote upgrade."
+    ::= { ibPUCommonManObjects 3 }
+
+ibPUCommonManTables OBJECT IDENTIFIER ::= { ibPUCommonMan 2 }
+
+ibPUExternalInputAlarmTable  OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbPUExternalInputAlarmEntry
+    MAX-ACCESS not-accessible
+    STATUS   current
+    DESCRIPTION
+        "External input alarm table"
+    ::= { ibPUCommonManTables 1 }
+
+ibPUExternalInputAlarmEntry  OBJECT-TYPE
+    SYNTAX IbPUExternalInputAlarmEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "External input alarm entry"
+    INDEX   { ibPUExternalInputAlarmChannelID }
+    ::= { ibPUExternalInputAlarmTable 1}
+
+IbPUExternalInputAlarmEntry ::=
+    SEQUENCE {
+        ibPUExternalInputAlarmChannelID Unsigned32,
+        ibPUExternalInputAlarmStatus    TruthValue
+    }
+ibPUExternalInputAlarmChannelID  OBJECT-TYPE
+    SYNTAX  Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The ID of the external input alarm channel."
+    ::= { ibPUExternalInputAlarmEntry 1 }
+
+ibPUExternalInputAlarmStatus  OBJECT-TYPE
+    SYNTAX  TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "True indicates that the current channel has alarm."
+    ::= { ibPUExternalInputAlarmEntry 2 }
+
+ibPUExternalOutputAlarmTable  OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbPUExternalOutputAlarmEntry
+    MAX-ACCESS not-accessible
+    STATUS   current
+    DESCRIPTION
+        "External output alarm table"
+    ::= { ibPUCommonManTables 2 }
+
+ibPUExternalOutputAlarmEntry  OBJECT-TYPE
+    SYNTAX IbPUExternalOutputAlarmEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "External output alarm entry"
+    INDEX   { ibPUExternalOutputAlarmChannelID }
+    ::= { ibPUExternalOutputAlarmTable 1}
+
+IbPUExternalOutputAlarmEntry ::=
+    SEQUENCE {
+        ibPUExternalOutputAlarmChannelID Unsigned32,
+        ibPUExternalOutputAlarmStatus    TruthValue
+    }
+ibPUExternalOutputAlarmChannelID  OBJECT-TYPE
+    SYNTAX  Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The ID of the external output alarm channel"
+    ::= { ibPUExternalOutputAlarmEntry 1 }
+
+ibPUExternalOutputAlarmStatus  OBJECT-TYPE
+    SYNTAX  TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "True indicates that the current channel has alarm."
+    ::= { ibPUExternalOutputAlarmEntry 2 }
+
+--
+-- EC Node definitions
+--
+ibPUECMan OBJECT IDENTIFIER ::= { ibPUMan 2 }
+
+ibPUECManObjects OBJECT IDENTIFIER ::= { ibPUECMan 1 }
+
+ibPUECCameraOnlines    OBJECT-TYPE
+    SYNTAX       Unsigned32 ( 0..100 )
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "Number of online cameras connected to an EC."
+    ::= { ibPUECManObjects 1 }
+
+ibPUECCameraAvailRate    OBJECT-TYPE
+    SYNTAX       Unsigned32 ( 0..100 )
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "Camera available rate. That is, the ratio of available cameras
+        to total cameras connected to an EC. It ranges from 0 to 100."
+    ::= { ibPUECManObjects 2 }
+
+ibPUECManTables OBJECT IDENTIFIER ::= { ibPUECMan 2 }
+
+ibPUECVideoChannelTable  OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbPUECVideoChannelEntry
+    MAX-ACCESS not-accessible
+    STATUS   current
+    DESCRIPTION
+        "Video channel table"
+    ::= { ibPUECManTables 1 }
+
+ibPUECVideoChannelEntry  OBJECT-TYPE
+    SYNTAX IbPUECVideoChannelEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Video channel entry"
+    INDEX   { ibPUECVideoChannelID }
+    ::= { ibPUECVideoChannelTable 1}
+
+IbPUECVideoChannelEntry ::=
+    SEQUENCE {
+        ibPUECVideoChannelID            Unsigned32,
+        ibPUECVideoChannelName          DisplayString,
+        ibPUECVideoChannelServiceStatus BITS
+    }
+ibPUECVideoChannelID  OBJECT-TYPE
+    SYNTAX  Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The ID of the video channel"
+    ::= { ibPUECVideoChannelEntry 1 }
+
+ibPUECVideoChannelName  OBJECT-TYPE
+    SYNTAX  DisplayString (SIZE (0..32))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The name of the video channel.
+        It is suggested that the name includes the channel ID
+        information."
+    ::= { ibPUECVideoChannelEntry 2 }
+
+ibPUECVideoChannelServiceStatus  OBJECT-TYPE
+    SYNTAX  BITS
+    {
+        unknown   (0),
+        unused    (1),
+        kinescope (2),
+        snapshot  (3)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The service status of the video channel.
+        0 the status is not known.
+        1 the video is not used or the channel has no signal.
+        2 the camera is kinescoping.
+        3 the camera is take snapshot. "
+    ::= { ibPUECVideoChannelEntry 3 }
+
+--
+-- DC Node definitions
+--
+ibPUDCMan OBJECT IDENTIFIER ::= { ibPUMan 3 }
+
+ibPUDCManObjects OBJECT IDENTIFIER ::= { ibPUDCMan 1 }
+
+ibPUDCRcvVideoPackets    OBJECT-TYPE
+    SYNTAX       Counter32
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "The total number of video packets which are received from
+        interfaces."
+    ::= { ibPUDCManObjects 1 }
+
+ibPUDCRcvVideoRefFrames    OBJECT-TYPE
+    SYNTAX       Counter32
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "The total number of video reference frames which are received
+        from interfaces."
+    ::= { ibPUDCManObjects 2 }
+
+ibPUDCVideoPacketsLoss    OBJECT-TYPE
+    SYNTAX       Counter32
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "The total number of lost video packets."
+    ::= { ibPUDCManObjects 3 }
+
+ibPUDCVideoRefFramesLoss    OBJECT-TYPE
+    SYNTAX       Counter32
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "The total number of lost video reference frames."
+    ::= { ibPUDCManObjects 4 }
+
+--
+-- Notification definitions
+--
+-- =================================================================
+-- Traps are defined below.
+ibPUECManMIBTrap OBJECT IDENTIFIER ::= { ibPUECMan 3 }
+
+-- All PU trap definitions should be placed under this object.
+ibPUECManTrapPrex OBJECT IDENTIFIER ::= { ibPUECManMIBTrap 0 }
+
+ibPUECManExternalSemaphoreTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPUExternalInputAlarmChannelID
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about external semaphore alarm."
+    ::= { ibPUECManTrapPrex 1 }
+
+ibPUECManVideoLossTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPUECVideoChannelName
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about video loss. Video loss is that no video
+        signal is inputted to the EC."
+    ::= { ibPUECManTrapPrex 2 }
+
+ibPUECManVideoRecoverTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPUECVideoChannelName
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about video recovery after loss."
+    ::= { ibPUECManTrapPrex 3 }
+
+ibPUECManMotionDetectTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPUECVideoChannelName,
+        ibPUECRegionCoordinateX1,
+        ibPUECRegionCoordinateY1,
+        ibPUECRegionCoordinateX2,
+        ibPUECRegionCoordinateY2
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about motion detection."
+    ::= { ibPUECManTrapPrex 4 }
+
+ibPUECManOnLineFailureTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPUCMSAddr
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap when EC can not register the CMS."
+    ::= { ibPUECManTrapPrex 5 }
+
+ibPUECManConnectionCMSFailureTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPUCMSAddr
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap when the connection with the CMS breaks down."
+    ::= { ibPUECManTrapPrex 6 }
+
+ibPUECManConnectionVerSrvFailureTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPUVersionServerAddr
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap when the connection with the version server breaks
+        down or can not create."
+    ::= { ibPUECManTrapPrex 7 }
+
+ibPUECManFlashFailureTrap NOTIFICATION-TYPE
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about flash failure."
+    ::= { ibPUECManTrapPrex 8 }
+
+ibPUECManCameraShelterTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPUECVideoChannelName,
+        ibPUECRegionCoordinateX1,
+        ibPUECRegionCoordinateY1,
+        ibPUECRegionCoordinateX2,
+        ibPUECRegionCoordinateY2
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap when a camera is sheltered."
+    ::= { ibPUECManTrapPrex 9 }
+
+-- All objects used for TRAP only are defined here.
+ibPUECManTrapObjects OBJECT IDENTIFIER ::= { ibPUECManMIBTrap 1 }
+
+ibPUECRegionCoordinateX1 OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The horizontal coordinate of top left point of the motion
+        detection region."
+    ::= { ibPUECManTrapObjects 1 }
+
+ibPUECRegionCoordinateY1 OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The vertical coordinate of top left point of the motion
+        detection region."
+    ::= { ibPUECManTrapObjects 2 }
+
+ibPUECRegionCoordinateX2 OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The horizontal coordinate of botton right point of the
+        motion detection region."
+    ::= { ibPUECManTrapObjects 3 }
+
+ibPUECRegionCoordinateY2 OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The horizontal coordinate of botton right point of the
+        motion detection region."
+    ::= { ibPUECManTrapObjects 4 }
+
+END

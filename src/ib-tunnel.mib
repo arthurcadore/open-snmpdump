@@ -1,0 +1,1279 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Generic Routing Encapsulation configuration MIB
+-- Reference: INET-ADDRESS-MIB, IPV6-FLOW-LABEL-MIB, IF-MIB
+-- Version: V1.4
+-- History:
+-- V1.0 created by Sun Ludong
+--   2005-06-04 Initial version
+-- V1.1 modified by Zhao Chongri
+--   2012-10-23 add table ibTunnelEviTable and ibTunnelEviLinkTable
+--      modified by Zhao Wenpeng
+--   2013-02-28 add table ibTunnelGreTable
+-- V1.2 modified by Yang Chao
+--   2013-11-22 added tables ibTunnelVxlanIfTable, ibTunnelVxlanConfigGroup,
+--      ibTunnelAvailableIDGroup and ibTunnelTotalNumTable
+--      modified by Zhao Chongri
+--   2014-4-9 added table ibTunnelNvgreIfTable
+-- V1.3 modified by Lei Lei
+--   2018-6-13 added table ibTunnelDestinationTable
+-- V1.4 modified by Geng Shi Xin
+--   2019-04-08 added table ibTunnelGrep2mpStatsTable
+-- =================================================================
+IB-TUNNEL-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Unsigned32, Counter64
+        FROM SNMPv2-SMI
+    RowStatus, TruthValue, TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    InetAddressType, InetAddress, InetAddressIPv4
+        FROM INET-ADDRESS-MIB
+    IPv6FlowLabelOrAny
+        FROM IPV6-FLOW-LABEL-MIB
+    ifIndex, InterfaceIndexOrZero, InterfaceIndex
+        FROM IF-MIB;
+
+ibTunnel MODULE-IDENTITY
+    LAST-UPDATED
+        "201806130000Z"                              -- Jun 13, 2018 at 00:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Added ibTunnelDestinationTable."
+    REVISION
+        "201806130000Z"                              -- Jun 13, 2018 at 00:00 GMT
+    DESCRIPTION
+        "This MIB contains objects to Manage configuration and Monitor tunnel.
+        "
+    REVISION
+        "201302280000Z"                              -- Feb 28, 2013 at 00:00 GMT
+    DESCRIPTION
+        "The initial revision of this MIB module.
+        "
+    ::= { ibCommon 53 }
+
+IbTunnelType ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "Tunnel type definition.
+        "
+    SYNTAX INTEGER {
+        other(1),                            -- none of the following
+        direct(2),                           -- no intermediate header
+        gre(3),                              -- GRE encapsulation
+        minimal(4),                          -- Minimal encapsulation
+        l2tp(5),                             -- L2TP encapsulation
+        pptp(6),                             -- PPTP encapsulation
+        l2f(7),                              -- L2F encapsulation
+        udp(8),                              -- UDP encapsulation
+        atmp(9),                             -- ATMP encapsulation
+        msdp(10),                            -- MSDP encapsulation
+        sixToFour(11),                       -- 6to4 encapsulation
+        sixOverFour(12),                     -- 6over4 encapsulation
+        isatap(13),                          -- ISATAP encapsulation
+        teredo(14),                          -- Teredo encapsulation
+        tunnelModeReserve(35),               -- 15 to 35 are reserved
+        tunnelModeIPv4Gre(36),               -- GRE tunnel, IPv4 as transport protocol
+        tunnelModeIPv6Gre(37),               -- GRE tunnel, IPv6 as transport protocol
+        tunnelModeIPv4IPv4(38),             -- IPv4 over IPv4 tunnel
+        tunnelModeIPv4IPv6Config(39),        -- IPv6 over IPv4 manual tunnel
+        tunnelModeIPv4IPv6Auto(40),          -- IPv6 over IPv4 auto tunnel
+        tunnelModeIPv4IPv66to4(41),          -- IPv6 over IPv4 6to4 tunnel
+        tunnelModeIPv4IPv6Isatap(42),        -- IPv6 over IPv4 isatap tunnel
+        tunnelModeIPv6IPv4(43),              -- IPv4 over IPv6
+        tunnelModeIPv6IPv6(44),              -- IPv6 over IPv6 tunnel
+        tunnelModeIPv4UdpDVPN(45),           -- IPv4 DVPN tunnel£¬UDP method
+        tunnelModeIPv4GreDVPN(46),           -- IPv4 DVPN tunnel£¬GRE method
+        tunnelModeIPv6UdpDVPN(47),           -- IPv6 DVPN tunnel£¬UDP method
+        tunnelModeIPv6GreDVPN(48),           -- IPv6 DVPN tunnel£¬GRE method
+        tunnelModeCrLsp(49),                 -- IPv4 CRLSP tunnel
+        tunnelModeMax(50),
+        tunnelModeIPv4UdpVxlan(51),          -- IPv4 VXLAN tunnel, UDP method
+        tunnelModeIPv6UdpVxlan(52),          -- IPv6 VXLAN tunnel, UDP method
+        tunnelModeIPv4NVGRE(53),             -- IPv4 NVGRE tunnel
+        tunnelModeIPv6NVGRE(54)              -- IPv6 NVGRE tunnel
+    }
+
+ibTunnelMIBObjects OBJECT IDENTIFIER ::= { ibTunnel 1 }
+
+ibTunnelTables      OBJECT IDENTIFIER ::= { ibTunnelMIBObjects 1 }
+
+ibTunnelIfTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbTunnelIfEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "The (conceptual) table containing information on configured tunnels.
+        "
+    ::= { ibTunnelTables 1 }
+
+ibTunnelIfEntry OBJECT-TYPE
+    SYNTAX     IbTunnelIfEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "An entry (conceptual row) containing the information on a
+        particular configured tunnel.
+        "
+    INDEX      { ifIndex }
+    ::= { ibTunnelIfTable 1 }
+
+IbTunnelIfEntry ::= SEQUENCE {
+    ibTunnelIfEncapsMethod         IbTunnelType,
+    ibTunnelIfHopLimit             Integer32,
+    ibTunnelIfSecurity             INTEGER,
+    ibTunnelIfTOS                  Integer32,
+    ibTunnelIfFlowLabel            IPv6FlowLabelOrAny,
+    ibTunnelIfAddressType          InetAddressType,
+    ibTunnelIfLocalInetAddress     InetAddress,
+    ibTunnelIfRemoteInetAddress    InetAddress,
+    ibTunnelIfEncapsLimit          Integer32
+}
+
+ibTunnelIfEncapsMethod OBJECT-TYPE
+    SYNTAX     IbTunnelType
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "The encapsulation method used by the tunnel.
+        "
+    ::= { ibTunnelIfEntry 3 }
+
+ibTunnelIfHopLimit OBJECT-TYPE
+    SYNTAX     Integer32 (0 | 1..255)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The IPv4 TTL or IPv6 Hop Limit to use in the outer IP
+        header.  A value of 0 indicates that the value is
+        copied from the payload's header.
+        "
+    ::= { ibTunnelIfEntry 4 }
+
+ibTunnelIfSecurity OBJECT-TYPE
+    SYNTAX     INTEGER {
+        none(1),   -- no security
+        ipsec(2),  -- IPsec security
+        other(3)
+    }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The method used by the tunnel to secure the outer IP
+        header.  The value ipsec indicates that IPsec is used
+        between the tunnel endpoints for authentication or
+        encryption or both.  More specific security-related
+        information may be available in a MIB module for the
+        security protocol in use.
+        "
+    ::= { ibTunnelIfEntry 5 }
+
+ibTunnelIfTOS OBJECT-TYPE
+    SYNTAX     Integer32 (-2..63)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The method used to set the high 6 bits (the
+        differentiated services codepoint) of the IPv4 TOS or
+        IPv6 Traffic Class in the outer IP header.  A value of
+        -1 indicates that the bits are copied from the
+        payload's header.  A value of -2 indicates that a
+        traffic conditioner is invoked and more information
+        may be available in a traffic conditioner MIB module.
+        A value between 0 and 63 inclusive indicates that the
+        bit field is set to the indicated value.
+        "
+    ::= { ibTunnelIfEntry 6 }
+
+ibTunnelIfFlowLabel OBJECT-TYPE
+    SYNTAX     IPv6FlowLabelOrAny
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The method used to set the IPv6 Flow Label value.
+        This object need not be present in rows where
+        ibTunnelIfAddressType indicates the tunnel is not over
+        IPv6.  A value of -1 indicates that a traffic
+        conditioner is invoked and more information may be
+        available in a traffic conditioner MIB.  Any other
+        value indicates that the Flow Label field is set to
+        the indicated value.
+        "
+    ::= { ibTunnelIfEntry 7 }
+
+ibTunnelIfAddressType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "The type of address in the corresponding
+        ibTunnelIfLocalInetAddress and ibTunnelIfRemoteInetAddress
+        objects.
+        "
+    ::= { ibTunnelIfEntry 8 }
+
+ibTunnelIfLocalInetAddress OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "The address of the local endpoint of the tunnel
+        (i.e., the source address used in the outer IP
+        header).  If the address is unknown, the value is
+        0.0.0.0 for IPv4 or :: for IPv6.  The type of this
+        object is given by ibTunnelIfAddressType.
+        "
+    ::= { ibTunnelIfEntry 9 }
+
+ibTunnelIfRemoteInetAddress OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "The address of the remote endpoint of the tunnel
+        (i.e., the destination address used in the outer IP
+        header).  If the address is unknown or the tunnel is
+        not a point-to-point link (e.g., if it is a 6to4
+        tunnel), the value is 0.0.0.0 for tunnels over IPv4 or
+        :: for tunnels over IPv6.  The type of this object is
+        given by ibTunnelIfAddressType.
+        "
+    ::= { ibTunnelIfEntry 10 }
+
+ibTunnelIfEncapsLimit OBJECT-TYPE
+    SYNTAX     Integer32 (-1 | 0..255)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The maximum number of additional encapsulations
+        permitted for packets undergoing encapsulation at this
+        node.  A value of -1 indicates that no limit is
+        present (except as a result of the packet size).
+        "
+    REFERENCE
+        "RFC 2473, section 4.1.1
+        "
+    ::= { ibTunnelIfEntry 11 }
+
+ibTunnelInetConfigTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbTunnelInetConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "The (conceptual) table containing information on
+        configured tunnels.  This table can be used to map a
+        set of tunnel endpoints to the associated ifIndex
+        value.  It can also be used for row creation.  Note
+        that every row in the ibTunnelIfTable with a fixed
+        destination address should have a corresponding row in
+        the ibTunnelInetConfigTable, regardless of whether it
+        was created via SNMP.
+        "
+    ::= { ibTunnelTables 3 }
+
+ibTunnelInetConfigEntry OBJECT-TYPE
+    SYNTAX     IbTunnelInetConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "An entry (conceptual row) containing the information
+        on a particular configured tunnel.
+        "
+    INDEX {
+        ibTunnelInetConfigSlot,
+        ibTunnelInetConfigSubSlot,
+        ibTunnelInetConfigTunnNum
+    }
+    ::= { ibTunnelInetConfigTable 1 }
+
+IbTunnelInetConfigEntry ::= SEQUENCE {
+    ibTunnelInetConfigSlot                Integer32,
+    ibTunnelInetConfigSubSlot             Integer32,
+    ibTunnelInetConfigTunnNum             Integer32,
+    ibTunnelInetConfigIfIndex             InterfaceIndexOrZero,
+    ibTunnelInetConfigStatus              RowStatus
+}
+
+ibTunnelInetConfigSlot OBJECT-TYPE
+    SYNTAX     Integer32 (0..255)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Slot number.  ibTunnelInetConfigSlot, ibTunnelInetConfigSubSlot
+        and ibTunnelInetConfigTunnNum describe a tunnel interface.
+        For Example, interface tunnel 0/0/25 would be configured as:
+        ibTunnelInetConfigSlot          0
+        ibTunnelInetConfigSubSlot       0
+        ibTunnelInetConfigTunnNum      25
+        "
+    ::= { ibTunnelInetConfigEntry 1 }
+
+ibTunnelInetConfigSubSlot OBJECT-TYPE
+    SYNTAX     Integer32 (0..255)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Sub slot number.  As described in ibTunnelInetConfigSlot's description.
+        "
+    ::= { ibTunnelInetConfigEntry 2 }
+
+ibTunnelInetConfigTunnNum OBJECT-TYPE
+    SYNTAX     Integer32 (0..65535)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Tunnel number.  As described in ibTunnelInetConfigSlot's description.
+        "
+    ::= { ibTunnelInetConfigEntry 3 }
+
+ibTunnelInetConfigIfIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndexOrZero
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "If the value of ibTunnelInetConfigStatus for this row
+        is active, then this object contains the value of
+        ifIndex corresponding to the tunnel interface.  A
+        value of 0 is not legal in the active state, and means
+        that the interface index has not yet been assigned.
+        "
+    ::= { ibTunnelInetConfigEntry 6 }
+
+ibTunnelInetConfigStatus OBJECT-TYPE
+    SYNTAX     RowStatus
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The status of this row, by which new entries may be
+        created, or old entries deleted from this table.  The
+        agent need not support setting this object to
+        createAndWait or notInService since there are no other
+        writable objects in this table, and writable objects
+        in rows of corresponding tables such as the
+        ibTunnelIfTable may be modified while this row is
+        active.
+
+        To create a row in this table, the management
+        station should set ibTunnelInetConfigSlot,
+        ibTunnelInetConfigSubSlot, ibTunnelInetConfigTunnNum,
+        and set ibTunnelInetConfigStatus to createAndGo.
+
+        Creating a row in this table will cause an interface
+        index to be assigned by the agent in an
+        implementation-dependent manner, and corresponding
+        rows will be instantiated in the ifTable and the
+        ibTunnelIfTable.  The status of this row will become
+        active as soon as the agent assigns the interface
+        index, regardless of whether the interface is
+        operationally up.
+
+        Deleting a row in this table will likewise delete the
+        corresponding row in the ifTable and in the ibTunnelIfTable.
+        "
+    ::= { ibTunnelInetConfigEntry 7 }
+
+ibTunnelEviTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbTunnelEviEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "The (conceptual) table containing information on configured EVI-Tunnel.
+        "
+    ::= { ibTunnelTables 4 }
+
+ibTunnelEviEntry OBJECT-TYPE
+    SYNTAX     IbTunnelEviEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "An entry (conceptual row) containing the information on a
+        particular configured EVI-Tunnel.
+        "
+    INDEX      { ibTunnelEviTunnNum }
+    ::= { ibTunnelEviTable 1 }
+
+IbTunnelEviEntry ::= SEQUENCE {
+    ibTunnelEviTunnNum              Integer32,
+    ibTunnelEviIfIndex              InterfaceIndex,
+    ibTunnelEviStatus               RowStatus,
+    ibTunnelEviAddressType          InetAddressType,
+    ibTunnelEviLocalAddr            InetAddress,
+    ibTunnelEviNetworkID            Integer32,
+    ibTunnelEviKeepaliveInterval    Integer32,
+    ibTunnelEviKeepaliveTimes       Integer32
+}
+
+ibTunnelEviTunnNum OBJECT-TYPE
+    SYNTAX     Integer32 (1..2147483647)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Tunnel number.  An identifier used to distinguish
+         between multiple tunnels.
+        "
+    ::= { ibTunnelEviEntry 1 }
+
+ibTunnelEviIfIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "A unique value, greater than zero, for each
+         interface.  It is recommended that values are assigned
+         contiguously starting from 1.  The value for each
+         interface sub-layer must remain constant at least from
+         one re-initialization of the entity's network
+         management system to the next re-initialization.
+        "
+    ::= { ibTunnelEviEntry 2 }
+
+ibTunnelEviStatus OBJECT-TYPE
+    SYNTAX     RowStatus
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The status of this row, by which new entries may be
+        created, or old entries deleted from this table.  The
+        agent need not support setting this object to
+        createAndWait or notInService since there are no other
+        writable objects in this table, and writable objects
+        in rows of corresponding tables such as the
+        ibTunnelEviTable may be modified while this row is
+        active.
+
+        Creating a row in this table will cause an interface
+        index to be assigned by the agent in an
+        implementation-dependent manner, and corresponding
+        rows will be instantiated in the ifTable.
+        The status of this row will become
+        active as soon as the agent assigns the interface
+        index, regardless of whether the interface is
+        operationally up.
+
+        Deleting a row in this table will likewise delete the
+        corresponding row in the ifTable.
+        "
+    ::= { ibTunnelEviEntry 3 }
+
+ibTunnelEviAddressType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The type of address in the corresponding
+         ibTunnelEviLocalAddr objects.
+         Can not be modified after creation.
+        "
+    ::= { ibTunnelEviEntry 4 }
+
+ibTunnelEviLocalAddr OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The address of the local endpoint of the tunnel
+        (i.e., the source address used in the outer IP
+        header).  The type of this object is given by
+        ibTunnelEviAddressType.
+        "
+    ::= { ibTunnelEviEntry 5 }
+
+ibTunnelEviNetworkID OBJECT-TYPE
+    SYNTAX     Integer32 (0..16777215)
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The method used to assign a network ID to an EVI-Tunnel interface.
+         Assign the same network ID to the EVI-Tunnel interfaces of
+         all edge devices in an EVI network.  A value of 0 indicates that
+         no network ID is assigned to any EVI-Tunnel interface.
+        "
+    ::= { ibTunnelEviEntry 6 }
+
+ibTunnelEviKeepaliveInterval OBJECT-TYPE
+    SYNTAX     Integer32 (1..32767)
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The method used to assign the keepalive interval.
+        "
+    ::= { ibTunnelEviEntry 7 }
+
+ibTunnelEviKeepaliveTimes OBJECT-TYPE
+    SYNTAX     Integer32 (1..255)
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The method used to assign the keepalive maximum number
+         of consecutive keepalive failures that are allowed.
+        "
+    ::= { ibTunnelEviEntry 8 }
+
+ibTunnelEviLinkTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbTunnelEviLinkEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "The (conceptual) table containing information on configured EVI-Link.
+        "
+    ::= { ibTunnelTables 5 }
+
+ibTunnelEviLinkEntry OBJECT-TYPE
+    SYNTAX     IbTunnelEviLinkEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "An entry (conceptual row) containing the information on a
+        particular configured EVI-Link.
+        "
+    INDEX      { ibTunnelEviTunnNum, ibTunnelEviLinkNum }
+    ::= { ibTunnelEviLinkTable 1 }
+
+IbTunnelEviLinkEntry ::= SEQUENCE {
+    ibTunnelEviLinkNum                Integer32,
+    ibTunnelEviLinkIfIndex            InterfaceIndex,
+    ibTunnelEviLinkAddressType        InetAddressType,
+    ibTunnelEviLinkRemoteAddr         InetAddress
+}
+
+ibTunnelEviLinkNum OBJECT-TYPE
+    SYNTAX     Integer32 (1..2147483647)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "EVI-Link number.
+        "
+    ::= { ibTunnelEviLinkEntry 1 }
+
+ibTunnelEviLinkIfIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "A unique value, greater than zero, for each
+         interface.  It is recommended that values are assigned
+         contiguously starting from 1.  The value for each
+         interface sub-layer must remain constant at least from
+         one re-initialization of the entity's network
+         management system to the next re-initialization.
+        "
+    ::= { ibTunnelEviLinkEntry 2 }
+
+    ibTunnelEviLinkAddressType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The type of address in the corresponding
+         ibTunnelEviLinkRemoteAddr objects.
+         Can not be modified after creation.
+        "
+    ::= { ibTunnelEviLinkEntry 3 }
+
+ibTunnelEviLinkRemoteAddr OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The address of the remote endpoint of the tunnel
+        (i.e., the destination address used in the outer IP
+        header).
+        "
+    ::= { ibTunnelEviLinkEntry 4}
+
+ibTunnelGreTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbTunnelGreEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "The (conceptual) table containing information on configured Gre-Tunnel.
+        "
+    ::= { ibTunnelTables 6 }
+
+ibTunnelGreEntry OBJECT-TYPE
+    SYNTAX     IbTunnelGreEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "An entry (conceptual row) containing the information on a
+        particular configured Gre-Tunnel.
+        "
+    INDEX      { ibTunnelGreTunnNum }
+    ::= { ibTunnelGreTable 1 }
+
+IbTunnelGreEntry ::= SEQUENCE {
+    ibTunnelGreTunnNum                  Integer32,
+    ibTunnelGreTunnIfIndex              InterfaceIndex,
+    ibTunnelGreAddressType              InetAddressType,
+    ibTunnelGreLocalAddr                InetAddress,
+    ibTunnelGreRemoteAddr               InetAddress,
+    ibTunnelGreKeepaliveEnabled         TruthValue,
+    ibTunnelGreKeepaliveInterval        Integer32,
+    ibTunnelGreKeepaliveTimes           Integer32,
+    ibTunnelGreSlbgGroupNum             Unsigned32,
+    ibTunnelGreTunnStatus               RowStatus
+}
+
+ibTunnelGreTunnNum OBJECT-TYPE
+    SYNTAX     Integer32 (1..2147483647)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Tunnel number.  An identifier used to distinguish
+         between multiple tunnels.
+        "
+    ::= { ibTunnelGreEntry 1 }
+
+ibTunnelGreTunnIfIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "A unique value, greater than zero, for each
+         interface.  It is recommended that values are assigned
+         contiguously starting from 1.  The value for each
+         interface sub-layer must remain constant at least from
+         one re-initialization of the entity's network
+         management system to the next re-initialization.
+        "
+    ::= { ibTunnelGreEntry 2 }
+
+ibTunnelGreAddressType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The type of address in the corresponding
+         ibTunnelGreLocalAddr and ibTunnelGreRemoteAddr objects.
+        "
+    ::= { ibTunnelGreEntry 3 }
+
+ibTunnelGreLocalAddr OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The address of the local endpoint of the tunnel
+         (i.e., the source address used in the outer IP
+         header).
+        "
+    ::= { ibTunnelGreEntry 4 }
+
+ibTunnelGreRemoteAddr OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The address of the remote endpoint of the tunnel
+         (i.e., the destination address used in the outer IP
+         header).
+        "
+    ::= { ibTunnelGreEntry 5 }
+
+ibTunnelGreKeepaliveEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This MIB object specifies whether or not keepalive is used.
+         A value of true indicates that keepalive SHOULD be used.
+         When keepalive is not be used, the value of
+         ibTunnelGreKeepaliveInterval and ibTunnelGreKeepaliveTimes
+         MUST be zero.
+        "
+    DEFVAL { false }
+    ::= { ibTunnelGreEntry 6 }
+
+ibTunnelGreKeepaliveInterval OBJECT-TYPE
+    SYNTAX     Integer32 (0..32767)
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The method used to assign the keepalive interval.
+         The value is zero when keepalive is not used.
+         The valid value is from 1 to 32767, when keepalive is used.
+        "
+    DEFVAL { 0 }
+    ::= { ibTunnelGreEntry 7 }
+
+ibTunnelGreKeepaliveTimes OBJECT-TYPE
+    SYNTAX     Integer32 (0..255)
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The method used to assign the keepalive maximum number
+         of consecutive keepalive failures that are allowed.
+         The value is zero when keepalive is not used.
+         The valid value is from 1 to 255, when keepalive is used.
+        "
+    DEFVAL { 0 }
+    ::= { ibTunnelGreEntry 8 }
+
+ibTunnelGreSlbgGroupNum OBJECT-TYPE
+    SYNTAX     Unsigned32 (0..4294967295)
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The method used to assign the service-loopback-group.
+        "
+    ::= { ibTunnelGreEntry 9 }
+
+ibTunnelGreTunnStatus OBJECT-TYPE
+    SYNTAX     RowStatus
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The status of this row, by which new entries may be
+         created, or old entries deleted from this table.  The
+         agent need not support setting this object to
+         createAndWait or notInService since there are no other
+         writable objects in this table, and writable objects
+         in rows of corresponding tables such as the
+         ibTunnelGreTable may be modified while this row is
+         active.
+
+         Creating a row in this table will cause an interface
+         index to be assigned by the agent in an
+         implementation-dependent manner, and corresponding
+         rows will be instantiated in the ifTable.
+         The status of this row will become
+         active as soon as the agent assigns the interface
+         index, regardless of whether the interface is
+         operationally up.
+
+         Deleting a row in this table will likewise delete the
+         corresponding row in the ifTable.
+        "
+    ::= { ibTunnelGreEntry 10 }
+
+ibTunnelVxlanIfTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbTunnelVxlanIfEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "The (conceptual) table containing information on configured Vxlan-Tunnel.
+        "
+    ::= { ibTunnelTables 7 }
+
+ibTunnelVxlanIfEntry OBJECT-TYPE
+    SYNTAX     IbTunnelVxlanIfEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "An entry (conceptual row) containing the information on a
+        particular configured Vxlan-Tunnel.
+        "
+    INDEX      { ibTunnelVxlanIfTunnNum }
+    ::= { ibTunnelVxlanIfTable 1 }
+
+IbTunnelVxlanIfEntry ::= SEQUENCE {
+    ibTunnelVxlanIfTunnNum              Integer32,
+    ibTunnelVxlanTunnIfIndex            InterfaceIndex,
+    ibTunnelVxlanIfAddressType          InetAddressType,
+    ibTunnelVxlanIfLocalAddr            InetAddress,
+    ibTunnelVxlanIfRemoteAddr           InetAddress,
+    ibTunnelVxlanIfStatus               RowStatus
+}
+
+ibTunnelVxlanIfTunnNum OBJECT-TYPE
+    SYNTAX     Integer32 (1..2147483647)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Tunnel number.  An identifier used to distinguish
+         between multiple tunnels.
+        "
+    ::= { ibTunnelVxlanIfEntry 1 }
+
+ibTunnelVxlanTunnIfIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "A unique value, greater than zero, for each
+         interface.  It is recommended that values are assigned
+         contiguously starting from 1.  The value for each
+         interface sub-layer must remain constant at least from
+         one re-initialization of the entity's network
+         management system to the next re-initialization.
+        "
+    ::= { ibTunnelVxlanIfEntry 2 }
+
+ibTunnelVxlanIfAddressType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The type of address in the corresponding
+         ibTunnelVxlanIfLocalAddr and ibTunnelVxlanIfRemoteAddr objects.
+        "
+    ::= { ibTunnelVxlanIfEntry 3 }
+
+ibTunnelVxlanIfLocalAddr OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The address of the local endpoint of the tunnel
+         (i.e., the source address used in the outer IP
+         header).
+        "
+    ::= { ibTunnelVxlanIfEntry 4 }
+
+ibTunnelVxlanIfRemoteAddr OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The address of the remote endpoint of the tunnel
+         (i.e., the destination address used in the outer IP
+         header).
+        "
+    ::= { ibTunnelVxlanIfEntry 5 }
+
+ibTunnelVxlanIfStatus OBJECT-TYPE
+    SYNTAX     RowStatus
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The status of this row, by which new entries may be
+         created, or old entries deleted from this table.  The
+         agent need not support setting this object to
+         createAndWait or notInService since there are no other
+         writable objects in this table, and writable objects
+         in rows of corresponding tables such as the
+         ibTunnelVxlanIfTable may be modified while this row is
+         active.
+
+         Creating a row in this table will cause an interface
+         index to be assigned by the agent in an
+         implementation-dependent manner, and corresponding
+         rows will be instantiated in the ifTable.
+         The status of this row will become
+         active as soon as the agent assigns the interface
+         index, regardless of whether the interface is
+         operationally up.
+
+         Deleting a row in this table will likewise delete the
+         corresponding row in the ifTable.
+        "
+    ::= { ibTunnelVxlanIfEntry 6 }
+
+ibTunnelVxlanConfigGroup OBJECT IDENTIFIER ::= { ibTunnelTables 8 }
+
+ibTunnelVxlanUdpPort OBJECT-TYPE
+    SYNTAX Integer32 (1..65535)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The UDP port number for Vxlan Tunnels."
+    ::= { ibTunnelVxlanConfigGroup 1 }
+
+ibTunnelVxlanDropWrongCksmPkt OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Whether or not dropping invalid UDP chesksum Vxlan packet."
+    ::= { ibTunnelVxlanConfigGroup 2 }
+
+ibTunnelVxlanDropVlanTagPkt OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Whether or not dropping Vxlan packet with inner VLAN tag."
+    ::= { ibTunnelVxlanConfigGroup 3 }
+
+ibTunnelAvailableIDGroup OBJECT IDENTIFIER ::= { ibTunnelTables 9 }
+
+ibTunnelAvailableID OBJECT-TYPE
+    SYNTAX Integer32 (-1 | 1..2147483647)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The available tunnel ID.  A value of -1 indicates that
+         there is no available tunnel ID."
+    ::= { ibTunnelAvailableIDGroup 1 }
+
+ibTunnelTotalNumTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbTunnelTotalNumEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Total number of a particular method tunnel."
+    ::= { ibTunnelTables 10 }
+
+ibTunnelTotalNumEntry OBJECT-TYPE
+    SYNTAX     IbTunnelTotalNumEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Total number of a particular method tunnel."
+    INDEX      { ibTunnelEncapsMethod }
+    ::= { ibTunnelTotalNumTable 1 }
+
+IbTunnelTotalNumEntry ::= SEQUENCE {
+    ibTunnelEncapsMethod              IbTunnelType,
+    ibTunnelTotalNum                  Unsigned32
+}
+
+ibTunnelEncapsMethod OBJECT-TYPE
+    SYNTAX     IbTunnelType
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "The encapsulation method used by the tunnel."
+    ::= { ibTunnelTotalNumEntry 1 }
+
+ibTunnelTotalNum OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Total number of a particular method tunnel.
+        "
+    ::= { ibTunnelTotalNumEntry 2 }
+
+ibTunnelNvgreIfTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbTunnelNvgreIfEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "The (conceptual) table containing information on configured Nvgre-Tunnel.
+        "
+    ::= { ibTunnelTables 11 }
+
+ibTunnelNvgreIfEntry OBJECT-TYPE
+    SYNTAX     IbTunnelNvgreIfEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "An entry (conceptual row) containing the information on a
+        particular configured Nvgre-Tunnel.
+        "
+    INDEX      { ibTunnelNvgreIfTunnNum }
+    ::= { ibTunnelNvgreIfTable 1 }
+
+IbTunnelNvgreIfEntry ::= SEQUENCE {
+    ibTunnelNvgreIfTunnNum              Integer32,
+    ibTunnelNvgreTunnIfIndex            InterfaceIndex,
+    ibTunnelNvgreIfAddressType          InetAddressType,
+    ibTunnelNvgreIfLocalAddr            InetAddress,
+    ibTunnelNvgreIfRemoteAddr           InetAddress,
+    ibTunnelNvgreIfStatus               RowStatus
+}
+
+ibTunnelNvgreIfTunnNum OBJECT-TYPE
+    SYNTAX     Integer32 (1..2147483647)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Tunnel number.  An identifier used to distinguish
+         between multiple tunnels.
+        "
+    ::= { ibTunnelNvgreIfEntry 1 }
+
+ibTunnelNvgreTunnIfIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "A unique value, greater than zero, for each
+         interface.  It is recommended that values are assigned
+         contiguously starting from 1.  The value for each
+         interface sub-layer must remain constant at least from
+         one re-initialization of the entity's network
+         management system to the next re-initialization.
+        "
+    ::= { ibTunnelNvgreIfEntry 2 }
+
+ibTunnelNvgreIfAddressType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The type of address in the corresponding
+         ibTunnelNvgreIfLocalAddr and ibTunnelNvgreIfRemoteAddr objects.
+        "
+    ::= { ibTunnelNvgreIfEntry 3 }
+
+ibTunnelNvgreIfLocalAddr OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The address of the local endpoint of the tunnel
+         (i.e., the source address used in the outer IP
+         header).
+        "
+    ::= { ibTunnelNvgreIfEntry 4 }
+
+ibTunnelNvgreIfRemoteAddr OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The address of the remote endpoint of the tunnel
+         (i.e., the destination address used in the outer IP
+         header).
+        "
+    ::= { ibTunnelNvgreIfEntry 5 }
+
+ibTunnelNvgreIfStatus OBJECT-TYPE
+    SYNTAX     RowStatus
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The status of this row, by which new entries may be
+         created, or old entries deleted from this table.  The
+         agent need not support setting this object to
+         createAndWait or notInService since there are no other
+         writable objects in this table, and writable objects
+         in rows of corresponding tables such as the
+         ibTunnelNvgreIfTable may be modified while this row is
+         active.
+
+         Creating a row in this table will cause an interface
+         index to be assigned by the agent in an
+         implementation-dependent manner, and corresponding
+         rows will be instantiated in the ifTable.
+         The status of this row will become
+         active as soon as the agent assigns the interface
+         index, regardless of whether the interface is
+         operationally up.
+
+         Deleting a row in this table will likewise delete the
+         corresponding row in the ifTable.
+        "
+    ::= { ibTunnelNvgreIfEntry 6 }
+
+ibTunnelDestinationTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbTunnelDestinationEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+       "The (conceptual) table containing information on tunnels.
+       "
+    ::= { ibTunnelTables 12 }
+
+ibTunnelDestinationEntry OBJECT-TYPE
+    SYNTAX     IbTunnelDestinationEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "An entry (conceptual row) containing the information on a
+         particular tunnel.
+        "
+    INDEX      { ibTunnelDestinationDstAddr,
+               ibTunnelDestinationDstType,
+         ibTunnelDestinationTunNum}
+    ::= { ibTunnelDestinationTable 1 }
+
+IbTunnelDestinationEntry ::= SEQUENCE {
+    ibTunnelDestinationDstAddr           InetAddress,
+    ibTunnelDestinationDstType           InetAddressType,
+    ibTunnelDestinationTunNum            Integer32,
+    ibTunnelDestinationTunIfindex        InterfaceIndex
+}
+
+ibTunnelDestinationDstAddr OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Destination address of a tunnel.
+        "
+    ::= { ibTunnelDestinationEntry 1 }
+
+ibTunnelDestinationDstType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Type of the destination address.
+        "
+    ::= { ibTunnelDestinationEntry 2 }
+
+ibTunnelDestinationTunNum OBJECT-TYPE
+    SYNTAX     Integer32 (0..65535)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Tunnel number, an identifier used to distinguish
+         between multiple tunnels.
+        "
+    ::= { ibTunnelDestinationEntry 3 }
+
+ibTunnelDestinationTunIfindex OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "A unique value greater than zero, for each interface.
+        "
+    ::= { ibTunnelDestinationEntry 4 }
+
+
+ibTunnelGrep2mpStatsTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbTunnelGrep2mpStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "The table contains GRE P2MP tunnel mapping statistics."
+    ::= { ibTunnelTables 13 }
+
+ibTunnelGrep2mpStatsEntry OBJECT-TYPE
+    SYNTAX     IbTunnelGrep2mpStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "GRE P2MP tunnel mapping statistics entry."
+    INDEX { ibTunnelGrep2mpStatsTunnelNo,
+            ibTunnelGrep2mpStatsVrf,
+            ibTunnelGrep2mpStatsVPCID,
+            ibTunnelGrep2mpStatsBraAddr,
+            ibTunnelGrep2mpStatsBraMask,
+            ibTunnelGrep2mpStatsAddrType,
+            ibTunnelGrep2mpStatsDestAddr}
+    ::= { ibTunnelGrep2mpStatsTable 1 }
+
+IbTunnelGrep2mpStatsEntry ::= SEQUENCE {
+        ibTunnelGrep2mpStatsTunnelNo              Integer32,
+        ibTunnelGrep2mpStatsVrf                   Integer32,
+        ibTunnelGrep2mpStatsVPCID                 Integer32,
+        ibTunnelGrep2mpStatsBraAddr               InetAddress,
+        ibTunnelGrep2mpStatsBraMask               InetAddress,
+        ibTunnelGrep2mpStatsAddrType              InetAddressType,
+        ibTunnelGrep2mpStatsDestAddr              InetAddressIPv4,
+        ibTunnelGrep2mpStatsInPkts                Counter64,
+        ibTunnelGrep2mpStatsInOctets              Counter64,
+        ibTunnelGrep2mpStatsInDis                 Counter64,
+        ibTunnelGrep2mpStatsOutPkts               Counter64,
+        ibTunnelGrep2mpStatsOutOctets             Counter64,
+        ibTunnelGrep2mpStatsOutDis                Counter64
+
+    }
+ibTunnelGrep2mpStatsTunnelNo OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "Tunnel interfacenumber."
+    ::= { ibTunnelGrep2mpStatsEntry 1 }
+
+
+ibTunnelGrep2mpStatsVrf OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "VPN instance index."
+    ::= { ibTunnelGrep2mpStatsEntry 2 }
+
+ibTunnelGrep2mpStatsVPCID OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "VPC ID."
+    ::= { ibTunnelGrep2mpStatsEntry 3 }
+
+
+ibTunnelGrep2mpStatsBraAddr OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "Branch network IP address."
+    ::= { ibTunnelGrep2mpStatsEntry 4 }
+
+ibTunnelGrep2mpStatsBraMask OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "Branch network mask."
+    ::= { ibTunnelGrep2mpStatsEntry 5 }
+
+ibTunnelGrep2mpStatsAddrType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Type of address in the corresponding
+        ibTunnelGrep2mpStatsBraAddr and ibTunnelGrep2mpStatsBraMask
+        objects.
+        "
+    ::= { ibTunnelGrep2mpStatsEntry 6 }
+
+ibTunnelGrep2mpStatsDestAddr OBJECT-TYPE
+    SYNTAX     InetAddressIPv4
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+           "Tunnel destination address."
+    ::= { ibTunnelGrep2mpStatsEntry 7 }
+
+
+
+ibTunnelGrep2mpStatsInPkts OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "Total number of IP datagrams received."
+    ::= { ibTunnelGrep2mpStatsEntry 8 }
+
+ibTunnelGrep2mpStatsInOctets OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "Total number of octets received in IP datagrams."
+    ::= { ibTunnelGrep2mpStatsEntry 9 }
+
+ibTunnelGrep2mpStatsInDis OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "The number of input IP datagrams for which no problems were
+            encountered to prevent their continued processing, but
+            were discarded."
+    ::= { ibTunnelGrep2mpStatsEntry 10 }
+
+ibTunnelGrep2mpStatsOutPkts OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "Total number IP datagrams sent."
+    ::= { ibTunnelGrep2mpStatsEntry 11 }
+
+ibTunnelGrep2mpStatsOutOctets OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "Total number of octets in IP datagrams sent."
+    ::= { ibTunnelGrep2mpStatsEntry 12 }
+
+ibTunnelGrep2mpStatsOutDis OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+           "The number of output IP datagrams which no problem was
+            encountered to prevent their transmission to their
+            destination, but were discarded ."
+    ::= { ibTunnelGrep2mpStatsEntry 13 }
+
+
+END

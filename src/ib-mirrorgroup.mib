@@ -1,0 +1,529 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Mirror group MIB
+-- Reference:
+-- Version: V1.1
+-- History:
+--   2006-01-10 created by xialei
+--     Initial version V1.0
+-- V1.1 2012/04/28 modified by mouxuanli
+--  Modify the description of the object ibMGStatus.
+--  Modify the description of the object ibMGMirrorDirection.
+--  Add ibMGEgressIfTable, ibMGMirrorVlanTable and ibMGMirrorCpuTable.
+-- =================================================================
+-- =================================================================
+--
+-- Import and definition
+--
+-- =================================================================
+IB-MIRRORGROUP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+
+    ibCommon
+        FROM IB-OID-MIB
+    RowStatus
+        FROM SNMPv2-TC
+    Integer32, OBJECT-TYPE, MODULE-IDENTITY, Unsigned32
+        FROM SNMPv2-SMI;
+
+    ibMirrGroup MODULE-IDENTITY
+        LAST-UPDATED "200601131403Z"
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+            "This MIB defines objects for managing mirror group."
+        REVISION "200601101903Z"
+        DESCRIPTION
+            "The initial revision of this MIB module."
+        ::= { ibCommon  68 }
+
+    ibMGInfoObjects OBJECT IDENTIFIER ::= {  ibMirrGroup 1  }
+
+    ibMGObjects OBJECT IDENTIFIER ::= {  ibMGInfoObjects 1  }
+
+    ibMGTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbMGEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A list of mirror group entries."
+        ::= { ibMGObjects 1 }
+
+    ibMGEntry OBJECT-TYPE
+        SYNTAX      IbMGEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A list of parameters that describe a mirror group to be created."
+        INDEX
+        {
+            ibMGID
+        }
+      ::= { ibMGTable 1 }
+
+    IbMGEntry ::=
+        SEQUENCE
+        {
+            ibMGID           Integer32,
+            ibMGType         INTEGER,
+            ibMGStatus       INTEGER,
+            ibMGRowStatus    RowStatus
+        }
+
+    ibMGID OBJECT-TYPE
+        SYNTAX      Integer32 (0..2147483647)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An index that uniquely identifies an entry in the mirror group table."
+        ::={ ibMGEntry 1 }
+
+    ibMGType OBJECT-TYPE
+        SYNTAX      INTEGER
+                    {
+                        local(1),
+                        remoteSource(2),
+                        remoteDestination(3)
+                    }
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "GroupType."
+        ::={ ibMGEntry 2 }
+
+    ibMGStatus OBJECT-TYPE
+        SYNTAX      INTEGER
+                    {
+                        active(1),
+                        inactive(2)
+                    }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The status of a mirror group.  A mirror group is inactive
+            when it was created.
+
+            The status of a mirror group can be changed automatically from inactive
+            to active when appropriate conditions were met.  Also, it can be changed
+            automatically from active to inactive when these conditions disappeared.
+
+            Followings are conditions for a mirror group to become active:
+              group type          conditions
+              ============================================================================
+              local               any source (mirroring-port, mirroring-VLAN, or mirroring-CPU),
+                                  monitor-port
+              remoteSource        If one of the three conditions is satisfied,
+                                  remoteSource group would be active.
+                                  1) any source (mirroring-port, mirroring-VLAN, or mirroring-CPU),
+                                     remote-probe VLAN,
+                                     configurable reflector-port (which is not supported on some devices)
+                                  2) any source (mirroring-port, mirroring-VLAN, or mirroring-CPU),
+                                     remote-probe VLAN,
+                                     egress-port (which is not supported on some devices)
+                                  3) any source (mirroring-port, mirroring-VLAN, or mirroring-CPU),
+                                     remote-probe VLAN,
+                                     fixed reflector-port(which is not supported on some devices)
+              remoteDestination   monitor-port, remote-probe VLAN
+            "
+        ::={ ibMGEntry 3 }
+
+    ibMGRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus"
+        ::={ ibMGEntry 4 }
+
+    ibMGMirrorIfObjects OBJECT IDENTIFIER ::= {  ibMGInfoObjects 2  }
+
+    ibMGMirrorIfTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbMGMirrorIfEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A list of mirror group mirroring-port entries."
+        ::= { ibMGMirrorIfObjects 1 }
+
+    ibMGMirrorIfEntry OBJECT-TYPE
+        SYNTAX      IbMGMirrorIfEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A list of parameters that describe a mirroring-port to be added to
+            a mirror group."
+        INDEX
+        {
+            ibMGID,
+            ibMGMirrorIfIndex,
+            ibMGMirrorDirection
+        }
+        ::= { ibMGMirrorIfTable 1 }
+
+    IbMGMirrorIfEntry ::=
+        SEQUENCE
+        {
+            ibMGMirrorIfIndex      Integer32,
+            ibMGMirrorDirection    INTEGER,
+            ibMGMirrorRowStatus    RowStatus
+        }
+
+    ibMGMirrorIfIndex OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "IfIndex of mirror group mirroring-port."
+        ::={ ibMGMirrorIfEntry 1 }
+
+    ibMGMirrorDirection OBJECT-TYPE
+        SYNTAX      INTEGER
+                    {
+                        inbound(1),
+                        outbound(2),
+                        both(3)
+                    }
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "Mirror direction of mirroring-port."
+        ::={ ibMGMirrorIfEntry 2 }
+
+    ibMGMirrorRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus"
+        ::={ ibMGMirrorIfEntry 3 }
+
+    ibMGMonitorIfObjects OBJECT IDENTIFIER ::= {  ibMGInfoObjects 3  }
+
+    ibMGMonitorIfTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbMGMonitorIfEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A list of mirror group monitor-port entries."
+        ::= { ibMGMonitorIfObjects 1 }
+
+    ibMGMonitorIfEntry OBJECT-TYPE
+        SYNTAX      IbMGMonitorIfEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A list of parameters that describe a monitor-port to be added to
+            a mirror group."
+        INDEX
+        {
+            ibMGID,
+            ibMGMonitorIfIndex
+        }
+        ::= { ibMGMonitorIfTable 1 }
+
+    IbMGMonitorIfEntry ::=
+        SEQUENCE
+        {
+            ibMGMonitorIfIndex      Integer32,
+            ibMGMonitorRowStatus    RowStatus
+        }
+
+    ibMGMonitorIfIndex OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "IfIndex of mirror group monitor-port."
+        ::={ ibMGMonitorIfEntry 1 }
+
+    ibMGMonitorRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus"
+        ::={ ibMGMonitorIfEntry 2 }
+
+    ibMGReflectorIfObjects OBJECT IDENTIFIER ::= {  ibMGInfoObjects 4  }
+
+    ibMGReflectorIfTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbMGReflectorIfEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A list of mirror group reflector-port entries."
+        ::= { ibMGReflectorIfObjects 1 }
+
+    ibMGReflectorIfEntry OBJECT-TYPE
+        SYNTAX      IbMGReflectorIfEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A list of parameters that describe a reflector-port to be added to
+            a mirror group."
+        INDEX
+        {
+            ibMGID,
+            ibMGReflectorIfIndex
+        }
+        ::= { ibMGReflectorIfTable 1 }
+
+    IbMGReflectorIfEntry ::=
+        SEQUENCE
+        {
+            ibMGReflectorIfIndex      Integer32,
+            ibMGReflectorRowStatus    RowStatus
+        }
+
+    ibMGReflectorIfIndex OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "IfIndex of mirror group reflector-port."
+        ::={ ibMGReflectorIfEntry 1 }
+
+    ibMGReflectorRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus"
+        ::={ ibMGReflectorIfEntry 2 }
+
+    ibMGRprobeVlanObjects OBJECT IDENTIFIER ::= {  ibMGInfoObjects 5  }
+
+    ibMGRprobeVlanTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbMGRprobeVlanEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A list of mirror group remote-probe vlan entries."
+        ::= { ibMGRprobeVlanObjects 1 }
+
+    ibMGRprobeVlanEntry OBJECT-TYPE
+        SYNTAX      IbMGRprobeVlanEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A list of parameters that describe a remote-probe vlan to be added
+            to a mirror group.  Details about remote-probe vlan please refer to
+            mirror group manual."
+        INDEX
+        {
+            ibMGID,
+            ibMGRprobeVlanID
+        }
+        ::= { ibMGRprobeVlanTable 1 }
+
+    IbMGRprobeVlanEntry ::=
+        SEQUENCE
+        {
+            ibMGRprobeVlanID           Integer32,
+            ibMGRprobeVlanRowStatus    RowStatus
+        }
+
+    ibMGRprobeVlanID OBJECT-TYPE
+        SYNTAX      Integer32(1..4094)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An index that uniquely identifies an entry in the remote-probe vlan table."
+        ::={ ibMGRprobeVlanEntry 1 }
+
+    ibMGRprobeVlanRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus"
+        ::={ ibMGRprobeVlanEntry 2 }
+
+    ibMGEgressIfObjects OBJECT IDENTIFIER ::= {  ibMGInfoObjects 6  }
+
+    ibMGEgressIfTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbMGEgressIfEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A list of mirror group egress-port entries."
+        ::= { ibMGEgressIfObjects 1 }
+
+    ibMGEgressIfEntry OBJECT-TYPE
+        SYNTAX      IbMGEgressIfEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A list of parameters that describe an egress-port to be added to
+            a mirror group."
+        INDEX
+        {
+            ibMGID,
+            ibMGEgressIfIndex
+        }
+        ::= { ibMGEgressIfTable 1 }
+
+    IbMGEgressIfEntry ::=
+        SEQUENCE
+        {
+            ibMGEgressIfIndex      Integer32,
+            ibMGEgressRowStatus    RowStatus
+        }
+
+    ibMGEgressIfIndex OBJECT-TYPE
+        SYNTAX      Integer32 (0..2147483647)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "IfIndex of mirror group egress-port."
+        ::={ ibMGEgressIfEntry 1 }
+
+    ibMGEgressRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus"
+        ::={ ibMGEgressIfEntry 2 }
+
+    ibMGMirrorVlanObjects OBJECT IDENTIFIER ::= {  ibMGInfoObjects 7  }
+
+    ibMGMirrorVlanTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbMGMirrorVlanEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A list of mirror group mirroring-VLAN entries."
+        ::= { ibMGMirrorVlanObjects 1 }
+
+    ibMGMirrorVlanEntry OBJECT-TYPE
+        SYNTAX      IbMGMirrorVlanEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A list of parameters that describe a mirroring-VLAN to be added to
+            a mirror group."
+        INDEX
+        {
+            ibMGID,
+            ibMGMirrorVlanID
+        }
+        ::= { ibMGMirrorVlanTable 1 }
+
+    IbMGMirrorVlanEntry ::=
+        SEQUENCE
+        {
+            ibMGMirrorVlanID           Integer32,
+            ibMGMirrorVlanDirection    INTEGER,
+            ibMGMirrorVlanRowStatus    RowStatus
+        }
+
+    ibMGMirrorVlanID OBJECT-TYPE
+        SYNTAX      Integer32(1..4094)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "Mirror group mirroring-VLAN ID."
+        ::={ ibMGMirrorVlanEntry 1 }
+
+    ibMGMirrorVlanDirection OBJECT-TYPE
+        SYNTAX      INTEGER
+                    {
+                        inbound(1),
+                        outbound(2),
+                        both(3)
+                    }
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Mirror direction of mirroring-VLAN."
+        ::={ ibMGMirrorVlanEntry 2 }
+
+    ibMGMirrorVlanRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus"
+        ::={ ibMGMirrorVlanEntry 3 }
+
+    ibMGMirrorCpuObjects OBJECT IDENTIFIER ::= {  ibMGInfoObjects 8  }
+
+    ibMGMirrorCpuTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbMGMirrorCpuEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A list of mirror group mirroring-CPU entries."
+        ::= { ibMGMirrorCpuObjects 1 }
+
+    ibMGMirrorCpuEntry OBJECT-TYPE
+        SYNTAX      IbMGMirrorCpuEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A list of parameters that describe a mirroring-CPU to be added to
+            a mirror group."
+        INDEX
+        {
+            ibMGID,
+            ibMGMirrorCpuChassis,
+            ibMGMirrorCpuSlot
+        }
+        ::= { ibMGMirrorCpuTable 1 }
+
+    IbMGMirrorCpuEntry ::=
+        SEQUENCE
+        {
+            ibMGMirrorCpuChassis      Unsigned32,
+            ibMGMirrorCpuSlot         Unsigned32,
+            ibMGMirrorCpuDirection    INTEGER,
+            ibMGMirrorCpuRowStatus    RowStatus
+        }
+
+    ibMGMirrorCpuChassis OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "Chassis ID of mirroring-CPU.  On a centralized device,
+             centralized IRF device, or distributed device in standalone mode,
+             the value for this node is always zero."
+        ::={ ibMGMirrorCpuEntry 1 }
+
+    ibMGMirrorCpuSlot OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "Slot ID of mirroring-CPU.  On a centralized device, the value for
+             this node is always zero."
+        ::={ ibMGMirrorCpuEntry 2 }
+
+    ibMGMirrorCpuDirection OBJECT-TYPE
+        SYNTAX      INTEGER
+                    {
+                        inbound(1),
+                        outbound(2),
+                        both(3)
+                    }
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Mirror direction of mirroring-CPU."
+        ::={ ibMGMirrorCpuEntry 3 }
+
+    ibMGMirrorCpuRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus"
+        ::={ ibMGMirrorCpuEntry 4 }
+
+
+END

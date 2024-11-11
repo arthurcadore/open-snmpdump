@@ -1,0 +1,299 @@
+-- =========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:  RDDC MIB
+-- Reference:  Enterprise MIB
+-- Version: V1.0
+-- History:
+--     V1.0 Initial version 2014-01-03
+-- =========================================================================
+IB-RDDC-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    Unsigned32, Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC
+    ifIndex, ifDescr
+        FROM IF-MIB
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibRddc MODULE-IDENTITY
+    LAST-UPDATED "201401030000Z"        -- January 03, 2014 at 00:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+         "Redundancy group is concerned with ensuring minimal disruption to
+         data and control planes in case of a failover.  If one of the
+         group-node in an IRF fails, the other group-node in the IRF takes over the
+         function of the failed group-node with minimal service interruption.
+         This module defines the objects pertaining to redundancy group(RDDC)."
+    REVISION  "201401030000Z"        -- January 03, 2014 at 00:00 GMT
+    DESCRIPTION "Creation Date."
+    ::= { ibCommon 151 }
+
+ibRddcNotifications  OBJECT IDENTIFIER ::= { ibRddc 0 }
+ibRddcObjects        OBJECT IDENTIFIER ::= { ibRddc 1 }
+
+ibRddcInfo           OBJECT IDENTIFIER ::= { ibRddcObjects 1 }
+ibRddcTrapObjects    OBJECT IDENTIFIER ::= { ibRddcObjects 2 }
+
+-- ---------------------------------------------------------- --
+-- The redundancy group status Table
+-- ---------------------------------------------------------- --
+
+ibRddcTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbRddcEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table describes the current status of redundancy groups."
+    ::= { ibRddcInfo 1 }
+
+ibRddcEntry OBJECT-TYPE
+    SYNTAX IbRddcEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The entry of ibRddcEntry."
+    INDEX { ibRddcGroupIdx }
+    ::= { ibRddcTable 1 }
+
+IbRddcEntry ::=
+    SEQUENCE {
+        ibRddcGroupIdx          Unsigned32,
+        ibRddcGroupName         OCTET STRING,
+        ibRddcPreempTimeRemain  Unsigned32,
+        ibRddcPreempTimeConfig  Unsigned32,
+        ibRddcHoldTimeRemain    Unsigned32,
+        ibRddcHoldTimeConfig    Unsigned32
+        }
+
+ibRddcGroupIdx OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Unique identifier of this redundancy group.  0 is an invalid value."
+    ::= { ibRddcEntry 1 }
+
+ibRddcGroupName OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1..16))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Unique identifier of this redundancy group."
+    ::= { ibRddcEntry 2 }
+
+ibRddcPreempTimeRemain OBJECT-TYPE
+    SYNTAX    Unsigned32
+    UNITS     "minutes"
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The redundancy group should not switch back immediately
+        when a failover is recovered.  The preempt delay timer is started
+        for waiting the failover became believable.
+        This object contains the current preempt delay time remained
+        when a failover is recovered."
+    ::= { ibRddcEntry 3 }
+
+ibRddcPreempTimeConfig OBJECT-TYPE
+    SYNTAX    Unsigned32
+    UNITS     "minutes"
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The current preempt delay time."
+    ::= { ibRddcEntry 4 }
+
+ibRddcHoldTimeRemain OBJECT-TYPE
+    SYNTAX    Unsigned32
+    UNITS     "seconds"
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "To prevent frequent switchovers of the redundancy group,
+        the hold-down timer started to keeping in a state for
+        a fixed time.
+        This object contains the current remained hold-down time
+        when a switchover or a failover recovery occurred."
+    ::= { ibRddcEntry 5 }
+
+ibRddcHoldTimeConfig OBJECT-TYPE
+    SYNTAX    Unsigned32
+    UNITS     "seconds"
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The current hold-down time."
+    ::= { ibRddcEntry 6 }
+
+-- ---------------------------------------------------------- --
+-- The redundancy group node Table
+-- ---------------------------------------------------------- --
+
+ibRddcNodeTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbRddcNodeEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table describes the current status of a redundancy group node."
+    ::= { ibRddcInfo 2 }
+
+ibRddcNodeEntry OBJECT-TYPE
+    SYNTAX IbRddcNodeEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The entry of ibRddcNodeEntry."
+    INDEX { ibRddcNodeGroupIdx,
+            ibRddcNodeId }
+    ::= { ibRddcNodeTable 1 }
+
+IbRddcNodeEntry ::=
+    SEQUENCE {
+        ibRddcNodeGroupIdx          Unsigned32,
+        ibRddcNodeId                Unsigned32,
+        ibRddcNodeBindType          INTEGER,
+        ibRddcNodeBindInfo          Unsigned32,
+        ibRddcNodePriority          Unsigned32,
+        ibRddcNodeWeight            Integer32,
+        ibRddcNodeStatus            INTEGER
+        }
+
+ibRddcNodeGroupIdx OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Unique identifier of this redundancy group.  0 is an invalid value."
+    ::= { ibRddcNodeEntry 1 }
+
+ibRddcNodeId OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Unique identifier of this redundancy group node.  0 is an invalid value."
+    ::= { ibRddcNodeEntry 2 }
+
+ibRddcNodeBindType OBJECT-TYPE
+    SYNTAX INTEGER {
+                      invalid(1),
+                      chassis(2)
+                   }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The bind type of this redundancy group node.
+         The current version only supports binding chassis of an IRF device."
+    ::= { ibRddcNodeEntry 3 }
+
+ibRddcNodeBindInfo OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The bind information of this redundancy group node.
+         The current version only supports binding chassis of an IRF device.
+         If the value of ibRddcNodeBindType is invalid, the value of ibRddcNodeBindInfo is 65535."
+    ::= { ibRddcNodeEntry 4 }
+
+ibRddcNodePriority OBJECT-TYPE
+    SYNTAX    Unsigned32 (1..255)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The priority of this redundancy group node.  The higher the value, the greater the priority."
+    ::= { ibRddcNodeEntry 5 }
+
+ibRddcNodeWeight OBJECT-TYPE
+    SYNTAX    Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The current weight of this redundancy group node.  The max value is 255."
+    ::= { ibRddcNodeEntry 6 }
+
+ibRddcNodeStatus OBJECT-TYPE
+    SYNTAX    INTEGER {
+                         invalid(1),
+                         master(2),
+                         standby(3)
+                      }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The current status of this redundancy group node."
+    ::= { ibRddcNodeEntry 7 }
+
+-- ---------------------------------------------------------- --
+-- The redundancy group trap objects Table
+-- ---------------------------------------------------------- --
+
+ibRddcNodeInfo OBJECT-TYPE
+    SYNTAX DisplayString   (SIZE (0..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "This object contains node identification information
+        where the switchover occurred."
+    ::= { ibRddcTrapObjects 1 }
+
+ibRddcSwitchReason OBJECT-TYPE
+    SYNTAX DisplayString    (SIZE (0..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "This object contains the cause for switchover."
+    ::= { ibRddcTrapObjects 2 }
+
+-- ==================================================================
+--
+-- ======================= trap definition begin ====================
+--
+-- ==================================================================
+ibRddcSwitchoverTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibRddcGroupIdx,
+            ibRddcGroupName,
+            ibRddcNodeInfo,
+            ibRddcSwitchReason
+        }
+    STATUS      current
+    DESCRIPTION
+        "Notification to signal switchover/failover."
+    ::= { ibRddcNotifications 1 }
+
+ibRddcFailIfRecoverTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibRddcGroupIdx,
+            ibRddcGroupName,
+            ifIndex,
+            ifDescr
+        }
+    STATUS      current
+    DESCRIPTION
+        "Notification to signal the failed interface recovered."
+    ::= { ibRddcNotifications 2 }
+
+ibRddcFailIfGenerateTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibRddcGroupIdx,
+            ibRddcGroupName,
+            ifIndex,
+            ifDescr
+        }
+    STATUS      current
+    DESCRIPTION
+        "Notification to signal the failed interface generated."
+    ::= { ibRddcNotifications 3 }
+
+END

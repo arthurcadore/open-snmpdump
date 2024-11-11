@@ -1,0 +1,638 @@
+-- ===========================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- Description: The MIB is designed to manage the raid.
+-- Reference:
+-- Version: V1.1
+-- History:
+--   V1.0 2007-09-04 created by lizhicheng
+--   V1.1 2009-10-20 modified by zhanglei
+--        Modify ibRaidName MAX-ACCESS to accessible-for-notify for simlint
+--        Delete raid run status stopped(3) in ibRaidRunState
+-- =================================================================
+IB-RAID-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+        Counter32, Integer32,
+        OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI
+        RowStatus, DateAndTime, TruthValue, TEXTUAL-CONVENTION
+    FROM SNMPv2-TC
+        entPhysicalIndex
+    FROM ENTITY-MIB
+        IbStorageOwnerType, IbStorageEnableState, IbStorageActionType,
+        IbRaidIDType, ibStorageRef
+    FROM IB-STORAGE-REF-MIB;
+
+ibRaid MODULE-IDENTITY
+    LAST-UPDATED "200709041452Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB describes the general information of raid."
+    ::= { ibStorageRef 4 }
+
+ibRaidMibObjects OBJECT IDENTIFIER ::= { ibRaid 1 }
+
+
+ibRaidCapacityTable  OBJECT IDENTIFIER ::= { ibRaidMibObjects 1 }
+ibPrimaryRaidCount OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the maximal number of primary raids supported."
+    ::= { ibRaidCapacityTable 1 }
+
+
+-- Raid Resource Create Table
+-- This table described the information of create server's array resource.
+ibRaidTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbRaidEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table containing some property information of the array."
+    ::= { ibRaidMibObjects 2 }
+
+ibRaidEntry OBJECT-TYPE
+    SYNTAX      IbRaidEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable
+        to create array resource."
+    INDEX
+        {
+            ibRaidName
+        }
+
+    ::= { ibRaidTable 1 }
+
+IbRaidEntry ::= SEQUENCE
+    {
+        ibRaidName         OCTET STRING,
+        ibRaidId           Integer32,
+        ibRaidUuid         IbRaidIDType,
+        ibRaidLevel        INTEGER,
+        ibRaidTimestamp    DateAndTime,
+        ibRaidDiskList     OCTET STRING,
+        ibRaidOwner        IbStorageOwnerType,
+        ibRaidSize         Integer32,
+        ibRaidFreeSize     Integer32,
+        ibRaidAutoSync     TruthValue,
+        ibRaidRowStatus    RowStatus
+    }
+
+ibRaidName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..31))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the name of the array."
+    ::= { ibRaidEntry 1 }
+
+ibRaidId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the identification of the array."
+    ::= { ibRaidEntry 2 }
+
+ibRaidUuid OBJECT-TYPE
+    SYNTAX      IbRaidIDType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the UUID of the array."
+    ::= { ibRaidEntry 3 }
+
+ibRaidLevel OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            jbod(1),
+            raid0(2),
+            raid1(3),
+            raid2(4),
+            raid3(5),
+            raid4(6),
+            raid5(7),
+            raid6(8),
+            raid10(9),
+            raid50(10)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the type of array.
+        The value 'jbod' means just a bunch of disks,
+        the value 'raid0' means RAID Level 0, and so on."
+    ::= { ibRaidEntry 4 }
+
+ibRaidTimestamp OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the system time when the array is created."
+    ::= { ibRaidEntry 5 }
+
+ibRaidDiskList OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(2..256))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes a list of the disk composed the array,
+        each two bytes with network-byte order means a single entity index
+        of the disk."
+    ::= { ibRaidEntry 6 }
+
+ibRaidOwner OBJECT-TYPE
+    SYNTAX      IbStorageOwnerType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the owner of the array."
+    ::= { ibRaidEntry 7 }
+
+ibRaidSize OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the size of array's total space. The
+        units is million bytes."
+    ::= { ibRaidEntry 8 }
+
+ibRaidFreeSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the size of array's vacancy space. The
+        units is million bytes."
+    ::= { ibRaidEntry 9 }
+
+ibRaidAutoSync OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the raid should be synchro automatically
+        when created."
+    ::= { ibRaidEntry 10 }
+
+ibRaidRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the actions to crate or delete an array."
+    ::= { ibRaidEntry 11 }
+
+
+
+-- Raid Resource Manage Table
+-- This table described the information about how to manage the server's array
+-- resource.
+ibRaidManageTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbRaidManageEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table containing some management information of the array."
+    ::= { ibRaidMibObjects 3 }
+
+ibRaidManageEntry OBJECT-TYPE
+    SYNTAX      IbRaidManageEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable
+        to particular array resource."
+    INDEX
+        {
+            ibRaidUuid
+        }
+
+    ::= { ibRaidManageTable 1 }
+
+IbRaidManageEntry ::= SEQUENCE
+    {
+        ibRaidLocationState    IbStorageEnableState,
+        ibRaidAction           INTEGER,
+        ibRaidRunState         INTEGER,
+        ibRaidAutoRebuild      IbStorageEnableState,
+        ibRaidSyncPercentage   Integer32,
+        ibRaidHideState        IbStorageEnableState,
+        ibRaidLvRestore        IbStorageActionType,
+        ibRaidType             INTEGER
+    }
+
+ibRaidLocationState OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the array can be located."
+    DEFVAL { enable }
+    ::= { ibRaidManageEntry 1 }
+
+ibRaidAction OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            run(1),
+            pause(2),
+            rebuild(3),
+            invalid(4)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the actions to operating the array. When
+        read, this object always returns the value 'invalid'."
+    ::= { ibRaidManageEntry 2 }
+
+ibRaidRunState OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            normal(1),
+            degraded(2),
+            failed(3)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the state of the array.
+        The value 'normal' means array works well.
+        The value 'degraded' means array has degraded.
+        The value 'failed' means some disks met failure and array has failed."
+    ::= { ibRaidManageEntry 3 }
+
+ibRaidAutoRebuild OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the array can be auto rebuild."
+    DEFVAL { disable }
+    ::= { ibRaidManageEntry 4 }
+
+ibRaidSyncPercentage OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the percentage of progress when the array
+        is synchronizing. The value is equal to '100' when the progress
+        has finished."
+    ::= { ibRaidManageEntry 5 }
+
+ibRaidHideState OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the array is hided. When the value of
+        this object is equal to 'enable', the array will be hided and the
+        files on it can not be accessed by any user."
+    DEFVAL { disable }
+    ::= { ibRaidManageEntry 6 }
+
+
+ibRaidLvRestore OBJECT-TYPE
+    SYNTAX      IbStorageActionType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies an action to restore all the logic volume
+        resources."
+    ::= { ibRaidManageEntry 7 }
+
+ibRaidType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            virtualDevice(1),
+            directDevice(2),
+            serviceEnabledDevice(3),
+            unassigned(4)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the physical type of an array.
+         The value 'virtualDevice' means if a array is prepared for virtual device,
+         it can be used to create LV, for exampe, it is can be split into a lot of LV,
+         or be a part of LV.
+         The value 'directDevice' means if a array is prepared for direct device,
+         it can be used to create a LV which type is direct.
+         Unlike virtual devices, they cannot be combined or split into multiple logical devices.
+         The value 'serviceEnabledDevice' means if a array is prepared for service-enabled device,
+         it can be used to create a LV which type is service-enabled.
+         Unlike virtual devices, they cannot be combined or split into multiple logical devices.
+         The value 'unassigned' means it is the original status of a array,
+         if a array is unassigned, it can't be used to create LV."
+    ::= { ibRaidManageEntry 8 }
+
+
+
+-- Raid Cache Table
+-- This table described the information of server's array cache resource.
+ibRaidCacheTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbRaidCacheEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table containing some property information and management
+        information of the array cache."
+    ::= { ibRaidMibObjects 4 }
+
+ibRaidCacheEntry OBJECT-TYPE
+    SYNTAX      IbRaidCacheEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable to particular
+        array cache resource."
+    INDEX
+        {
+            ibRaidUuid
+        }
+
+    ::= { ibRaidCacheTable 1 }
+
+IbRaidCacheEntry ::= SEQUENCE
+    {
+        ibRaidReadCache                IbStorageEnableState,
+        ibRaidReadCacheHitPeriod       Integer32,
+        ibRaidReadCacheAverageRate     Integer32,
+        ibRaidReadCachePhaseRate       Integer32,
+        ibRaidWriteCache               IbStorageEnableState,
+        ibRaidWriteCacheHitPeriod      Integer32,
+        ibRaidWriteCacheAverageRate    Integer32,
+        ibRaidWriteCachePhaseRate      Integer32,
+        ibRaidWriteCacheFlush          IbStorageActionType
+    }
+
+ibRaidReadCache OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the state of read cache. If the value of
+        this object is set to 'disable', the associated percentage of cache
+        hit may be invalid."
+    DEFVAL { enable }
+    ::= { ibRaidCacheEntry 1 }
+
+ibRaidReadCacheHitPeriod OBJECT-TYPE
+    SYNTAX      Integer32(1..60)
+    UNITS       "minute"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object describes the period during which how often the
+        date matched with the cache when read. The units is minute."
+    ::= { ibRaidCacheEntry 2 }
+
+ibRaidReadCacheAverageRate OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the average percentage of cache hit when read."
+    ::= { ibRaidCacheEntry 3 }
+
+ibRaidReadCachePhaseRate OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the percentage of cache hit when read during
+        the period set by the ibRaidReadCacheHitPeriod object."
+    ::= { ibRaidCacheEntry 4 }
+
+ibRaidWriteCache OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the state of write cache. If the value of
+        this object is set to 'disable', the associated percentage of cache
+        hit may be invalid."
+    DEFVAL { enable }
+    ::= { ibRaidCacheEntry 5 }
+
+ibRaidWriteCacheHitPeriod OBJECT-TYPE
+    SYNTAX      Integer32(1..60)
+    UNITS       "minute"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object describes the period during which how often the
+        date matched with the cache when writed. The units is minute."
+    ::= { ibRaidCacheEntry 6 }
+
+ibRaidWriteCacheAverageRate OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the average percentage of cache hit when writed."
+    ::= { ibRaidCacheEntry 7 }
+
+ibRaidWriteCachePhaseRate OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the percentage of cache hit when write during
+        the period set by the ibRaidWriteCacheHitPeriod object."
+    ::= { ibRaidCacheEntry 8 }
+
+ibRaidWriteCacheFlush OBJECT-TYPE
+    SYNTAX      IbStorageActionType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies an action to flushing the write cache."
+    ::= { ibRaidCacheEntry 9 }
+
+
+
+-- Spare Hot Disk Table
+-- This table described the spare hot disk information.
+ibRaidSpareDiskTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbRaidSpareDiskEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table described the spare hot disk information."
+    ::= { ibRaidMibObjects 5 }
+
+ibRaidSpareDiskEntry OBJECT-TYPE
+    SYNTAX      IbRaidSpareDiskEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable to a spare
+        hot disk."
+    INDEX
+        {
+            ibRaidUuid,
+            entPhysicalIndex
+        }
+
+    ::= { ibRaidSpareDiskTable 1 }
+
+IbRaidSpareDiskEntry ::= SEQUENCE
+    {
+        ibRaidSpareDiskRowStatus    RowStatus
+    }
+
+ibRaidSpareDiskRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the actions to create or delete spare hot
+        disk."
+    ::= { ibRaidSpareDiskEntry 1 }
+
+-- Freezed Raid Management Table
+-- This table described the freezed raid management.
+ibFreezeRaidTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbFreezeRaidEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table described the freezed raid management."
+    ::= { ibRaidMibObjects 6 }
+
+ibFreezeRaidEntry OBJECT-TYPE
+    SYNTAX      IbFreezeRaidEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable to manage
+        the freezed raid."
+    INDEX
+        {
+            ibFreezeRaidUuid
+        }
+
+    ::= { ibFreezeRaidTable 1 }
+
+IbFreezeRaidEntry ::= SEQUENCE
+    {
+        ibFreezeRaidUuid         IbRaidIDType,
+        ibFreezeRaidName         OCTET STRING,
+        ibFreezeRaidRowStatus    RowStatus
+    }
+
+ibFreezeRaidUuid OBJECT-TYPE
+    SYNTAX      IbRaidIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object describes the uuid of the freezed raid."
+    ::= { ibFreezeRaidEntry 1 }
+
+
+ibFreezeRaidName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..31))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the name of the freezed raid."
+    ::= { ibFreezeRaidEntry 2 }
+
+ibFreezeRaidRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the actions to manage the freezed raid.
+        Only the value 'destroy' is supported."
+    ::= { ibFreezeRaidEntry 3 }
+
+-- 3rd Raid Management Table
+-- This table described the 3rd raid management.
+ib3rdRaidTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF Ib3rdRaidEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table described the 3rd raid management."
+    ::= { ibRaidMibObjects 7 }
+
+ib3rdRaidEntry OBJECT-TYPE
+    SYNTAX      Ib3rdRaidEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable to manage
+        the 3rd raid."
+    INDEX
+        {
+            ib3rdRaidUuid
+        }
+
+    ::= { ib3rdRaidTable 1 }
+
+Ib3rdRaidEntry ::= SEQUENCE
+    {
+        ib3rdRaidUuid         IbRaidIDType,
+        ib3rdRaidName         OCTET STRING,
+        ib3rdRaidOwner        OCTET STRING,
+        ib3rdRaidImport       IbStorageOwnerType,
+        ib3rdRaidRowStatus    RowStatus
+    }
+
+ib3rdRaidUuid OBJECT-TYPE
+    SYNTAX      IbRaidIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object describes the uuid of the 3rd raid."
+    ::= { ib3rdRaidEntry 1 }
+
+ib3rdRaidName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the name of the 3rd raid."
+    ::= { ib3rdRaidEntry 2 }
+
+ib3rdRaidOwner OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the owner of the 3rd raid."
+    ::= { ib3rdRaidEntry 3 }
+
+ib3rdRaidImport OBJECT-TYPE
+    SYNTAX      IbStorageOwnerType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the owner for the 3rd raid. When read,
+        the value 'none' will be get.
+        If the action is executed successfully, the 3rd raid will become
+        a primary raid, and this entry will be deleted automatically."
+    ::= { ib3rdRaidEntry 4 }
+
+ib3rdRaidRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the actions to manage the 3rd raid.
+        Only the value 'destroy' is supported."
+    ::= { ib3rdRaidEntry 5 }
+
+END

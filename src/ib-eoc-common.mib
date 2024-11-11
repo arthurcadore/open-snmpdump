@@ -1,0 +1,1908 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:
+-- Reference:
+-- Version: V1.7
+-- History:
+-- V1.0 created by liujingya.
+--     Initial version of the MIB
+-- V1.1 2008-1-29 Adjusted the structure of some tables and the value of
+--     some objects by liujingya.
+-- V1.2 2008-5-19 Added ibEOCComUniAdminStatus, ibEOCComCnuSoftwareVersion,
+--     modified description of ibEOCComUniUpLineRate and
+--     ibEOCComUniDownLineRate by liujingya.
+-- V1.3 2008-7-30 updated by xujun
+--     add ibEOCComCnuRateDropThr, ibEOCComCnuTxRate, ibEOCComCnuRxRate,
+--     ibEOCComCnuTxRateDrop, ibEOCComCnuRxRateDrop, ibEOCCnuTxRateDropTrap,
+--     ibEOCCnuTxRateDropRecoverTrap, ibEOCCnuRxRateDropTrap and
+--     ibEOCCnuRxRateDropRecoverTrap by xujun
+-- V1.4 2009-2-13 Added ibEOCCnuFWDownLoadErrTrap,
+--     ibEOCCnuFWDownLoadErrReTrap, ibEOCCnuDeviceTypeErrTrap,
+--     ibEOCCnuDeviceTypeErrReTrap, ibEOCCnuAutoUpdateErrTrap,
+--     ibEOCCnuAutoUpdateSuccTrap and
+--     modified MAX-ACCESS of ibEOCComCnuDeviceType by liujingya.
+-- V1.5 2010-1-7 Added ibEocComCnuTypeIdx, ibEOCComCnuDescripton,
+--     ibEOCComCltMaxAllowToAccess, ibEocComCnuNumber by xujun
+-- V1.6 2011-12-28 updated by gaoguangping
+--     Added ibEOCLoopbackDetectTrap, ibEOCLoopbackRecoverTrap;
+--     Modified ibEOCComCnuLinkState.
+-- V1.7 2013-08-20 Added ibEOCComCnuTempIndex by xujun
+-- =================================================================
+IB-EOC-COMMON-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        ifIndex, ifDescr
+    FROM IF-MIB
+        Integer32, Unsigned32, TimeTicks, OBJECT-TYPE, MODULE-IDENTITY,
+        NOTIFICATION-TYPE, Gauge32
+    FROM SNMPv2-SMI
+        IANAifType
+    FROM IANAifType-MIB
+        MacAddress, RowStatus, DisplayString, TruthValue
+    FROM SNMPv2-TC
+        ibHPEOCDownLoadCNUFWResult
+    FROM IB-HPEOC-MIB;
+
+
+ibEOCCommon MODULE-IDENTITY
+    LAST-UPDATED "200709111008Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "
+        The objects in this MIB module are used to manage and
+        display common configuration between Ethernet Passive
+        Optical Network (EOC) port which are based on the Ethernet
+        in the First Mile (EFM) Passive Optical Network(PON) as
+        defined in IEEE Draft P802.3ah/D3.0 clause 60, 64, 65..
+        and Ethernet Over Cable (EOC) which is based on HomePlug
+        AV Specification.
+        "
+    ::= { ibCommon 83 }
+
+--
+-- ibEOCCommonSysMan
+--
+ibEOCCommonSysMan OBJECT IDENTIFIER ::= { ibEOCCommon 1 }
+
+ibEOCCommonSysScalarObjects OBJECT IDENTIFIER ::= { ibEOCCommonSysMan 1 }
+
+ibEOCCommonSysVersion OBJECT-TYPE
+    SYNTAX     OCTET STRING
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        Eoc version.  If the object length is
+        zero, it means the version is unknown.
+        The length is up to 1024.
+        "
+    ::= { ibEOCCommonSysScalarObjects 1 }
+
+ibEOCCommonUpLinkMacAddress OBJECT-TYPE
+    SYNTAX     MacAddress
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        EOC CLT's uplink device's mac address.
+        "
+    ::= { ibEOCCommonSysScalarObjects 2 }
+
+
+--
+-- ibEOCCommonCltMan
+--
+ibEOCCommonCltMan OBJECT IDENTIFIER ::= { ibEOCCommon 2 }
+
+--
+-- ibEOCCommonCltManTable
+--
+ibEOCCommonCltManTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbEOCCommonCltManEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        This table defines the primary parameters of the
+        CLT configuration.
+        "
+    ::= { ibEOCCommonCltMan 1 }
+
+ibEOCCommonCltManEntry OBJECT-TYPE
+    SYNTAX     IbEOCCommonCltManEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        The entry of the table ibEOCCommonCltManTable.
+        "
+    INDEX
+        {
+            ifIndex
+        }
+    ::= { ibEOCCommonCltManTable 1 }
+
+IbEOCCommonCltManEntry ::= SEQUENCE
+    {
+        ibEOCCommonCltAutoAuthorize    TruthValue,
+        ibEOCCommonCltMaxAllowToAccess Integer32
+    }
+
+ibEOCCommonCltAutoAuthorize OBJECT-TYPE
+    SYNTAX     TruthValue
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        This value determines whether software performs
+        self-authorization for each Cable Network Unit(CNU)
+        registering to the network.  Setting it to false
+        means for every CNU registering, software requires
+        external authorization, and until it's done the
+        CNU is not authenticated.  True value means software
+        authorizes each CNU registering to the network
+        automatically.
+        "
+    DEFVAL
+        {
+            false
+        }
+    ::= { ibEOCCommonCltManEntry 1 }
+
+ibEOCCommonCltMaxAllowToAccess OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+         "
+         This value determines how many CNU can be bound
+         in this CLT. If the number of CNU is more than this
+         value , then the rest of CNU should not be allow to
+         access.
+         "
+    DEFVAL
+        {
+            253
+        }
+    ::= { ibEOCCommonCltManEntry 2 }
+
+--
+-- ibEOCComCnuMan
+--
+
+ibEOCComCnuMan OBJECT IDENTIFIER ::= { ibEOCCommon 3 }
+
+ibEOCComCnuScalarObjects OBJECT IDENTIFIER ::= { ibEOCComCnuMan 1 }
+
+ibEOCComCnuMaxDownBWMinVal OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The lower limit of total-bandwidth which is confined to
+        ibEOCComCnuMaxDownBW."
+    ::= { ibEOCComCnuScalarObjects 1 }
+
+ibEOCComCnuMaxDownBWMaxVal OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The upper limit of total-bandwidth which is confined to
+        ibEOCComCnuMaxDownBW."
+    ::= { ibEOCComCnuScalarObjects 2 }
+
+ibEOCComCnuSlaHighPriBWMinVal OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The lower limit of high priority bandwidth which is confined to
+        ibEOCComCnuSlaHighPriBW."
+    ::= { ibEOCComCnuScalarObjects 3 }
+
+ibEOCComCnuSlaHighPriBWMaxVal OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The upper limit of high priority bandwidth which is confined to
+        ibEOCComCnuSlaHighPriBW."
+    ::= { ibEOCComCnuScalarObjects 4 }
+
+ibEOCComCnuMaxUpBWMinVal OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The lower limit of total-bandwidth which is confined to
+        ibEOCComCnuMaxUpBW."
+    ::= { ibEOCComCnuScalarObjects 5 }
+
+ibEOCComCnuMaxUpBWMaxVal OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The upper limit of total-bandwidth which is confined to
+        ibEOCComCnuMaxUpBW."
+    ::= { ibEOCComCnuScalarObjects 6 }
+
+ibEOCComCnuAttenThrA OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        The value of cnu's average attenuation good level thresholds.
+        "
+    ::= { ibEOCComCnuScalarObjects 7 }
+
+ibEOCComCnuAttenThrB OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        The value of cnu's average attenuation normal level thresholds.
+        "
+    ::= { ibEOCComCnuScalarObjects 8 }
+
+ibEOCComCnuRateDropThr OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        The value of cnu's Tx/Rx rate drop thresholds.
+        "
+    ::= { ibEOCComCnuScalarObjects 9 }
+
+--
+-- ibEOCComCnuSysManTable
+--
+
+ibEOCComCnuSysManTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbEOCComCnuSysManEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        This table implements the management of CNUs(Coax Network Unit).
+        "
+    ::= { ibEOCComCnuMan 2 }
+
+ibEOCComCnuSysManEntry OBJECT-TYPE
+    SYNTAX     IbEOCComCnuSysManEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        The entry of the table ibEOCComCnuSysManTable.
+        "
+    INDEX
+        {
+            ifIndex
+        }
+    ::= { ibEOCComCnuSysManTable 1 }
+
+IbEOCComCnuSysManEntry ::= SEQUENCE
+    {
+        ibEOCComCnuCableIfindex    Integer32,
+        ibEOCComCnuDeviceType      DisplayString,
+        ibEOCComCnuDeviceAlias     DisplayString,
+        ibEOCComCnuDescr           DisplayString,
+        ibEOCComCnuUpTime          TimeTicks,
+        ibEOCComCnuVLANType        INTEGER,
+        ibEOCComCnuPvid            Integer32,
+        ibEOCComCnuVlanTag         INTEGER,
+        ibEOCComCnuReset           INTEGER,
+        ibEOCComCnuDeregister      INTEGER,
+        ibEOCComCnuSave            INTEGER,
+        ibEOCComCnuAccess          INTEGER
+    }
+
+ibEOCComCnuCableIfindex OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The index of cable port which uniquely identifies the cable
+        port of one device.
+        "
+    ::= { ibEOCComCnuSysManEntry 1 }
+
+ibEOCComCnuDeviceType OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        The type of the EOC CNU(Coax Network Unit).
+        "
+    ::= { ibEOCComCnuSysManEntry 2 }
+
+ibEOCComCnuDeviceAlias OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "
+        EOC CNU's alias which display as the device's name,
+        it's recommended to set it uniquely and understandably.
+        "
+    ::= { ibEOCComCnuSysManEntry 3 }
+
+ibEOCComCnuDescr OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        User's description, including user's address,
+        name, telephone number and so on.
+        "
+    ::= { ibEOCComCnuSysManEntry 4 }
+
+ibEOCComCnuUpTime OBJECT-TYPE
+    SYNTAX     TimeTicks
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The time since the CNU last registered to the network.
+        "
+    ::= { ibEOCComCnuSysManEntry 5 }
+
+ibEOCComCnuVLANType OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            vLANTrunk(1),
+            access(2),
+            hybrid(3),
+            fabric(4)
+        }
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "port vlan types.
+        hybrid (3) port can carry multiple VLANs.
+        If fabric function is supported, fabric(4) means the port is
+        a fabric port."
+    ::= { ibEOCComCnuSysManEntry 6 }
+
+ibEOCComCnuPvid OBJECT-TYPE
+    SYNTAX     Integer32 (1..4094)
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        The PVID, the VLAN ID assigned to untagged frames or
+        Priority-Tagged frames received on cable interface.
+        "
+    REFERENCE
+        "
+        IEEE 802.1Q/D11 Section 12.10.1.1
+        "
+    DEFVAL
+        {
+            1
+        }
+    ::= { ibEOCComCnuSysManEntry 7 }
+
+ibEOCComCnuVlanTag OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            tagged(1),
+            untagged(2)
+        }
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        VLAN is set tagged or untagged on cable interface.
+        "
+    ::= { ibEOCComCnuSysManEntry 8 }
+
+ibEOCComCnuReset OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            running(1),
+            reset(2)
+        }
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        This variable is used to reset the CNU device. The
+        interface may be unavailable while the reset occurs and
+        data may be lost. During reading operation it returns
+        the state of the CNU device. running(1) indicates and
+        operates normal operation, reset(2) indicates and
+        operates reset mode. Writing can be done all the time.
+        "
+    ::= { ibEOCComCnuSysManEntry 9 }
+
+ibEOCComCnuDeregister OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            deregister(1)
+        }
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        deregister CNU.
+        "
+    ::= { ibEOCComCnuSysManEntry 10 }
+
+ibEOCComCnuSave OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            save(1),
+            running(2)
+        }
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        Save the UNI and CNU related configurations to
+        the CNU.
+        "
+    ::= { ibEOCComCnuSysManEntry 11 }
+
+ibEOCComCnuAccess OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            access(1),
+            notaccess(2)
+        }
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        Control whether the user can access to the network.
+        "
+    ::= { ibEOCComCnuSysManEntry 12 }
+
+--
+-- ibEOCComCnuMacTable
+--
+
+ibEOCComCnuMacTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbEOCComCnuMacEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        This table implements the management of CNUs.
+        "
+    ::= { ibEOCComCnuMan 3 }
+
+ibEOCComCnuMacEntry OBJECT-TYPE
+    SYNTAX     IbEOCComCnuMacEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        The entry of the table ibEOCComCnuMacTable.
+        "
+    INDEX
+        {
+            ifIndex
+        }
+    ::= { ibEOCComCnuMacTable 1 }
+
+IbEOCComCnuMacEntry ::= SEQUENCE
+    {
+        ibEOCComCnuMacAddress    MacAddress,
+        ibEOCComCnuRowStatus     RowStatus,
+        ibEOCComCnuTempIndex     Integer32
+    }
+
+ibEOCComCnuMacAddress OBJECT-TYPE
+    SYNTAX     MacAddress
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "
+        EOC CNU's MAC address.
+        "
+    ::= { ibEOCComCnuMacEntry 1 }
+
+ibEOCComCnuRowStatus OBJECT-TYPE
+    SYNTAX     RowStatus
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "
+        Operation status.
+        "
+    ::= { ibEOCComCnuMacEntry 2 }
+    
+ibEOCComCnuTempIndex OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        EOC CNU's model index from ibHPEOCTemplateIndex,
+        If configure 0, the CNU select no model.
+        "
+    ::= { ibEOCComCnuMacEntry 3 }
+    
+--
+-- ibEOCComCnuInfoTable
+--
+
+ibEOCComCnuInfoTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbEOCComCnuInfoEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        Primary status of the specified CNU.
+        There will be one row in this table for each
+        information in the system.
+        "
+    ::= { ibEOCComCnuMan 4 }
+
+ibEOCComCnuInfoEntry OBJECT-TYPE
+    SYNTAX     IbEOCComCnuInfoEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        The entry of the ibEOCComCnuInfoTable.
+        "
+    INDEX
+        {
+            ifIndex
+        }
+    ::= { ibEOCComCnuInfoTable 1 }
+
+IbEOCComCnuInfoEntry ::= SEQUENCE
+    {
+        ibEOCComCnuHardwareVersion    DisplayString,
+        ibEOCComCnuPCBVersion         OCTET STRING,
+        ibEOCComCnuLinkState          INTEGER,
+        ibEOCComCnuAttenuation        Integer32,
+        ibEOCComCnuSoftwareVersion    DisplayString,
+        ibEOCComCnuTxRate             Integer32,
+        ibEOCComCnuRxRate             Integer32,
+        ibEOCComCnuTxRateDrop         Integer32,
+        ibEOCComCnuRxRateDrop         Integer32
+    }
+
+ibEOCComCnuHardwareVersion OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        EOC CNU's hardware version.  If the object length is
+        zero, it means the version is unknown.
+        "
+    ::= { ibEOCComCnuInfoEntry 1 }
+
+ibEOCComCnuPCBVersion OBJECT-TYPE
+    SYNTAX     OCTET STRING (SIZE(0..255))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        EOC CNU's PCB version.
+        "
+    ::= { ibEOCComCnuInfoEntry 2 }
+
+ibEOCComCnuLinkState OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            physicaldown(1),
+            linkdown(2),
+            linkup(3),
+            loopback(4)
+        }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The cable port's link state.  The physicaldown(1) state indicates
+        that the CNU is not powered on.  The linkdown(2) state indicates
+        that the CNU is powered on, but registers fail.  The linkup(3)
+        state indicates that the CNU is powered on, and registers
+        successful.  The loopback(4) state indecates that the CNU is
+        powered on and registers successful, but loopback has detected.
+        "
+    ::= { ibEOCComCnuInfoEntry 3 }
+
+ibEOCComCnuAttenuation OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The cnu's average attenuation.
+        "
+    ::= { ibEOCComCnuInfoEntry 4 }
+
+ibEOCComCnuSoftwareVersion OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        EOC CNU's software version.  If the object length is
+        zero, it means the version is unknown.
+        "
+    ::= { ibEOCComCnuInfoEntry 5 }
+
+ibEOCComCnuTxRate OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The cnu's capability of tx speed in unit of 1Mbps.
+        "
+    ::= { ibEOCComCnuInfoEntry 6 }
+
+ibEOCComCnuRxRate OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The cnu's capability of rx speed in unit of 1Mbps.
+        "
+    ::= { ibEOCComCnuInfoEntry 7 }
+
+ibEOCComCnuTxRateDrop OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The cnu's capability droping of tx
+        speed from it's history max value in unit of %.
+        "
+    ::= { ibEOCComCnuInfoEntry 8 }
+
+ibEOCComCnuRxRateDrop OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The cnu's capability droping of rx
+        speed from it's history max value in unit of %.
+        "
+    ::= { ibEOCComCnuInfoEntry 9 }
+
+--
+-- ibEOCComCnuBandWidthTable
+--
+
+ibEOCComCnuBandWidthTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbEOCComCnuBandWidthEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        Set bandwidth parameters.
+        "
+    ::= { ibEOCComCnuMan 5 }
+
+ibEOCComCnuBandWidthEntry OBJECT-TYPE
+    SYNTAX     IbEOCComCnuBandWidthEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        The entry of table ibEOCComCnuBandWidthTable.
+        It is a pre-configuration.
+        "
+    INDEX
+        {
+            ifIndex
+        }
+    ::= { ibEOCComCnuBandWidthTable 1 }
+
+IbEOCComCnuBandWidthEntry ::= SEQUENCE
+    {
+        ibEOCComCnuMaxDownBW       Integer32,
+        ibEOCComCnuSlaHighPriBW    Integer32,
+        ibEOCComCnuMaxUpBW         Integer32
+    }
+
+ibEOCComCnuMaxDownBW OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        Maximum bandwidth allowed for the CNU,
+        measured in Kbit/s.
+        "
+    ::= { ibEOCComCnuBandWidthEntry 1 }
+
+ibEOCComCnuSlaHighPriBW OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        High priority bandwidth - measured in Kbit/s.
+        The value of this object should be the multiple of
+        the value of ibEOCComCnuMaxUpBW.
+        The high priority bandwidth should not be larger than the maximum
+        bandwidth.
+        "
+    ::= { ibEOCComCnuBandWidthEntry 2 }
+
+ibEOCComCnuMaxUpBW OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        Total bandwidth - measured in Kbit/s.
+        The value of this object should be the multiple of
+        the value of ibEOCComCnuSlaHighPriBW.
+        The total bandwidth should be larger than the high priority bandwidth.
+        "
+    ::= { ibEOCComCnuBandWidthEntry 3 }
+
+
+
+
+--
+-- ibEOCComUniMan
+--
+
+ibEOCComUniMan OBJECT IDENTIFIER ::= { ibEOCCommon 4 }
+
+ibEOCComUniManTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbEOCComUniManEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        This table defines several user network interface(UNI) system
+        parameters.
+        "
+    ::= { ibEOCComUniMan 1 }
+
+ibEOCComUniManEntry OBJECT-TYPE
+    SYNTAX     IbEOCComUniManEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        The entry of ibEOCComUniManTable.
+        "
+    INDEX
+        {
+            ifIndex,
+            ibEOCUniIndex
+        }
+    ::= { ibEOCComUniManTable 1 }
+
+IbEOCComUniManEntry ::= SEQUENCE
+    {
+        ibEOCUniIndex               Unsigned32,
+        ibEOCComUniDescr            DisplayString,
+        ibEOCComUniStatus           INTEGER,
+        ibEOCComUniSpeed            INTEGER,
+        ibEOCComUniDuplex           INTEGER,
+        ibEOCComUniCurrentSpeed     Gauge32,
+        ibEOCComUniCurrentDuplex    INTEGER,
+        ibEOCComUniMdi              INTEGER,
+        ibEOCComUniFlowControl      TruthValue,
+        ibEOCComUniCountReset       INTEGER,
+        ibEOCComUniAlias            DisplayString,
+        ibEOCComUniType             IANAifType,
+        ibEOCComUniVLANType         INTEGER,
+        ibEOCComUniPvid             Integer32,
+        ibEOCComUniVlanTag          INTEGER,
+        ibEOCComUniPriority         Integer32,
+        ibEOCComUniUpLineRate       Unsigned32,
+        ibEOCComUniDownLineRate     Unsigned32,
+        ibEOCComUniAdminStatus      INTEGER
+    }
+
+ibEOCUniIndex OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        The index value which uniquely identifies the FE(Fast Ethernet)
+        interface of the CNU.
+        "
+    ::= { ibEOCComUniManEntry 1 }
+
+ibEOCComUniDescr OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        A textual string containing information about the interface.  This
+        string should include the name of the manufacturer, the product
+        name and the version of the interface hardware and software.
+        "
+    ::= { ibEOCComUniManEntry 2 }
+
+ibEOCComUniStatus OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            up(1),
+            down(2),
+            testing(3)
+        }
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        The desired state of the user network interface. When a managed
+        system initializes, all user network interfaces start with down
+        state. The testing state indicates that no operational packets
+        can be passed. As a result of either explicit management action or
+        per configuration information retained by the managed system,
+        ibEOCComUniStatus is then changed to either the up or
+        testing states (or remains in the down state).
+        "
+    ::= { ibEOCComUniManEntry 3 }
+
+ibEOCComUniSpeed OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            auto(1),
+            s10M(10),
+            s100M(100)
+        }
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        User network interface speed.
+        "
+    ::= { ibEOCComUniManEntry 4 }
+
+ibEOCComUniDuplex OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            full(1),
+            half(2),
+            auto(3)
+        }
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        User network interface mode.
+        "
+    ::= { ibEOCComUniManEntry 5 }
+
+ibEOCComUniCurrentSpeed OBJECT-TYPE
+    SYNTAX     Gauge32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        An estimate of the interface's current bandwidth in
+        bits per second.  For interfaces which do not vary in
+        bandwidth or for those where no accurate estimation
+        can be made, this object should contain the nominal
+        bandwidth.  If the bandwidth of the interface is
+        greater than the maximum value reportable by this
+        object then this object should report its maximum
+        value (4,294,967,295).  For a sub-layer which
+        has no concept of bandwidth, this object should be
+        zero.
+        "
+    ::= { ibEOCComUniManEntry 6 }
+
+ibEOCComUniCurrentDuplex OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            full(1),
+            half(2),
+            unknown(3)
+        }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The current mode of operation of the MAC
+        entity.  'unknown' indicates that the current
+        duplex mode could not be determined.
+
+        Management control of the duplex mode is
+        accomplished through the MAU MIB.  When
+        an interface does not support autonegotiation,
+        or when autonegotiation is not enabled, the
+        duplex mode is controlled using
+        ifMauDefaultType.  When autonegotiation is
+        supported and enabled, duplex mode is controlled
+        using ifMauAutoNegAdvertisedBits.  In either
+        case, the currently operating duplex mode is
+        reflected both in this object and in ifMauType.
+
+        Note that this object provides redundant
+        information with ifMauType.  Normally, redundant
+        objects are discouraged.  However, in this
+        instance, it allows a management application to
+        determine the duplex status of an interface
+        without having to know every possible value of
+        ifMauType.  This was felt to be sufficiently
+        valuable to justify the redundancy.
+        "
+    REFERENCE
+        "
+        [IEEE 802.3 Std.], 30.3.1.1.32, aDuplexStatus.
+        "
+    ::= { ibEOCComUniManEntry 7 }
+
+ibEOCComUniMdi OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            mdi-ii(1),
+            mdi-x(2),
+            mdi-auto(3)
+        }
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "Type of the line connected to UNI interface:
+        mdi-ii(straight-through cable),
+        mdi-x (crossover cable),
+        mdi-auto (auto-sensing)."
+    DEFVAL
+        {
+            mdi-auto
+        }
+    ::= { ibEOCComUniManEntry 8 }
+
+ibEOCComUniFlowControl OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Flow control status.
+        true(1)  - Flow control status enable.
+        false(2) - Flow control status disable."
+    DEFVAL
+        {
+            false
+        }
+    ::= { ibEOCComUniManEntry 9 }
+
+ibEOCComUniCountReset OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            reset(1)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Reset the counter which is about packets of the interface,
+        then the counter will change to zero.  There is no sense in
+        reading this object."
+    ::= { ibEOCComUniManEntry 10 }
+
+ibEOCComUniAlias OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        This object is an 'alias' name for the interface as
+        specified by a network manager, and provides a non-
+        volatile 'handle' for the interface.
+
+        On the first instantiation of an interface, the value
+        of ibEOCComUniAlias associated with that interface is the
+        zero-length string.  As and when a value is written
+        into an instance of ibEOCComUniAlias through a network
+        management set operation, then the agent must retain
+        the supplied value in the ibEOCComUniAlias instance associated
+        with the same interface for as long as that interface
+        remains instantiated, including across all re-
+        initializations/reboots of the network management
+        system, including those which result in a change of
+        the interface's ifIndex and ibEOCUniIndex value.
+
+        An example of the value which a network manager might
+        store in this object for a WAN interface is the
+        (Telco's) circuit number/identifier of the interface.
+
+        Some agents may support write-access only for
+        interfaces having particular values of ibEOCComUniType.  An
+        agent which supports write access to this object is
+        required to keep the value in non-volatile storage,
+        but it may limit the length of new values depending on
+        how much storage is already occupied by the current
+        values for other interfaces.
+        "
+    ::= { ibEOCComUniManEntry 11 }
+
+ibEOCComUniType OBJECT-TYPE
+    SYNTAX     IANAifType
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The type of interface.  Additional values for ibEOCComUniType
+        are assigned by the Internet Assigned Numbers
+        Authority(IANA), through updating the syntax of the
+        IANAifType textual convention.
+        "
+    ::= { ibEOCComUniManEntry 12 }
+
+ibEOCComUniVLANType OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            vLANTrunk(1),
+            access(2),
+            hybrid(3),
+            fabric(4)
+        }
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "port vlan types.
+        hybrid (3) port can carry multiple VLANs.
+        If fabric function is supported, fabric(4) means the port is
+        a fabric port."
+    ::= { ibEOCComUniManEntry 13 }
+
+ibEOCComUniPvid OBJECT-TYPE
+    SYNTAX     Integer32 (1..4094)
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        The PVID, the VLAN ID assigned to untagged frames or
+        Priority-Tagged frames received on this port.
+        "
+    REFERENCE
+        "
+        IEEE 802.1Q/D11 Section 12.10.1.1
+        "
+    DEFVAL
+        {
+            1
+        }
+    ::= { ibEOCComUniManEntry 14 }
+
+ibEOCComUniVlanTag OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            tagged(1),
+            untagged(2)
+        }
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        VLAN is set tagged or untagged.
+        "
+    ::= { ibEOCComUniManEntry 15 }
+
+ibEOCComUniPriority OBJECT-TYPE
+    SYNTAX     Integer32 (0..7)
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        The default ingress User Priority for this port.  This
+        only has effect on media, such as Ethernet, that do not
+        support native User Priority.
+        "
+    ::= { ibEOCComUniManEntry 16 }
+
+ibEOCComUniUpLineRate OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        The max speed upload in units of 1,000 bits per second
+        on this interface.  The value should between 0 and 100Mbps.
+        If the value is 0, it means that the upload speed is only
+        restricted by the physical line.
+        "
+    ::= { ibEOCComUniManEntry 17 }
+
+ibEOCComUniDownLineRate OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        The max speed download in units of 1,000 bits per second
+        on this interface.  The value should between 0 and 100Mbps.
+        If the value is 0, it means that the download speed is only
+        restricted by the physical line.
+        "
+    ::= { ibEOCComUniManEntry 18 }
+
+ibEOCComUniAdminStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            up(1),
+            down(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Control if open or close the UNI.  If choose up(1), means the UNI is
+        opened and packets can pass it.  If choose down(2), means the UNI is
+        closed and all packets will be discard.
+        "
+    ::= { ibEOCComUniManEntry 19 }
+
+--
+-- ibEOCComUniCountTable
+--
+ibEOCComUniCountTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbEOCComUniCountEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A list of interface counter about frames entries."
+    ::= { ibEOCComUniMan 2 }
+
+ibEOCComUniCountEntry OBJECT-TYPE
+    SYNTAX      IbEOCComUniCountEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing management information applicable
+        to a particular interface."
+    INDEX
+        {
+            ifIndex,
+            ibEOCUniIndex
+        }
+    ::= { ibEOCComUniCountTable 1 }
+
+IbEOCComUniCountEntry ::= SEQUENCE
+    {
+        ibEOCUniInPkts                     Unsigned32,
+        ibEOCUniInUPkts                    Unsigned32,
+        ibEOCUniInBPkts                    Unsigned32,
+        ibEOCUniInMPkts                    Unsigned32,
+        ibEOCUniInPausePkts                Unsigned32,
+        ibEOCUniInTotalErrors              Unsigned32,
+        ibEOCUniInCRCErrs                  Unsigned32,
+        ibEOCUniInUndersizePkts            Unsigned32,
+        ibEOCUniInOversizePkts             Unsigned32,
+        ibEOCUniInErrorbyOther             Unsigned32,
+        ibEOCUniInOctets                   Unsigned32,
+        ibEOCUniOutPkts                    Unsigned32,
+        ibEOCUniOutUPkts                   Unsigned32,
+        ibEOCUniOutBPkts                   Unsigned32,
+        ibEOCUniOutMPkts                   Unsigned32,
+        ibEOCUniOutPausePkts               Unsigned32,
+        ibEOCUniOutTotalErrors             Unsigned32,
+        ibEOCUniOutCollisions              Unsigned32,
+        ibEOCUniOutDelayExceedDsds         Unsigned32,
+        ibEOCUniOutErrorbyOther            Unsigned32,
+        ibEOCUniOutDroppedFrames           Unsigned32,
+        ibEOCUniOutOctets                  Unsigned32
+    }
+
+ibEOCUniInPkts OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of packets (including bad packets,
+        broadcast packets, and multicast packets) received."
+    ::= { ibEOCComUniCountEntry 1 }
+
+ibEOCUniInUPkts  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of good packets received that are
+        directed to the unicast address.  Note that this
+        does not include multicast and broadcast packets."
+    ::= { ibEOCComUniCountEntry 2 }
+
+ibEOCUniInBPkts  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of good packets received that are
+        directed to the broadcast address.  Note that this
+        does not include multicast packets."
+    ::= { ibEOCComUniCountEntry 3 }
+
+ibEOCUniInMPkts  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of good packets received that are
+        directed to a multicast address.  Note that this number
+        does not include packets directed to the broadcast address."
+    ::= { ibEOCComUniCountEntry 4 }
+
+ibEOCUniInPausePkts  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "A count of MAC Control packets received on this
+        interface by the pause(flow control) operation.
+        This counter does not increment when the
+        interface is in a half-duplex mode.
+        Discontinuities in the value of this counter can
+        occur at re-initialization of the management
+        system."
+    ::= { ibEOCComUniCountEntry 5 }
+
+ibEOCUniInTotalErrors  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Total count of the error packets received on this interface."
+    ::= { ibEOCComUniCountEntry 6 }
+
+ibEOCUniInCRCErrs  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of packets received that
+        had a length (excluding framing bits, but
+        including FCS octets) of between 64 and 1518
+        octets, inclusive, but had either a bad
+        Frame Check Sequence (FCS) with an integral
+        number of octets (FCS Error) or a bad FCS with
+        a non-integral number of octets (Alignment Error)."
+    ::= { ibEOCComUniCountEntry 7 }
+
+ibEOCUniInUndersizePkts  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of packets received that are
+        less than 64 octets long (excluding framing bits,
+        but including FCS octets) and are otherwise well formed."
+    ::= { ibEOCComUniCountEntry 8 }
+
+ibEOCUniInOversizePkts  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of packets received that are
+        longer than 1518 octets (excluding framing bits,
+        but including FCS octets) and are otherwise well formed."
+    ::= { ibEOCComUniCountEntry 9 }
+
+ibEOCUniInErrorbyOther   OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of other error packets received on this interface."
+    ::= { ibEOCComUniCountEntry 10 }
+
+ibEOCUniInOctets   OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of octets received on this interface."
+    ::= { ibEOCComUniCountEntry 11 }
+
+ibEOCUniOutPkts OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of packets (including bad packets,
+        broadcast packets, and multicast packets) sent."
+    ::= { ibEOCComUniCountEntry 12 }
+
+ibEOCUniOutUPkts OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of good packets sent that are
+        directed to the unicast address.  Note that this
+        does not include multicast and broadcast packets."
+    ::= { ibEOCComUniCountEntry 13 }
+
+ibEOCUniOutBPkts  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of good packets sent that are
+        directed to the broadcast address.  Note that this
+        does not include multicast packets."
+    ::= { ibEOCComUniCountEntry 14 }
+
+ibEOCUniOutMPkts  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of good packets sent that are
+        directed to a multicast address.  Note that this number
+        does not include packets directed to the broadcast address."
+    ::= { ibEOCComUniCountEntry 15 }
+
+ibEOCUniOutPausePkts  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of MAC control packets sent on this
+        interface by the pause operation.  This counter does
+        not increment when the interface is in a half-duplex mode.
+        Discontinuities in the value of this counter can
+        occur at re-initialization of the management system."
+    ::= { ibEOCComUniCountEntry 16 }
+
+ibEOCUniOutTotalErrors  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of error packets sent on this interface."
+    ::= { ibEOCComUniCountEntry 17 }
+
+ibEOCUniOutCollisions  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The best estimate of the total number of collisions
+        on this Ethernet segment.
+        The value returned will depend on the location of the
+        RMON probe.  Section 8.2.1.3 (10BASE-5) and section
+        10.3.1.3 (10BASE-2) of IEEE standard 802.3 states that a
+        station must detect a collision, in the receive mode, if
+        three or more stations are transmitting simultaneously.  A
+        repeater port must detect a collision when two or more
+        stations are transmitting simultaneously.  Thus a probe
+        placed on a repeater port could record more collisions
+        than a probe connected to a station on the same segment
+        could.  Probe location plays a much smaller role when considering
+        10BASE-T.  14.2.1.4 (10BASE-T) of IEEE standard 802.3
+        defines a collision as the simultaneous presence of signals
+        on the DO and RD circuits (transmitting and receiving
+        at the same time).  A 10BASE-T station can only detect
+        collisions when it is transmitting.  Thus probes placed on
+        a station and a repeater, should report the same number of
+        collisions.  Note also that an RMON probe inside a repeater should
+        ideally report collisions between the repeater and one or
+        more other hosts (transmit collisions as defined by IEEE
+        802.3k) plus receiver collisions observed on any coax
+        segments to which the repeater is connected."
+    ::= { ibEOCComUniCountEntry 18 }
+
+ibEOCUniOutDelayExceedDsds  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS  current
+    DESCRIPTION
+        "The number of packets discarded by this port due
+        to excessive transit delay through the bridge.  It
+        is incremented by both transparent and source route bridges."
+    ::= { ibEOCComUniCountEntry 19 }
+
+ibEOCUniOutErrorbyOther  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of other error packets sent on this interface.
+        Other error packets means the error packets out of collision packets
+        and excessive delayed packets."
+    ::= { ibEOCComUniCountEntry 20 }
+
+ibEOCUniOutDroppedFrames OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of frames dropped because of buffer failure."
+    ::= { ibEOCComUniCountEntry 21 }
+
+ibEOCUniOutOctets   OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The total number of octets transmitted out of the interface."
+    ::= { ibEOCComUniCountEntry 22 }
+
+--
+-- ibEOCCommon NOTIFICATION
+--
+
+ibEOCCommonTrap OBJECT IDENTIFIER ::= { ibEOCCommon 5 }
+
+ibEOCTrapPrefix OBJECT IDENTIFIER ::= {ibEOCCommonTrap 0}
+
+ibEOCCnuRegExcessTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCnuRegExcessTrap notification is sent when the
+        number of registered CNUs exceeds the limit.
+        "
+    ::= { ibEOCTrapPrefix 1 }
+
+ibEOCCnuRegExcessRecoverTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCnuRegExcessRecoverTrap notification is sent when
+        ibEOCCnuRegExcessTrap is detected and then recoverd.
+        "
+    ::= { ibEOCTrapPrefix 2 }
+
+ibEOCCnuRegSuccTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCnuRegSuccTrap notification is sent when a
+        CNU registers successful.
+        "
+    ::= { ibEOCTrapPrefix 3 }
+
+ibEOCCnuOffLineTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCnuOffLineTrap notification is sent when a
+        CNU offline.
+        "
+    ::= { ibEOCTrapPrefix 4 }
+
+ibEOCCnuLinkupTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCnuLinkupTrap notification is sent when a
+        CNU linkup.
+        "
+    ::= { ibEOCTrapPrefix 5 }
+
+ibEOCOamDisconnectTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCOamDisconnectionTrap notification is sent when
+        LLID's OAM link is disconnected.
+        "
+    ::= { ibEOCTrapPrefix 6 }
+
+ibEOCOamDisconnectRecoverTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCOamDisconnectionRecoverTrap notification is sent when
+        LLID's OAM link is disconnected and then connected.
+        "
+    ::= { ibEOCTrapPrefix 7 }
+
+
+ibEOCBandwidthNotEnoughTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        Bandwidth is not enough, cnu can not bind now.
+        "
+    ::= { ibEOCTrapPrefix 8 }
+
+ibEOCCnuAttenuationTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibEOCComCnuMacAddress,
+            ibEOCComCnuAttenuation
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibHPEOCCnuAttenuationTrap notification is sent when a
+        CNU's attenuation is changing.
+        "
+    ::= { ibEOCTrapPrefix 9 }
+
+ibEOCCnuRegFailTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCnuRegFailTrap notification is sent when a
+        CNU registers fail.
+        "
+    ::= { ibEOCTrapPrefix 10 }
+
+ibEOCCLTCablePortErrorTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCLTCablePortErrorTrap notification is sent when the
+        hardware of cable port occurs error or CLT's vlan is configged
+        error.
+        "
+    ::= { ibEOCTrapPrefix 11 }
+
+ibEOCCLTCablePortErrReTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCLTCablePortErrReTrap notification is sent when cable port
+        error and then recovered.
+        "
+    ::= { ibEOCTrapPrefix 12 }
+
+ibEOCCnuTxRateDropTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibEOCComCnuMacAddress,
+            ibEOCComCnuTxRateDrop
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCnuTxRateDropTrap notification is sent when cable port
+        rate of TX capability drop exceeded threshold.
+        "
+    ::= { ibEOCTrapPrefix 13 }
+
+ibEOCCnuTxRateDropRecoverTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibEOCComCnuMacAddress,
+            ibEOCComCnuTxRateDrop
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCnuTxRateDropRecoverTrap notification is sent when cable port
+        rate of TX capability recover from the recent rate-drop trap.
+        "
+    ::= { ibEOCTrapPrefix 14 }
+
+ibEOCCnuRxRateDropTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibEOCComCnuMacAddress,
+            ibEOCComCnuRxRateDrop
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCnuRxRateDropTrap notification is sent when cable port
+        rate of RX capability drop exceeded threshold.
+        "
+    ::= { ibEOCTrapPrefix 15 }
+
+ibEOCCnuRxRateDropRecoverTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibEOCComCnuMacAddress,
+            ibEOCComCnuRxRateDrop
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCnuRxRateDropRecoverTrap notification is sent when cable port
+        rate of RX capability recover from the recent rate-drop trap.
+        "
+    ::= { ibEOCTrapPrefix 16 }
+
+ibEOCCnuFWDownLoadErrTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibHPEOCDownLoadCNUFWResult
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCnuFWDownLoadErrTrap notification is sent when CLT can't
+        download CNU firmware from the server successfully.
+        "
+    ::= { ibEOCTrapPrefix 17 }
+
+ibEOCCnuFWDownLoadErrReTrap NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCnuFWDownLoadErrReTrap notification is sent when CLT recover
+        from the download CNU firmware error.
+        "
+    ::= { ibEOCTrapPrefix 18 }
+
+ibEOCCnuDeviceTypeErrTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibEOCComCnuMacAddress,
+            ibEOCComCnuDeviceType
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCnuDeviceTypeErrTrap notification is sent when the online CNU
+        doesn't match the type which user defined earlier.
+        "
+    ::= { ibEOCTrapPrefix 19 }
+
+ibEOCCnuDeviceTypeErrReTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibEOCComCnuMacAddress
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCnuDeviceTypeErrReTrap notification is sent when the online CNU
+        doesn't match the type which user defined earlier and then recover.
+        "
+    ::= { ibEOCTrapPrefix 20 }
+
+ibEOCCnuAutoUpdateErrTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibEOCComCnuMacAddress
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCnuAutoUpdateErrTrap notification is sent when the online CNU
+        doesn't auto update successfully.
+        "
+    ::= { ibEOCTrapPrefix 21 }
+
+ibEOCCnuAutoUpdateSuccTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibEOCComCnuMacAddress
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCCnuAutoUpdateSuccTrap notification is sent when the online CNU
+        auto update successfully.
+        "
+    ::= { ibEOCTrapPrefix 22 }
+
+ibEOCLoopbackDetectTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibEOCComCnuMacAddress
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCLoopbackDetectTrap notification is sent when the loopback between
+        the ethernet ports of CNU or CLT is found.
+        "
+    ::= { ibEOCTrapPrefix 23 }
+
+ibEOCLoopbackRecoverTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibEOCComCnuMacAddress
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibEOCLoopbackRecoverTrap notification is sent when the loopback between
+        the ethernet ports of CNU or CLT is recover.
+        "
+    ::= { ibEOCTrapPrefix 24 }
+
+--
+-- ibEOCComOnLineCnuMan
+--
+
+ibEOCComOnLineCnuMan OBJECT IDENTIFIER ::= { ibEOCCommon 6 }
+--
+-- ibEOCComCnuTypeTable
+--
+ibEOCComCnuTypeTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbEOCComCnuTypeEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        This table defines the description of cnu typ.
+        "
+    ::= { ibEOCComOnLineCnuMan 1 }
+
+ibEOCComCnuTypeEntry OBJECT-TYPE
+    SYNTAX     IbEOCComCnuTypeEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        The entry of the table ibEOCComCnuTypeTable.
+        "
+    INDEX
+        {
+            ibEOCComCnuTypeIdx
+        }
+    ::= { ibEOCComCnuTypeTable 1 }
+
+IbEOCComCnuTypeEntry ::= SEQUENCE
+    {
+        ibEOCComCnuTypeIdx    Unsigned32,
+        ibEOCComCnuDescripton DisplayString
+    }
+
+ibEOCComCnuTypeIdx OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        A unique value for each cnu types.  Its value
+        ranges between 1 and the value of cny typess.
+        "
+    ::= { ibEOCComCnuTypeEntry 1 }
+
+ibEOCComCnuDescripton OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The description for unique cnu types.
+        "
+    ::= { ibEOCComCnuTypeEntry 2 }
+
+--
+-- ibEOCComCnuNumTable
+--
+
+ibEOCComCnuNumTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbEOCComCnuNumEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        This table defines the number of cnu registered in variable types
+        of the CLT .
+        "
+    ::= { ibEOCComOnLineCnuMan 2 }
+
+ibEOCComCnuNumEntry OBJECT-TYPE
+    SYNTAX     IbEOCComCnuNumEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "
+        The entry of the table ibEOCComCnuNumTable.
+        "
+    INDEX
+        {
+            ifIndex,
+            ibEOCComCnuTypeIdx
+        }
+    ::= { ibEOCComCnuNumTable 1 }
+
+IbEOCComCnuNumEntry ::= SEQUENCE
+    {
+        ibEOCComCnuNumber     Integer32
+    }
+
+ibEOCComCnuNumber OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "
+        The number of special type of cnu that has been registerd in clt.
+        "
+    ::= { ibEOCComCnuNumEntry 1 }
+
+END

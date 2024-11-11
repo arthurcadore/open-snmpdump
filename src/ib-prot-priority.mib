@@ -1,0 +1,123 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: protocol priority mib
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 created by zhuangyu
+--     The initial version, 2005-01-17
+-- =================================================================
+IB-PROT-PRIORITY-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        ibCommon
+            FROM IB-OID-MIB
+        Integer32, OBJECT-TYPE, MODULE-IDENTITY
+            FROM SNMPv2-SMI
+        RowStatus
+            FROM SNMPv2-TC;
+
+    ibProtocolPriority MODULE-IDENTITY
+        LAST-UPDATED "200501171633Z"        -- January 17, 2005 at 16:33 GMT
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+            "This MIB is used to manage and configure the priority of specified protocol.
+            This MIB is applicable to routers, switches and other products.
+            "
+        REVISION "200501171633Z"        -- January 17, 2005 at 16:33 GMT
+        DESCRIPTION
+            "The initial revision of this MIB module."
+        ::= { ibCommon 37 }
+
+
+--
+-- Node definitions
+--
+    ibProtocolPriorityObjects OBJECT IDENTIFIER ::= { ibProtocolPriority 1 }
+
+    ibPPri OBJECT IDENTIFIER ::= { ibProtocolPriorityObjects 1 }
+
+    ibProtocolPriorityTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbProtocolPriorityEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "A table is used to configure the priority of the protocol."
+        ::= { ibPPri 1 }
+
+    ibProtocolPriorityEntry OBJECT-TYPE
+        SYNTAX IbProtocolPriorityEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry containing information about the priority of the protocol."
+        INDEX { ibPPriProtocolType }
+        ::= { ibProtocolPriorityTable 1 }
+
+    IbProtocolPriorityEntry ::=
+        SEQUENCE {
+            ibPPriProtocolType
+                INTEGER,
+            ibPPriPriorityType
+                INTEGER,
+            ibPPriPriorityVlaue
+                Integer32,
+            ibPPriRowStatus
+                RowStatus
+        }
+
+    ibPPriProtocolType OBJECT-TYPE
+        SYNTAX INTEGER
+               {
+               ospf(1),
+               telnet(2),
+               snmp(3),
+               icmp(4),
+               bgp(5),
+               ldp(6)
+               }
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Protocol type."
+        ::= { ibProtocolPriorityEntry 1 }
+
+    ibPPriPriorityType OBJECT-TYPE
+        SYNTAX INTEGER
+               {
+               ipPrecedence(1),
+               dscp(2)
+               }
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "Priority type."
+        ::= { ibProtocolPriorityEntry 2 }
+
+    ibPPriPriorityVlaue OBJECT-TYPE
+        SYNTAX Integer32 (0..63)
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "Priority value.
+            If setting ibPPriPriorityType to ip-precedence(1),
+            the range of ibPPriPriorityVlaue is from 0 to 7.
+            If setting ibPPriPriorityType to dscp(2),
+            the range of ibPPriPriorityVlaue is from 0 to 63."
+        ::= { ibProtocolPriorityEntry 3 }
+
+    ibPPriRowStatus OBJECT-TYPE
+        SYNTAX RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "RowStatus, Now support createAndGo,active and destroy.
+            To create a new row, ibPPriPriorityType and ibPPriPriorityValue must be specified.
+            To modify a row,ibPPriPriorityType and ibPPriPriorityValue
+            must change at the same time and the ibPPriRowStatus is active ."
+        ::= { ibProtocolPriorityEntry 4 }
+END

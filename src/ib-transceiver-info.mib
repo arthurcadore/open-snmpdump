@@ -1,0 +1,1923 @@
+-- ===========================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:  Transceiver MIB
+-- Reference:  IF-MIB
+-- Version:  V2.5
+-- History:
+-- V1.0 created by liuhongxu and zoudian.
+--   Initial version 2006-01-10
+-- V1.1 2006-06-08 Updated by chenzhaojie
+--   Change description of ibTransceiverWaveLength
+-- V1.2 2009-12-29 Updated by jinyi
+--   Add the objects of ibTransceiverDiagnostic, ibTransceiverCurTXPower,
+--   ibTransceiverMaxTXPower, ibTransceiverMinTXPower, ibTransceiverCurRXPower,
+--   ibTransceiverMaxRXPower, ibTransceiverMinRXPower, ibTransceiverTemperature,
+--   ibTransceiverVoltage, ibTransceiverBiasCurrent
+-- V1.3 2012-06-06 Updated by jixugang
+--   Add the objects of ibTransceiverTempHiAlarm, ibTransceiverTempLoAlarm,
+--   ibTransceiverTempHiWarn, ibTransceiverTempLoWarn, ibTransceiverVccHiAlarm,
+--   ibTransceiverVccLoAlarm, ibTransceiverVccHiWarn, ibTransceiverVccLoWarn,
+--   ibTransceiverBiasHiAlarm, ibTransceiverBiasLoAlarm, ibTransceiverBiasHiWarn,
+--   ibTransceiverBiasLoWarn, ibTransceiverPwrOutHiAlarm, ibTransceiverPwrOutLoAlarm,
+--   ibTransceiverPwrOutHiWarn, ibTransceiverPwrOutLoWarn, ibTransceiverRcvPwrHiAlarm,
+--   ibTransceiverRcvPwrLoAlarm, ibTransceiverRcvPwrHiWarn, ibTransceiverRcvPwrLoWarn,
+--   ibTransceiverErrors
+-- V1.4 2013-06-06 Updated by chenyixian
+--   Add ibTransceiverChannelTable to transceiver channel statistics.
+-- V1.5 2014-08-11 Updated by SongHao
+--   Add ibTransceiverVendorOUI and ibTransceiverRevisionNumber.
+-- V1.6 2015-12-25 Updated by zhouliping
+--   Added ibTransceiverFrequency and ibTransceiverActiveITUChannel to ibTransceiverInfoTable.
+--   Added ibTransceiverITUChanTable for ITU channel information.
+-- V1.7 2016-03-09 Updated by zhouliping
+--   Added ibTransceiverCurWaveErr, ibTransceiverWaveErrHiAlarm, ibTransceiverWaveErrLoAlarm,
+--   ibTransceiverCurFreqErr, ibTransceiverFreqErrHiAlarm and ibTransceiverFreqErrLoAlarm
+--   to ibTransceiverInfoTable.
+--     2018-01-03 Updated by zhouliping
+--   Added ibTransceiverChannelBiasHiAm, ibTransceiverChannelBiasLoAm,
+--   ibTransceiverChannelTXPwrHiAm, ibTransceiverChannelTXPwrLoAm
+--   to ibTransceiverChannelTable.
+-- V1.8 2019-01-03 Updated by luozelei
+--   Added ibTransceiverPartNumber and ibTransceiverProductCode
+--   to ibTransceiverInfoTable.
+-- V1.9 2019-08-09 Updated by yuhaiyan
+--   Added ibTransceiverOriginalSN to ibTransceiverInfoTable.
+-- V2.0 2021-03-18 Updated by hezheng
+--   Add the objects of ibTransceiverPwrOutHiAlarmDbm, ibTransceiverPwrOutLoAlarmDbm,
+--   ibTransceiverPwrOutHiWarnDbm, ibTransceiverPwrOutLoWarnDbm, ibTransceiverRcvPwrHiAlarmDbm,
+--   ibTransceiverRcvPwrLoAlarmDbm, ibTransceiverRcvPwrHiWarnDbm, ibTransceiverRcvPwrLoWarnDbm.
+--   Added ibTransceiverChanTXPwrHiAmDbm, ibTransceiverChanTXPwrLoAmDbm
+--   to ibTransceiverChannelTable.
+-- V2.1 2021-12-02 Updated by fangliwen
+--   Added ibTransceiverExtrAlarmEnable and ibTransceiverMaybeFake.
+-- V2.2 2022-2-22 Updated by liziyi
+--   Add the ibTransceiverLaneTable.
+--   Added ibTransceiverLaneCurRxPower、ibTransceiverLaneCurTxPower and ibTransceiverLaneBiasCurrent
+--   to ibTransceiverLaneTable.
+-- V2.3 2022-05-12 Updated by fangliwen
+--   Add ibTransceiverRelySlotMfgName and ibTransceiverRelySlotMfgDate
+--   to ibTransceiverInfoTable.
+-- V2.4 2022-07-21 Updated by chendong
+--   Add ibTransceiverCurrentPower and ibTransceiverMaxPower
+--   to ibTransceiverInfoTable.
+--   Added ibTransceiverCurrentTotalPower and ibTransceiverMaxTotalPower.
+--   2023-03-01 Updated by shenhongxia
+--   Add ibTransceiverTotalTXPower and ibTransceiverTotalRXPower
+-- V2.5 2023-07-13 Updated by zhaomangyu
+--   Add the ibTransceiverPERFCollInterval, ibTransceiverPERFCollEnable, ibTransceiverLCHTable.
+--   Added ibTransceiverModulationType, ibTransceiverFecMode to ibTransceiverInfoTable.
+--   Added ibTransceiverChanCfgTxPower, ibTransceiverChanLoopback, ibTransceiverChanFrequence,
+--   ibTransceiverChanGrid, ibTransceiverChanCurCD, ibTransceiverChanCDAvg,
+--   ibTransceiverChanCDMin, ibTransceiverChanCDMax, ibTransceiverChanCurPMD ,
+--   ibTransceiverChanPMDAvg, ibTransceiverChanPMDMin, ibTransceiverChanPMDMax ,
+--   ibTransceiverChanCurPDL, ibTransceiverChanPDLAvg,
+--   ibTransceiverChanPDLMin, ibTransceiverChanPDLMax,
+--   ibTransceiverChanCurSopRoc, ibTransceiverChanSopRocAvg, ibTransceiverChanSopRocMin,
+--   ibTransceiverChanSopRocMax, ibTransceiverChanCurOsnr, ibTransceiverChanOsnrAvg,
+--   ibTransceiverChanOsnrMin, ibTransceiverChanOsnrMax, ibTransceiverChanCurEsnr,
+--   ibTransceiverChanEsnrAvg, ibTransceiverChanEsnrMin, ibTransceiverChanEsnrMax,
+--   ibTransceiverChanCurCFO, ibTransceiverChanCFOAvg,
+--   ibTransceiverChanCFOMin, ibTransceiverChanCFOMax, ibTransceiverChanCurPreFecBer ,
+--   ibTransceiverChanPreFecBerAvg, ibTransceiverChanPreFecBerMin, ibTransceiverChanPreFecBerMax ,
+--   ibTransceiverChanPostFecFer, ibTransceiverChanFecUEBlocks, ibTransceiverChanEcBits,
+--   ibTransceiverChanUcWords, ibTransceiverChanTXPowerAvg, ibTransceiverChanTXPowerMin,
+--   ibTransceiverChanTXPowerMax, ibTransceiverChanRXPowerAvg, ibTransceiverChanRXPowerMin,
+--   ibTransceiverChanRXPowerMax, ibTransceiverChanCurHgSoPmd , ibTransceiverChanHgSoPmdAvg,
+--   ibTransceiverChanHgSoPmdMin, ibTransceiverChanHgSoPmdMax, ibTransceiverChanCurLgSoPmd,
+--   ibTransceiverChanLgSoPmdAvg, ibTransceiverChanLgSoPmdMin, ibTransceiverChanLgSoPmdMax,
+--   ibTransceiverChanLaserTemp to ibTransceiverChannelTable.
+--   2023-08-11 Updated by zhaomangyu
+--   Add enumeration values for ibTransceiverChanLoopback,Change description of ibTransceiverChanCurPMD,
+--   ibTransceiverChanPMDAvg, ibTransceiverChanPMDMin, ibTransceiverChanPMDMax
+-- =================================================================
+IB-TRANSCEIVER-INFO-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Unsigned32, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    TruthValue, DateAndTime
+        FROM SNMPv2-TC
+    ifIndex, ifName
+        FROM IF-MIB
+    ibCommon
+        FROM IB-OID-MIB;
+
+    ibTransceiver MODULE-IDENTITY
+        LAST-UPDATED "202308110000Z"
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+            "Add enumeration values for ibTransceiverChanLoopback,Change description of ibTransceiverChanCurPMD,
+            ibTransceiverChanPMDAvg, ibTransceiverChanPMDMin, ibTransceiverChanPMDMax."
+        REVISION "202308110000Z"
+        DESCRIPTION
+            "
+            Add the ibTransceiverPERFCollInterval, ibTransceiverPERFCollEnable, ibTransceiverLCHTable.
+            Added ibTransceiverModulationType, ibTransceiverFecMode to ibTransceiverInfoTable.
+            Added ibTransceiverChanCfgTxPower, ibTransceiverChanLoopback, ibTransceiverChanFrequence,
+            ibTransceiverChanGrid, ibTransceiverChanCurCD, ibTransceiverChanCDAvg,
+            ibTransceiverChanCDMin, ibTransceiverChanCDMax, ibTransceiverChanCurPMD ,
+            ibTransceiverChanPMDAvg, ibTransceiverChanPMDMin, ibTransceiverChanPMDMax ,
+            ibTransceiverChanCurPDL, ibTransceiverChanPDLAvg,
+            ibTransceiverChanPDLMin, ibTransceiverChanPDLMax,
+            ibTransceiverChanCurSopRoc, ibTransceiverChanSopRocAvg, ibTransceiverChanSopRocMin,
+            ibTransceiverChanSopRocMax, ibTransceiverChanCurOsnr, ibTransceiverChanOsnrAvg,
+            ibTransceiverChanOsnrMin, ibTransceiverChanOsnrMax, ibTransceiverChanCurEsnr,
+            ibTransceiverChanEsnrAvg, ibTransceiverChanEsnrMin, ibTransceiverChanEsnrMax,
+            ibTransceiverChanCurCFO, ibTransceiverChanCFOAvg,
+            ibTransceiverChanCFOMin, ibTransceiverChanCFOMax, ibTransceiverChanCurPreFecBer ,
+            ibTransceiverChanPreFecBerAvg, ibTransceiverChanPreFecBerMin, ibTransceiverChanPreFecBerMax ,
+            ibTransceiverChanPostFecFer, ibTransceiverChanFecUEBlocks, ibTransceiverChanEcBits,
+            ibTransceiverChanUcWords, ibTransceiverChanTXPowerAvg, ibTransceiverChanTXPowerMin,
+            ibTransceiverChanTXPowerMax, ibTransceiverChanRXPowerAvg, ibTransceiverChanRXPowerMin,
+            ibTransceiverChanRXPowerMax, ibTransceiverChanCurHgSoPmd , ibTransceiverChanHgSoPmdAvg,
+            ibTransceiverChanHgSoPmdMin, ibTransceiverChanHgSoPmdMax, ibTransceiverChanCurLgSoPmd,
+            ibTransceiverChanLgSoPmdAvg, ibTransceiverChanLgSoPmdMin, ibTransceiverChanLgSoPmdMax,
+            ibTransceiverChanLaserTemp to ibTransceiverChannelTable."
+        REVISION "202307130000Z"
+        DESCRIPTION
+            "Add ibTransceiverTotalTXPower and ibTransceiverTotalRXPower."
+        REVISION "202303010000Z"
+        DESCRIPTION
+            "The objects in this MIB module are used to display the
+            information of transceiver on interface."
+        REVISION "202207210000Z"
+        DESCRIPTION
+            "Add ibTransceiverCurrentPower and ibTransceiverMaxPower to ibTransceiverInfoTable.
+            Add ibTransceiverCurrentTotalPower and ibTransceiverMaxTotalPower."
+        REVISION "202205120000Z"
+        DESCRIPTION
+            "Add ibTransceiverRelySlotMfgName and ibTransceiverRelySlotMfgDate
+            to ibTransceiverInfoTable."
+        REVISION "202202220000Z"
+        DESCRIPTION
+            "Add the ibTransceiverLaneTable. Added ibTransceiverLaneCurRxPower,
+             ibTransceiverLaneCurTxPower and ibTransceiverLaneBiasCurrent to ibTransceiverLaneTable."
+        REVISION "202112020000Z"
+        DESCRIPTION
+            "Add the objects of ibTransceiverExtrAlarmEnable and ibTransceiverMaybeFake."
+        REVISION "202103180000Z"
+        DESCRIPTION
+            "Add the objects of ibTransceiverPwrOutHiAlarmDbm, ibTransceiverPwrOutLoAlarmDbm,
+            ibTransceiverPwrOutHiWarnDbm, ibTransceiverPwrOutLoWarnDbm, ibTransceiverRcvPwrHiAlarmDbm,
+            ibTransceiverRcvPwrLoAlarmDbm, ibTransceiverRcvPwrHiWarnDbm, ibTransceiverRcvPwrLoWarnDbm.
+            Added ibTransceiverChanTXPwrHiAmDbm, ibTransceiverChanTXPwrLoAmDbm
+            to ibTransceiverChannelTable."
+        REVISION "201908090000Z"
+        DESCRIPTION
+            "Added ibTransceiverOriginalSN to ibTransceiverInfoTable."
+        REVISION "201901030000Z"
+        DESCRIPTION
+            "Added ibTransceiverPartNumber and ibTransceiverProductCode
+            to ibTransceiverInfoTable."
+        REVISION "201801030000Z"
+        DESCRIPTION
+            "Added ibTransceiverChannelBiasHiAm, ibTransceiverChannelBiasLoAm,
+            ibTransceiverChannelTXPwrHiAm, ibTransceiverChannelTXPwrLoAm
+            to ibTransceiverChannelTable."
+        REVISION "201603090000Z"
+        DESCRIPTION
+            "Added ibTransceiverCurWaveErr, ibTransceiverWaveErrHiAlarm, ibTransceiverWaveErrLoAlarm,
+            ibTransceiverCurFreqErr, ibTransceiverFreqErrHiAlarm and ibTransceiverFreqErrLoAlarm
+            to ibTransceiverInfoTable."
+        REVISION "201512250000Z"
+        DESCRIPTION
+            "Added ibTransceiverFrequency and ibTransceiverActiveITUChannel to ibTransceiverInfoTable.
+            Added ibTransceiverITUChanTable for ITU channel information."
+        REVISION "201408111050Z"
+        DESCRIPTION
+            "Add ibTransceiverVendorOUI and ibTransceiverRevisionNumber."
+        REVISION "201306060000Z"
+        DESCRIPTION
+            "Add ibTransceiverChannelTable to transceiver channel statistics."
+        REVISION "201206060000Z"
+        DESCRIPTION
+            "Add the objects of ibTransceiverTempHiAlarm, ibTransceiverTempLoAlarm,
+            ibTransceiverTempHiWarn, ibTransceiverTempLoWarn, ibTransceiverVccHiAlarm,
+            ibTransceiverVccLoAlarm, ibTransceiverVccHiWarn, ibTransceiverVccLoWarn,
+            ibTransceiverBiasHiAlarm, ibTransceiverBiasLoAlarm, ibTransceiverBiasHiWarn,
+            ibTransceiverBiasLoWarn, ibTransceiverPwrOutHiAlarm, ibTransceiverPwrOutLoAlarm,
+            ibTransceiverPwrOutHiWarn, ibTransceiverPwrOutLoWarn, ibTransceiverRcvPwrHiAlarm,
+            ibTransceiverRcvPwrLoAlarm, ibTransceiverRcvPwrHiWarn, ibTransceiverRcvPwrLoWarn,
+            ibTransceiverErrors."
+        REVISION "200912290000Z"
+        DESCRIPTION
+            "Add the objects of ibTransceiverDiagnostic, ibTransceiverCurTXPower,
+            ibTransceiverMaxTXPower, ibTransceiverMinTXPower, ibTransceiverCurRXPower,
+            ibTransceiverMaxRXPower, ibTransceiverMinRXPower, ibTransceiverTemperature,
+            ibTransceiverVoltage, ibTransceiverBiasCurrent."
+        REVISION "200606080000Z"
+        DESCRIPTION
+            "Change description of ibTransceiverWaveLength."
+        REVISION "200601100000Z"
+        DESCRIPTION
+            "The initial revision of this MIB module."
+            ::= { ibCommon 70 }
+
+    ibTransceiverInfoAdm OBJECT IDENTIFIER ::= { ibTransceiver 1 }
+
+    ibTransceiverInfoTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbTransceiverInfoEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This table shows transceiver information on an interface."
+        ::= { ibTransceiverInfoAdm 1 }
+
+    ibTransceiverInfoEntry OBJECT-TYPE
+        SYNTAX IbTransceiverInfoEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The entry of the ibTransceiverInfoTable."
+        INDEX { ifIndex }
+        ::= { ibTransceiverInfoTable 1 }
+
+    IbTransceiverInfoEntry ::=
+        SEQUENCE {
+            ibTransceiverHardwareType      OCTET STRING,
+            ibTransceiverType              OCTET STRING,
+            ibTransceiverWaveLength        Integer32,
+            ibTransceiverVendorName        OCTET STRING,
+            ibTransceiverSerialNumber      OCTET STRING,
+            ibTransceiverFiberDiameterType INTEGER,
+            ibTransceiverTransferDistance  Integer32,
+            ibTransceiverDiagnostic        TruthValue,
+            ibTransceiverCurTXPower        Integer32,
+            ibTransceiverMaxTXPower        Integer32,
+            ibTransceiverMinTXPower        Integer32,
+            ibTransceiverCurRXPower        Integer32,
+            ibTransceiverMaxRXPower        Integer32,
+            ibTransceiverMinRXPower        Integer32,
+            ibTransceiverTemperature       Integer32,
+            ibTransceiverVoltage           Integer32,
+            ibTransceiverBiasCurrent       Integer32,
+            ibTransceiverTempHiAlarm       Integer32,
+            ibTransceiverTempLoAlarm       Integer32,
+            ibTransceiverTempHiWarn        Integer32,
+            ibTransceiverTempLoWarn        Integer32,
+            ibTransceiverVccHiAlarm        Integer32,
+            ibTransceiverVccLoAlarm        Integer32,
+            ibTransceiverVccHiWarn         Integer32,
+            ibTransceiverVccLoWarn         Integer32,
+            ibTransceiverBiasHiAlarm       Integer32,
+            ibTransceiverBiasLoAlarm       Integer32,
+            ibTransceiverBiasHiWarn        Integer32,
+            ibTransceiverBiasLoWarn        Integer32,
+            ibTransceiverPwrOutHiAlarm     Integer32,
+            ibTransceiverPwrOutLoAlarm     Integer32,
+            ibTransceiverPwrOutHiWarn      Integer32,
+            ibTransceiverPwrOutLoWarn      Integer32,
+            ibTransceiverRcvPwrHiAlarm     Integer32,
+            ibTransceiverRcvPwrLoAlarm     Integer32,
+            ibTransceiverRcvPwrHiWarn      Integer32,
+            ibTransceiverRcvPwrLoWarn      Integer32,
+            ibTransceiverErrors            BITS,
+            ibTransceiverVendorOUI         OCTET STRING,
+            ibTransceiverRevisionNumber    OCTET STRING,
+            ibTransceiverFrequency         Integer32,
+            ibTransceiverActiveITUChannel  Unsigned32,
+            ibTransceiverCurWaveErr        Integer32,
+            ibTransceiverWaveErrHiAlarm    Integer32,
+            ibTransceiverWaveErrLoAlarm    Integer32,
+            ibTransceiverCurFreqErr        Integer32,
+            ibTransceiverFreqErrHiAlarm    Integer32,
+            ibTransceiverFreqErrLoAlarm    Integer32,
+            ibTransceiverPartNumber        OCTET STRING,
+            ibTransceiverProductCode       OCTET STRING,
+            ibTransceiverOriginalSN        OCTET STRING,
+            ibTransceiverPwrOutHiAlarmDbm  Integer32,
+            ibTransceiverPwrOutLoAlarmDbm  Integer32,
+            ibTransceiverPwrOutHiWarnDbm   Integer32,
+            ibTransceiverPwrOutLoWarnDbm   Integer32,
+            ibTransceiverRcvPwrHiAlarmDbm  Integer32,
+            ibTransceiverRcvPwrLoAlarmDbm  Integer32,
+            ibTransceiverRcvPwrHiWarnDbm   Integer32,
+            ibTransceiverRcvPwrLoWarnDbm   Integer32,
+            ibTransceiverRelySlotMfgName   OCTET STRING,
+            ibTransceiverRelySlotMfgDate   DateAndTime,
+            ibTransceiverCurrentPower      Integer32,
+            ibTransceiverMaxPower          Integer32,
+            ibTransceiverTotalTXPower      Integer32,
+            ibTransceiverTotalRXPower      Integer32,
+            ibTransceiverModulationType    OCTET STRING,
+            ibTransceiverFecMode           OCTET STRING
+        }
+
+    ibTransceiverHardwareType OBJECT-TYPE
+        SYNTAX OCTET STRING
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Hardware type of the interface, such as SM(single mode)."
+        ::= { ibTransceiverInfoEntry 1 }
+
+    ibTransceiverType OBJECT-TYPE
+        SYNTAX OCTET STRING
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Type of the interface, such as SFP/XFP/GBIC."
+        ::= { ibTransceiverInfoEntry 2 }
+
+    ibTransceiverWaveLength OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Wave length of the interface, measured in nanometer.
+            The unit is nm."
+        ::= { ibTransceiverInfoEntry 3 }
+
+    ibTransceiverVendorName OBJECT-TYPE
+        SYNTAX OCTET STRING
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Vendor name of the interface."
+        ::= { ibTransceiverInfoEntry 4 }
+
+    ibTransceiverSerialNumber OBJECT-TYPE
+        SYNTAX OCTET STRING
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Serial number of the interface."
+        ::= { ibTransceiverInfoEntry 5 }
+
+    ibTransceiverFiberDiameterType OBJECT-TYPE
+        SYNTAX INTEGER
+            {
+              fiber9(1),
+              fiber50(2),
+              fiber625(3),
+              copper(4),
+              unknown(65535)
+            }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The diameter of the fiber, measured in micron.
+            fiber9 - 9 micron multi-mode fiber
+            fiber50 - 50 micron multi-mode fiber
+            fiber625 - 62.5 micron multi-mode fiber
+            copper - copper cable."
+        ::= { ibTransceiverInfoEntry 6 }
+
+    ibTransceiverTransferDistance OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The maximum distance which the interface can transmit,
+            measured in meter."
+        ::= { ibTransceiverInfoEntry 7 }
+
+    ibTransceiverDiagnostic OBJECT-TYPE
+        SYNTAX      TruthValue
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the digital diagnostic monitoring function."
+        ::= { ibTransceiverInfoEntry 8 }
+
+    ibTransceiverCurTXPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the current transmitted power.
+            The unit is in hundredths of dBm."
+        ::= { ibTransceiverInfoEntry 9 }
+
+    ibTransceiverMaxTXPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the maximum transmitted power.
+            The unit is in hundredths of dBm."
+        ::= { ibTransceiverInfoEntry 10 }
+
+    ibTransceiverMinTXPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the minimum transmitted power.
+            The unit is in hundredths of dBm."
+        ::= { ibTransceiverInfoEntry 11 }
+
+    ibTransceiverCurRXPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the current received power.
+            The unit is in hundredths of dBm."
+        ::= { ibTransceiverInfoEntry 12 }
+
+    ibTransceiverMaxRXPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the maximum received power.
+            The unit is in hundredths of dBm."
+        ::= { ibTransceiverInfoEntry 13 }
+
+    ibTransceiverMinRXPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the minimum received power.
+            The unit is in hundredths of dBm."
+        ::= { ibTransceiverInfoEntry 14 }
+
+    ibTransceiverTemperature OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the current temperature.
+             The unit is Celsius centigrade."
+        ::= { ibTransceiverInfoEntry 15 }
+
+    ibTransceiverVoltage OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the current voltage.
+            The unit is in hundredths of V"
+        ::= { ibTransceiverInfoEntry 16 }
+
+    ibTransceiverBiasCurrent OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the current bias electric current.
+            The unit is in hundredths of mA"
+        ::= { ibTransceiverInfoEntry 17 }
+
+    ibTransceiverTempHiAlarm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver temperature high alarm threshold
+             in thousandths of degrees Celsius.
+             As an example: 49120 is 49.120 degrees Celsius."
+        ::= { ibTransceiverInfoEntry 18 }
+
+    ibTransceiverTempLoAlarm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver temperature low alarm threshold
+             in thousandths of degrees Celsius.
+             As an example: 49120 is 49.120 degrees Celsius."
+        ::= { ibTransceiverInfoEntry 19 }
+
+    ibTransceiverTempHiWarn OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver temperature high warning threshold
+             in thousandths of degrees Celsius.
+             As an example: 49120 is 49.120 degrees Celsius."
+        ::= { ibTransceiverInfoEntry 20 }
+
+    ibTransceiverTempLoWarn OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver temperature low warning threshold
+             in thousandths of degrees Celsius.
+             As an example: 49120 is 49.120 degrees Celsius."
+        ::= { ibTransceiverInfoEntry 21 }
+
+    ibTransceiverVccHiAlarm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver VCC high alarm threshold
+             in hundreds of microvolts.
+             As an example: 32928 is 3.2928 volts.
+             Returns zero if not supported on the transceiver."
+        ::= { ibTransceiverInfoEntry 22 }
+
+    ibTransceiverVccLoAlarm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver VCC low alarm threshold
+             in hundreds of microvolts.
+             As an example: 32928 is 3.2928 volts.
+             Returns zero if not supported on the transceiver."
+        ::= { ibTransceiverInfoEntry 23 }
+
+    ibTransceiverVccHiWarn OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver VCC high warning threshold
+             in hundreds of microvolts.
+             As an example: 32928 is 3.2928 volts.
+             Returns zero if not supported on the transceiver."
+        ::= { ibTransceiverInfoEntry 24 }
+
+    ibTransceiverVccLoWarn OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver VCC low warning threshold
+             in hundreds of microvolts.
+             As an example: 32928 is 3.2928 volts.
+             Returns zero if not supported on the transceiver."
+        ::= { ibTransceiverInfoEntry 25 }
+
+    ibTransceiverBiasHiAlarm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver bias high alarm threshold in microamps."
+        ::= { ibTransceiverInfoEntry 26 }
+
+    ibTransceiverBiasLoAlarm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver bias low alarm threshold in microamps."
+        ::= { ibTransceiverInfoEntry 27 }
+
+    ibTransceiverBiasHiWarn OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver bias high warning threshold in microamps."
+        ::= { ibTransceiverInfoEntry 28 }
+
+    ibTransceiverBiasLoWarn OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver bias low warning threshold in microamps."
+        ::= { ibTransceiverInfoEntry 29 }
+
+    ibTransceiverPwrOutHiAlarm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver transmit power high alarm
+             threshold in tenths of microwatts.
+             As an example: 10000 is 1 milliwatt."
+        ::= { ibTransceiverInfoEntry 30 }
+
+    ibTransceiverPwrOutLoAlarm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver transmit power low alarm
+             threshold in tenths of microwatts.
+             As an example: 10000 is 1 milliwatt."
+        ::= { ibTransceiverInfoEntry 31 }
+
+    ibTransceiverPwrOutHiWarn OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver transmit power high warning
+             threshold in tenths of microwatts
+             As an example: 10000 is 1 milliwatt."
+        ::= { ibTransceiverInfoEntry 32 }
+
+    ibTransceiverPwrOutLoWarn OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver transmit power low warning
+             threshold in tenths of microwatts.
+             As an example: 10000 is 1 milliwatt."
+        ::= { ibTransceiverInfoEntry 33 }
+
+    ibTransceiverRcvPwrHiAlarm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver receive power high alarm
+             threshold in tenths of microwatts.
+             As an example: 10000 is 1 milliwatt."
+        ::= { ibTransceiverInfoEntry 34 }
+
+    ibTransceiverRcvPwrLoAlarm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver receive power low alarm
+             threshold in tenths of microwatts.
+             As an example: 10000 is 1 milliwatt."
+        ::= { ibTransceiverInfoEntry 35 }
+
+    ibTransceiverRcvPwrHiWarn OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver receive power high warning
+             threshold in tenths of microwatts.
+             As an example: 10000 is 1 milliwatt."
+        ::= { ibTransceiverInfoEntry 36 }
+
+    ibTransceiverRcvPwrLoWarn OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver receive power low warning
+             threshold in tenths of microwatts.
+             As an example: 10000 is 1 milliwatt."
+        ::= { ibTransceiverInfoEntry 37 }
+
+    ibTransceiverErrors OBJECT-TYPE
+        SYNTAX      BITS
+            {
+                xcvrIOError(0),
+                xcvrChecksum(1),
+                xcvrTypeAndPortConfigMismatch(2),
+                xcvrTypeNotSupported(3),
+                wisLocalFault(4),
+                rcvOpticalPowerFault(5),
+                pmapmdReceiverLocalFault(6),
+                pcsReceiveLocalFault(7),
+                phyXSReceiveLocalFault(8),
+                laserBiasCurrentFault(9),
+                laserTemperatureFault(10),
+                laserOutputPowerFault(11),
+                txFault(12),
+                pmapmdTransmitterLocalFault(13),
+                pcsTransmitLocalFault(14),
+                phyXSTransmitLocalFault(15),
+                rxLossOfSignal(16),
+                tecError(17),
+                wavelengthUnlocked(18),
+                txIsNotReadyDueToTuning(19)
+            }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Bitmask indicating transceiver errors.
+             Transceiver information I/O error(0)
+             Transceiver information checksum error(1)
+             Transceiver type and port configuration mismatch(2)
+             Transceiver type not supported by port hardware(3)
+             WIS local fault(4)
+             Receive optical power fault(5)
+             PMA/PMD receiver local fault(6)
+             PCS receive local fault(7)
+             PHY XS receive local fault(8)
+             Laser bias current fault(9)
+             Laser temperature fault(10)
+             Laser output power fault(11)
+             TX fault(12)
+             PMA/PMD transmitter local fault(13)
+             PCS transmit local fault(14)
+             PHY XS Transmit Local Fault(15)
+             RX loss of signal(16)
+             TEC error(17)
+             Wavelength unlocked(18)
+             Tx is not ready due to tuning(19)
+             Unused(20-31)"
+        ::= { ibTransceiverInfoEntry 38 }
+
+    ibTransceiverVendorOUI OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..255))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Vendor OUI of the interface."
+        ::= { ibTransceiverInfoEntry 39 }
+
+    ibTransceiverRevisionNumber OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..255))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Revision number of the interface."
+        ::= { ibTransceiverInfoEntry 40 }
+
+    ibTransceiverFrequency OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The frequency of the current ITU channel on the connected transceiver.
+            The unit is hundredths of THz."
+        ::= { ibTransceiverInfoEntry 41 }
+
+    ibTransceiverActiveITUChannel OBJECT-TYPE
+        SYNTAX      Unsigned32 (1..4294967295)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The index of the current ITU channel on the connected transceiver.
+            The maximum index number for the ITU channel might vary by transceiver model.
+            The value of this node depends on the ibTransceiverITUChanIdx node of ibTransceiverITUChanTable.
+            The value of this node affects the frequency or wavelength."
+        ::= { ibTransceiverInfoEntry 42 }
+
+    ibTransceiverCurWaveErr OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The current wavelength error of the current ITU channel
+            on the connected transceiver.
+            The unit is thousandths of nm."
+        ::= { ibTransceiverInfoEntry 43 }
+
+    ibTransceiverWaveErrHiAlarm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The high wavelength error alarm threshold of the
+            current ITU channel on the connected transceiver.
+            The unit is thousandths of nm."
+        ::= { ibTransceiverInfoEntry 44 }
+
+    ibTransceiverWaveErrLoAlarm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The low wavelength error alarm threshold of the
+            current ITU channel on the connected transceiver.
+            The unit is thousandths of nm."
+        ::= { ibTransceiverInfoEntry 45 }
+
+    ibTransceiverCurFreqErr OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The current frequency error of the current ITU channel
+            on the connected transceiver.
+            The unit is tenths of GHz."
+        ::= { ibTransceiverInfoEntry 46 }
+
+    ibTransceiverFreqErrHiAlarm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The high frequency error alarm threshold of the current
+            ITU channel on the connected transceiver.
+            The unit is tenths of GHz."
+        ::= { ibTransceiverInfoEntry 47 }
+
+    ibTransceiverFreqErrLoAlarm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The low frequency error alarm threshold of the current
+            ITU channel on the connected transceiver.
+            The unit is tenths of GHz."
+        ::= { ibTransceiverInfoEntry 48 }
+
+    ibTransceiverPartNumber OBJECT-TYPE
+        SYNTAX OCTET STRING
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "PartNumber of the interface.
+            As an example: 1110409083."
+        ::= { ibTransceiverInfoEntry 49 }
+
+    ibTransceiverProductCode OBJECT-TYPE
+        SYNTAX OCTET STRING
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Product Code of the interface.
+            As an example: MRC00CD."
+        ::= { ibTransceiverInfoEntry 50 }
+
+    ibTransceiverOriginalSN OBJECT-TYPE
+        SYNTAX OCTET STRING
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Orginal serial number of the interface."
+        ::= { ibTransceiverInfoEntry 51 }
+
+    ibTransceiverPwrOutHiAlarmDbm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver transmit power high alarm
+             threshold in hundredths of dBm.
+             As an example: 100 milliwatts is 20 dBms."
+        ::= { ibTransceiverInfoEntry 52 }
+
+    ibTransceiverPwrOutLoAlarmDbm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver transmit power low alarm
+             threshold in hundredths of dBm.
+             As an example: 100 milliwatts is 20 dBms."
+        ::= { ibTransceiverInfoEntry 53 }
+
+    ibTransceiverPwrOutHiWarnDbm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver transmit power high warning
+             threshold in hundredths of dBm.
+             As an example: 100 milliwatts is 20 dBms."
+        ::= { ibTransceiverInfoEntry 54 }
+
+    ibTransceiverPwrOutLoWarnDbm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver transmit power low warning
+             threshold in hundredths of dBm.
+             As an example: 100 milliwatts is 20 dBms."
+        ::= { ibTransceiverInfoEntry 55 }
+
+    ibTransceiverRcvPwrHiAlarmDbm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver receive power high alarm
+             threshold in hundredths of dBm.
+             As an example: 100 milliwatts is 20 dBms."
+        ::= { ibTransceiverInfoEntry 56 }
+
+    ibTransceiverRcvPwrLoAlarmDbm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver receive power low alarm
+             threshold in hundredths of dBm.
+             As an example: 100 milliwatts is 20 dBms."
+        ::= { ibTransceiverInfoEntry 57 }
+
+    ibTransceiverRcvPwrHiWarnDbm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver receive power high warning
+             threshold in hundredths of dBm.
+             As an example: 100 milliwatts is 20 dBms."
+        ::= { ibTransceiverInfoEntry 58 }
+
+    ibTransceiverRcvPwrLoWarnDbm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver receive power low warning
+             threshold in hundredths of dBm.
+             As an example: 100 milliwatts is 20 dBms."
+        ::= { ibTransceiverInfoEntry 59 }
+
+    ibTransceiverRelySlotMfgName OBJECT-TYPE
+        SYNTAX      OCTET STRING
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Vendor name of the card on which the transceiver is installed."
+        ::= { ibTransceiverInfoEntry 60 }
+
+    ibTransceiverRelySlotMfgDate OBJECT-TYPE
+        SYNTAX      DateAndTime
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Manufacturing date of the card on which the transceiver is installed."
+        ::= { ibTransceiverInfoEntry 61 }
+
+    ibTransceiverCurrentPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current transceiver real-time power.
+            The unit is thousandths of w."
+        ::= { ibTransceiverInfoEntry 62 }
+
+    ibTransceiverMaxPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current transceiver maximum power.
+            The unit is thousandths of w."
+        ::= { ibTransceiverInfoEntry 63 }
+
+    ibTransceiverTotalTXPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the total transmitted power.
+            The unit is in hundredths of dBm."
+        ::= { ibTransceiverInfoEntry 64 }
+
+    ibTransceiverTotalRXPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the total received power.
+            The unit is in hundredths of dBm."
+        ::= { ibTransceiverInfoEntry 65 }
+
+    ibTransceiverModulationType OBJECT-TYPE
+        SYNTAX      OCTET STRING
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver modulation type."
+        ::= { ibTransceiverInfoEntry 66 }
+
+    ibTransceiverFecMode OBJECT-TYPE
+        SYNTAX      OCTET STRING
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver FEC mode.
+            As an example: FEC_ENABLED."
+        ::= { ibTransceiverInfoEntry 67 }
+-- Transceiver Channel Table
+
+    ibTransceiverChannelTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbTransceiverChannelEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This table provides statistics about transceiver with multi-channel."
+        ::= { ibTransceiverInfoAdm 2 }
+
+    ibTransceiverChannelEntry OBJECT-TYPE
+        SYNTAX IbTransceiverChannelEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The entry of the ibTransceiverChannelTable."
+        INDEX { ifIndex, ibTransceiverChannelIndex }
+        ::= { ibTransceiverChannelTable 1 }
+
+    IbTransceiverChannelEntry ::=
+        SEQUENCE {
+            ibTransceiverChannelIndex             Integer32,
+            ibTransceiverChannelCurTXPower        Integer32,
+            ibTransceiverChannelCurRXPower        Integer32,
+            ibTransceiverChannelTemperature       Integer32,
+            ibTransceiverChannelBiasCurrent       Integer32,
+            ibTransceiverChannelBiasHiAm          Integer32,
+            ibTransceiverChannelBiasLoAm          Integer32,
+            ibTransceiverChannelTXPwrHiAm         Integer32,
+            ibTransceiverChannelTXPwrLoAm         Integer32,
+            ibTransceiverChanTXPwrHiAmDbm         Integer32,
+            ibTransceiverChanTXPwrLoAmDbm         Integer32,
+            ibTransceiverChanCfgTxPower        Integer32,
+            ibTransceiverChanLoopback       INTEGER,
+            ibTransceiverChanFrequence         Unsigned32,
+            ibTransceiverChanGrid              Unsigned32,
+            ibTransceiverChanCurCD           Integer32,
+            ibTransceiverChanCDAvg           Integer32,
+            ibTransceiverChanCDMin           Integer32,
+            ibTransceiverChanCDMax           Integer32,
+            ibTransceiverChanCurPMD          Integer32,
+            ibTransceiverChanPMDAvg          Integer32,
+            ibTransceiverChanPMDMin          Integer32,
+            ibTransceiverChanPMDMax          Integer32,
+            ibTransceiverChanCurPDL          Integer32,
+            ibTransceiverChanPDLAvg          Integer32,
+            ibTransceiverChanPDLMin          Integer32,
+            ibTransceiverChanPDLMax          Integer32,
+            ibTransceiverChanCurSopRoc         Integer32,
+            ibTransceiverChanSopRocAvg         Integer32,
+            ibTransceiverChanSopRocMin         Integer32,
+            ibTransceiverChanSopRocMax         Integer32,
+            ibTransceiverChanCurOsnr         Integer32,
+            ibTransceiverChanOsnrAvg         Integer32,
+            ibTransceiverChanOsnrMin         Integer32,
+            ibTransceiverChanOsnrMax         Integer32,
+            ibTransceiverChanCurEsnr         Integer32,
+            ibTransceiverChanEsnrAvg         Integer32,
+            ibTransceiverChanEsnrMin         Integer32,
+            ibTransceiverChanEsnrMax         Integer32,
+            ibTransceiverChanCurCFO          Integer32,
+            ibTransceiverChanCFOAvg          Integer32,
+            ibTransceiverChanCFOMin          Integer32,
+            ibTransceiverChanCFOMax          Integer32,
+            ibTransceiverChanCurPreFecBer         Integer32,
+            ibTransceiverChanPreFecBerAvg         Integer32,
+            ibTransceiverChanPreFecBerMin         Integer32,
+            ibTransceiverChanPreFecBerMax         Integer32,
+            ibTransceiverChanPostFecFer           Integer32,
+            ibTransceiverChanFecUEBlocks        Unsigned32,
+            ibTransceiverChanEcBits             Unsigned32,
+            ibTransceiverChanLaserTemp          Integer32,
+            ibTransceiverChanTXPowerAvg         Integer32,
+            ibTransceiverChanTXPowerMin         Integer32,
+            ibTransceiverChanTXPowerMax         Integer32,
+            ibTransceiverChanRXPowerAvg         Integer32,
+            ibTransceiverChanRXPowerMin         Integer32,
+            ibTransceiverChanRXPowerMax         Integer32,
+            ibTransceiverChanCurHgSoPmd         Integer32,
+            ibTransceiverChanHgSoPmdAvg         Integer32,
+            ibTransceiverChanHgSoPmdMin         Integer32,
+            ibTransceiverChanHgSoPmdMax         Integer32,
+            ibTransceiverChanCurLgSoPmd         Integer32,
+            ibTransceiverChanLgSoPmdAvg         Integer32,
+            ibTransceiverChanLgSoPmdMin         Integer32,
+            ibTransceiverChanLgSoPmdMax         Integer32
+        }
+
+    ibTransceiverChannelIndex OBJECT-TYPE
+        SYNTAX      Integer32(1..2147483647)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The channel index of transceiver.
+            Indicating one channel of the interface."
+        ::= { ibTransceiverChannelEntry 1 }
+
+    ibTransceiverChannelCurTXPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the current transmission power.
+            The unit is in hundredths of dBm."
+        ::= { ibTransceiverChannelEntry 2 }
+
+    ibTransceiverChannelCurRXPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the current received power.
+            The unit is in hundredths of dBm."
+        ::= { ibTransceiverChannelEntry 3 }
+
+    ibTransceiverChannelTemperature OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the current temperature.
+            The unit is Celsius centigrade."
+        ::= { ibTransceiverChannelEntry 4 }
+
+    ibTransceiverChannelBiasCurrent OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the current bias electric current.
+            The unit is in hundredths of mA."
+        ::= { ibTransceiverChannelEntry 5 }
+
+    ibTransceiverChannelBiasHiAm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver bias high alarm threshold in microamps."
+        ::= { ibTransceiverChannelEntry 6 }
+
+    ibTransceiverChannelBiasLoAm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver bias low alarm threshold in microamps."
+        ::= { ibTransceiverChannelEntry 7 }
+
+    ibTransceiverChannelTXPwrHiAm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver transmit power high alarm threshold in tenths of microwatts."
+        ::= { ibTransceiverChannelEntry 8 }
+
+    ibTransceiverChannelTXPwrLoAm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver transmit power low alarm threshold in tenths of microwatts."
+        ::= { ibTransceiverChannelEntry 9 }
+
+    ibTransceiverChanTXPwrHiAmDbm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver transmit power high alarm threshold in hundredths of dBm."
+        ::= { ibTransceiverChannelEntry 10 }
+
+    ibTransceiverChanTXPwrLoAmDbm OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Transceiver transmit power low alarm threshold in hundredths of dBm."
+        ::= { ibTransceiverChannelEntry 11 }
+
+    ibTransceiverChanCfgTxPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Transmit power configured for the transceiver channel,
+            in hundredths of dBm."
+        ::= { ibTransceiverChannelEntry 12 }
+
+    ibTransceiverChanLoopback  OBJECT-TYPE
+        SYNTAX      INTEGER
+        {
+            none(1),
+            hostInput(2),
+            hostOutput(3),
+            mediaInput(4),
+            mediaOutput(5)
+        }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Loopback detection mode of the transceiver channel."
+        ::= { ibTransceiverChannelEntry 13 }
+
+    ibTransceiverChanFrequence   OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Operating frequency of the transceiver channel,
+            in MHz."
+        ::= { ibTransceiverChannelEntry 14 }
+
+    ibTransceiverChanGrid   OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Operating frequency grid of the transceiver channel,
+            in MHz."
+        ::= { ibTransceiverChannelEntry 15 }
+
+    ibTransceiverChanCurCD   OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current chromatic dispersion, in hundredths of a picosecond per nanometer."
+        ::= { ibTransceiverChannelEntry 16 }
+
+    ibTransceiverChanCDAvg   OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Average chromatic dispersion value within the statistical period,
+            in hundredths of a picosecond per nanometer."
+        ::= { ibTransceiverChannelEntry 17 }
+
+    ibTransceiverChanCDMin   OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Minimum chromatic dispersion value within the statistical period,
+            in hundredths of a picosecond per nanometer."
+        ::= { ibTransceiverChannelEntry 18 }
+
+    ibTransceiverChanCDMax   OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Maximum dispersion value within the statistical period,
+            in hundredths of a picosecond per nanometer."
+        ::= { ibTransceiverChannelEntry 19 }
+
+    ibTransceiverChanCurPMD   OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current polarization mode dispersion, in hundredths of a picosecond."
+        ::= { ibTransceiverChannelEntry 20 }
+
+    ibTransceiverChanPMDAvg   OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Average polarization mode dispersion within a statistical period,
+            in hundredths of a picosecond."
+        ::= { ibTransceiverChannelEntry 21 }
+
+    ibTransceiverChanPMDMin   OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Minimum polarization mode dispersion within a statistical period,
+            in hundredths of a picosecond."
+        ::= { ibTransceiverChannelEntry 22 }
+
+    ibTransceiverChanPMDMax   OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Maximum polarization mode dispersion within a statistical period,
+            in hundredths of a picosecond."
+        ::= { ibTransceiverChannelEntry 23 }
+
+    ibTransceiverChanCurPDL    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current polarization related loss, in hundredths of dB."
+        ::= { ibTransceiverChannelEntry 24 }
+
+    ibTransceiverChanPDLAvg    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Average polarization related loss during the statistical period,
+            in hundredths of dB."
+        ::= { ibTransceiverChannelEntry 25 }
+
+    ibTransceiverChanPDLMin    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Minimum polarization related loss within the statistical period,
+            in hundredths of dB."
+        ::= { ibTransceiverChannelEntry 26 }
+
+    ibTransceiverChanPDLMax    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Maximum polarization related loss during the statistical period,
+            in hundredths of dB."
+        ::= { ibTransceiverChannelEntry 27 }
+
+    ibTransceiverChanCurSopRoc    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current state-of-polarization rate-of-change, in krad/s."
+        ::= { ibTransceiverChannelEntry 28 }
+
+    ibTransceiverChanSopRocAvg    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Average state-of-polarization rate-of-change during the statistical period,
+            in krad/s."
+        ::= { ibTransceiverChannelEntry 29 }
+
+    ibTransceiverChanSopRocMin    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Minimum state-of-polarization rate-of-change within the statistical period,
+            in krad/s."
+        ::= { ibTransceiverChannelEntry 30 }
+
+    ibTransceiverChanSopRocMax    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Maximum state-of-polarization rate-of-change within the statistical period,
+            in krad/s."
+        ::= { ibTransceiverChannelEntry 31 }
+
+    ibTransceiverChanCurOsnr    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current optical signal-to-noise ratio, in hundredths of dB."
+        ::= { ibTransceiverChannelEntry 32 }
+
+    ibTransceiverChanOsnrAvg    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Average optical signal-to-noise ratio during the statistical period,
+            in hundredths of dB."
+        ::= { ibTransceiverChannelEntry 33 }
+
+    ibTransceiverChanOsnrMin    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Minimum optical signal-to-noise ratio within the statistical period,
+            in hundredths of dB."
+        ::= { ibTransceiverChannelEntry 34 }
+
+    ibTransceiverChanOsnrMax    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Maximum optical signal-to-noise ratio during the statistical period,
+            in hundredths of dB."
+        ::= { ibTransceiverChannelEntry 35 }
+
+    ibTransceiverChanCurEsnr    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current signal-to-noise ratio of the electrical signal,
+            in hundredths of dB."
+        ::= { ibTransceiverChannelEntry 36 }
+
+    ibTransceiverChanEsnrAvg    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Average signal-to-noise ratio of electrical signals during the statistical period,
+            in hundredths of dB."
+        ::= { ibTransceiverChannelEntry 37 }
+
+    ibTransceiverChanEsnrMin    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Minimum electrical signal-to-noise ratio during the statistical period,
+            in hundredths of dB."
+        ::= { ibTransceiverChannelEntry 38 }
+
+    ibTransceiverChanEsnrMax    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Maximum electrical signal-to-noise ratio during the statistical period,
+            in hundredths of dB."
+        ::= { ibTransceiverChannelEntry 39 }
+
+    ibTransceiverChanCurCFO    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current carrier frequency offset of the transceiver channel,
+            in tenths of MHZ."
+        ::= { ibTransceiverChannelEntry 40 }
+
+    ibTransceiverChanCFOAvg    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Average carrier frequency offset of the transceiver channel in the statistical period,
+            in tenths of MHZ."
+        ::= { ibTransceiverChannelEntry 41 }
+
+    ibTransceiverChanCFOMin    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Minimum carrier frequency offset of the transceiver channel in the statistical period,
+            in tenths of MHZ."
+        ::= { ibTransceiverChannelEntry 42 }
+
+    ibTransceiverChanCFOMax    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Maximum carrier frequency offset of the transceiver channel in the statistical period,
+            in tenths of MHZ."
+        ::= { ibTransceiverChannelEntry 43 }
+
+    ibTransceiverChanCurPreFecBer    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current pre-FEC bit error rate on the media side, in 10^-18."
+        ::= { ibTransceiverChannelEntry 44 }
+
+    ibTransceiverChanPreFecBerAvg    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Average pre-FEC bit error rate on the media side during the statistical period,
+            in units of 10^-18."
+        ::= { ibTransceiverChannelEntry 45 }
+
+    ibTransceiverChanPreFecBerMin    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Minimum pre-FEC bit error rate on the medium side within the statistical cycle,
+            in 10^-18."
+        ::= { ibTransceiverChannelEntry 46 }
+
+    ibTransceiverChanPreFecBerMax    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Maximum pre-FEC bit error rate on the media side during the statistical period,
+            in 10^-18."
+        ::= { ibTransceiverChannelEntry 47 }
+
+    ibTransceiverChanPostFecFer    OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current post-FEC frame error rate on the media side, in 10^-10."
+        ::= { ibTransceiverChannelEntry 48 }
+
+    ibTransceiverChanFecUEBlocks    OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Uncorrectable blocks or frames by FEC."
+        ::= { ibTransceiverChannelEntry 49 }
+
+    ibTransceiverChanEcBits     OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Number of error bits on the media side."
+        ::= { ibTransceiverChannelEntry 50 }
+
+    ibTransceiverChanLaserTemp     OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current laser temperature, in hundredths of degrees Celsius."
+        ::= { ibTransceiverChannelEntry 51 }
+
+    ibTransceiverChanTXPowerAvg     OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Average transmit optical power of the transceiver channel in the statistical period,
+            in hundredths of dBM."
+        ::= { ibTransceiverChannelEntry 52 }
+
+    ibTransceiverChanTXPowerMin     OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Minimum transmit power of the transceiver channel in the statistical period,
+           in hundredths of dBM."
+        ::= { ibTransceiverChannelEntry 53 }
+
+    ibTransceiverChanTXPowerMax     OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Maximum transmit power of the transceiver channel in the statistical period.
+            in hundredths of dBM."
+        ::= { ibTransceiverChannelEntry 54 }
+
+    ibTransceiverChanRXPowerAvg     OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Average receive power of the transceiver channel in the statistical period.
+            in hundredths of dBM."
+        ::= { ibTransceiverChannelEntry 55 }
+
+    ibTransceiverChanRXPowerMin     OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Minimum receive power of the transceiver channel in the statistical period.
+            in hundredths of dBM."
+        ::= { ibTransceiverChannelEntry 56 }
+
+    ibTransceiverChanRXPowerMax     OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Maximum receive power of the transceiver channel in the statistical period.
+            in hundredths of dBM."
+        ::= { ibTransceiverChannelEntry 57 }
+
+    ibTransceiverChanCurHgSoPmd     OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current value of high granularity second-order polarization mode dispersion,
+            in hundredths of a picosecond^2."
+        ::= { ibTransceiverChannelEntry 58 }
+
+    ibTransceiverChanHgSoPmdAvg     OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Average value of high granularity second-order polarization mode color
+             within a statistical period, in hundredths of a picosecond^2."
+        ::= { ibTransceiverChannelEntry 59 }
+
+    ibTransceiverChanHgSoPmdMin     OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Minimum value of high granularity second-order polarization mode color
+             within a statistical period, in hundredths of a picosecond^2."
+        ::= { ibTransceiverChannelEntry 60 }
+
+    ibTransceiverChanHgSoPmdMax     OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Maximum value of high granularity second-order polarization mode color
+             within a statistical period, in hundredths of a picosecond^2."
+        ::= { ibTransceiverChannelEntry 61 }
+
+    ibTransceiverChanCurLgSoPmd     OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current value of low granularity second-order polarization mode dispersion,
+            in hundredths of a picosecond^2."
+        ::= { ibTransceiverChannelEntry 62 }
+
+    ibTransceiverChanLgSoPmdAvg     OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Average value of low granularity second-order polarization mode color
+             within a statistical period, in hundredths of a picosecond^2."
+        ::= { ibTransceiverChannelEntry 63 }
+
+    ibTransceiverChanLgSoPmdMin     OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Minimum value of low granularity second-order polarization mode color
+             within a statistical period, in hundredths of a picosecond^2."
+        ::= { ibTransceiverChannelEntry 64 }
+
+    ibTransceiverChanLgSoPmdMax     OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Maximum value of low granularity second-order polarization mode color
+             within a statistical period, in hundredths of a picosecond^2."
+        ::= { ibTransceiverChannelEntry 65 }
+
+-- Transceiver ITUChannel Table
+
+    ibTransceiverITUChanTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbTransceiverITUChanEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This table provides information about ITU channels supported on the transceiver that is connected to this interface."
+        ::= { ibTransceiverInfoAdm 3 }
+
+    ibTransceiverITUChanEntry OBJECT-TYPE
+        SYNTAX IbTransceiverITUChanEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The entry of the ibTransceiverITUChanTable."
+        INDEX { ifIndex, ibTransceiverITUChanIdx }
+        ::= { ibTransceiverITUChanTable 1 }
+
+    IbTransceiverITUChanEntry ::=
+        SEQUENCE {
+            ibTransceiverITUChanIdx            Unsigned32,
+            ibTransceiverITUChanFreq          Integer32,
+            ibTransceiverITUChanWaveLth        Integer32
+        }
+
+    ibTransceiverITUChanIdx OBJECT-TYPE
+        SYNTAX      Unsigned32 (1..4294967295)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The index of the specified ITU channel on the transceiver that is connected to this interface."
+        ::= { ibTransceiverITUChanEntry 1 }
+
+    ibTransceiverITUChanFreq OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The frequency of the specified ITU channel on the transceiver that is connected to this interface.
+            The unit is hundredths of THz."
+        ::= { ibTransceiverITUChanEntry 2 }
+
+    ibTransceiverITUChanWaveLth OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The wave length of the specified ITU channel on the transceiver that is connected to this interface.
+            The unit is pm."
+        ::= { ibTransceiverITUChanEntry 3 }
+
+    ibTransceiverSystemPara OBJECT IDENTIFIER ::= {  ibTransceiver 2  }
+
+-- ==================================================================
+
+    ibTransceiverExtrAlarmEnable OBJECT-TYPE
+        SYNTAX      TruthValue
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Enable alarming upon detection of a third-party transceiver."
+        DEFVAL      { true }
+        ::= { ibTransceiverSystemPara 1 }
+
+    ibTransceiverCurrentTotalPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current transceivers real-time total power.
+            The unit is thousandths of w."
+        ::= { ibTransceiverSystemPara 2 }
+
+    ibTransceiverMaxTotalPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Current transceivers maximum total power.
+            The unit is thousandths of w."
+        ::= { ibTransceiverSystemPara 3 }
+
+    ibTransceiverPERFCollInterval OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Transceiver performance collection interval.
+            Values are 5min, 15min, 30min, or 60min.
+            The unit is thousandths of min."
+        ::= { ibTransceiverSystemPara 4 }
+
+    ibTransceiverPERFCollEnable OBJECT-TYPE
+        SYNTAX      TruthValue
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Whether to enable transceiver performance information collection."
+        ::= { ibTransceiverSystemPara 5 }
+
+    ibTransceiverTrap OBJECT IDENTIFIER ::= {  ibTransceiver 3  }
+
+    ibTransceiverTrapPrefix OBJECT IDENTIFIER ::= { ibTransceiverTrap 0 }
+
+  -- ==================================================================
+
+    ibTransceiverMaybeFake NOTIFICATION-TYPE
+      OBJECTS { ifName, ibTransceiverType, ibTransceiverSerialNumber }
+      STATUS  current
+      DESCRIPTION
+          "The transceiver is suspected to be a counterfeit/pirated/unauthorized transceiver."
+      ::= { ibTransceiverTrapPrefix 1 }
+
+  -- ==================================================================
+
+    ibTransceiverLaneTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbTransceiverLaneEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This table provides statistics about transceiver ."
+        ::= { ibTransceiverInfoAdm 4 }
+
+    ibTransceiverLaneEntry OBJECT-TYPE
+        SYNTAX IbTransceiverLaneEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The entry of the ibTransceiverLaneTable."
+        INDEX { ifIndex }
+        ::= { ibTransceiverLaneTable 1 }
+
+    IbTransceiverLaneEntry ::=
+        SEQUENCE {
+            ibTransceiverLaneCurTxPower    OCTET STRING,
+            ibTransceiverLaneCurRxPower    OCTET STRING,
+            ibTransceiverLaneBiasCurrent   OCTET STRING
+        }
+
+    ibTransceiverLaneCurTxPower OBJECT-TYPE
+        SYNTAX      OCTET STRING
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the current transmitted power.
+            The unit is in hundredths of dBm."
+        ::= { ibTransceiverLaneEntry 1 }
+
+    ibTransceiverLaneCurRxPower OBJECT-TYPE
+        SYNTAX      OCTET STRING
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the current received power.
+            The unit is in hundredths of dBm."
+        ::= { ibTransceiverLaneEntry 2 }
+
+    ibTransceiverLaneBiasCurrent  OBJECT-TYPE
+        SYNTAX      OCTET STRING
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Indicating the current bias electric current.
+            The unit is in hundredths of mA."
+        ::= { ibTransceiverLaneEntry 3 }
+
+  -- ==================================================================
+
+    ibTransceiverLCHTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbTransceiverLCHEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This table provides statistics about transceiver with logical channels."
+        ::= { ibTransceiverInfoAdm 5 }
+
+    ibTransceiverLCHEntry OBJECT-TYPE
+        SYNTAX IbTransceiverLCHEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Entry of the ibTransceiverLCHTable."
+        INDEX { ifIndex, ibTransceiverLCHIndex }
+        ::= { ibTransceiverLCHTable 1 }
+
+    IbTransceiverLCHEntry ::=
+        SEQUENCE {
+            ibTransceiverLCHIndex                  Integer32,
+            ibTransceiverLCHPreFecBer       Integer32,
+            ibTransceiverLCHPreFecBerAvg    Integer32,
+            ibTransceiverLCHPreFecBerMin           Integer32,
+            ibTransceiverLCHPreFecBerMax           Integer32,
+            ibTransceiverLCHPostFecFer             Integer32,
+            ibTransceiverLCHFecUEBlocks        Unsigned32,
+            ibTransceiverLCHEcBits                 Unsigned32,
+            ibTransceiverLCHUcWords                Unsigned32
+        }
+
+    ibTransceiverLCHIndex OBJECT-TYPE
+        SYNTAX      Integer32(1..2147483647)
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "Logical channel index.
+            Indicating one channel of the interface."
+        ::= { ibTransceiverLCHEntry 1 }
+
+    ibTransceiverLCHPreFecBer OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Pre-FEC bit error rate on the host side.
+            The unit is in hundredths of 10^-18."
+        ::= { ibTransceiverLCHEntry 2 }
+
+    ibTransceiverLCHPreFecBerAvg OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Average pre-FEC bit error rate on the host side in a statistical period.
+            The unit is in hundredths of 10^-18."
+        ::= { ibTransceiverLCHEntry 3 }
+
+    ibTransceiverLCHPreFecBerMin OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Minimum pre-FEC bit error rate on the host side in a statistical period.
+            The unit is in hundredths of 10^-18."
+        ::= { ibTransceiverLCHEntry 4 }
+
+    ibTransceiverLCHPreFecBerMax OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Maximum pre-FEC bit error rate on the host side in a statistical period.
+            The unit is in hundredths of 10^-18."
+        ::= { ibTransceiverLCHEntry 5 }
+
+    ibTransceiverLCHPostFecFer OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Average post-FEC frame error rate on the host side in a statistical period.
+            The unit is in hundredths of 10^-10."
+        ::= { ibTransceiverLCHEntry 6 }
+
+    ibTransceiverLCHFecUEBlocks OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "FEC uncorrectable blocks or frames on the host side."
+        ::= { ibTransceiverLCHEntry 7 }
+
+    ibTransceiverLCHEcBits OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Number of error bits on the host side."
+        ::= { ibTransceiverLCHEntry 8 }
+
+    ibTransceiverLCHUcWords OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Uncorrectable errors on the host side."
+        ::= { ibTransceiverLCHEntry 9 }
+END

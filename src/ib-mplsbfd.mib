@@ -1,0 +1,78 @@
+-- =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Multiprotocol Label Switching BFD MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 2023-03-14 Initial version Created by Longlewen
+-- =============================================================================
+IB-MPLSBFD-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    ibCommon
+        FROM IB-OID-MIB
+    ;
+
+-- =============================================================================
+-- module identity part
+-- =============================================================================
+ibMplsBfd MODULE-IDENTITY
+    LAST-UPDATED
+        "202303141400Z"   -- Mar 14, 2023 at 14:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Multiprotocol Label Switching Bfd MIB"
+    REVISION
+        "202303141400Z"   -- Mar 14, 2023 at 14:00 GMT
+    DESCRIPTION
+        "Initial version of this MIB."
+    ::= { ibCommon 261 }
+
+-- =============================================================================
+-- Top level components of this MIB module.
+-- =============================================================================
+ibMplsBfdNotifications OBJECT IDENTIFIER ::= { ibMplsBfd 0 }
+
+ibMplsBfdObjects      OBJECT IDENTIFIER  ::= { ibMplsBfd 1 }
+
+ibMplsBfdScalarGroup   OBJECT IDENTIFIER ::= { ibMplsBfdObjects 1 }
+
+ibMplsBfdBaseInfo    OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..127))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The base information of MPLS Bfd."
+    ::= { ibMplsBfdScalarGroup 1 }
+
+ibMplsBfdExtInfo    OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..127))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The external information of MPLS Bfd."
+    ::= { ibMplsBfdScalarGroup 2 }
+
+-- =============================================================================
+-- Notifications
+-- =============================================================================
+ibMplsBfdTracerouteFailed  NOTIFICATION-TYPE
+    OBJECTS {
+            ibMplsBfdBaseInfo,
+            ibMplsBfdExtInfo
+            }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the echo reply is failed."
+    ::= { ibMplsBfdNotifications 1 }
+
+-- =============================================================================
+-- End of notifications.
+-- =============================================================================
+
+END

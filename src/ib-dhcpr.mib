@@ -1,0 +1,315 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: DHCP Relay MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+--
+-- =================================================================
+
+    IB-DHCPR-MIB DEFINITIONS ::= BEGIN
+
+        IMPORTS
+            ibRhw
+                FROM IB-OID-MIB
+            ifIndex
+                FROM RFC1213-MIB
+            OBJECT-GROUP
+                FROM SNMPv2-CONF
+            IpAddress, Integer32, OBJECT-TYPE, MODULE-IDENTITY
+                FROM SNMPv2-SMI
+            RowStatus
+                FROM SNMPv2-TC;
+
+        ibDHCPRelayMib MODULE-IDENTITY
+            LAST-UPDATED "200303010000Z"        -- March 01, 2003 at 00:00 GMT
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION
+                "This MIB describes objects used for managing DHCP relay."
+            REVISION "200302120000Z"        -- February 12, 2003 at 00:00 GMT
+            DESCRIPTION
+                "The initial revision of this MIB module."
+            ::= { ibRhw 1 }
+
+
+
+--
+-- Node definitions
+--
+
+        ibDHCPRelayMibObject OBJECT IDENTIFIER ::= { ibDHCPRelayMib 1 }
+
+-- =================================================================
+-- 1st Table of ibDHCPRelayMibObjects: ibDHCPRIPTable
+-- =================================================================
+        ibDHCPRIPTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbDHCPRIPEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "A table for configuring ip addresses for DHCP relay"
+            ::= { ibDHCPRelayMibObject 1 }
+
+        ibDHCPRIPEntry OBJECT-TYPE
+            SYNTAX IbDHCPRIPEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for configuring ip addresses for DHCP
+                relay"
+            INDEX { ifIndex, ibDHCPRIPAddr }
+            ::= { ibDHCPRIPTable 1 }
+
+        IbDHCPRIPEntry ::=
+            SEQUENCE {
+                ibDHCPRIPAddr
+                    IpAddress,
+                ibDHCPRIPRowStatus
+                    RowStatus
+             }
+
+        ibDHCPRIPAddr OBJECT-TYPE
+            SYNTAX IpAddress
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Ip address for DHCP relay"
+            ::= { ibDHCPRIPEntry 1 }
+
+        ibDHCPRIPRowStatus OBJECT-TYPE
+            SYNTAX RowStatus
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "RowStatus. Three actions are used: active,
+                createAndGo, destroy"
+            ::= { ibDHCPRIPEntry 2 }
+
+-- =================================================================
+-- 2nd Table of ibDHCPRelayMibObjects: ibDHCPRSeletAllocateModeTable
+-- =================================================================
+        ibDHCPRSeletAllocateModeTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbDHCPRSeletAllocateModeEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "A table for selecting allocation mode of dhcp
+                service"
+            ::= { ibDHCPRelayMibObject 2 }
+
+        ibDHCPRSeletAllocateModeEntry OBJECT-TYPE
+            SYNTAX IbDHCPRSeletAllocateModeEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for configuring the allocation mode of
+                DHCP service"
+            INDEX { ifIndex }
+            ::= { ibDHCPRSeletAllocateModeTable 1 }
+
+        IbDHCPRSeletAllocateModeEntry ::=
+            SEQUENCE {
+                ibDHCPRSelectAllocateMode
+                    INTEGER
+             }
+
+        ibDHCPRSelectAllocateMode OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                global(0),
+                interface(1),
+                relay(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Allocation mode of DHCP service"
+            ::= { ibDHCPRSeletAllocateModeEntry 1 }
+
+--
+-- Non-table objects
+--
+        ibDHCPRelayCycleStatus OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                on(0),
+                off(1)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Status of DHCP relay cycle mode"
+            ::= { ibDHCPRelayMibObject 3 }
+
+        ibDHCPRRxBadPktNum OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total number of the bad packets received by
+                DHCP relay"
+            ::= { ibDHCPRelayMibObject 4 }
+
+        ibDHCPRRxServerPktNum OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total number of the packets received from
+                DHCP servers by DHCP relay module"
+            ::= { ibDHCPRelayMibObject 5 }
+
+        ibDHCPRTxServerPktNum OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total number of the packets transmited to
+                DHCP servers by DHCP relay module"
+            ::= { ibDHCPRelayMibObject 6 }
+
+        ibDHCPRRxClientPktNum OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total number of the packets received form DHCP
+                clients by DHCP relay"
+            ::= { ibDHCPRelayMibObject 7 }
+
+        ibDHCPRTxClientPktNum OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total number of the brodcast packets transmited
+                to DHCP clients by DHCP relay"
+            ::= { ibDHCPRelayMibObject 8 }
+
+        ibDHCPRTxClientUniPktNum OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total number of the unicast packets received
+                form DHCP clients by DHCP relay"
+            ::= { ibDHCPRelayMibObject 9 }
+
+        ibDHCPRTxClientBroPktNum OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total number of the brodcast packets received
+                form DHCP clients by DHCP relay"
+            ::= { ibDHCPRelayMibObject 10 }
+
+        ibDHCPRelayDiscoverPktNum OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total number of the DHCP Discover packets handled
+                by DHCP relay"
+            ::= { ibDHCPRelayMibObject 11 }
+
+        ibDHCPRelayRequestPktNum OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total number of the DHCP Request packets handled
+                by DHCP relay"
+            ::= { ibDHCPRelayMibObject 12 }
+
+        ibDHCPRelayDeclinePktNum OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total number of the DHCP Decline packets handled
+                by DHCP relay"
+            ::= { ibDHCPRelayMibObject 13 }
+
+        ibDHCPRelayReleasePktNum OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total number of the DHCP Release packets handled
+                by DHCP relay"
+            ::= { ibDHCPRelayMibObject 14 }
+
+        ibDHCPRelayInformPktNum OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total number of the DHCP Inform packets handled
+                by DHCP relay"
+            ::= { ibDHCPRelayMibObject 15 }
+
+        ibDHCPRelayOfferPktNum OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total number of the DHCP Offer packets handled
+                by DHCP server"
+            ::= { ibDHCPRelayMibObject 16 }
+
+        ibDHCPRelayAckPktNum OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total number of the DHCP Ack packets handled
+                by DHCP relay"
+            ::= { ibDHCPRelayMibObject 17 }
+
+        ibDHCPRelayNakPktNum OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total number of the DHCP Nak packets handled
+                by DHCP relay"
+            ::= { ibDHCPRelayMibObject 18 }
+
+        ibDHCPRelayStatisticsReset OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                invalid(0),
+                reset(1)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Reset the above statictics information of handled
+                packets by DHCP relay"
+            ::= { ibDHCPRelayMibObject 19 }
+
+        ibDHCPRelayMIBConformance OBJECT IDENTIFIER ::= { ibDHCPRelayMib 2 }
+
+        ibDHCPRelayMIBCompliances OBJECT IDENTIFIER ::= { ibDHCPRelayMIBConformance 1 }
+
+        ibDHCPRelayMIBGroups OBJECT IDENTIFIER ::= { ibDHCPRelayMIBConformance 2 }
+
+        ibDHCPRelayMIBGroup OBJECT-GROUP
+            OBJECTS { ibDHCPRIPAddr, ibDHCPRIPRowStatus, ibDHCPRSelectAllocateMode, ibDHCPRelayCycleStatus, ibDHCPRRxBadPktNum,
+                ibDHCPRRxServerPktNum, ibDHCPRTxServerPktNum, ibDHCPRRxClientPktNum, ibDHCPRTxClientPktNum, ibDHCPRTxClientUniPktNum,
+                ibDHCPRTxClientBroPktNum, ibDHCPRelayDiscoverPktNum, ibDHCPRelayRequestPktNum, ibDHCPRelayDeclinePktNum, ibDHCPRelayReleasePktNum,
+                ibDHCPRelayInformPktNum, ibDHCPRelayOfferPktNum, ibDHCPRelayAckPktNum, ibDHCPRelayNakPktNum, ibDHCPRelayStatisticsReset
+                 }
+            STATUS current
+            DESCRIPTION
+                "The basic collection of objects providing management of
+                DHCP realy."
+            ::= { ibDHCPRelayMIBGroups 1 }
+
+
+    END

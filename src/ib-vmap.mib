@@ -1,0 +1,577 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: 802.1 VLAN Mapping MIB Version 1
+-- Reference:
+-- Version: V1.2
+-- History:
+-- V1.0 Initial version Created by XiaoRen Yang, 2013.3.8
+-- V1.1 Updated by zhuhaifeng 2018-12-12.
+--   Add ibVMAP1to2RangeNestedPrio to ibVMAP1to2RangeTable.
+--   Add ibVMAP1to2SingleNestedPrio to ibVMAP1to2SingleTable.
+--   Add ibVMAP2to1Table.
+-- V1.2 Updated by chenjie 2022-06-17
+--   Add ibVMAPTrapGroup
+--   Add ibVMAPIfChassis to ibVMAPTrapGroup
+--   Add ibVMAPIfSlot to ibVMAPTrapGroup
+--   Add ibVMAPThresholdRatio to ibVMAPTrapGroup.
+--   Add ibVMAPTrap to ibVmap
+--   Add ibVMAPTrapPrex to ibVMAPTrap.
+--   Add ibVMAPCountThresholdAlarm to ibVMAPTrapPrex
+--   Add ibVMAPCountThresholdResume to ibVMAPTrapPrex.
+-- ==================================================================
+IB-VMAP-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    RowStatus, TruthValue
+        FROM SNMPv2-TC
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    ifIndex
+        FROM IF-MIB
+    ibCommon
+        FROM IB-OID-MIB;
+
+-- ==================================================================
+--
+-- module identity part
+--
+-- ==================================================================
+ibVmap MODULE-IDENTITY
+    LAST-UPDATED
+        "202206170000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "802.1 VLAN Mapping MIB Version"
+    REVISION    "202206170000Z"
+    DESCRIPTION "Add ibVMAPTrapGroup
+                 Add ibVMAPIfChassis to ibVMAPTrapGroup
+                 Add ibVMAPIfSlot to ibVMAPTrapGroup
+                 Add ibVMAPThresholdRatio to ibVMAPTrapGroup.
+                 Add ibVMAPTrap to ibVmap
+                 Add ibVMAPTrapPrex to ibVMAPTrap.
+                 Add ibVMAPCountThresholdAlarm to ibVMAPTrapPrex
+                 Add ibVMAPCountThresholdResume to ibVMAPTrapPrex."
+    REVISION    "201812120000Z"
+    DESCRIPTION "Add ibVMAP1to2RangeNestedPrio to ibVMAP1to2RangeTable.
+                 Add ibVMAP1to2SingleNestedPrio to ibVMAP1to2SingleTable.
+                 Add ibVMAP2to1Table."
+    REVISION    "201303080000Z"
+    DESCRIPTION "The initial version of this MIB."
+    ::= { ibCommon 138 }
+
+-- ==================================================================
+--
+-- =====================object definition begin======================
+--
+-- ==================================================================
+
+ibVMAPNNITable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVMAPNNIEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "VLAN mapping NNI table."
+    ::= { ibVmap 1 }
+
+ibVMAPNNIEntry OBJECT-TYPE
+    SYNTAX      IbVMAPNNIEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "VLAN mapping NNI table entries."
+    INDEX { ifIndex }
+    ::= { ibVMAPNNITable 1 }
+
+IbVMAPNNIEntry ::=
+    SEQUENCE
+    {
+        ibVMAPNNIState    TruthValue
+    }
+
+ibVMAPNNIState    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set the network-side interface for a many-to-one VLAN mapping."
+    ::= { ibVMAPNNIEntry 1 }
+
+ibVMAP1to1Table  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVMAP1to1Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "One-to-one VLAN mapping table."
+    ::= { ibVmap 2 }
+
+ibVMAP1to1Entry OBJECT-TYPE
+    SYNTAX     IbVMAP1to1Entry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "One-to-one VLAN mapping table entries."
+    INDEX { ifIndex, ibVMAP1to1Vlan }
+    ::= { ibVMAP1to1Table 1 }
+
+IbVMAP1to1Entry ::=
+    SEQUENCE
+    {
+        ibVMAP1to1Vlan             Integer32,
+        ibVMAP1to1TranslatedVlan   Integer32,
+        ibVMAP1to1RowStatus        RowStatus
+    }
+
+ibVMAP1to1Vlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The original VLAN for a one-to-one VLAN mapping on the port."
+    ::= { ibVMAP1to1Entry 1 }
+
+ibVMAP1to1TranslatedVlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The translated VLAN for a one-to-one VLAN mapping on the port."
+    ::= { ibVMAP1to1Entry 2 }
+
+ibVMAP1to1RowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibVMAP1to1Entry 3 }
+
+ibVMAPNto1RangeTable    OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVMAPNto1RangeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Many-to-one VLAN mapping table.  The original VLANs of each entry
+         should be a range of VLANs (for example, VLAN 20 to 30)."
+    ::= { ibVmap 3 }
+
+ibVMAPNto1RangeEntry OBJECT-TYPE
+    SYNTAX     IbVMAPNto1RangeEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Many-to-one VLAN mapping table entries.  The original VLANs of each
+         entry should be a range of VLANs (for example, VLAN 20 to 30)."
+    INDEX { ifIndex, ibVMAPNto1StartVlan }
+    ::= { ibVMAPNto1RangeTable 1 }
+
+IbVMAPNto1RangeEntry ::=
+    SEQUENCE
+    {
+        ibVMAPNto1StartVlan              Integer32,
+        ibVMAPNto1EndVlan                Integer32,
+        ibVMAPNto1RangeTranslatedVlan    Integer32,
+        ibVMAPNto1RangeRowStatus         RowStatus
+    }
+
+ibVMAPNto1StartVlan   OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The original start VLAN for a many-to-one VLAN mapping on the port."
+    ::= { ibVMAPNto1RangeEntry 1 }
+
+ibVMAPNto1EndVlan   OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The original end VLAN for a many-to-one VLAN mapping on the port."
+    ::= { ibVMAPNto1RangeEntry 2 }
+
+ibVMAPNto1RangeTranslatedVlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The translated VLAN for a many-to-one VLAN mapping on the port."
+    ::= { ibVMAPNto1RangeEntry 3 }
+
+ibVMAPNto1RangeRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibVMAPNto1RangeEntry 4 }
+
+ibVMAPNto1SingleTable    OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVMAPNto1SingleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Many-to-one VLAN mapping table.  The original VLANs of each entry
+         should be a group of VLANs listed one by
+         one (for example, VLAN 30, 31, 32)."
+    ::= { ibVmap 4 }
+
+ibVMAPNto1SingleEntry OBJECT-TYPE
+    SYNTAX     IbVMAPNto1SingleEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Many-to-one VLAN mapping table entries.  The original VLANs of each
+         entry should be a group of VLANs listed one by
+         one (for example, VLAN 30, 31, 32)."
+    INDEX { ifIndex, ibVMAPNto1Vlan }
+    ::= { ibVMAPNto1SingleTable 1 }
+
+IbVMAPNto1SingleEntry ::=
+    SEQUENCE
+    {
+        ibVMAPNto1Vlan                    Integer32,
+        ibVMAPNto1SingleTranslatedVlan    Integer32,
+        ibVMAPNto1SingleRowStatus         RowStatus
+    }
+
+ibVMAPNto1Vlan   OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The original VLANs for a many-to-one VLAN mapping on the port."
+    ::= { ibVMAPNto1SingleEntry 1 }
+
+ibVMAPNto1SingleTranslatedVlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The translated VLAN for a many-to-one VLAN mapping on the port."
+    ::= { ibVMAPNto1SingleEntry 2 }
+
+ibVMAPNto1SingleRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibVMAPNto1SingleEntry 3 }
+
+ibVMAP1to2RangeTable    OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVMAP1to2RangeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "One-to-two VLAN mapping table.  The original VLANs of each entry
+         should be a range of VLANs (for example, VLAN 20 to 30)."
+    ::= { ibVmap 5 }
+
+ibVMAP1to2RangeEntry OBJECT-TYPE
+    SYNTAX      IbVMAP1to2RangeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "One-to-two VLAN mapping table entries.  The original VLANs of
+         each entry should be a range of VLANs (for example, VLAN 20 to 30)."
+    INDEX { ifIndex, ibVMAP1to2StartVlan }
+    ::= { ibVMAP1to2RangeTable 1 }
+
+IbVMAP1to2RangeEntry ::=
+    SEQUENCE
+    {
+        ibVMAP1to2StartVlan          Integer32,
+        ibVMAP1to2EndVlan            Integer32,
+        ibVMAP1to2RangeNestedVlan    Integer32,
+        ibVMAP1to2RangeRowStatus     RowStatus,
+        ibVMAP1to2RangeNestedPrio    Integer32
+    }
+
+ibVMAP1to2StartVlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The original start VLAN for a one-to-two VLAN mapping on the port."
+    ::= { ibVMAP1to2RangeEntry 1 }
+
+ibVMAP1to2EndVlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The original end VLAN for a one-to-two VLAN mapping on the port."
+    ::= { ibVMAP1to2RangeEntry 2 }
+
+ibVMAP1to2RangeNestedVlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The nested VLAN for a one-to-two VLAN mapping on the port."
+    ::= { ibVMAP1to2RangeEntry 3 }
+
+ibVMAP1to2RangeRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibVMAP1to2RangeEntry 4 }
+
+ibVMAP1to2RangeNestedPrio OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The nested VLAN tag's priority for a one-to-two VLAN mapping on the port."
+    DEFVAL { 65535 }
+    ::= { ibVMAP1to2RangeEntry 5 }
+
+ibVMAP1to2SingleTable    OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVMAP1to2SingleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "One-to-two VLAN mapping table.  The original VLANs of each entry should
+         be a group of VLANs listed one by one (for example, VLAN 30, 31, 32)."
+    ::= { ibVmap 6 }
+
+ibVMAP1to2SingleEntry OBJECT-TYPE
+    SYNTAX      IbVMAP1to2SingleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "One-to-two VLAN mapping table entries.  The original VLANs of each
+         entry should be a group of VLANs listed one by
+         one (for example, VLAN 30, 31, 32)."
+    INDEX { ifIndex, ibVMAP1to2Vlan }
+    ::= { ibVMAP1to2SingleTable 1 }
+
+IbVMAP1to2SingleEntry ::=
+    SEQUENCE
+    {
+        ibVMAP1to2Vlan                Integer32,
+        ibVMAP1to2SingleNestedVlan    Integer32,
+        ibVMAP1to2SingleRowStatus     RowStatus,
+        ibVMAP1to2SingleNestedPrio    Integer32
+    }
+
+ibVMAP1to2Vlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The original VLANs for a one-to-two VLAN mapping on the port."
+    ::= { ibVMAP1to2SingleEntry 1 }
+
+ibVMAP1to2SingleNestedVlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The nested VLAN for a one-to-two VLAN mapping on the port."
+    ::= { ibVMAP1to2SingleEntry 2 }
+
+ibVMAP1to2SingleRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibVMAP1to2SingleEntry 3 }
+
+ibVMAP1to2SingleNestedPrio OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The nested VLAN tag's priority for a one-to-two VLAN mapping on the port."
+    DEFVAL { 65535 }
+    ::= { ibVMAP1to2SingleEntry 4 }
+
+ibVMAP2to2Table    OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVMAP2to2Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Two-to-two VLAN mapping table."
+    ::= { ibVmap 7 }
+
+ibVMAP2to2Entry OBJECT-TYPE
+    SYNTAX      IbVMAP2to2Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Two-to-two VLAN mapping table entries."
+    INDEX { ifIndex, ibVMAP2to2OuterVlan, ibVMAP2to2InnerVlan }
+    ::= { ibVMAP2to2Table 1 }
+
+IbVMAP2to2Entry ::=
+    SEQUENCE
+    {
+        ibVMAP2to2OuterVlan             Integer32,
+        ibVMAP2to2InnerVlan             Integer32,
+        ibVMAP2to2TranslatedOuterVlan   Integer32,
+        ibVMAP2to2TranslatedInnerVlan   Integer32,
+        ibVMAP2to2RowStatus             RowStatus
+    }
+
+ibVMAP2to2OuterVlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The original outer VLAN for a two-to-two VLAN mapping on the port."
+    ::= { ibVMAP2to2Entry 1 }
+
+ibVMAP2to2InnerVlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The original inner VLAN for a two-to-two VLAN mapping on the port."
+    ::= { ibVMAP2to2Entry 2 }
+
+ibVMAP2to2TranslatedOuterVlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The translated outer VLAN for a two-to-two VLAN mapping on the port."
+    ::= { ibVMAP2to2Entry 3 }
+
+ibVMAP2to2TranslatedInnerVlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The translated inner VLAN for a two-to-two VLAN mapping on the port."
+    ::= { ibVMAP2to2Entry 4 }
+
+ibVMAP2to2RowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibVMAP2to2Entry 5 }
+
+ibVMAP2to1Table    OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVMAP2to1Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Two-to-one VLAN mapping table."
+    ::= { ibVmap 8 }
+
+ibVMAP2to1Entry OBJECT-TYPE
+    SYNTAX      IbVMAP2to1Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Two-to-one VLAN mapping table entries."
+    INDEX { ifIndex, ibVMAP2to1OuterVlan, ibVMAP2to1InnerVlan }
+    ::= { ibVMAP2to1Table 1 }
+
+IbVMAP2to1Entry ::=
+    SEQUENCE
+    {
+        ibVMAP2to1OuterVlan             Integer32,
+        ibVMAP2to1InnerVlan             Integer32,
+        ibVMAP2to1TranslatedOuterVlan   Integer32,
+        ibVMAP2to1RowStatus             RowStatus
+    }
+
+ibVMAP2to1OuterVlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The original outer VLAN for a two-to-one VLAN mapping on the port."
+    ::= { ibVMAP2to1Entry 1 }
+
+ibVMAP2to1InnerVlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The original inner VLAN for a two-to-one VLAN mapping on the port."
+    ::= { ibVMAP2to1Entry 2 }
+
+ibVMAP2to1TranslatedOuterVlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The translated outer VLAN for a two-to-one VLAN mapping on the port."
+    ::= { ibVMAP2to1Entry 3 }
+
+ibVMAP2to1RowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibVMAP2to1Entry 4 }
+
+ibVMAPTrapGroup OBJECT IDENTIFIER ::= { ibVmap 9 }
+
+ibVMAPIfChassis    OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Chassis number."
+    ::= { ibVMAPTrapGroup 1 }
+
+ibVMAPIfSlot    OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Slot number."
+    ::= { ibVMAPTrapGroup 2 }
+
+ibVMAPThresholdRatio    OBJECT-TYPE
+    SYNTAX      Integer32 (0..100)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Ratio which the current configure number in the system total about vlan mapping
+        and vlan stacking."
+    ::= { ibVMAPTrapGroup 3 }
+
+ibVMAPTrap OBJECT IDENTIFIER ::= { ibVmap 10 }
+ibVMAPTrapPrex OBJECT IDENTIFIER ::= { ibVMAPTrap 0 }
+
+ibVMAPCountThresholdAlarm NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibVMAPIfChassis,
+        ibVMAPIfSlot,
+        ibVMAPThresholdRatio
+    }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when configure number exceeds the
+         upper threshold."
+    ::= { ibVMAPTrapPrex 1 }
+
+ibVMAPCountThresholdResume NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibVMAPIfChassis,
+        ibVMAPIfSlot,
+        ibVMAPThresholdRatio
+    }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when configure number from
+         above the upper threshold to below the lower threshold."
+    ::= { ibVMAPTrapPrex 2 }
+
+END

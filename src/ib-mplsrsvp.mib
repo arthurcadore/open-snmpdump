@@ -1,0 +1,152 @@
+-- =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Multiprotocol Label Switching Resource Reservation Protocol MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 2022-06-01 Initial version Created by zhouwan
+-- =============================================================================
+IB-MPLSRSVP-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    ibCommon
+        FROM IB-OID-MIB
+    ;
+
+-- =============================================================================
+-- module identity part
+-- =============================================================================
+ibMplsRsvp MODULE-IDENTITY
+    LAST-UPDATED
+        "202206011900Z"   -- June 01, 2022 at 19:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Multiprotocol Label Switching Resource Reservation Protocol MIB"
+    REVISION
+        "202206011900Z"   -- June 01, 2022 at 19:00 GMT
+    DESCRIPTION
+        "Initial version of this MIB."
+    ::= { ibCommon 229 }
+
+-- =============================================================================
+-- Top level components of this MIB module
+-- =============================================================================
+ibMplsRsvpNotifications OBJECT IDENTIFIER ::= { ibMplsRsvp 0 }
+
+ibMplsRsvpObjects       OBJECT IDENTIFIER ::= { ibMplsRsvp 1 }
+
+ibMplsRsvpScalarGroup   OBJECT IDENTIFIER ::= { ibMplsRsvpObjects 1 }
+
+ibMplsRsvpNbrAddr    OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..127))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The RSVP(Resource Reservation Protocol) Neighbor Address."
+    ::= { ibMplsRsvpScalarGroup 1 }
+
+ibMplsRsvpFrrMainInfo    OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..127))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The Main Tunnel information of RSVP(Resource Reservation Protocol)
+         Fast Reroute."
+    ::= { ibMplsRsvpScalarGroup 2 }
+
+ibMplsRsvpFrrByPassInfo    OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..127))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The Bypass Tunnel information of RSVP(Resource Reservation Protocol)
+         Fast Reroute."
+    ::= { ibMplsRsvpScalarGroup 3 }
+
+-- =============================================================================
+-- Notifications
+-- =============================================================================
+ibMplsRsvpNeighborLost  NOTIFICATION-TYPE
+    OBJECTS { ibMplsRsvpNbrAddr  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the RSVP neighbor is lost
+      and hello status went from up to init or idle."
+    ::= { ibMplsRsvpNotifications 1 }
+
+ibMplsRsvpNeighborLostRecovery  NOTIFICATION-TYPE
+     OBJECTS { ibMplsRsvpNbrAddr  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the RSVP neighbor is recovered
+      and hello status went from init to up."
+    ::= { ibMplsRsvpNotifications 2 }
+
+ibMplsRsvpAuthFail  NOTIFICATION-TYPE
+    OBJECTS { ibMplsRsvpNbrAddr   }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the RSVP neighbor authentication
+       is failed."
+    ::= { ibMplsRsvpNotifications 3 }
+
+ibMplsRsvpAuthFailRecovery  NOTIFICATION-TYPE
+    OBJECTS { ibMplsRsvpNbrAddr   }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the RSVP neighbor authentication
+      failure is recovered."
+    ::= { ibMplsRsvpNotifications 4 }
+
+ibMplsRsvpFrrProtAval  NOTIFICATION-TYPE
+    OBJECTS {
+        ibMplsRsvpFrrMainInfo,
+        ibMplsRsvpFrrByPassInfo
+            }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the primary tunnel is bound
+      by bypass tunnel."
+    ::= { ibMplsRsvpNotifications 5 }
+
+ibMplsRsvpFrrProtNotAval  NOTIFICATION-TYPE
+    OBJECTS {
+        ibMplsRsvpFrrMainInfo,
+        ibMplsRsvpFrrByPassInfo
+            }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the primary tunnel is unbound
+      by bypass tunnel."
+    ::= { ibMplsRsvpNotifications 6 }
+
+ibMplsRsvpFrrSwitch  NOTIFICATION-TYPE
+    OBJECTS {
+        ibMplsRsvpFrrMainInfo,
+        ibMplsRsvpFrrByPassInfo
+            }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when tunnel frr is switched."
+    ::= { ibMplsRsvpNotifications 7 }
+
+ibMplsRsvpFrrResume  NOTIFICATION-TYPE
+    OBJECTS {
+        ibMplsRsvpFrrMainInfo,
+        ibMplsRsvpFrrByPassInfo
+            }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when tunnel frr is resumed."
+    ::= { ibMplsRsvpNotifications 8 }
+
+-- =============================================================================
+-- End of notifications.
+-- =============================================================================
+
+END

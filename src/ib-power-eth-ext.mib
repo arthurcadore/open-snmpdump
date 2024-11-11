@@ -1,0 +1,1716 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Power over ethernet extend MIB
+-- Reference: POWER-ETHERNET-MIB
+-- Version: V1.9
+-- History:
+--   V1.0 2004-07-24 Created by Gaolong
+--   V1.1 2004-09-08 Update file by Gaolong for some syntax errors.
+--   V1.2 2004-11-19 Update file by liuhongxu for poe need.
+--                   Added ibMainPsePriorityMode¡¢ibPsePowerMaxValue¡¢
+--                   ibpsePDChangNotification adjust the objects' sequence of
+--                   ibPsePortTable and ibMainPseTable add the description
+--                   of MANDATORY-GROUPS in ibPseCompliance.
+--   V1.3 2004-12-16 Update file by liuhongxu for poe profile
+--                   Added ibPsePortProfile, ibPseProfilesTable
+--                   change the name of ibPseProfileIndex add
+--                   ibPseProfileApplyNum.  adjust the format of this mib.
+--   V1.4 2005-03-29 Update file by Wangzhaoyan for poe pow need.
+--                   Added ibPOEPowerObjects, ibPOEThresholdLimitObjs,
+--                   ibPOESupModuleInfoObjs, ibPOEDCOutStateObjects,
+--                   ibPOEDCDCOutInfoObjects, ibPOEACSwitchStateModuleObjs,
+--                   ibPOEInCurStateObjects, ibPOEAlarmStateObjects and the
+--                   sub-nodes.  Added 17 traps change the node name from
+--                   ibpsePDChangNotification to ibpsePDChangeNotification
+--                   change some detail as the suggestion from Wangyingxia and
+--                   Yangyang.  adjust the format of this mib.
+--   V1.5 2005-11-21 Update file by Liweizhen for controling the power-management
+--                   policy of PSE or PD.  Added ibPsePolicyMode, ibPDPolicyMode,
+--                   ibMainPsePowerPriority.
+--                   Delete some description of ibPsePortProfileIndex node.
+--                   Change the description of ibPseProfilePowerMode node.
+--                   Change SYNTAX OCTET STRING range for the following nodes:
+--                   ibPOEPowerType, ibPOESupervisionModuleName,
+--                   ibPOESMFactorName, ibPOEModuleHardVerInfo.
+--                   Adjust the format of this mib.
+--   V1.6 2015-07-21 Update file by Fangliwen for profile power limit.
+--                   Change the syntax of ibPseProfilePowerLimit node.
+--   V1.7 2019-5-23  Update file for PoE-AI. Added the following nodes:
+--                   ibPsePDDisableNotification,ibPsePortGroupIndex,
+--                   ibPsePortIndex and ibPsePortDisableInfo.
+--   V1.8 2021-7-23  Update file for PoE-track. Added the following nodes:
+--                   ibPOETrackNotification, and ibPsePortTrackAction.
+--        2022-07-22 Added ibPOEPortName, ibPOEPdClassInvalid,
+--                   ibPOEPdClassOvercurrent, and ibPOEPdPowerOvercurrent.
+--   V1.9 2023-08-07 Added ibPOEInputPortState, and ibPOEInputChangeNotification.
+-- =================================================================
+IB-POWER-ETH-EXT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+      ibCommon
+              FROM IB-OID-MIB
+      pethPsePortGroupIndex, pethPsePortIndex,
+      pethMainPseGroupIndex, pethPsePortDetectionStatus
+              FROM POWER-ETHERNET-MIB
+      OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP
+              FROM SNMPv2-CONF
+      Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+              FROM SNMPv2-SMI
+      DisplayString, RowStatus, TEXTUAL-CONVENTION
+              FROM SNMPv2-TC;
+
+
+ibPowerEthernetExt MODULE-IDENTITY
+      LAST-UPDATED "202308070000Z"      -- Aug 07, 2023 at 00:00 GMT
+
+      ORGANIZATION
+          "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+      CONTACT-INFO
+          ""
+      DESCRIPTION
+              "Description."
+      REVISION "202308070000Z"
+      DESCRIPTION
+          "Added the following nodes:
+           ibPOEInputPortState, and ibPOEInputChangeNotification."
+      REVISION "202207220000Z"
+      DESCRIPTION
+          "Added ibPOEPortName,
+           ibPOEPdClassInvalid,
+           ibPOEPdClassOvercurrent,
+           and ibPOEPdPowerOvercurrent."
+      REVISION "202107230000Z"
+      DESCRIPTION
+          "Added the following nodes:
+           ibPOETrackNotification, and ibPsePortTrackAction."
+      REVISION "201905230000Z"
+      DESCRIPTION
+          "Added the following nodes:
+          ibPsePDDisableNotification,ibPsePortGroupIndex,
+          ibPsePortIndex, and ibPsePortDisableInfo."
+      REVISION      "201507250000Z"
+      DESCRIPTION
+          "The initial version of this MIB module."
+          ::= { ibCommon 14 }
+
+
+--
+-- Node definitions
+--
+
+ibPsePortTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF IbPsePortEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "The indexing scheme is taken form that used by
+             the IETF Power MIB.  The same indexing scheme is
+             used to give continuity in behaviour between
+             that standard and this extensions definitioin."
+      ::= { ibPowerEthernetExt 1 }
+
+
+ibPsePortEntry OBJECT-TYPE
+      SYNTAX IbPsePortEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "The pethPsePortGroupIndex is imported from the IETF Power MIB
+             and uniquely identifies the group containing the port to which
+             power ethernet PSE is connected.  Group means (box in the stack,
+             module in a rack).
+
+             The pethPsePortPowerIndex is imported from the IETF Power MIB
+             and uniquely identifies the power ethernet PSE port within group
+             pethPseGroupIndex to which the power Ethernet PSE entry is
+             connected.  This value will match the local port number on a
+             switch."
+      INDEX { pethPsePortGroupIndex, pethPsePortIndex }
+      ::= { ibPsePortTable 1 }
+
+
+IbPsePortEntry ::=
+      SEQUENCE {
+              ibPsePortFaultDescription
+                      DisplayString,
+              ibPsePortPeakPower
+                      Integer32,
+              ibPsePortAveragePower
+                      Integer32,
+              ibPsePortCurrentPower
+                      Integer32,
+              ibPsePortPowerLimit
+                      Integer32,
+              ibPsePortProfileIndex
+                      Integer32,
+              ibPsePortTrackAction
+                      INTEGER
+      }
+
+ibPsePortFaultDescription OBJECT-TYPE
+      SYNTAX DisplayString
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "The object supports the fault category of the IETF Power MIB [1]
+             pethPsePortDetectionStatus object.  A textual description
+             containing more information about the nature of this fault is
+             provided by this object.  Typically this will detail the precise
+             PoE hardware state which is causing the pethPsePortDetectionStatus
+             object to be in the 'fault' state.
+             It is a DisplayString of up to 255 characters."
+      ::= { ibPsePortEntry 2 }
+
+
+ibPsePortPeakPower OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "The object specifies the peak power which has been consumed by
+             the port.  It is defined as the highest measured value of power
+             in milliWatts that has been consumed by the port.  Its value
+             is only reset when link is lost, the port is PoE disabled or
+             when it is manually reset by the user asspecified below.
+             It is a read/write integer value with units of milliWatts.
+             Writing a value of zero to this object resets its value
+             to zero.  Writing any other value to this object has no
+             effect on its value and an error is returned."
+      ::= { ibPsePortEntry 3 }
+
+
+ibPsePortAveragePower OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "The object specifies the average power which has been consumed
+             by the port.  This object is a read/write integer value with
+             units of milliWatts.  Writing a value of zero to this object
+             resets its value to zero.  Writing any other value to this
+             object has no effect on its value and an error is returned."
+      ::= { ibPsePortEntry 4 }
+
+
+ibPsePortCurrentPower OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+              "The object specifies the power currently being consumed by the port.
+              It is a read only integer value with units of milliWatts."
+      ::= { ibPsePortEntry 5 }
+
+
+ibPsePortPowerLimit OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+              "The object specifies the power limit set for this port.
+              The PSE will not supply more than this level of power to the
+              specified port.
+              It is a read/write integer value with units of milliWatts."
+      ::= { ibPsePortEntry 6 }
+
+ibPsePortProfileIndex OBJECT-TYPE
+      SYNTAX Integer32 (0..100)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "Indicates the power profile which is currently associated
+             with this port.  This object references the corresponding
+             ibPseProfileIndex object in the power profiles table.  A
+             value of zero is a special case and indicates that no
+             power profile is currently associated with this port.  When
+             ibPseProfileIndex is set to an index of existent profile,
+             pethPsePortPowerPairs, pethPsePortPowerPriority,
+             pethPsePortAdminEnable and ibPsePortPowerLimit will be
+             set to the same as corresponding value.  PethPsePortPowerPairs,
+             pethPsePortPowerPriority and pethPsePortAdminEnable are objects
+             of rfc3621-Power-Ethernet.mib."
+      ::= { ibPsePortEntry 7 }
+
+ibPsePortTrackAction OBJECT-TYPE
+       SYNTAX     INTEGER {
+              none(0),
+              alarm(1),
+              alarmRebootPD(2)
+              }
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+             "Action taken when the state of the track entry associated with
+              the PoE port changes from positive to negative.
+              none(0):None.
+              alarm(1):Outputs alarm information.
+              alarmRebootPD(2):Outputs alarm information and restarts the PD."
+      ::= { ibPsePortEntry 8 }
+
+ibMainPseTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF IbMainPseEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+              "Description."
+      ::= { ibPowerEthernetExt 2 }
+
+
+ibMainPseEntry OBJECT-TYPE
+      SYNTAX IbMainPseEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "The pethMainPseGroupIndex is imported from the IETF Power MIB
+             and uniquely identifies the group containing the port to which
+             power ethernet PSE is connected.  Group means (box in the stack,
+             module in a rack) and the value 1 MUST be used for non-modular
+             devices."
+      INDEX { pethMainPseGroupIndex }
+      ::= { ibMainPseTable 1 }
+
+
+IbMainPseEntry ::=
+      SEQUENCE {
+              ibMainPsePowerLimit
+                         Integer32,
+              ibMainPseAveragePower
+                         Integer32,
+              ibMainPsePeakPower
+                         Integer32,
+              ibMainGuaranteedPowerRemaining
+                         Integer32,
+              ibMainPsePriorityMode
+                         INTEGER,
+              ibMainPseLegacy
+                         INTEGER,
+              ibMainPsePowerPriority
+                         INTEGER
+              }
+
+ibMainPsePowerLimit OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "The object specifies the power limit set for the unit as a whole.
+             The PoE unit will already have a nominal power defined by the
+             IETF Power MIB [1] pethMainPsePower object.  This OPTIONAL object
+             specifies a further limit to this nominal power value.  This may
+             be useful to control the thermals of the unit, or for internal
+             testing purposes.  One possible use for this object may be to lower
+             the power consumption of the unit if one or more of the internal
+             fans have broken.  It is a read/write integer value with units of
+             Watts (note - Watts is chosen instead of milliWatts here since
+             the IETF Power MIB [1] measures unit based parameters, such as
+             the pethMainPsePower object, in units of Watts)."
+      ::= { ibMainPseEntry 1 }
+
+
+ibMainPseAveragePower OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "The object specifies the average power which has been consumed
+             by the port.  It is a read/write integer value with units of
+             Watts (note - Watts is chosen instead of milliWatts here since
+             the IETF Power MIB [1] measures unit based parameters, such as
+             the pethMainPsePower object, in units of Watts).  Writing a value
+             of zero to this object resets its value to zero.  Writing any
+             other value to this object has no effect on its value and an error
+             is returned."
+      ::= { ibMainPseEntry 2 }
+
+
+ibMainPsePeakPower OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "The object specifies the peak power which has been consumed for PoE.
+             It is defined as the highest measured value of power in milliWatts
+             that has been consumed at any one point in time by the sum of the PoE
+             ports.  Its value is only reset when the unit is powered on or when
+             it is manually reset by the user as specifiedbelow.  It is a read/write
+             integer value with units of Watts (note - Watts is chosen instead of
+             milliWatts here since the IETF Power MIB [1] measures unit based
+             parameters, such as the pethMainPsePower object, in units of Watts).
+             Writing a value of zero to this object resets its value to zero.
+             Writing any other value to this object has noeffect on its value
+             and an error is returned."
+      ::= { ibMainPseEntry 3 }
+
+
+ibMainGuaranteedPowerRemaining OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The object specifies the amount of power remaining in the guaranteed
+             power pool.  Each time a port is placed into guaranteed mode it
+             reserves a set amount of power out of the total guaranteed power
+             pool for the system.  This intention of this object is to give the
+             client of this MIB (whether that be the CLI or the Web interface or
+             the end user) an indication of how many ports can still be placed
+             into guaranteed mode.  It is a read only integer value with units of
+             Watts(note - Watts is chosen instead of milliWatts here since the
+             IETF Power MIB [1] measures unit based parameters,such as the
+             pethMainPsePower object, in units of Watts)."
+      ::= { ibMainPseEntry 4 }
+
+
+ibMainPsePriorityMode OBJECT-TYPE
+      SYNTAX INTEGER   {
+              disconnection(0),
+              non-disconnection(1)
+              }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "Describes or controls the priority mode on slot which must be
+             enabled firstly.  When a new board is inserted, and the power is
+             over-load, a value of disconnection(0) means that the power will
+             stop supply to the low priority slot ; A value of non-disconnection(1)
+             means that the slot still supply when a new board is inserted, and
+             the power is over-load too."
+      ::= { ibMainPseEntry 5 }
+
+ibMainPseLegacy OBJECT-TYPE
+      SYNTAX INTEGER   {
+             enable(0),
+             disable(1)
+              }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "Describes or controls the legacy mode on slot which must be enabled
+             firstly.  Legacy mode: standard or nonstandard PD detection mode."
+      ::= { ibMainPseEntry 6 }
+
+ibMainPsePowerPriority OBJECT-TYPE
+      SYNTAX INTEGER   {
+             critical(1),
+             high(2),
+             low(3)
+              }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "Describes or controls the priority of the PSE.  The priority
+             will be used by the PSE policy to prevent from power overloading.
+             If the priority of PSE is set to critical, the PSE will turn into
+             guaranteed mode.  The priority could be used by a control mechanism
+             that prevents power overloading by disconnecting PSEs with lower
+             power priority.  PSEs that connect devices critical to the
+             application should be set to higher priority."
+      ::= { ibMainPseEntry 7 }
+
+-- Power Profile PSE table
+ibPseProfilesTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF IbPseProfilesEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "A table of objects representing a set of power profiles.
+             Power profiles can be applied to PoE ports, which have the
+             effect of automatically setting the priority, power limit
+             and PoE enable MIB objects to the values specified in the
+             power profile."
+      ::= { ibPowerEthernetExt 7 }
+
+ibPseProfilesEntry OBJECT-TYPE
+      SYNTAX IbPseProfilesEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "A set of objects that display and control the Main power of a PSE."
+      INDEX    { ibPseProfileIndex }
+      ::= { ibPseProfilesTable 1 }
+
+IbPseProfilesEntry ::= SEQUENCE {
+             ibPseProfileIndex     Integer32,
+             ibPseProfileName      DisplayString,
+             ibPseProfilePowerMode      INTEGER,
+             ibPseProfilePowerLimit     Integer32,
+             ibPseProfilePriority       INTEGER,
+             ibPseProfilePairs          INTEGER,
+             ibPseProfileApplyNum       Integer32,
+             ibPseProfileRowStatus      RowStatus
+                }
+
+ibPseProfileIndex OBJECT-TYPE
+      SYNTAX Integer32 (1..100)
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "The index of the profile.  This uniquely allow the profile to be
+             identified."
+      ::= { ibPseProfilesEntry 1 }
+
+ibPseProfileName OBJECT-TYPE
+      SYNTAX DisplayString (SIZE(1..15))
+      MAX-ACCESS read-create
+      STATUS current
+      DESCRIPTION
+            "Assigns the profile a name with which the settings
+            can be assiciated with.  For example, 'NBX Phone'."
+      ::= { ibPseProfilesEntry 2 }
+
+ibPseProfilePowerMode OBJECT-TYPE
+      SYNTAX INTEGER {
+                powerDisabled (1),
+                powerEnabled (2)
+               }
+      MAX-ACCESS read-create
+      STATUS current
+      DESCRIPTION
+             "The power mode associated with this power profile.  There
+             are two possible power modes as follows: powerDisabled,
+             powerEnabled.  When a power profile is applied to a PSE port,
+             this value dictates the settings of the ports pethPsePortPowerPriority
+             and pethPsePortAdminEnable objects."
+      ::= { ibPseProfilesEntry 3 }
+
+ibPseProfilePowerLimit OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-create
+      STATUS current
+      DESCRIPTION
+             "The power limit to be applied to the ports ibPsePortPowerLimit
+              object when the profile is applied to the PSE port.  Expressed in
+              milliWatts."
+      ::= { ibPseProfilesEntry 4 }
+
+ibPseProfilePriority OBJECT-TYPE
+      SYNTAX INTEGER   {
+                critical(1),
+                high(2),
+                low(3)
+               }
+      MAX-ACCESS read-create
+      STATUS current
+      DESCRIPTION
+             "This object controls the priority of the port from the point of
+             view of a power management algorithm.  The priority that is set
+             by this variable could be used by a control mechanism that
+             prevents over current situations by disconnecting first ports
+             with lower power priority.  Ports that connect devices critical
+             to the operation of the network - like the E911 telephones
+             ports - should be set to higher priority."
+      ::= { ibPseProfilesEntry 5 }
+
+ibPseProfilePairs OBJECT-TYPE
+      SYNTAX INTEGER   {
+                signal(1),
+                spare(2)
+                }
+      MAX-ACCESS read-create
+      STATUS current
+      DESCRIPTION
+             "Describes or controls the pairs in use.  If the value of
+             pethPsePortPowerPairsControl is true, this object is writable.
+             A value of signal(1) means that the signal pairs only are in use.
+             A value of spare(2) means that the spare pairs only are in use."
+      REFERENCE
+             "IEEE Std 802.3af Section 30.9.1.1.4 aPSEPowerPairs"
+      ::= { ibPseProfilesEntry 6 }
+
+ibPseProfileApplyNum OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The number of this profile which has been applied.
+             If ibPseProfileApplyNum is not zero, user can't
+             change the current line."
+      ::= { ibPseProfilesEntry 7 }
+
+ibPseProfileRowStatus OBJECT-TYPE
+      SYNTAX RowStatus
+      MAX-ACCESS read-create
+      STATUS current
+      DESCRIPTION
+             "The status of this classifier.
+             If ibPseProfileApplyNum is not zero, user can't
+             delete the current line."
+      ::= { ibPseProfilesEntry 8 }
+
+ibPseAutoDetectActive OBJECT-TYPE
+      SYNTAX INTEGER
+                {
+                notSupported(1),
+                disabled(2),
+                enabled(3)
+                }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "The object specifies whether the device auto-detection feature is
+             active.  If this object is set to Active, and a known powered device
+             is detected, then the port will automatically switch to Auto-Guaranteed
+             mode.  This is a stackwide object (ie. it is not referenced by
+             group index)."
+      ::= { ibPowerEthernetExt 3 }
+
+ibPsePowerMaxValue OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "The object specifies the max poe power for lanswitch.
+             The value should between the power currently and the max power."
+      ::= { ibPowerEthernetExt 5 }
+
+ibPsePolicyMode OBJECT-TYPE
+      SYNTAX INTEGER
+              {
+              disabled(1),
+              priority(2)
+              }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "The PSE policy only applies to the situation that when a new
+             board (PSE) is inserted, and the power is overload.
+             A value of priority(2) means that the power will stop supplying
+             to the low priority PSE.  About PSE priority, please refer to
+             ibMainPsePowerPriority.  A value of disabled(1) means that the
+             power will stop supplying to the new inserted PSE.  The default
+             value of this object is disabled(1)."
+      ::= { ibPowerEthernetExt 9 }
+
+ibPDPolicyMode OBJECT-TYPE
+      SYNTAX INTEGER
+              {
+              disabled(1),
+              priority(2)
+              }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "The PD policy only applies to the situation that when a new
+             PD is inserted, and the power of PSE is overload.
+             A value of priority(2) means that the power will stop supplying
+             to the low priority port PD.  About port priority, please refer
+             to pethPsePortPowerPriority.  A value of disabled(1) means that
+             the slot stop supplying to the new inserted PD.  The default
+             value of this object is disabled(1)."
+      ::= { ibPowerEthernetExt 10 }
+
+ibPOEPortName OBJECT-TYPE
+      SYNTAX     DisplayString (SIZE(1..15))
+      MAX-ACCESS accessible-for-notify
+      STATUS     current
+      DESCRIPTION
+          "PoE-capable interface name."
+      ::= { ibPowerEthernetExt 12 }
+
+ibPOEInputPortState OBJECT-TYPE
+      SYNTAX INTEGER
+              {
+              normal(1),
+              faulty(2),
+              ready(3),
+              unknown(4)
+              }
+      MAX-ACCESS accessible-for-notify
+      STATUS     current
+      DESCRIPTION
+             "Power input status of the power interface.
+             The values include:
+             normal (1),Faulty (2),Ready(3),Unknown(4)."
+      ::= { ibPowerEthernetExt 13 }
+
+ibpseportNotification  OBJECT IDENTIFIER ::= { ibPowerEthernetExt 6 }
+
+-- Notification  Control  Objects
+
+ibpsePDChangeNotification NOTIFICATION-TYPE
+      OBJECTS { pethPsePortDetectionStatus }
+      STATUS current
+      DESCRIPTION
+             "This notification indicates if PD has been inserted or pulled out."
+      ::= { ibpseportNotification 1 }
+
+ibPOEDisconnectNotification  NOTIFICATION-TYPE
+      OBJECTS { ibPOEAlarmModuleInfoIndex, ibPOEModuleDisconnect }
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the POE power module does not disconnect."
+      ::= { ibpseportNotification 2 }
+
+ibPOEInputErrorNotification  NOTIFICATION-TYPE
+      OBJECTS { ibPOEAlarmModuleInfoIndex, ibPOEModuleInputError }
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the POE power module input error."
+      ::= { ibpseportNotification 3 }
+
+ibPOEOutputErrorNotification  NOTIFICATION-TYPE
+      OBJECTS { ibPOEAlarmModuleInfoIndex, ibPOEModuleOutputError }
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the POE power module output error."
+      ::= { ibpseportNotification 4 }
+
+ibPOEOverVoltageNotification  NOTIFICATION-TYPE
+      OBJECTS { ibPOEAlarmModuleInfoIndex, ibPOEModuleOverVoltage }
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the POE power module overruns the
+             voltage limit."
+      ::= { ibpseportNotification 5 }
+
+ibPOEOverTempNotification  NOTIFICATION-TYPE
+      OBJECTS { ibPOEAlarmModuleInfoIndex, ibPOEModuleOverTemp }
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the POE power module overruns the
+             temperature limit."
+      ::= { ibpseportNotification 6 }
+
+ibPOEFanErrorNotification  NOTIFICATION-TYPE
+      OBJECTS { ibPOEAlarmModuleInfoIndex, ibPOEModuleFanError }
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the POE power module fan error."
+      ::= { ibpseportNotification 7 }
+
+ibPOEModuleShutdownNotification  NOTIFICATION-TYPE
+      OBJECTS { ibPOEAlarmModuleInfoIndex, ibPOEModuleShutdown }
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the POE power module is closed."
+      ::= { ibpseportNotification 8 }
+
+ibPOECurRestrictedNotification  NOTIFICATION-TYPE
+      OBJECTS { ibPOEAlarmModuleInfoIndex, ibPOEModuleCurRestricted }
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the POE power module current is restricted."
+      ::= { ibpseportNotification 9 }
+
+ibPOEACSwitchNotification  NOTIFICATION-TYPE
+      OBJECTS { ibPOEACSwitchStateIndex, ibPOEACSwitchState }
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the AC input switch alarm of this POE power."
+      ::= { ibpseportNotification 10 }
+
+ibPOEACInCurANotification  NOTIFICATION-TYPE
+      OBJECTS { ibPOEInCurAState }
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the AC input current A alarm state of
+             this POE power."
+      ::= { ibpseportNotification 11 }
+
+ibPOEACInCurBNotification  NOTIFICATION-TYPE
+      OBJECTS { ibPOEInCurBState }
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the AC input current B alarm state of
+             this POE power."
+      ::= { ibpseportNotification 12 }
+
+ibPOEACInCurCNotification  NOTIFICATION-TYPE
+      OBJECTS { ibPOEInCurCState }
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the AC input current C alarm state of
+             this POE power."
+      ::= { ibpseportNotification 13 }
+
+ibPOEACSwitchVolABNotification  NOTIFICATION-TYPE
+      OBJECTS { ibPOESwitchStateVolExIndex, ibPOESwitchStateInVolAB}
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the AC input voltage AB alarm state of
+             this POE power."
+      ::= { ibpseportNotification 14 }
+
+ibPOEACSwitchVolBCNotification  NOTIFICATION-TYPE
+      OBJECTS { ibPOESwitchStateVolExIndex, ibPOESwitchStateInVolBC}
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the AC input voltage BC alarm state of
+             this POE power."
+      ::= { ibpseportNotification 15 }
+
+ibPOEACSwitchVolCANotification  NOTIFICATION-TYPE
+      OBJECTS { ibPOESwitchStateVolExIndex, ibPOESwitchStateInVolCA }
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the AC input voltage CA alarm state of
+             this POE power."
+      ::= { ibpseportNotification 16 }
+
+ibPOEDCOutVolNotification NOTIFICATION-TYPE
+      OBJECTS { ibPOEDCOutStateIndex, ibPOEDCOutDCVolAlarm }
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the DC output alarm of this POE power."
+      ::= { ibpseportNotification 17 }
+
+ibPOEShutdownNotification NOTIFICATION-TYPE
+      STATUS current
+      DESCRIPTION
+             "This notification indicates the whole POE power has been shutdown."
+      ::= { ibpseportNotification 18 }
+
+ibPOETrackNotification NOTIFICATION-TYPE
+      OBJECTS { ibPsePortTrackAction }
+      STATUS current
+      DESCRIPTION
+             "This notification indicates that the PD attached to the PoE port
+              is unreachable"
+      ::= { ibpseportNotification 19 }
+
+ibPOEPdClassInvalid NOTIFICATION-TYPE
+      OBJECTS
+          {
+              ibPOEPortName
+          }
+      STATUS current
+      DESCRIPTION
+          "This notification is generated when an invalid class of PD is detected on a PoE-capable interface."
+      ::= { ibpseportNotification 20 }
+
+ibPOEPdClassOvercurrent NOTIFICATION-TYPE
+      OBJECTS
+          {
+              ibPOEPortName
+          }
+      STATUS current
+      DESCRIPTION
+          "This notification is generated when an overloaded class of PD is detected on a PoE-capable interface."
+      ::= { ibpseportNotification 21 }
+
+ibPOEPdPowerOvercurrent NOTIFICATION-TYPE
+      OBJECTS
+          {
+              ibPOEPortName
+          }
+      STATUS current
+      DESCRIPTION
+          "This notification is generated when the power of a PD is overloaded."
+      ::= { ibpseportNotification 22 }
+
+ibPseComformance OBJECT IDENTIFIER ::= { ibPowerEthernetExt 4 }
+
+ibPseCompliances OBJECT IDENTIFIER ::= { ibPseComformance 1 }
+
+ibPseCompliance MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION
+             "Description."
+      MODULE  -- this module
+      MANDATORY-GROUPS {    ibPsePortGroup,
+                            ibMainPseGroup,
+                            ibPseScalarGroup,
+                            ibPsePDNotificationGroup
+                       }
+      GROUP ibPseProfilesGroup
+      DESCRIPTION
+             "This group is mandatory only for executing POE commands as a batch."
+      ::= { ibPseCompliances 1 }
+
+ibPseGroup OBJECT IDENTIFIER ::= { ibPseComformance 2 }
+
+ibPsePortGroup OBJECT-GROUP
+      OBJECTS { ibPsePortProfileIndex, ibPsePortPowerLimit, ibPsePortCurrentPower,
+                ibPsePortAveragePower, ibPsePortPeakPower, ibPsePortFaultDescription,
+                ibMainPsePriorityMode
+              }
+      STATUS current
+      DESCRIPTION
+             "A collection of objects should be supported at the same time."
+      ::= { ibPseGroup 1 }
+
+ibMainPseGroup OBJECT-GROUP
+      OBJECTS { ibMainPsePowerLimit, ibMainPseAveragePower, ibMainPsePeakPower,
+                ibMainGuaranteedPowerRemaining }
+      STATUS current
+      DESCRIPTION
+             "A collection of objects should be supported at the same time."
+      ::= { ibPseGroup 2 }
+
+ibPseScalarGroup OBJECT-GROUP
+      OBJECTS { ibPseAutoDetectActive, ibPsePowerMaxValue, ibPsePolicyMode ,
+                ibPDPolicyMode }
+      STATUS current
+      DESCRIPTION
+             "A collection of scalar objects supported."
+      ::= { ibPseGroup 3 }
+
+ibPsePDNotificationGroup NOTIFICATION-GROUP
+      NOTIFICATIONS { ibpsePDChangeNotification }
+      STATUS current
+      DESCRIPTION
+             "PD Change Notification."
+      ::= { ibPseGroup 4 }
+
+ibPseProfilesGroup OBJECT-GROUP
+      OBJECTS { ibPseProfileName, ibPseProfilePowerMode,
+                ibPseProfilePowerLimit, ibPseProfilePriority,
+                ibPseProfilePairs, ibPseProfileApplyNum, ibPseProfileRowStatus}
+      STATUS current
+      DESCRIPTION
+             "A collection of objects should be supported at the same time."
+      ::= { ibPseGroup 5 }
+
+ibPOEPowerThresholdLimitGroup OBJECT-GROUP
+      OBJECTS { ibPOEThresholdACMimimum, ibPOEThresholdACMaximum,
+                ibPOEThresholdDCMinimum, ibPOEThresholdDCMaximum }
+      STATUS current
+      DESCRIPTION
+             "Power threshold limits group."
+      ::= { ibPseGroup 6 }
+
+ibPOEPowerSupInfoGroup OBJECT-GROUP
+      OBJECTS { ibPOEPowerType, ibPOEPowerModuleNum, ibPOESupervisionModuleName,
+                ibPOESMMajorVersion, ibPOESMMinorVersion, ibPOESMFactorName}
+      STATUS current
+      DESCRIPTION
+             "The basic Power information group."
+      ::= { ibPseGroup 7 }
+
+ibPOEPowerDCOutStateGroup OBJECT-GROUP
+      OBJECTS { ibPOEDCOutStateModuleNum }
+      STATUS current
+      DESCRIPTION
+             "The DC out power state group."
+      ::= { ibPseGroup 8 }
+
+ibPOEPowerDCOutInfoGroup OBJECT-GROUP
+      OBJECTS { ibPOEDCOutCurNum }
+      STATUS current
+      DESCRIPTION
+             "The power AC input switch information group"
+      ::= { ibPseGroup 9 }
+
+ibPOEPowerACSwitchStateModuleGroup OBJECT-GROUP
+      OBJECTS { ibPOEACSwitchStateModuleNum}
+      STATUS current
+      DESCRIPTION
+             "PD Change Notification."
+      ::= { ibPseGroup 10 }
+
+ibPOEPowerInCurStateGroup OBJECT-GROUP
+      OBJECTS { ibPOEInCurStateModuleNum, ibPOEInCurAState, ibPOEInCurBState,
+                ibPOEInCurCState}
+      STATUS current
+      DESCRIPTION
+             "PD Change Notification."
+      ::= { ibPseGroup 11 }
+
+ibPOEPowerAlarmStateGroup OBJECT-GROUP
+      OBJECTS { ibPOEAlarmStateModuleNum }
+      STATUS current
+      DESCRIPTION
+              "PD Change Notification."
+      ::= { ibPseGroup 12 }
+
+ACAlarmState ::= TEXTUAL-CONVENTION
+      STATUS current
+      DESCRIPTION
+           "AC Alarm State."
+      SYNTAX INTEGER{
+                normal     (1),
+                underLimit (2),
+                aboveLimit (3),
+                lackPhrase (4),
+                fuseBroken (5),
+                switchOff  (6),
+                otherError (7)
+                   }
+
+DCAlarmState ::= TEXTUAL-CONVENTION
+     STATUS current
+     DESCRIPTION
+         "DC Alarm State."
+     SYNTAX INTEGER{
+                normal     (1),
+                underLimit (2),
+                aboveLimit (3),
+                fuseBroken (4),
+                switchOff  (5),
+                otherError (6)
+                   }
+
+SwitchState ::= TEXTUAL-CONVENTION
+     STATUS current
+     DESCRIPTION
+        "Switch State."
+SYNTAX INTEGER   {
+               on            (1),
+               off           (2),
+               highVoltInput (3),
+               lowVoltInput  (4)
+                  }
+
+ModuleAlarmState ::= TEXTUAL-CONVENTION
+   STATUS current
+   DESCRIPTION
+      "Module Alarm State."
+   SYNTAX INTEGER   {
+                    normal (1),
+                    alarm  (2)
+                      }
+
+ibPOEPowerObjects OBJECT IDENTIFIER ::= { ibPowerEthernetExt 8 }
+
+ibPOEThresholdLimitObjs OBJECT IDENTIFIER ::= { ibPOEPowerObjects 1 }
+
+ibPOEThresholdACMimimum OBJECT-TYPE
+      SYNTAX OCTET STRING (SIZE (1..10))
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "Input threshold AC minimum.
+             It is a read-write node.
+             The value of this node is 'OCTET STRING',
+             it is used to describe a float value.
+             So this string should fit the following rule:
+             1. This string should be terminated by '\0';
+             2. Every characters should be number or radix point;
+             3. The radix point should occur only once, and it should not
+             be the first or the last character of the string.
+             The value of this node should be smaller than 264.0V and larger than 90.0V.
+             And it should be smaller than the ibPOEThresholdACMaximum."
+      ::= { ibPOEThresholdLimitObjs 1 }
+
+ibPOEThresholdACMaximum OBJECT-TYPE
+      SYNTAX OCTET STRING (SIZE (1..10))
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "Input threshold AC maximum.
+             It is a read-write node.
+             The value of this node is 'OCTET STRING',
+             it is used to describe a float value.
+             So this string should fit the following rule:
+             1. This string should be terminated by '\0';
+             2. Every characters should be number or radix point;
+             3. The radix point should occur only once, and it should not
+             be the first or the last character of the string.
+             It should be smaller than 264.0V and larger than 90.0V.
+             And it should be larger than the ibPOEThresholdACMinimum."
+      ::= { ibPOEThresholdLimitObjs 2 }
+
+ibPOEThresholdDCMinimum OBJECT-TYPE
+      SYNTAX OCTET STRING (SIZE (1..10))
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "Input threshold DC minimum.
+             It is a read-write node.
+             The value of this node is 'OCTET STRING',
+             it is used to describe a float value.
+             So this string should fit the following rule:
+             1. This string should be terminated by '\0';
+             2. Every characters should be number or radix point;
+             3. The radix point should occur only once, and it should not
+             be the first or the last character of the string.
+             It should be smaller than 47.0V and larger than 45.0V."
+      ::= { ibPOEThresholdLimitObjs 3 }
+
+ibPOEThresholdDCMaximum OBJECT-TYPE
+      SYNTAX OCTET STRING (SIZE (1..10))
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+             "Input threshold DC maximum.
+             It is a read-write node.
+             The value of this node is 'OCTET STRING',
+             it is used to describe a float value.
+             So this string should fit the following rule:
+             1. This string should be terminated by '\0';
+             2. Every characters should be number or radix point;
+             3. The radix point should occur only once, and it should not
+             be the first or the last character of the string.
+             It should be smaller than 57.0V and larger than 55.0V."
+      ::= { ibPOEThresholdLimitObjs 4 }
+
+ibPOESupModuleInfoObjs OBJECT IDENTIFIER ::= { ibPOEPowerObjects 2 }
+
+ibPOEPowerType OBJECT-TYPE
+      SYNTAX OCTET STRING (SIZE (1..127))
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The type of the power."
+      ::= { ibPOESupModuleInfoObjs 1 }
+
+ibPOEPowerModuleNum OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The number of the power modules."
+      ::= { ibPOESupModuleInfoObjs 2 }
+
+ibPOESupervisionModuleName OBJECT-TYPE
+      SYNTAX OCTET STRING (SIZE (1..127))
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The object specifies the Supervision Module name on this POE power."
+      ::= { ibPOESupModuleInfoObjs 3 }
+
+ibPOESMMajorVersion OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The object specifies the high byte of the monitor module version."
+      ::= { ibPOESupModuleInfoObjs 4 }
+
+ibPOESMMinorVersion OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The object specifies the low byte of the monitor module version."
+      ::= { ibPOESupModuleInfoObjs 5 }
+
+ibPOESMFactorName OBJECT-TYPE
+      SYNTAX OCTET STRING (SIZE (1..127))
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The object specifies the name of the manufactor."
+      ::= { ibPOESupModuleInfoObjs 6 }
+
+ibPOEModuleInfoTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF IbPOEModuleInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "The table of the module information on this POE power."
+      ::= { ibPOESupModuleInfoObjs 7 }
+
+ibPOEModuleInfoEntry OBJECT-TYPE
+      SYNTAX IbPOEModuleInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "The entry of the module information on this POE power."
+      INDEX { ibPOEModuleIndex }
+      ::= { ibPOEModuleInfoTable 1 }
+
+IbPOEModuleInfoEntry ::=
+      SEQUENCE {
+                 ibPOEModuleIndex
+                         Integer32,
+                 ibPOEModuleID
+                         Integer32,
+                 ibPOEModuleInfoPower
+                         Integer32,
+                 ibPOEModuleHardVerInfo
+                         OCTET STRING
+                }
+
+ibPOEModuleIndex OBJECT-TYPE
+      SYNTAX Integer32 (1..2147483647)
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+             "The index of the current module on this POE power.
+             It is also the index of ibPOEModuleInfoTable.
+             The range of this node is from 1 to ibPOEPowerModuleNum."
+      ::= { ibPOEModuleInfoEntry 1 }
+
+ibPOEModuleID OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The ID of the current module on this POE power."
+      ::= { ibPOEModuleInfoEntry 2 }
+
+ibPOEModuleInfoPower OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The power of the current module on this POE power."
+      ::= { ibPOEModuleInfoEntry 3 }
+
+ibPOEModuleHardVerInfo OBJECT-TYPE
+      SYNTAX OCTET STRING (SIZE (1..127))
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The hardware version information of the current module on this POE power."
+      ::= { ibPOEModuleInfoEntry 4 }
+
+ibPOEDCOutStateObjects OBJECT IDENTIFIER ::= { ibPOEPowerObjects 3 }
+
+ibPOEDCOutStateModuleNum OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The module number on this POE power.
+             It is the maximum of the ibPOEDCOutStateIndex."
+      ::= { ibPOEDCOutStateObjects 1 }
+
+ibPOEDCOutStateTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF IbPOEDCOutStateEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "The table of DC output power state on this POE power."
+      ::= { ibPOEDCOutStateObjects 2 }
+
+ibPOEDCOutStateEntry OBJECT-TYPE
+      SYNTAX IbPOEDCOutStateEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "The entry of the DC output power state on this POE power."
+      INDEX { ibPOEDCOutStateIndex }
+      ::= { ibPOEDCOutStateTable 1 }
+
+      IbPOEDCOutStateEntry ::=
+              SEQUENCE {
+                       ibPOEDCOutStateIndex
+                               Integer32,
+                       ibPOEDCOutDCVolAlarm
+                               DCAlarmState
+                    }
+
+ibPOEDCOutStateIndex OBJECT-TYPE
+      SYNTAX Integer32 (1..2147483647)
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+             "The index of the DC output power state on this POE power.
+             The range of this node is from 1 to ibPOEDCOutStateModuleNum."
+      ::= { ibPOEDCOutStateEntry 1 }
+
+ibPOEDCOutDCVolAlarm OBJECT-TYPE
+      SYNTAX DCAlarmState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The DC output alarm of the DC output power state on this POE power.
+             The value of this node will be the following values:
+                                 normal     (1),
+                                 underLimit (2),
+                                 aboveLimit (3),
+                                 fuseBroken (4),
+                                 switchOff  (5),
+                                 otherError (6)."
+      ::= { ibPOEDCOutStateEntry 2 }
+
+ibPOEDCOutInfoObjects OBJECT IDENTIFIER ::= { ibPOEPowerObjects 4 }
+
+ibPOEDCOutCurNum OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The number of DC output current on this POE power.
+             It is the maximum of ibPOEDCOutInfoIndex."
+      ::= { ibPOEDCOutInfoObjects 1 }
+
+ibPOEDCOutInfoTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF IbPOEDCOutInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "The table of the DC output information on this POE power."
+      ::= { ibPOEDCOutInfoObjects 2 }
+
+ibPOEDCOutInfoEntry OBJECT-TYPE
+      SYNTAX IbPOEDCOutInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "The entry of the DC output information on this POE power."
+      INDEX { ibPOEDCOutInfoIndex }
+      ::= { ibPOEDCOutInfoTable 1 }
+
+IbPOEDCOutInfoEntry ::=
+      SEQUENCE {
+                ibPOEDCOutInfoIndex
+                        Integer32,
+                ibPOEDCOutVol
+                        OCTET STRING,
+                ibPOEDCOutInfoLoadCur
+                        OCTET STRING
+              }
+
+ibPOEDCOutInfoIndex OBJECT-TYPE
+      SYNTAX Integer32 (1..2147483647)
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+             "The index of the DC output information on this POE POWER.
+             The range of this node is from 1 to ibPOEDCOutCurNum."
+      ::= { ibPOEDCOutInfoEntry 1 }
+
+ibPOEDCOutVol OBJECT-TYPE
+      SYNTAX OCTET STRING (SIZE (1..10))
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The DC output voltage of the current DC output on this POE power."
+      ::= { ibPOEDCOutInfoEntry 2 }
+
+ibPOEDCOutInfoLoadCur OBJECT-TYPE
+      SYNTAX OCTET STRING (SIZE (1..10))
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The total load current of the current DC output on this POE power."
+      ::= { ibPOEDCOutInfoEntry 3 }
+
+ibPOEACSwitchStateModuleObjs OBJECT IDENTIFIER ::= { ibPOEPowerObjects 5 }
+
+ibPOEACSwitchStateModuleNum OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The number of the AC swtich state module on this POE power.
+             It is the maximum of ibPOEACSwitchStateIndex."
+      ::= { ibPOEACSwitchStateModuleObjs 1 }
+
+ibPOEACSwitchStateTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF IbPOEACSwitchStateEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "The table of the AC switch state on this POE power."
+      ::= { ibPOEACSwitchStateModuleObjs 2 }
+
+ibPOEACSwitchStateEntry OBJECT-TYPE
+      SYNTAX IbPOEACSwitchStateEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "The entry of the AC switch state on this POE power."
+      INDEX { ibPOEACSwitchStateIndex }
+      ::= { ibPOEACSwitchStateTable 1 }
+
+IbPOEACSwitchStateEntry ::=
+      SEQUENCE {
+                ibPOEACSwitchStateIndex
+                        Integer32,
+                ibPOEACSwitchState
+                        SwitchState
+               }
+
+ibPOEACSwitchStateIndex OBJECT-TYPE
+      SYNTAX Integer32 (1..2147483647)
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+             "The index of the AC switch state on this POE power.
+             The range of this node is from 1 to ibPOEACSwitchStateModuleNum."
+      ::= { ibPOEACSwitchStateEntry 1 }
+
+ibPOEACSwitchState OBJECT-TYPE
+      SYNTAX SwitchState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The AC switch state on this POE power.
+             The value of this node will be one of the following values:
+                                 on             (1),
+                                 off            (2),
+                                 highVoltInput  (3),
+                                 lowVoltInput   (4)"
+      ::= { ibPOEACSwitchStateEntry 2 }
+
+ibPOEInCurStateObjects OBJECT IDENTIFIER ::= { ibPOEPowerObjects 6 }
+
+ibPOEInCurStateModuleNum OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The DC input current state of the module on this POE power.
+             It is the maximum of the ibPOESwitchStateVolExIndex."
+      ::= { ibPOEInCurStateObjects 1 }
+
+ibPOEInCurAState OBJECT-TYPE
+      SYNTAX ACAlarmState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The current A state in the DC input on this POE power.
+                                 normal     (1),
+                                 underLimit (2),
+                                 aboveLimit (3),
+                                 lackPhrase (4),
+                                 fuseBroken (5),
+                                 switchOff  (6),
+                                 otherError (7)."
+      ::= { ibPOEInCurStateObjects 2 }
+
+ibPOEInCurBState OBJECT-TYPE
+      SYNTAX ACAlarmState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The current B state in the DC input on this POE power.
+             The value of this node will be one of the following values:
+                                 normal     (1),
+                                 underLimit (2),
+                                 aboveLimit (3),
+                                 lackPhrase (4),
+                                 fuseBroken (5),
+                                 switchOff  (6),
+                                 otherError (7)."
+      ::= { ibPOEInCurStateObjects 3 }
+
+ibPOEInCurCState OBJECT-TYPE
+      SYNTAX ACAlarmState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The current C state in the DC input on this POE power.
+             The value of this node will be one of the following values:
+                                 normal     (1),
+                                 underLimit (2),
+                                 aboveLimit (3),
+                                 lackPhrase (4),
+                                 fuseBroken (5),
+                                 switchOff  (6),
+                                 otherError (7)."
+      ::= { ibPOEInCurStateObjects 4 }
+
+ibPOESwitchStateVolExTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF IbPOESwitchStateVolExEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "All alarm status of the VOL status.
+             The value of this node will be one of the following values:
+                                 normal     (1),
+                                 underLimit (2),
+                                 aboveLimit (3),
+                                 lackPhrase (4),
+                                 fuseBroken (5),
+                                 switchOff  (6),
+                                 otherError (7)."
+      ::= { ibPOEInCurStateObjects 5 }
+
+ibPOESwitchStateVolExEntry OBJECT-TYPE
+      SYNTAX IbPOESwitchStateVolExEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "The ibPOESwitchStateVolExIndex will match the number of the VOL status."
+      INDEX { ibPOESwitchStateVolExIndex }
+      ::= { ibPOESwitchStateVolExTable 1 }
+
+IbPOESwitchStateVolExEntry ::=
+      SEQUENCE {
+               ibPOESwitchStateVolExIndex
+                       Integer32,
+               ibPOESwitchStateInVolAB
+                       ACAlarmState,
+               ibPOESwitchStateInVolBC
+                       ACAlarmState,
+               ibPOESwitchStateInVolCA
+                       ACAlarmState
+               }
+
+ibPOESwitchStateVolExIndex OBJECT-TYPE
+      SYNTAX Integer32 (1..2147483647)
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+             "The object species the index of the VOL status.
+             The range of this node is from 1 to ibPOEInCurStateModuleNum."
+      ::= { ibPOESwitchStateVolExEntry 1 }
+
+ibPOESwitchStateInVolAB OBJECT-TYPE
+      SYNTAX ACAlarmState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The object specifies the VOL AB alarm in each VOL status.
+             The value of this node will be one of the following values:
+                                 normal     (1),
+                                 underLimit (2),
+                                 aboveLimit (3),
+                                 lackPhrase (4),
+                                 fuseBroken (5),
+                                 switchOff  (6),
+                                 otherError (7)."
+      ::= { ibPOESwitchStateVolExEntry 2 }
+
+ibPOESwitchStateInVolBC OBJECT-TYPE
+      SYNTAX ACAlarmState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The object specifies the VOL BC alarm in each VOL status.
+             The value of this node will be one of the following values:
+                                 normal     (1),
+                                 underLimit (2),
+                                 aboveLimit (3),
+                                 lackPhrase (4),
+                                 fuseBroken (5),
+                                 switchOff  (6),
+                                 otherError (7)."
+      ::= { ibPOESwitchStateVolExEntry 3 }
+
+ibPOESwitchStateInVolCA OBJECT-TYPE
+      SYNTAX ACAlarmState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The object specifies the VOL CA alarm in each VOL status.
+             The value of this node will be one of the following values:
+                                 normal     (1),
+                                 underLimit (2),
+                                 aboveLimit (3),
+                                 lackPhrase (4),
+                                 fuseBroken (5),
+                                 switchOff  (6),
+                                 otherError (7)."
+      ::= { ibPOESwitchStateVolExEntry 4 }
+
+ibPOEAlarmStateObjects OBJECT IDENTIFIER ::= { ibPOEPowerObjects 7 }
+
+ibPOEAlarmStateModuleNum OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The object specifies the number of the power modules in alarm state."
+      ::= { ibPOEAlarmStateObjects 1 }
+
+ibPOEAlarmStateInfoTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF IbPOEAlarmStateInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "All alarm states in the POE power modules."
+      ::= { ibPOEAlarmStateObjects 2 }
+
+ibPOEAlarmStateInfoEntry OBJECT-TYPE
+      SYNTAX IbPOEAlarmStateInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+             "The ibPOEAlarmModuleInfoIndex will match the number
+             of the power module."
+INDEX { ibPOEAlarmModuleInfoIndex }
+      ::= { ibPOEAlarmStateInfoTable 1 }
+
+IbPOEAlarmStateInfoEntry ::=
+      SEQUENCE {
+               ibPOEAlarmModuleInfoIndex
+                       Integer32,
+               ibPOEModuleDisconnect
+                       ModuleAlarmState,
+               ibPOEModuleInputError
+                       ModuleAlarmState,
+               ibPOEModuleOutputError
+                       ModuleAlarmState,
+               ibPOEModuleOverVoltage
+                       ModuleAlarmState,
+               ibPOEModuleOverTemp
+                       ModuleAlarmState,
+               ibPOEModuleFanError
+                       ModuleAlarmState,
+               ibPOEModuleShutdown
+                       ModuleAlarmState,
+               ibPOEModuleCurRestricted
+                       ModuleAlarmState
+               }
+
+ibPOEAlarmModuleInfoIndex OBJECT-TYPE
+      SYNTAX Integer32 (1..2147483647)
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+             "The index specifies the index of the IbPOEAlarmStateInfoEntry table.
+             The range of this node is from 1 to ibPOEAlarmStateModuleNum."
+      ::= { ibPOEAlarmStateInfoEntry 1 }
+
+ibPOEModuleDisconnect OBJECT-TYPE
+      SYNTAX ModuleAlarmState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The node specifies the alarm state:
+             The module does not link.
+             The value of this node is one of the following values:
+                              normal (1),
+                              alarm  (2)."
+      ::= { ibPOEAlarmStateInfoEntry 2 }
+
+ibPOEModuleInputError OBJECT-TYPE
+      SYNTAX ModuleAlarmState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The node specifies the alarm state:
+                                 Input error.
+             The value of this node is one of the following values:
+                                 normal (1),
+                                 alarm  (2)."
+      ::= { ibPOEAlarmStateInfoEntry 3 }
+
+ibPOEModuleOutputError OBJECT-TYPE
+      SYNTAX ModuleAlarmState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The node specifies the alarm state:
+                                 Output error.
+             The value of this node is one of the following values:
+                                 normal (1),
+                                 alarm  (2)."
+      ::= { ibPOEAlarmStateInfoEntry 4 }
+
+ibPOEModuleOverVoltage OBJECT-TYPE
+      SYNTAX ModuleAlarmState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The node specifies the alarm state:
+                                 The voltage is too high.
+             The value of this node is one of the following values:
+                                 normal (1),
+                                 alarm  (2)."
+      ::= { ibPOEAlarmStateInfoEntry 5 }
+
+ibPOEModuleOverTemp OBJECT-TYPE
+      SYNTAX ModuleAlarmState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The node specifies the alarm state:
+                                 The temperature is too high.
+             The value of this node is one of the following values:
+                                 normal (1),
+                                 alarm  (2)."
+      ::= { ibPOEAlarmStateInfoEntry 6 }
+
+ibPOEModuleFanError OBJECT-TYPE
+      SYNTAX ModuleAlarmState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The node specifies the alarm state:
+                                 The fan error.
+             The value of this node is one of the following values:
+                                 normal (1),
+                                 alarm  (2)."
+      ::= { ibPOEAlarmStateInfoEntry 7 }
+
+ibPOEModuleShutdown OBJECT-TYPE
+      SYNTAX ModuleAlarmState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The node specifies the alarm state:
+                                 The module is shutdown.
+             The value of this node is one of the following values:
+                                 normal (1),
+                                 alarm  (2)."
+      ::= { ibPOEAlarmStateInfoEntry 8 }
+
+ibPOEModuleCurRestricted OBJECT-TYPE
+      SYNTAX ModuleAlarmState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+             "The node specifies the alarm state:
+                                 The module limit the current.
+             The value of this node is one of the following values:
+                                 normal (1),
+                                 alarm  (2)."
+      ::= { ibPOEAlarmStateInfoEntry 9 }
+
+IbPDDisableState ::= TEXTUAL-CONVENTION
+      STATUS current
+      DESCRIPTION
+           "PD disabled State."
+      SYNTAX INTEGER{
+             unknown(0),
+             overInrush(1),
+             lessMPSCurrent(2),
+             peakPower(3),
+             overVoltage(4),
+             underVoltage(5),
+             overTemperature(6),
+             shortCircuit(7)
+                   }
+
+ibPseNotification  OBJECT IDENTIFIER ::= { ibPowerEthernetExt 11 }
+ibPseNotificationPrefix OBJECT IDENTIFIER ::= { ibPseNotification 0 }
+
+    ibPsePDDisableNotification NOTIFICATION-TYPE
+      OBJECTS{ ibPsePortGroupIndex, ibPsePortIndex, ibPsePortDisableInfo }
+      STATUS current
+      DESCRIPTION
+            "The PD has been powered off."
+      ::= { ibPseNotificationPrefix 1 }
+
+ibPseNotificationObjects OBJECT IDENTIFIER ::= { ibPseNotification 1 }
+
+       ibPsePortGroupIndex OBJECT-TYPE
+       SYNTAX      Integer32 (1..2147483647)
+       MAX-ACCESS  accessible-for-notify
+       STATUS      current
+       DESCRIPTION
+           "This variable uniquely identifies the group
+            containing the port to which a power Ethernet PSE is
+            connected."
+       ::= { ibPseNotificationObjects 1 }
+
+     ibPsePortIndex OBJECT-TYPE
+       SYNTAX      Integer32 (1..2147483647)
+       MAX-ACCESS  accessible-for-notify
+       STATUS      current
+       DESCRIPTION
+           "This variable uniquely identifies the power Ethernet PSE
+            port within group pethPsePortGroupIndex to which the
+            power Ethernet PSE entry is connected."
+       ::= { ibPseNotificationObjects 2 }
+
+     ibPsePortDisableInfo OBJECT-TYPE
+      SYNTAX IbPDDisableState
+          MAX-ACCESS  accessible-for-notify
+          STATUS      current
+          DESCRIPTION
+              "
+              Reason that caused PSE port power failure.
+              The calue of this node is one of the following values:
+              unknown(0),
+              overInrush(1),
+              lessMPSCurrent(2),
+              peakPower(3),
+              overVoltage(4),
+              underVoltage(5),
+              overTemperature(6),
+              shortCircuit(7).
+              "
+          ::= { ibPseNotificationObjects 3 }
+
+ibPseportNotification2 OBJECT IDENTIFIER ::= { ibPowerEthernetExt 14 }
+ibPseportNotification2Prefix OBJECT IDENTIFIER ::= { ibPseportNotification2 0 }
+
+    ibPOEInputChangeNotification NOTIFICATION-TYPE
+      OBJECTS
+          { ibPOEPortName, ibPOEInputPortState }
+      STATUS current
+      DESCRIPTION
+          "Change of the power input status of the power interface."
+      ::= { ibPseportNotification2Prefix 1 }
+
+END
+

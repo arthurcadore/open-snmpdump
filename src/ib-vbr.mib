@@ -1,0 +1,410 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Virtual Bridge (VBR) information MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 2018-07-11 Initial version by Xuzhihui
+-- ============================================================================
+IB-VBR-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI
+        DisplayString, RowStatus, TruthValue
+    FROM SNMPv2-TC;
+-- ==================================================================
+--
+-- Module identity part
+--
+-- ==================================================================
+ibVbr MODULE-IDENTITY
+    LAST-UPDATED "201807111129Z"        -- 11th July, 2018 at 11:29 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB is used to manage port extenders (PEXs) over 802.1BR.
+         This MIB is applicable to products that support PEXs."
+    REVISION
+        "201807111129Z"
+    DESCRIPTION
+        "Initial version of this MIB module."
+    ::= { ibCommon 180 }
+
+--VBR specification information
+ibVbrSpecInfo OBJECT IDENTIFIER ::= { ibVbr 1 }
+
+ibVbrGroupMinId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Lowest PEX group ID that can be used to allocate ECIDs for ports
+        on a PEX."
+    ::= { ibVbrSpecInfo 1 }
+
+ibVbrGroupMaxId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Highest PEX group ID that can be used to allocate ECID for ports
+        on a PEX."
+    ::= { ibVbrSpecInfo 2 }
+
+ibVbrMinAssociateId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Lowest ID that can be assigned to a PEX."
+    ::= { ibVbrSpecInfo 3 }
+
+ibVbrMaxAssociateId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Highest ID that can be assigned to a PEX."
+    ::= { ibVbrSpecInfo 4 }
+
+--End VBR specification information
+
+
+ibVbrTable OBJECT IDENTIFIER ::= { ibVbr 2 }
+
+--VBR group table
+ibVbrGroupTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVbrGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects used to configure PEX groups."
+    ::= { ibVbrTable 1 }
+
+ibVbrGroupEntry OBJECT-TYPE
+    SYNTAX      IbVbrGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a PEX group."
+    INDEX
+        {
+            ibVbrGroupId
+        }
+    ::= { ibVbrGroupTable 1 }
+
+IbVbrGroupEntry ::= SEQUENCE
+    {
+        ibVbrGroupId               Integer32,
+        ibVbrGroupDescr            DisplayString,
+        ibVbrGroupRowStatus        RowStatus
+    }
+
+ibVbrGroupId OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483647)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "ID that can be used to uniquely identify a PEX group.  The value range
+        is ibVbrGroupMinId to ibVbrGroupMaxId."
+    ::= { ibVbrGroupEntry 1 }
+
+ibVbrGroupDescr OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..79))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Description for the PEX group.  The default value is
+        'pex-group XXXX', where 'XXXX' is ibVbrGroupId.
+        Writing a zero-length string to this object resets the value to the
+        default."
+    ::= { ibVbrGroupEntry 2 }
+
+ibVbrGroupRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The control that allows creation and deletion of entries.
+        Values include createAndGo, active, and destroy.
+        If the row to be created or modified already exists,
+        an error message is returned.  If the row to be deleted does not exist,
+        a success message is returned."
+    ::= { ibVbrGroupEntry 3 }
+--End VBR group table
+
+--VBR cascade-port table
+ibVbrCasPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVbrCasPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects used to configure PEX cascade ports."
+    ::= { ibVbrTable 2 }
+
+ibVbrCasPortEntry OBJECT-TYPE
+    SYNTAX      IbVbrCasPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Information about a PEX cascade port."
+    INDEX
+        {
+            ibVbrCasPortIndex
+        }
+    ::= { ibVbrCasPortTable 1 }
+
+IbVbrCasPortEntry ::= SEQUENCE
+    {
+        ibVbrCasPortIndex         Integer32,
+        ibVbrCasPortAssociateId   Integer32,
+        ibVbrCasPortGroupID       Integer32,
+        ibVbrPEXStatus            INTEGER,
+        ibVbrPEXTier              Integer32,
+        ibVbrPEXDeviceMac         DisplayString,
+        ibVbrPEXSysname           DisplayString,
+        ibVbrPEXBoardType         DisplayString,
+        ibVbrPEXParent            Integer32,
+        ibVbrCasPortRowStatus     RowStatus
+    }
+
+ibVbrCasPortIndex OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Interface index of the cascade port for a PEX."
+    ::= { ibVbrCasPortEntry 1 }
+
+ibVbrCasPortAssociateId OBJECT-TYPE
+    SYNTAX      Integer32(1..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "ID assigned to the PEX that is attached to the cascade port.
+        The value range is ibVbrMinAssociateId to ibVbrMaxAssociateId.
+        The value is 0xffff if the PEX is not assigned an ID.
+        For a successful configuration, the ID must be unique among all PEXs in
+        the IRF 3.1 system."
+    DEFVAL { 65535 }
+    ::= { ibVbrCasPortEntry 2 }
+
+ibVbrCasPortGroupID OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483647)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "PEX group ID assigned to the PEX that is attached to the cascade port.
+         The value range is ibVbrGroupMinId to ibVbrGroupMaxId."
+    DEFVAL { 65535 }
+    ::= { ibVbrCasPortEntry 3 }
+
+ibVbrPEXStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            offline(1),
+            online(2)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Status of the PEX.
+        If the value is offline, the PEX is absent or its configuration
+        is incomplete.
+        If the value is online, the PEX is operating correctly."
+    DEFVAL { offline }
+    ::= { ibVbrCasPortEntry 4 }
+
+ibVbrPEXTier OBJECT-TYPE
+    SYNTAX      Integer32(1..65535)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Tier of the PEX.
+        The value is 0xffff if the upper-tier device of the PEX
+        is not online."
+    ::= { ibVbrCasPortEntry 5 }
+
+ibVbrPEXDeviceMac OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE(1..15))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device MAC address of the PEX."
+    ::= { ibVbrCasPortEntry 6 }
+
+ibVbrPEXSysname OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE(1..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device name of the PEX."
+    ::= { ibVbrCasPortEntry 7 }
+
+ibVbrPEXBoardType OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE(1..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device board type of the PEX."
+    ::= { ibVbrCasPortEntry 8 }
+
+ibVbrPEXParent OBJECT-TYPE
+    SYNTAX      Integer32(1..65535)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Upper-tier device of the PEX.
+        The value is 0xffff if the upper-tier device of the PEX
+        is the parent fabric(CB).
+        In other situations, the value equals to the associated ID
+        of the upper-tier PEX."
+    DEFVAL { 65535 }
+    ::= { ibVbrCasPortEntry 9 }
+
+ibVbrCasPortRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The control that allows creation and deletion of entries.
+        Values include createAndGo, active, and destroy.
+        If the row to be created or modified already exists,
+        an error message is returned.  If the row to be deleted does not exist,
+        a success message is returned."
+    ::= { ibVbrCasPortEntry 10 }
+--End VBR cascade-port table
+
+--VBR upgrade table
+ibVbrUpgradeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVbrUpgradeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects used to upgrade PEX software
+        images or patches."
+    ::= { ibVbrTable 3 }
+
+ibVbrUpgradeEntry OBJECT-TYPE
+    SYNTAX      IbVbrUpgradeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Upgrade software for PEXs, including upgrading PEX software
+        images by using an IPE file and installing or uninstalling PEX patches
+        by using a patch file.
+        Each time only one of the upgrading operations can be performed.
+        The IPE file or the patch file must be saved in the
+        flash:/pex_images directory on the parent fabric."
+    INDEX
+        {
+            ibVbrUpgradeAssociateId
+        }
+    ::= { ibVbrUpgradeTable 1 }
+
+IbVbrUpgradeEntry ::= SEQUENCE
+    {
+        ibVbrUpgradeAssociateId   Integer32,
+        ibVbrUpgradeIPEFile       DisplayString,
+        ibVbrUpgradePatchFile     DisplayString,
+        ibVbrUpgradePatchAction   INTEGER,
+        ibVbrUpgradeStatus        INTEGER,
+        ibVbrInitUpgradeStatus    TruthValue
+    }
+
+ibVbrUpgradeAssociateId OBJECT-TYPE
+    SYNTAX      Integer32(1..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "ID assigned to a PEX.
+        The value range is ibVbrMinAssociateId to ibVbrMaxAssociateId.
+        If the value is 0xffff,this object will upgrade software for all PEXs."
+    ::= { ibVbrUpgradeEntry 1 }
+
+ibVbrUpgradeIPEFile OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..127))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The IPE file used to upgrade PEX software images.
+        The file must be saved in the flash:/pex_images directory on
+        the parent fabric."
+    ::= { ibVbrUpgradeEntry 2 }
+
+ibVbrUpgradePatchFile OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..127))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The patch file used to install or uninstall PEX patches.
+        The file must be saved in the flash:/pex_images directory on
+        the parent fabric."
+    ::= { ibVbrUpgradeEntry 3 }
+
+ibVbrUpgradePatchAction OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            active(1),
+            inactive(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action on patches in the patch file.
+        The value active means to install the patches.
+        The value deactive means to uninstall the patches."
+    ::= { ibVbrUpgradeEntry 4 }
+
+ibVbrUpgradeStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            initial(1),
+            downloading(2),
+            upgrading(3),
+            succeeded(4),
+            failed(5)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Result of the upgrading operation."
+    ::= { ibVbrUpgradeEntry 5 }
+
+ibVbrInitUpgradeStatus OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "If you want to initialize the upgrade status, set the value of
+        this object to enable."
+    DEFVAL { false }
+    ::= { ibVbrUpgradeEntry 6 }
+
+--End VBR upgrade table
+
+-- PEX traps
+
+ibVbrTraps OBJECT IDENTIFIER ::= { ibVbr 3 }
+
+ibVbrTrapPrefix OBJECT IDENTIFIER ::= { ibVbrTraps 0 }
+
+ibVbrPEXRemoveOrInsert  NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibVbrCasPortIndex,
+            ibVbrCasPortAssociateId,
+            ibVbrPEXStatus
+        }
+    STATUS      current
+    DESCRIPTION
+        "An ibVbrPEXRemoveOrInsert notification is sent when a PEX
+        is removed or inserted."
+    ::= { ibVbrTrapPrefix 1 }
+
+END

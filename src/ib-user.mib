@@ -1,0 +1,920 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:
+-- Reference:
+-- Version: V3.0
+-- History:
+--  V1.0 Initial version 2004-07-13
+--  V1.1 2004-10-12 Updated by gaolong
+--       Removed hyphens from DisplayString definition.
+--  V2.0 2004-12-28 Updated by huguohua02576
+--       Added ibUserState, ibUserInfoRowStatus, and ibUserIndex to ibUserInfoTable.
+--       Changed the index of ibUserInfoTable from ibUserName to ibUserIndex.
+--       Modified the max access to ibUserName, ibUserPassword, ibAuthMode, and ibUserLevel
+--       from read-only to read-create.
+--       Added ibUserAttributeTable, ibUserMaxNum, ibUserCurrNum, and ibUserIndexIndicator.
+--  V2.1 2006-02-07 Updated by sunludong03130
+--       Modified the descriptions of ibFtpService, ibLanAccessService, ibSshService,
+--       ibTelnetService, ibTerminalService, and ibFtpDirectory.
+--  V2.2 2006-12-26 Updated by zhangzhancheng02444
+--       Modified ibAccessLimit, ibFtpDirectory, ibSlotNum, ibSubSlotNum,
+--       and ibPortNum.
+--  V2.3 2008-03-13 Updated by w02260
+--       Added ibExpirationDate and ibUserGroup to ibUserAttributeTable,
+--       and added ibUserGroupObjects.
+--  V2.4 2008-12-29 Updated by liubo04367
+--       Added ibPortalService to ibUserAttributeTable.
+--  V2.5 2012-02-28 Updated by y02965
+--       Added ibUserRoleTable.
+--       Added ibPPPService, ibHttpService, and ibHttpsService to ibUserAttributeTable.
+--  V2.6 2012-05-28 Updated by y06401
+--       Modified the description of ibAuthMode.
+--       2012-10-11 Updated by l04367
+--       Added ibUserIfIndex.
+--       Modified ibUserRole.
+--  V2.7 2013-04-25 Updated by q04356
+--       Modified the description of ibIdleCut.
+--  V2.8 2016-11-19 Updated by y06401
+--       Modified the description of ibUserGroup.
+--       Modified the SYNTAX of ibUserGroupName.
+--  V2.9 2021-12-13 Updated by z11983
+--       Added ibUserTrap, ibUserBlacklistTrap, ibUserBlacklistNotifications,
+--       ibUserBlacklistVarObjects, ibUserBlacklistLock, ibUserBlacklistUnlock,
+--       ibUserIPAddressType, and ibUserIPAddress.
+--  V3.0 2022-6-13 Updated by liubo
+--       Added ibUserTrapPrefix, ibUserTrapNotifications, ibUserTrapVarObjects,
+--       ibUserManagePasswordChanged, ibUserNetworkPasswordChanged, and ibUserOperatorType.
+--       2022-07-08 Updated by z11983
+--       Added ibUserGroupTrap, ibUserGroupNotifications, ibUserGroupVarObjects,
+--       ibUserGroupThresholdAlarm, ibUserGroupThresholdResume,
+--       ibUserGroupUsedNum and ibUserGroupNumThreshold.
+-- =================================================================
+IB-USER-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    RowStatus, MacAddress, TEXTUAL-CONVENTION, DateAndTime, DisplayString
+        FROM SNMPv2-TC
+    IpAddress, Integer32, Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB;
+
+ibUser MODULE-IDENTITY
+    LAST-UPDATED "202207080000Z"            -- July 08 2022 at 00:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "
+        This MIB contains objects to
+        Manage configuration and Monitor running state
+        for userlog feature.
+        "
+    REVISION "202207080000Z"        -- July 08 2022 at 00:00 GMT
+    DESCRIPTION
+        "Added ibUserGroupTrap, ibUserGroupNotifications, ibUserGroupVarObjects,
+        ibUserGroupThresholdAlarm, ibUserGroupThresholdResume,
+        ibUserGroupUsedNum and ibUserGroupNumThreshold."
+    REVISION "202206130000Z"        -- June 13 2022 at 00:00 GMT
+    DESCRIPTION
+        "Added ibUserTrapPrefix, ibUserTrapNotifications, ibUserTrapVarObjects,
+         ibUserManagePasswordChanged, ibUserNetworkPasswordChanged, and ibUserOperatorType."
+    REVISION "202112130000Z"        -- December 13 2021 at 00:00 GMT
+    DESCRIPTION
+        "Added ibUserTrap, ibUserBlacklistTrap, ibUserBlacklistNotifications,
+        ibUserBlacklistVarObjects, ibUserBlacklistLock, ibUserBlacklistUnlock,
+        ibUserIPAddressType, and ibUserIPAddress."
+    REVISION "201611190000Z"        -- November 19, 2016 at 00:00 GMT
+    DESCRIPTION
+        "Modified description of ibUserGroup.
+        Modified SYNTAX of ibUserGroupName"
+    ::= { ibCommon 12 }
+
+
+--
+-- type definitions
+--
+
+-- ServiceType
+ServiceType ::=  TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "enable (1)
+        disable (2)
+        "
+    SYNTAX      INTEGER
+        {
+            enable(1),
+            disable(2)
+        }
+--
+-- end of type definitions
+--
+
+-- ibUserObjects===============================================================
+ibUserObjects OBJECT IDENTIFIER ::= { ibUser 1 }
+
+
+-- ibUserInfoTable=============================================================
+ibUserInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbUserInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "
+        Local User Info Table
+        "
+    ::= { ibUserObjects 1 }
+
+ibUserInfoEntry OBJECT-TYPE
+    SYNTAX      IbUserInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "
+        The entry of ibUserInfoTable
+        "
+    INDEX
+        {
+            ibUserIndex
+        }
+    ::= { ibUserInfoTable 1 }
+
+IbUserInfoEntry ::= SEQUENCE
+    {
+        ibUserName             DisplayString,
+        ibUserPassword         DisplayString,
+        ibAuthMode             Integer32,
+        ibUserLevel            Integer32,
+        ibUserState            INTEGER,
+        ibUserInfoRowStatus    RowStatus,
+        ibUserIndex            Integer32
+    }
+
+
+ibUserName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..255))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "
+        The name of local user, it must be unique.
+        "
+    ::= { ibUserInfoEntry 1 }
+
+ibUserPassword OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..255))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "
+        The password of local user, default is null.
+        When read, ibUserPassword always returns an Octet String of length zero.
+        "
+    ::= { ibUserInfoEntry 2 }
+
+ibAuthMode OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "
+        The encrypting type of password:
+        0 : password simple, means password is entered in clean text and saved in cipher text.
+        1 : password hash simple, means password is entered in clean text and saved in hash value.
+        7 : password cipher, means password is entered and saved in cipher text.
+        8 : password hash cipher, means password is entered and saved in hash value.
+        default is 0.
+        "
+    ::= { ibUserInfoEntry 3 }
+
+ibUserLevel OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "
+        The privilege of local user
+        the value range is from 0 to 3, and 0 is minimum, 3 is maximum.
+        default is 0.
+        "
+    ::= { ibUserInfoEntry 4 }
+
+ibUserState OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            active(0),
+            block(1)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "
+        The state of local user
+        0: active, means local user can execute any operations that he has
+           privilege to do.
+        1: block, means local user can not execute any operations.
+        default is active.
+        "
+    ::= { ibUserInfoEntry 5 }
+
+ibUserInfoRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "
+        The status of this conceptual row.  Now only support CreateAndGo and
+        Destroy and Active.
+        "
+    ::= { ibUserInfoEntry 6 }
+
+
+ibUserIndex OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483646)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "
+        The index of local user
+        "
+    ::= { ibUserInfoEntry 7 }
+
+-- ibUserAttributeTable========================================================
+ibUserAttributeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbUserAttributeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "
+        Local User Attribute Table.
+        if there are data in ibUserInfoTable, this table should have the
+        relevant data.
+        this table only support query and modify, but not support create and
+        delete operations.
+        "
+    ::= { ibUserObjects 2 }
+
+ibUserAttributeEntry OBJECT-TYPE
+    SYNTAX      IbUserAttributeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The entry of ibUserAttributeTable "
+    INDEX
+        {
+            ibUserIndex
+        }
+    ::= { ibUserAttributeTable 1 }
+
+IbUserAttributeEntry ::= SEQUENCE
+    {
+        ibAccessLimit         Integer32,
+        ibIdleCut             Integer32,
+        ibIPAddress           IpAddress,
+        ibNasIPAddress        IpAddress,
+        ibSlotNum             Integer32,
+        ibSubSlotNum          Integer32,
+        ibPortNum             Integer32,
+        ibMacAddress          MacAddress,
+        ibVlan                Integer32,
+        ibFtpService          ServiceType,
+        ibFtpDirectory        OCTET STRING,
+        ibLanAccessService    ServiceType,
+        ibSshService          ServiceType,
+        ibTelnetService       ServiceType,
+        ibTerminalService     ServiceType,
+        ibExpirationDate      DateAndTime,
+        ibUserGroup           DisplayString,
+        ibPortalService       ServiceType,
+        ibPPPService          ServiceType,
+        ibHttpService         ServiceType,
+        ibHttpsService        ServiceType,
+        ibUserIfIndex         Integer32
+    }
+
+
+ibAccessLimit OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        The maximum user number of current user who can access devices.
+        default is 0, means no limit.
+        "
+    ::= { ibUserAttributeEntry 1 }
+
+ibIdleCut OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Valid idle time out(second),
+        default is 0, means disable idle time out.
+        "
+    ::= { ibUserAttributeEntry 2 }
+
+ibIPAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Set local user's ip address.
+        default is 0.0.0.0
+        "
+    ::= { ibUserAttributeEntry 3 }
+
+ibNasIPAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Set local user's ip address of network access server.
+        default is 127.0.0.1, means local machine.
+        "
+    ::= { ibUserAttributeEntry 4 }
+
+ibSlotNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Set local user's slot.
+        default is 0.
+        "
+    ::= { ibUserAttributeEntry 5 }
+
+ibSubSlotNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Set local user's sub-slot.
+        default is 0.
+        "
+    ::= { ibUserAttributeEntry 6 }
+
+ibPortNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Set local user's port number.
+        0 is an insignificant value for initial status.
+        "
+    ::= { ibUserAttributeEntry 7 }
+
+ibMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Set local user's mac address.
+        default is 0-0-0, means the local user do not bind any mac address.
+        "
+    ::= { ibUserAttributeEntry 8 }
+
+ibVlan OBJECT-TYPE
+    SYNTAX      Integer32(0..4094)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Set local user's vlan id.
+        the value range is from 0 to 4094.
+        default is 0, means the local user is not in any vlan.
+        "
+    ::= { ibUserAttributeEntry 9 }
+
+ibFtpService OBJECT-TYPE
+    SYNTAX      ServiceType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        FTP service:
+        enable
+        Setting this object to the value enable has the
+        effect of enabling the FTP service for the corresponding entry in the
+        ibUserAttributeTable.
+
+        disable
+        Setting this object to the value disable has the
+        effect of disabling the FTP service for the corresponding entry in the
+        ibUserAttributeTable.
+
+        The default value is disable.
+        "
+    ::= { ibUserAttributeEntry 10 }
+
+ibFtpDirectory OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Directory of FTP user.
+        default is null, means if local user has the privilege of ftp service.
+        "
+    ::= { ibUserAttributeEntry 11 }
+
+ibLanAccessService OBJECT-TYPE
+    SYNTAX      ServiceType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Lan Access service:
+        enable
+        Setting this object to the value enable has the
+        effect of enabling the lan access service for the corresponding entry
+        in the ibUserAttributeTable.
+
+        disable
+        Setting this object to the value disable has the
+        effect of disabling the lan access service for the corresponding entry
+        in the ibUserAttributeTable.
+
+        The default value is disable.
+        "
+    ::= { ibUserAttributeEntry 12 }
+
+ibSshService OBJECT-TYPE
+    SYNTAX      ServiceType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        SSH service:
+        enable
+        Setting this object to the value enable has the
+        effect of enabling the SSH service for the corresponding entry in the
+        ibUserAttributeTable.
+
+        disable
+        Setting this object to the value disable has the
+        effect of disabling the SSH service for the corresponding entry in the
+        ibUserAttributeTable.
+
+        The default value is disable.
+        "
+    ::= { ibUserAttributeEntry 13 }
+
+ibTelnetService OBJECT-TYPE
+    SYNTAX      ServiceType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Telnet service:
+        enable
+        Setting this object to the value enable has the
+        effect of enabling the TELNET service for the corresponding entry in the
+        ibUserAttributeTable.
+
+        disable
+        Setting this object to the value disable has the
+        effect of disabling the TELNET service for the corresponding entry in the
+        ibUserAttributeTable.
+
+        The default value is disable.
+        "
+    ::= { ibUserAttributeEntry 14 }
+
+ibTerminalService OBJECT-TYPE
+    SYNTAX      ServiceType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Terminal service:
+        enable
+        Setting this object to the value enable has the
+        effect of enabling the terminal service for the corresponding entry
+        in the ibUserAttributeTable.
+
+        disable
+        Setting this object to the value disable has the
+        effect of disabling the terminal service for the corresponding entry
+        in the ibUserAttributeTable.
+
+        The default value is disable.
+        "
+    ::= { ibUserAttributeEntry 15 }
+
+ibExpirationDate OBJECT-TYPE
+    SYNTAX      DateAndTime(SIZE(8))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Expired date of user.
+        The default value is 0-0-0,0:0:0.0, and means it doesn't expire for
+        ever.
+        "
+    ::= { ibUserAttributeEntry 16 }
+
+ibUserGroup      OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..255))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        The user group that user belongs to.
+        Any user must belong to a user group.
+        The default group is the 'system' group.
+        "
+    ::= { ibUserAttributeEntry 17 }
+
+ibPortalService OBJECT-TYPE
+    SYNTAX      ServiceType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Portal service:
+        enable
+        Setting this object to the value enable has the
+        effect of enabling the portal service for the corresponding entry
+        in the ibUserAttributeTable.
+
+        disable
+        Setting this object to the value disable has the
+        effect of disabling the portal service for the corresponding entry
+        in the ibUserAttributeTable.
+
+        The default value is disable.
+        "
+    ::= { ibUserAttributeEntry 18 }
+
+ibPPPService OBJECT-TYPE
+    SYNTAX      ServiceType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        PPP service:
+        enable
+        Setting this object to the value enable has the
+        effect of enabling the PPP service for the corresponding entry
+        in the ibUserAttributeTable.
+
+        disable
+        Setting this object to the value disable has the
+        effect of disabling the PPP service for the corresponding entry
+        in the ibUserAttributeTable.
+
+        The default value is disable.
+        "
+    ::= { ibUserAttributeEntry 19 }
+
+ibHttpService OBJECT-TYPE
+    SYNTAX      ServiceType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Http service:
+        enable
+        Setting this object to the value enable has the
+        effect of enabling the Web service for the corresponding entry
+        in the ibUserAttributeTable.
+
+        disable
+        Setting this object to the value disable has the
+        effect of disabling the Web service for the corresponding entry
+        in the ibUserAttributeTable.
+
+        The default value is disable.
+        "
+    ::= { ibUserAttributeEntry 20 }
+
+ibHttpsService OBJECT-TYPE
+    SYNTAX      ServiceType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Https service:
+        enable
+        Setting this object to the value enable has the
+        effect of enabling the Web service for the corresponding entry
+        in the ibUserAttributeTable.
+
+        disable
+        Setting this object to the value disable has the
+        effect of disabling the Web service for the corresponding entry
+        in the ibUserAttributeTable.
+
+        The default value is disable.
+        "
+    ::= { ibUserAttributeEntry 21 }
+
+ibUserIfIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "
+        Set local user's interface index.  A value of 0 means that the interface
+        index has not been assigned or the interface assigned not exist.
+        The default value is 0.
+        "
+    ::= { ibUserAttributeEntry 22 }
+
+-- ibUserMaxNum================================================================
+ibUserMaxNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "
+        This object contains the maximum number of local users.
+        "
+    ::= { ibUserObjects 3 }
+
+-- ibUserCurrNum===============================================================
+ibUserCurrNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "
+        This object contains the current number of local users.
+        "
+    ::= { ibUserObjects 4 }
+
+-- ibUserIndexIndicator========================================================
+ibUserIndexIndicator OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "
+        This object contains an appropriate value to
+        be used for ibUserIndex when creating entries in the
+        ibUserInfoTable.  The value 0 indicates that no unassigned
+        entries are available.  To obtain the
+        ibUserIndex value for a new
+        entry, the manager issues a management
+        protocol retrieval operation to obtain the
+        current value of this object.  After each
+        retrieval, the agent should modify the value
+        to the next unassigned index.
+        After a manager retrieves a value the agent will
+        determine through its local policy when this index
+        value will be made available for reuse.
+        "
+    ::= { ibUserObjects 5 }
+
+
+-- ibUserRoleTable========================================================
+ibUserRoleTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbUserRoleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "
+        Local User Role Table.
+        If there is data in ibUserInfoTable, this table should has the
+        relevant data.
+        "
+    ::= { ibUserObjects 6 }
+
+ibUserRoleEntry OBJECT-TYPE
+    SYNTAX      IbUserRoleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The entry of ibUserRoleTable."
+    INDEX
+        {
+            ibUserIndex,
+            ibUserRole
+        }
+    ::= { ibUserRoleTable 1 }
+
+IbUserRoleEntry ::= SEQUENCE
+    {
+        ibUserRole           DisplayString,
+        ibUserRoleStatus     RowStatus
+    }
+
+ibUserRole      OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..63))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "
+        The user's role determines the user's privilege.
+        The user must be authorized one role at least.
+        The default user role for a local user created by a network-admin user
+        is network-operator, and the default user role for a local user created
+        by an mdc-admin or level-15 user is mdc-operator.
+        "
+    ::= { ibUserRoleEntry 1 }
+
+ibUserRoleStatus   OBJECT-TYPE
+    SYNTAX   RowStatus
+    MAX-ACCESS  read-create
+    STATUS   current
+    DESCRIPTION
+        "
+        This object is responsible for managing the creation, deletion and
+        modification of rows, which support active status and CreateAndGo,
+        Destroy operation.  To create a new row, ibUserIndex must be specified.
+        The number of rows with same ibUserIndex cann't be more than 64.
+        If the the number of rows with a ibUserIndex is 1, this row cann't be
+        destroyed.
+        "
+    ::= { ibUserRoleEntry 2 }
+
+
+-- ibUserGroupObjects==========================================================
+ibUserGroupObjects OBJECT IDENTIFIER ::= { ibUser 2 }
+
+
+-- ibUserGroupInfoTable========================================================
+ibUserGroupInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbUserGroupInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "
+        User group information table.
+        "
+    ::= { ibUserGroupObjects 1 }
+
+ibUserGroupInfoEntry OBJECT-TYPE
+    SYNTAX      IbUserGroupInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "
+        The entry of ibUserGroupInfoTable.
+        "
+    INDEX
+        {
+            ibUserGroupName
+        }
+    ::= { ibUserGroupInfoTable 1 }
+
+IbUserGroupInfoEntry ::= SEQUENCE
+    {
+        ibUserGroupName             DisplayString,
+        ibUserGroupInfoRowStatus    RowStatus
+    }
+
+ibUserGroupName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..255))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "
+        The index of user group.
+        "
+    ::= { ibUserGroupInfoEntry 1 }
+
+ibUserGroupInfoRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "
+        The status of this conceptual row.  Only support createAndGo, destroy
+        and active.
+        "
+    ::= { ibUserGroupInfoEntry 2 }
+
+-- ibUserTrap==================================================================
+ibUserTrap OBJECT IDENTIFIER ::= { ibUser 3 }
+
+-- ibUserBlacklistTrap=========================================================
+ibUserBlacklistTrap OBJECT IDENTIFIER ::= { ibUserTrap 1 }
+
+-- ibUserBlacklistNotifications================================================
+ibUserBlacklistNotifications OBJECT IDENTIFIER ::= { ibUserBlacklistTrap 0 }
+
+ibUserBlacklistLock NOTIFICATION-TYPE
+    OBJECTS     { ibUserName,
+                  ibUserIPAddressType,
+                  ibUserIPAddress}
+    STATUS      current
+    DESCRIPTION
+    "A user was added to the password control blacklist."
+    ::= { ibUserBlacklistNotifications 1 }
+
+ibUserBlacklistUnlock NOTIFICATION-TYPE
+    OBJECTS     { ibUserName,
+                  ibUserIPAddressType,
+                  ibUserIPAddress}
+    STATUS      current
+    DESCRIPTION
+    "The user was removed from the password control blacklist."
+    ::= { ibUserBlacklistNotifications 2 }
+
+-- ibUserBlacklistVarObjects==================================================
+ibUserBlacklistVarObjects OBJECT IDENTIFIER ::= { ibUserBlacklistTrap 1 }
+
+ibUserIPAddressType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "User IP address type."
+    ::= { ibUserBlacklistVarObjects 1 }
+
+ibUserIPAddress OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "User IP address."
+    ::= { ibUserBlacklistVarObjects 2 }
+
+-- ibUserTrapPrefix=========================================================
+ibUserTrapPrefix OBJECT IDENTIFIER ::= { ibUserTrap 2 }
+
+-- ibUserTrapNotifications================================================
+ibUserTrapNotifications OBJECT IDENTIFIER ::= { ibUserTrapPrefix 0 }
+
+ibUserManagePasswordChanged NOTIFICATION-TYPE
+    OBJECTS     { ibUserName,
+                  ibUserOperatorType}
+    STATUS      current
+    DESCRIPTION
+    "The password of a local device management user was modified."
+    ::= { ibUserTrapNotifications 1 }
+
+ibUserNetworkPasswordChanged NOTIFICATION-TYPE
+    OBJECTS     { ibUserName,
+                  ibUserOperatorType}
+    STATUS      current
+    DESCRIPTION
+    "The password of a local network access user was modified."
+    ::= { ibUserTrapNotifications 2 }
+
+-- ibUserTrapVarObjects==================================================
+ibUserTrapVarObjects OBJECT IDENTIFIER ::= { ibUserTrapPrefix 1 }
+
+ibUserOperatorType OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..63))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The type of the operator, including CLI, MIB, UI, and login."
+    ::= { ibUserTrapVarObjects 1 }
+
+-- ibUserGroupTrap=========================================================
+ibUserGroupTrap OBJECT IDENTIFIER ::= { ibUser 4 }
+
+-- ibUserGroupNotifications==============================================
+ibUserGroupNotifications OBJECT IDENTIFIER ::= { ibUserGroupTrap 0 }
+
+ibUserGroupThresholdAlarm NOTIFICATION-TYPE
+    OBJECTS     { ibUserGroupUsedNum,
+                  ibUserGroupNumThreshold }
+    STATUS      current
+    DESCRIPTION
+    "Number of user groups reached the alarm threshold."
+    ::= { ibUserGroupNotifications 1 }
+
+ibUserGroupThresholdResume NOTIFICATION-TYPE
+    OBJECTS     { ibUserGroupUsedNum,
+                  ibUserGroupNumThreshold }
+    STATUS      current
+    DESCRIPTION
+    "Number of user groups dropped below the alarm threshold."
+    ::= { ibUserGroupNotifications 2 }
+
+-- ibUserGroupVarObjects===============================================
+ibUserGroupVarObjects OBJECT IDENTIFIER ::= { ibUserGroupTrap 1 }
+
+ibUserGroupUsedNum OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Number of user groups in use."
+    ::= { ibUserGroupVarObjects 1 }
+
+ibUserGroupNumThreshold OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Alarm threshold for the number of user groups."
+    ::= { ibUserGroupVarObjects 2 }
+
+END

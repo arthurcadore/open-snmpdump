@@ -1,0 +1,592 @@
+-- ==========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Infomation center MIB
+-- Reference: RFC5424
+-- Version: V1.4
+-- History:
+--   V1.0 Initial version 2012-03-07 by shuaixiaojuan
+--        2012-11-03
+--        Added ibICLogbufferContTable, ibICLogbufferContEntry,
+--        ibICLogbufferContIndex, ibICLogbufferContDescription by chenkaiping
+--   V1.1 2014-09-05 by SongHao
+--        Added isoWithTimezone(5) to ICTimeStampType.
+--        Modified description of ibICLogTimestampType.
+--   V1.2 2020-3-31 by liwenxiao
+--        Added dataWithMilliseconds(6), isoWithMilliseconds(7),
+--        isoWithMillisecondsAndTimezone(8) to ibICLoghostTimestampType.
+--        Modified description of ibICLoghostTimestampType.
+--   V1.3 2022-06-15 by caohao
+--        Added ibICNotification, ibICLogWriteFail,
+--        ibICLogType, ibICFailReason.
+--   V1.4 2022-07-21 by zhangjindong
+--        Added ibICLogFileName, and ibICLogFileAging.
+-- ==========================================================================
+IB-INFOCENTER-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    DisplayString, TruthValue, RowStatus, TAddress, TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    Counter32, Unsigned32, Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB
+    InterfaceIndexOrZero
+        FROM IF-MIB;
+
+ibInfoCenter MODULE-IDENTITY
+    LAST-UPDATED "202207210000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "All the configuration of the info center can be managed
+        by info center MIB."
+    REVISION "202207210000Z"
+    DESCRIPTION
+        "Added ibICLogFileName and
+         ibICLogFileAging."
+    REVISION "202206150000Z"
+    DESCRIPTION
+        "Added ibICNotification, ibICLogWriteFail,
+        ibICLogType, ibICFailReason."
+    REVISION "202002070459Z"
+    DESCRIPTION
+        "Added dataWithMilliseconds(6), isoWithMilliseconds(7),
+        isoWithMillisecondsAndTimezone(8) to ibICLoghostTimestampType.
+        Modified description of ibICLoghostTimestampType."
+    REVISION "201409050325Z"
+    DESCRIPTION
+        "Added isoWithTimezone(5) to ICTimeStampType.
+        Modified description of ibICLogTimestampType."
+    REVISION "201211031900Z"
+    DESCRIPTION
+        "Added ibICLogbufferContTable, ibICLogbufferContEntry,
+        ibICLogbufferContIndex, ibICLogbufferContDescription."
+    REVISION "201203071900Z"        -- Mar 07, 2012 at 19:00 GMT
+    DESCRIPTION
+        "The initial version of this MIB module."
+     ::= { ibCommon 119 }
+
+--
+-- Textual conventions
+--
+
+ICMessageLevelType ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "Specify severity level of message."
+    SYNTAX INTEGER
+        {
+            emergency(0),
+            alert(1),
+            critical(2),
+            error(3),
+            warning(4),
+            notice(5),
+            informational(6),
+            debug(7),
+            invalid(8)
+        }
+
+ICFacilityType ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "Specify loghost facility which generates messages."
+    SYNTAX INTEGER
+        {
+            kernel(0),
+            userLevel(1),
+            mailSystem(2),
+            systemDaemons(3),
+            securityAuthorization(4),
+            internallyMessages(5),
+            linePrinter(6),
+            networkNews(7),
+            uucp(8),
+            clockDaemon(9),
+            securityAuthorization2(10),
+            ftpDaemon(11),
+            ntp(12),
+            logAudit(13),
+            logAlert(14),
+            clockDaemon2(15),
+            local0(16),
+            local1(17),
+            local2(18),
+            local3(19),
+            local4(20),
+            local5(21),
+            local6(22),
+            local7(23)
+        }
+
+ICTimeStampType ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "Specify operation types on time stamp of message.
+        date: the time stamp type of message is date.
+        boot: the time stamp type of message is the time from
+              uptime of system.
+        iso: the time stamp type of message is ISO date with
+             format YYYY-MM-ddThh:mm:ss.
+        dateWithoutYear: the time stamp type of message is date
+                         without year information.
+        none: no time stamp information in message.
+        isoWithTimezone: the time stamp type of message is ISO date
+                         with timezone offset.
+                         Example YYYY-MM-ddThh:mm:ss-04:00
+                                 or
+                                 YYYY-MM-ddThh:mm:ssZ
+        dataWithMilliseconds: the time stamp type of message is date with milliseconds.
+                              Example MM dd hh:mm:ss.ms
+        isoWithMilliseconds: the time stamp type of message is ISO date with milliseconds.
+                              Example YYYY-MM-ddThh:mm:ss.ms
+        isoWithMillisecondsAndTimezone: the time stamp type of message is ISO date with
+                                        milliseconds and timezone offset.
+                                        Example YYYY-MM-ddThh:mm:ss.ms-04:00
+                                                or
+                                                YYYY-MM-ddThh:mm:ss.msZ"
+    SYNTAX INTEGER
+        {
+            date(0),
+            boot(1),
+            iso(2),
+            dateWithoutYear(3),
+            none(4),
+            isoWithTimezone(5),
+            dataWithMilliseconds(6),
+            isoWithMilliseconds(7),
+            isoWithMillisecondsAndTimezone(8)
+        }
+
+--
+-- Node definitions
+--
+
+ibICLogbuffer OBJECT IDENTIFIER ::= { ibInfoCenter 1 }
+
+ibICLogbufferObjects OBJECT IDENTIFIER ::= { ibICLogbuffer 1 }
+
+ibICMaxLogbufferSize OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The maximum number of messages that can be stored
+         in logbuffer."
+    ::= { ibICLogbufferObjects 1 }
+
+ibICLogbufferSize OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The capacity of logbuffer which can be customized by users.
+         The valid range is from 0 to ibICMaxLogbufferSize."
+    DEFVAL { 512 }
+    ::= { ibICLogbufferObjects 2 }
+
+ibICLogbufferCurrentMessages OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of log messages stored in logbuffer."
+    ::= { ibICLogbufferObjects 3 }
+
+ibICLogbufferOverwrittenMessages OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of log messages overwritten in logbuffer."
+    ::= { ibICLogbufferObjects 4 }
+
+ibICLogbufferDroppedMessages OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of log messages dropped in logbuffer."
+    ::= { ibICLogbufferObjects 5 }
+
+ibICLogbufferContTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbICLogbufferContEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The table of logbuffer contents."
+    ::= { ibICLogbuffer 2 }
+
+ibICLogbufferContEntry OBJECT-TYPE
+    SYNTAX IbICLogbufferContEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The contents entry of logbuffer."
+    INDEX { ibICLogbufferContIndex }
+    ::= { ibICLogbufferContTable 1 }
+
+IbICLogbufferContEntry ::=
+    SEQUENCE {
+        ibICLogbufferContIndex            Integer32,
+        ibICLogbufferContDescription      DisplayString
+        }
+
+ibICLogbufferContIndex OBJECT-TYPE
+    SYNTAX Integer32 (1..2147483647)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The index of this table."
+    ::= { ibICLogbufferContEntry 1 }
+
+ibICLogbufferContDescription OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..1600))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The contents of logbuffer."
+    ::= { ibICLogbufferContEntry 2 }
+
+ibICLoghost OBJECT IDENTIFIER ::= { ibInfoCenter 2 }
+
+ibICLoghostObjects OBJECT IDENTIFIER ::= { ibICLoghost 1 }
+
+ibICMaxLoghost OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The object shows the maximum number of rows in
+         ibLoghostTable."
+    ::= { ibICLoghostObjects 1 }
+
+ibICLoghostSourceInterface OBJECT-TYPE
+    SYNTAX InterfaceIndexOrZero
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The source interface which sends message to loghost.
+         All loghosts use the same source interface.
+         Zero is invalid."
+    ::= { ibICLoghostObjects 2 }
+
+ibICLoghostTimestampType OBJECT-TYPE
+    SYNTAX ICTimeStampType
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Time stamp type of message sent to loghost."
+    DEFVAL { date }
+    ::= { ibICLoghostObjects 3 }
+
+ibICLoghostTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbICLoghostEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The table of loghost."
+    ::= { ibICLoghost 2 }
+
+ibICLoghostEntry OBJECT-TYPE
+    SYNTAX IbICLoghostEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The loghost entry of syslog."
+    INDEX { ibICLoghostIndex }
+    ::= { ibICLoghostTable 1 }
+
+IbICLoghostEntry ::=
+    SEQUENCE {
+        ibICLoghostIndex                   Unsigned32,
+        ibICLoghostIpaddressType           InetAddressType,
+        ibICLoghostIpaddress               InetAddress,
+        ibICLoghostVPNName                 DisplayString,
+        ibICLoghostFacility                ICFacilityType,
+        ibICLoghostOperateRowStatus        RowStatus,
+        ibICLoghostIpaddressPort           Unsigned32,
+        ibICLoghostTAddress                TAddress
+    }
+
+ibICLoghostIndex OBJECT-TYPE
+    SYNTAX Unsigned32(1..64)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The index of this table."
+    ::= { ibICLoghostEntry 1 }
+
+ibICLoghostIpaddressType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The address type of loghost."
+    DEFVAL { ipv4 }
+    ::= { ibICLoghostEntry 2 }
+
+ibICLoghostIpaddress OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The address of loghost."
+    ::= { ibICLoghostEntry 3 }
+
+ibICLoghostVPNName OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The VPN instance of loghost."
+    DEFVAL { "" }
+    ::= { ibICLoghostEntry 4 }
+
+ibICLoghostFacility OBJECT-TYPE
+    SYNTAX ICFacilityType
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The operations staff can selectively filter the messages
+         with priority which consists of facility that generates
+         the message and severity of the message.
+         "
+    DEFVAL { local7 }
+    ::= { ibICLoghostEntry 5 }
+
+ibICLoghostOperateRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The status of this table entry."
+    ::= { ibICLoghostEntry 6 }
+
+ibICLoghostIpaddressPort OBJECT-TYPE
+    SYNTAX Unsigned32(1..65535)
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The loghost server port."
+    DEFVAL { 514 }
+    ::= { ibICLoghostEntry 7 }
+
+ibICLoghostTAddress OBJECT-TYPE
+    SYNTAX TAddress
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The loghost server transport address.
+         Consist of ibICLoghostIpaddress(ipv4) and ibICLoghostIpaddressPort.
+         This node can't be bound with ibICLoghostIpaddress, ibICLoghostIpaddressPort
+         and ibICLoghostIpaddressType at the same time."
+    ::= { ibICLoghostEntry 8 }
+
+ibICDirection OBJECT IDENTIFIER ::= { ibInfoCenter 3 }
+
+ibICDirectionTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbICDirectionEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table of syslog output direction."
+    ::= { ibICDirection 1 }
+
+ibICDirectionEntry OBJECT-TYPE
+    SYNTAX IbICDirectionEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The output direction entry of syslog."
+    INDEX { ibICDirectionIndex }
+    ::= { ibICDirectionTable 1 }
+
+IbICDirectionEntry ::=
+    SEQUENCE {
+        ibICDirectionIndex       Unsigned32,
+        ibICDirectionName        DisplayString,
+        ibICDirectionState       TruthValue
+        }
+
+ibICDirectionIndex OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The index of this table."
+    ::= { ibICDirectionEntry 1 }
+
+ibICDirectionName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (1..30))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The name of output direction."
+    ::= { ibICDirectionEntry 2 }
+
+ibICDirectionState OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The state of syslog: true(1):enable.
+                              false(2):disable."
+    ::= { ibICDirectionEntry 3 }
+
+
+ibICModule OBJECT IDENTIFIER ::= { ibInfoCenter 4 }
+
+ibICModuleTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbICModuleEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table of syslog module."
+    ::= { ibICModule 1 }
+
+ibICModuleEntry OBJECT-TYPE
+    SYNTAX IbICModuleEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The module entry of syslog."
+    INDEX { IMPLIED ibICModuleName }
+    ::= { ibICModuleTable 1 }
+
+IbICModuleEntry ::=
+    SEQUENCE {
+        ibICModuleName         DisplayString
+        }
+
+ibICModuleName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (1..8))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The name of module."
+    ::= { ibICModuleEntry 1 }
+
+ibICLog OBJECT IDENTIFIER ::= { ibInfoCenter 5 }
+
+ibICLogObjects OBJECT IDENTIFIER ::= { ibICLog 1 }
+
+ibICLogGlobalState OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The global state of syslog: true(1):enable.
+                              false(2):disable."
+    DEFVAL { true }
+    ::= { ibICLogObjects 1 }
+
+ibICLogTimestampType OBJECT-TYPE
+    SYNTAX ICTimeStampType
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Time stamp type of log message.
+        Note that isoWithTimezone is not supported."
+    DEFVAL { date }
+    ::= { ibICLogObjects 2 }
+
+ibICLogTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbICLogEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table of syslog module."
+    ::= { ibICLog 2 }
+
+ibICLogEntry OBJECT-TYPE
+    SYNTAX IbICLogEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The log entry of syslog."
+    INDEX { ibICDirectionIndex,
+            IMPLIED ibICModuleName
+          }
+    ::= { ibICLogTable 1 }
+
+IbICLogEntry ::=
+    SEQUENCE {
+        ibICLogLevel           ICMessageLevelType,
+        ibICLogRowStatus       RowStatus
+        }
+
+
+ibICLogLevel OBJECT-TYPE
+    SYNTAX ICMessageLevelType
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The level of log message, invalid is for deny any log."
+    ::= { ibICLogEntry 1 }
+
+ibICLogRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The status of this table entry."
+    ::= { ibICLogEntry 2 }
+
+ibICNotification OBJECT IDENTIFIER ::= { ibICLog 3 }
+ibICTrapPrefix OBJECT IDENTIFIER ::= { ibICNotification 0 }
+
+ibICLogWriteFail NOTIFICATION-TYPE
+    OBJECTS { ibICLogType, ibICFailReason }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when write to the log file fails."
+    ::= { ibICTrapPrefix 1 }
+
+ibICLogFileAging  NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibICLogFileName
+        }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated each time when the oldest files are deleted (single file is not supported)."
+    ::= { ibICTrapPrefix 2 }
+
+ibICTrapInfor OBJECT IDENTIFIER ::= { ibICLog 4 }
+
+ibICLogType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+            logfile(1),
+            diagfile(2),
+            secfile(3),
+            tracefile(4)
+        }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Log file type"
+    ::= { ibICTrapInfor 1}
+
+ibICFailReason OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Log file write failure reason."
+    ::= { ibICTrapInfor 2}
+
+ibICLogFileName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of a deleted log file."
+    ::= { ibICTrapInfor 3}
+END

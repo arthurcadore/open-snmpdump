@@ -1,0 +1,281 @@
+-- ==========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The purpose of this MIB file is to provide the definition of
+--              voice call record.
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2008-02-17 Initial version, created by Tian Xiaoqiang, Qu Jin
+-- ==========================================================================
+IB-VOICE-CALL-ACTIVE-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+        OBJECT-TYPE, MODULE-IDENTITY, Integer32, Gauge32
+    FROM SNMPv2-SMI
+        InetAddressType, InetAddress
+    FROM INET-ADDRESS-MIB
+        IbCodecType
+    FROM IB-VOICE-DIAL-CONTROL-MIB
+        callActiveSetupTime, callActiveIndex
+    FROM DIAL-CONTROL-MIB
+        TEXTUAL-CONVENTION
+    FROM SNMPv2-TC
+        ibVoice
+    FROM IB-OID-MIB;
+
+ibVoCallActive MODULE-IDENTITY
+    LAST-UPDATED "200802170000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB file is to provide the definition of voice call
+         active record information."
+    REVISION "200802170000Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibVoice 15 }
+
+-- ======================================
+--          Type declaration
+-- ======================================
+
+IbGUid ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+        "Represents a global call identifier. The global call identifier is
+         used as an unique identifier for an end-to-end call. A zero length
+         IbGUid indicates no value for the global call identifier."
+    SYNTAX       OCTET STRING(SIZE(0..16))
+
+
+ibVoiceCallActiveObjects OBJECT IDENTIFIER ::= { ibVoCallActive 1 }
+
+-- ===========================================================================
+--                        ibVoiceCallActiveTable
+-- ===========================================================================
+ibVoiceCallActiveTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbVoiceCallActiveEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table is the voice extension to the call active table
+         of DIAL-CONTROL-MIB. It contains voice encapsulation call
+         leg information that is derived from the statistics
+         of lower layer telephony interface."
+    ::= { ibVoiceCallActiveObjects 1 }
+
+ibVoiceCallActiveEntry OBJECT-TYPE
+    SYNTAX IbVoiceCallActiveEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The information regarding a single voice encapsulation
+         call leg.
+         The call leg entry is identified by using the same index
+         objects that are used by call active table of
+         DIAL-CONTROL-MIB to identify the call.
+         An entry of this table is created when its associated call
+         active entry in the DIAL-CONTROL-MIB is created and
+         call active entry contains the call establishment to a
+         voice over telephony network peer.
+         The entry is deleted when its associated call active entry
+         in the DIAL-CONTROL-MIB is deleted."
+    INDEX { callActiveSetupTime, callActiveIndex }
+    ::= { ibVoiceCallActiveTable 1 }
+
+IbVoiceCallActiveEntry ::= SEQUENCE {
+        ibVoCallActiveConnectionId IbGUid,
+        ibVoCallActiveTxDuration Gauge32,
+        ibVoCallActiveVoiceTxDuration Gauge32,
+        ibVoCallActiveFaxTxDuration Gauge32,
+        ibVoCallActiveCoderType IbCodecType,
+        ibVoCallActiveImgPageCount Gauge32
+    }
+
+ibVoCallActiveConnectionId OBJECT-TYPE
+    SYNTAX IbGUid
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The global call identifier for the gateway call."
+    ::= { ibVoiceCallActiveEntry 1 }
+
+ibVoCallActiveTxDuration OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Duration of transmit path open from this peer to the
+         voice gateway for the call. The units is milliseconds."
+    ::= { ibVoiceCallActiveEntry 2 }
+
+ibVoCallActiveVoiceTxDuration OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Duration of voice transmitted from this peer to voice
+         gateway for this call. The voice utilization rate can be
+         obtained by dividing this by ibVoCallActiveTXDuration object.
+         The units is milliseconds."
+    ::= { ibVoiceCallActiveEntry 3 }
+
+ibVoCallActiveFaxTxDuration OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Duration of fax transmitted from this peer to voice gateway
+         for this call. The fax utilization rate can be obtained by
+         dividing this by ibVoCallActiveTXDuration object. The units
+         is milliseconds."
+    ::= { ibVoiceCallActiveEntry 4 }
+
+ibVoCallActiveCoderType OBJECT-TYPE
+    SYNTAX IbCodecType
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The negotiated coder type. It specifies the encode type to
+         the PSTN leg of a call."
+    ::= { ibVoiceCallActiveEntry 5 }
+
+ibVoCallActiveImgPageCount OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of fax related image pages are received or
+         transmitted via the peer for the call. The units is pages."
+    ::= { ibVoiceCallActiveEntry 6 }
+
+
+-- ===========================================================================
+--                        ibVoiceVoIPCallActiveTable
+-- ===========================================================================
+ibVoiceVoIPCallActiveTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbVoiceVoIPCallActiveEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table is the VoIP extension to the call active table of
+         DIAL-CONTROL-MIB. It contains VoIP call leg
+         information about specific VoIP call destination."
+    ::= { ibVoiceCallActiveObjects 2 }
+
+ibVoiceVoIPCallActiveEntry OBJECT-TYPE
+    SYNTAX IbVoiceVoIPCallActiveEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The information regarding a single VoIP call leg.
+         The call leg entry is identified by using the same index
+         objects that are used by call active table of DIAL-CONTROL-MIB
+         to identify the call.
+         An entry of this table is created when its associated call
+         active entry in the DIAL-CONTROL-MIB is created and the
+         call active entry contains information for the call
+         establishment to the peer on the IP backbone via a voice
+         over IP peer.
+         The entry is deleted when its associated call active entry
+         in the DIAL-CONTROL-MIB is deleted."
+    INDEX { callActiveSetupTime, callActiveIndex }
+    ::= { ibVoiceVoIPCallActiveTable 1 }
+
+IbVoiceVoIPCallActiveEntry ::= SEQUENCE {
+    ibVoVoIPCallActiveConnectionId IbGUid,
+    ibVoVoIPCallActiveRemSigIPType InetAddressType,
+    ibVoVoIPCallActiveRemSigIPAddr InetAddress,
+    ibVoVoIPCallActiveRemSigPort Integer32,
+    ibVoVoIPCallActiveRemMedIPType InetAddressType,
+    ibVoVoIPCallActiveRemMedIPAddr InetAddress,
+    ibVoVoIPCallActiveRemMedPort Integer32,
+    ibVoVoIPCallActiveSessProtocol INTEGER,
+    ibVoVoIPCallActiveCoderType IbCodecType
+    }
+
+ibVoVoIPCallActiveConnectionId OBJECT-TYPE
+    SYNTAX IbGUid
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The global call identifier for the gateway call."
+    ::= { ibVoiceVoIPCallActiveEntry 1 }
+
+ibVoVoIPCallActiveRemSigIPType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The type of remote system signalling IP address for the VoIP call."
+    ::= { ibVoiceVoIPCallActiveEntry 2 }
+
+ibVoVoIPCallActiveRemSigIPAddr OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Remote system signalling IP address for the VoIP call."
+    ::= { ibVoiceVoIPCallActiveEntry 3 }
+
+ibVoVoIPCallActiveRemSigPort OBJECT-TYPE
+    SYNTAX Integer32(0..65535)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Remote system UDP listener signalling port to which to transmit voice
+         packets."
+    ::= { ibVoiceVoIPCallActiveEntry 4 }
+
+ibVoVoIPCallActiveRemMedIPType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The type of remote system media IP address for the VoIP call."
+    ::= { ibVoiceVoIPCallActiveEntry 5 }
+
+ibVoVoIPCallActiveRemMedIPAddr OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Remote system media IP address for the VoIP call."
+    ::= { ibVoiceVoIPCallActiveEntry 6 }
+
+ibVoVoIPCallActiveRemMedPort OBJECT-TYPE
+    SYNTAX Integer32(0..65535)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Remote system UDP listener media port to which to transmit voice
+         packets."
+    ::= { ibVoiceVoIPCallActiveEntry 7 }
+
+ibVoVoIPCallActiveSessProtocol OBJECT-TYPE
+    SYNTAX INTEGER {
+        unknown(1),
+        h323(2),
+        sip(3)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The object specifies the session protocol to be used
+         for internet call between local and remote router via
+         IP backbone."
+    ::= { ibVoiceVoIPCallActiveEntry 8 }
+
+ibVoVoIPCallActiveCoderType OBJECT-TYPE
+    SYNTAX IbCodecType
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The negotiated coder type. It specifies the encode type to
+         the VoIP leg of a call."
+    ::= { ibVoiceVoIPCallActiveEntry 9 }
+
+
+END

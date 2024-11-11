@@ -1,0 +1,239 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:  The Dynamic Host Configuration Protocol for IPv6 (DHCPv6)
+-- provides a framework to assign IPv6 prefixes, IPv6 addresses,
+-- and other configuration parameters to hosts.
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2014-10-30 Initial version Created by c09672
+-- =================================================================
+IB-DHCP6-SERVER-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, Integer32, TimeTicks
+        FROM SNMPv2-SMI
+    RowStatus
+        FROM SNMPv2-TC
+    InetAddressIPv6
+        FROM INET-ADDRESS-MIB;
+
+ibDHCP6Server MODULE-IDENTITY
+    LAST-UPDATED "201410300000Z"            -- Oct 30th, 2014 at 00:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB module is used for DHCPv6 server."
+    REVISION    "201410300000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { ibCommon 159 }
+
+--
+-- Define the DHCPv6 Server Tables.
+--
+    ibDHCP6ServerTables OBJECT IDENTIFIER ::= { ibDHCP6Server 1 }
+
+-- =================================================================
+-- 1st Table of ibDHCP6ServerTables: ibDHCP6PoolTable
+-- =================================================================
+ibDHCPS6PoolTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDHCPS6PoolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for creating DHCPv6 address pools."
+    ::= { ibDHCP6ServerTables 1 }
+
+ibDHCPS6PoolEntry OBJECT-TYPE
+    SYNTAX      IbDHCPS6PoolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing objects for creating or
+        deleting a DHCPv6 address pool."
+    INDEX { ibDHCPS6PoolName }
+    ::= { ibDHCPS6PoolTable 1 }
+
+IbDHCPS6PoolEntry ::=
+    SEQUENCE
+        {
+            ibDHCPS6PoolName      OCTET STRING,
+            ibDHCPS6PoolRowStatus RowStatus
+        }
+
+ibDHCPS6PoolName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..10))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "DHCPv6 address pool name.  The name must be integer."
+    ::= { ibDHCPS6PoolEntry 1 }
+
+ibDHCPS6PoolRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active,
+        createAndGo, destroy."
+    ::= { ibDHCPS6PoolEntry 2 }
+
+-- =================================================================
+-- 2nd Table of ibDHCP6ServerTables: ibDHCPS6PoolConfigTable
+-- =================================================================
+ibDHCPS6PoolConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDHCPS6PoolConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring parameters for DHCPv6 address pools."
+    ::= { ibDHCP6ServerTables 2 }
+
+ibDHCPS6PoolConfigEntry OBJECT-TYPE
+    SYNTAX      IbDHCPS6PoolConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing the objects for the parameter
+        configurations of DHCPv6 address pools."
+    INDEX { ibDHCPS6PoolName }
+    ::= { ibDHCPS6PoolConfigTable 1 }
+
+IbDHCPS6PoolConfigEntry ::=
+    SEQUENCE
+        {
+            ibDHCPS6PoolPrimaryDNSIP InetAddressIPv6,
+            ibDHCPS6PoolSecondDNSIP  InetAddressIPv6
+        }
+
+ibDHCPS6PoolPrimaryDNSIP OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The Primary DNS server IPv6 address to be assigned to the
+        client.  To delete a configured Primary DNS server IP, please
+        set ibDHCP6ServerPoolPrimaryDNSIP to '0x00 0x00 0x00 0x00
+        0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00'."
+    ::= { ibDHCPS6PoolConfigEntry 1 }
+
+ibDHCPS6PoolSecondDNSIP OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The Secondary DNS server IPv6 address to be assigned to the
+        client.  To delete a configured Secondary DNS server IP, please
+        set ibDHCP6ServerPoolSecondDNSIP to '0x00 0x00 0x00 0x00 0x00
+        0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00'."
+    ::= { ibDHCPS6PoolConfigEntry 2 }
+
+-- =================================================================
+-- 3rd Table of ibDHCP6ServerTables: ibDHCPS6PoolNetworkTable
+-- =================================================================
+ibDHCPS6PoolNetworkTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDHCPS6PoolNetworkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table containing the network configurations of DHCPv6
+        address pools."
+    ::= { ibDHCP6ServerTables 3 }
+
+ibDHCPS6PoolNetworkEntry OBJECT-TYPE
+    SYNTAX      IbDHCPS6PoolNetworkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing the objects for configuring
+        the network ip or host ip etc. to pools for
+        DHCPv6 server.  IbDHCPS6PoolStartAddr and ibDHCPS6PoolStopAddr
+        must be set with ibDHCPS6PoolNetPrefixLen, and must be on the
+        same network."
+    INDEX { ibDHCPS6PoolName }
+    ::= { ibDHCPS6PoolNetworkTable 1 }
+
+IbDHCPS6PoolNetworkEntry ::=
+    SEQUENCE
+        {
+            ibDHCPS6PoolStartAddr      InetAddressIPv6,
+            ibDHCPS6PoolStopAddr       InetAddressIPv6,
+            ibDHCPS6PoolNetPrefixLen   Integer32,
+            ibDHCPS6PoolLeaseTime      TimeTicks
+        }
+
+ibDHCPS6PoolStartAddr OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Start IP of a DHCPv6 address pool.
+        To delete a configured start IP, please set
+        ibDHCP6ServerPoolStartAddr to '0x00 0x00 0x00 0x00 0x00
+        0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00'."
+    ::= { ibDHCPS6PoolNetworkEntry 1 }
+
+ibDHCPS6PoolStopAddr OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "End IP of a DHCPv6 address pool."
+    ::= { ibDHCPS6PoolNetworkEntry 2 }
+
+ibDHCPS6PoolNetPrefixLen OBJECT-TYPE
+    SYNTAX      Integer32(1..128)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "A prefix length of DHCPv6 address pool."
+    ::= { ibDHCPS6PoolNetworkEntry 3 }
+
+ibDHCPS6PoolLeaseTime OBJECT-TYPE
+    SYNTAX      TimeTicks
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Number of time ticks of the lease."
+    ::= { ibDHCPS6PoolNetworkEntry 4 }
+
+-- =================================================================
+-- 4th Table of ibDHCP6ServerTables: ibDHCPS6PoolStatTable
+-- =================================================================
+ibDHCPS6PoolStatTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDHCPS6PoolStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The statistics of each DHCPv6 address pool."
+    ::= { ibDHCP6ServerTables 4 }
+
+ibDHCPS6PoolStatEntry OBJECT-TYPE
+    SYNTAX      IbDHCPS6PoolStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing the statistics of each DHCPv6 address pool."
+    INDEX { ibDHCPS6PoolName }
+    ::= { ibDHCPS6PoolStatTable 1 }
+
+IbDHCPS6PoolStatEntry ::=
+    SEQUENCE
+        {
+            ibDHCPS6PoolIPPoolUsage     Integer32
+        }
+
+ibDHCPS6PoolIPPoolUsage OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Utilization rate of IPv6 addresses in each DHCPv6 address pool, in percentage."
+    ::= { ibDHCPS6PoolStatEntry 1 }
+
+END

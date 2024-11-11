@@ -1,0 +1,412 @@
+-- ====================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: MS(Media Switch Server) Configuration management MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 Initial version 2007-04-13 created by zhoujianming
+--- ===================================================================
+IB-MS-MAN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    PhysicalIndex
+        FROM ENTITY-MIB
+    ibSurveillanceMIB
+        FROM IB-OID-MIB;
+
+ibMSMan MODULE-IDENTITY
+    LAST-UPDATED "200708130000Z"  -- August 13, 2007  GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB is defined to manage MS components
+        according to specific capability."
+    ::= { ibSurveillanceMIB 3 }
+
+--
+-- Node definitions
+--
+
+ibMSManMIBObjects OBJECT IDENTIFIER ::= { ibMSMan 1 }
+--
+-- statistical period
+--
+ibMSStatisticalPeriod OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The statistical period of this entity, which unit is
+        second and default value is 300 seconds."
+    ::= { ibMSManMIBObjects 1 }
+
+ibMSManMIBTables OBJECT IDENTIFIER ::= { ibMSMan 2 }
+--
+-- forward table
+--
+ibMSForwardTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbMSForwardEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "MS Forward table, used to get the forwarding information
+         of the entity. "
+    ::= { ibMSManMIBTables 1 }
+
+ibMSForwardEntry OBJECT-TYPE
+    SYNTAX      IbMSForwardEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "ibMSForward table entry."
+    INDEX { ibMSForwardIndex }
+    ::= { ibMSForwardTable 1 }
+
+IbMSForwardEntry ::=
+    SEQUENCE {
+        ibMSForwardIndex                   PhysicalIndex,
+        ibMSForwardMaxConnection           Unsigned32,
+        ibMSForwardConnectionThreshold     Unsigned32,
+        ibMSCurrentForwardConnection       Unsigned32,
+        ibMSPeriodForwardConnection        Unsigned32,
+        ibMSForwardTotalTime               Unsigned32,
+        ibMSForwardTotalConn               Unsigned32
+     }
+ibMSForwardIndex OBJECT-TYPE
+    SYNTAX PhysicalIndex
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The value of this object is the entity index, which
+         depends on the implementation of ENTITY-MIB. "
+    ::= { ibMSForwardEntry 1 }
+
+
+ibMSForwardMaxConnection OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maxium number of forward connections the entity can
+        support."
+    ::= { ibMSForwardEntry 2 }
+
+ibMSForwardConnectionThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The threshold of forward connections."
+    ::= { ibMSForwardEntry 3 }
+
+ibMSCurrentForwardConnection OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of forward connections the entity provided
+        in this time."
+    ::= { ibMSForwardEntry 4 }
+
+ibMSPeriodForwardConnection OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maxium number of forward connections within the
+        last statistical period."
+    ::= { ibMSForwardEntry 5 }
+
+ibMSForwardTotalTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total forward connection time the entity has
+        serviced since its startup."
+    ::= { ibMSForwardEntry 6 }
+
+ibMSForwardTotalConn OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total forward connection numbers the entity has
+        serviced since its startup."
+    ::= { ibMSForwardEntry 7 }
+
+--
+-- VOD table
+--
+ibMSVODTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbMSVODEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "MS VOD(video on demand) table, used to get the VOD
+        information of the entity."
+    ::= { ibMSManMIBTables 2 }
+
+    ibMSVODEntry OBJECT-TYPE
+    SYNTAX      IbMSVODEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "ibMSVOD table entry."
+    INDEX { ibMSVODIndex }
+    ::= { ibMSVODTable 1 }
+
+IbMSVODEntry ::=
+    SEQUENCE {
+        ibMSVODIndex                   PhysicalIndex,
+        ibMSVODMaxConnection           Unsigned32,
+        ibMSVODConnectionThreshold     Unsigned32,
+        ibMSCurrentVODConnection       Unsigned32,
+        ibMSPeriodVODMaxConnection     Unsigned32,
+        ibMSVODTotalTime               Unsigned32,
+        ibMSVODTotalConn               Unsigned32
+     }
+ibMSVODIndex OBJECT-TYPE
+    SYNTAX      PhysicalIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The value of this object is the entity index, which
+        depends on the implementation of ENTITY-MIB. "
+    ::= { ibMSVODEntry 1 }
+
+ibMSVODMaxConnection OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maxium number of VOD connections the entity
+        can support."
+    ::= { ibMSVODEntry 2 }
+
+ibMSVODConnectionThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The threshold of VOD connections."
+    ::= { ibMSVODEntry 3 }
+
+ibMSCurrentVODConnection OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of VOD connections the entity provided
+        in this time."
+    ::= { ibMSVODEntry 4 }
+
+ibMSPeriodVODMaxConnection OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maxium number of VOD connections within the last
+        statistical period."
+    ::= { ibMSVODEntry 5 }
+
+ibMSVODTotalTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total VOD connection time the entity has serviced
+        since its startup."
+    ::= { ibMSVODEntry 6 }
+
+ibMSVODTotalConn OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total VOD connection numbers the entity has serviced
+        since its startup."
+    ::= { ibMSVODEntry 7 }
+
+--
+-- Record table
+--
+ibMSRecordTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbMSRecordEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "MS Record table, used to get the record information of
+        the entity."
+    ::= { ibMSManMIBTables 3 }
+
+ibMSRecordEntry OBJECT-TYPE
+    SYNTAX      IbMSRecordEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "ibMSRecord table entry."
+    INDEX { ibMSRecordIndex }
+    ::= { ibMSRecordTable 1 }
+
+IbMSRecordEntry ::=
+    SEQUENCE {
+        ibMSRecordIndex                    PhysicalIndex,
+        ibMSRecordMaxConnection            Unsigned32,
+        ibMSRecordConnectionThreshold      Unsigned32,
+        ibMSCurrentRecordConnection        Unsigned32,
+        ibMSPeriodRecordMaxConnection      Unsigned32,
+        ibMSRecordTotalTime                Unsigned32,
+        ibMSRecordTotalConn                Unsigned32
+     }
+ibMSRecordIndex OBJECT-TYPE
+    SYNTAX      PhysicalIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The value of this object is the entity index, which
+        depends on the implementation of ENTITY-MIB. "
+    ::= { ibMSRecordEntry 1 }
+
+ibMSRecordMaxConnection OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maxium number of record connections the entity can
+        support."
+    ::= { ibMSRecordEntry 2 }
+
+ibMSRecordConnectionThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The threshold of record connections ."
+    ::= { ibMSRecordEntry 3 }
+
+ibMSCurrentRecordConnection OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of record connections the entity provided in
+        this time."
+    ::= { ibMSRecordEntry 4 }
+
+ibMSPeriodRecordMaxConnection OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maxium number of record connections within the
+        last statistical period."
+    ::= { ibMSRecordEntry 5 }
+
+ibMSRecordTotalTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total record connection time the entity has
+        serviced since its startup."
+    ::= { ibMSRecordEntry 6 }
+
+ibMSRecordTotalConn OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total record connection numbers the entity
+        has serviced since its startup."
+    ::= { ibMSRecordEntry 7 }
+
+--
+-- Notification definitions
+--
+-- =================================================================
+-- Traps are defined below.
+ibMSManMIBTrap OBJECT IDENTIFIER ::= { ibMSMan 3 }
+
+-- All trap definitions should be placed under this object.
+ibMSManTrapPrex OBJECT IDENTIFIER ::= { ibMSManMIBTrap 0 }
+
+ibMSManVODConnectionThresholdTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibMSVODIndex,
+        ibMSCurrentVODConnection,
+        ibMSVODConnectionThreshold
+    }
+    STATUS     current
+    DESCRIPTION
+        "Current VOD connection exceeds the threshold."
+    ::= { ibMSManTrapPrex 1 }
+
+ibMSManVODConnectionRecoverTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibMSVODIndex,
+        ibMSCurrentVODConnection,
+        ibMSVODConnectionThreshold
+    }
+    STATUS    current
+    DESCRIPTION
+        "Current VOD connection recovers under the threshold."
+    ::= { ibMSManTrapPrex 2 }
+
+ibMSManForwardConnectionThresholdTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibMSForwardIndex,
+        ibMSCurrentForwardConnection,
+        ibMSForwardConnectionThreshold
+    }
+    STATUS     current
+    DESCRIPTION
+        "Current forward connection exceeds the threshold."
+    ::= { ibMSManTrapPrex 3 }
+
+ibMSManForwardConnectionRecoverTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibMSForwardIndex,
+        ibMSCurrentForwardConnection,
+        ibMSForwardConnectionThreshold
+    }
+    STATUS     current
+    DESCRIPTION
+        "Current forward connection recovers under the threshold."
+    ::= { ibMSManTrapPrex 4 }
+
+ibMSManRecordConnectionThresholdTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibMSRecordIndex,
+        ibMSCurrentRecordConnection,
+        ibMSRecordConnectionThreshold
+    }
+    STATUS     current
+    DESCRIPTION
+        "Current record connection exceeds the threshold."
+    ::= { ibMSManTrapPrex 5 }
+
+ibMSManRecordConnectionRecoverTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibMSRecordIndex,
+        ibMSCurrentRecordConnection,
+        ibMSRecordConnectionThreshold
+    }
+    STATUS     current
+    DESCRIPTION
+        "Current record connection recovers under the threshold."
+    ::= { ibMSManTrapPrex 6 }
+
+
+END

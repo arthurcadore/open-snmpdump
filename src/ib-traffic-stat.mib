@@ -1,0 +1,273 @@
+-- =============================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Traffic Statistics mib
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 2022-03-30
+--        Initial Version by chenzhouhui
+-- =============================================================
+
+IB-TRAFFIC-STAT-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        Integer32, Unsigned32,
+        OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI
+        CounterBasedGauge64
+    FROM HCNUM-TC;
+
+ibTrafficStat  MODULE-IDENTITY
+        LAST-UPDATED    "202203301911Z"
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+             "This MIB provides traffic statistics information."
+        REVISION        "202203301911Z"
+        DESCRIPTION
+                "Initial version of this MIB module,
+                 including ibTSSlotStatTable, ibTSSlotMonStatTable,ibTSSlotMonThresholdTable,
+                 ibTSSlotMonActionTable,ibTSSlotMonTrapPrex"
+        ::= { ibCommon 222 }
+
+ibTSGroup OBJECT IDENTIFIER ::= { ibTrafficStat 1 }
+-- =================================================================
+ibTSSlotStat OBJECT IDENTIFIER ::= { ibTSGroup 1 }
+
+ibTSSlotStatTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTSSlotStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table is about some types of statistics."
+    ::= { ibTSSlotStat 1 }
+
+ibTSSlotStatEntry OBJECT-TYPE
+    SYNTAX      IbTSSlotStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Entry items."
+    INDEX
+        {
+            ibTSFrameIndex,
+            ibTSSlotIndex
+        }
+    ::= { ibTSSlotStatTable 1 }
+
+IbTSSlotStatEntry ::= SEQUENCE
+    {
+        ibTSFrameIndex               Integer32,
+        ibTSSlotIndex                Integer32,
+        ibTSPacketDropStatistics     CounterBasedGauge64
+    }
+
+ibTSFrameIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Frame index."
+    ::= { ibTSSlotStatEntry 1 }
+
+ibTSSlotIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Slot index."
+    ::= { ibTSSlotStatEntry 2 }
+
+ibTSPacketDropStatistics OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics about the number of dropped packets."
+    ::= { ibTSSlotStatEntry 3 }
+
+ibTSMonGroup OBJECT IDENTIFIER ::= { ibTrafficStat 2 }
+-- =================================================================
+ibTSSlotMonStat OBJECT IDENTIFIER ::= { ibTSMonGroup 1 }
+
+ibTSSlotMonStatTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTSSlotMonStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table is about some types of statistics."
+    ::= { ibTSSlotMonStat 1 }
+
+ibTSSlotMonStatEntry OBJECT-TYPE
+    SYNTAX      IbTSSlotMonStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Entry items."
+    INDEX
+        {
+            ibTSFrameIndex,
+            ibTSSlotIndex
+        }
+    ::= { ibTSSlotMonStatTable 1 }
+
+IbTSSlotMonStatEntry ::= SEQUENCE
+    {
+        ibTSSlotMonPacketDropStatistics  CounterBasedGauge64
+    }
+
+ibTSSlotMonPacketDropStatistics OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Statistics about the number of dropped packets when the interval is reached."
+    ::= { ibTSSlotMonStatEntry 1 }
+
+-- =================================================================
+ibTSSlotMonControl  OBJECT IDENTIFIER ::= { ibTSMonGroup 2 }
+
+ibTSSlotMonThresholdTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTSSlotMonThresholdEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table is about the upper threshold, lower threshold, and inspection interval of dropped packets.
+         The upper threshold and lower threshold must be bound together. After modification, the table ibSlotMonAlarmActionTable
+         will be changed."
+
+    ::= { ibTSSlotMonControl 1 }
+
+ibTSSlotMonThresholdEntry OBJECT-TYPE
+    SYNTAX      IbTSSlotMonThresholdEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Entry items."
+    INDEX
+        {
+            ibTSFrameIndex,
+            ibTSSlotIndex
+        }
+    ::= { ibTSSlotMonThresholdTable 1 }
+
+IbTSSlotMonThresholdEntry ::= SEQUENCE
+    {
+        ibTSSlotMonPacketDropLowThres              Unsigned32,
+        ibTSSlotMonPacketDropHighThres             Unsigned32,
+        ibTSSlotMonPacketDropInterval              Unsigned32
+    }
+
+ibTSSlotMonPacketDropLowThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Lower threshold for the number of dropped packets."
+    DEFVAL { 100 }
+    ::= { ibTSSlotMonThresholdEntry 1 }
+
+ibTSSlotMonPacketDropHighThres OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Upper threshold for the number of dropped packets."
+    DEFVAL { 1000000 }
+    ::= { ibTSSlotMonThresholdEntry 2 }
+
+ibTSSlotMonPacketDropInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Inspection interval for the number of dropped packets."
+    DEFVAL { 30 }
+    ::= { ibTSSlotMonThresholdEntry 3 }
+
+-- =================================================================
+ibTSSlotMonActionTable   OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTSSlotMonActionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table can set or get whether to enable the slot shutdown or reboot function."
+    ::= { ibTSSlotMonControl 2 }
+
+ibTSSlotMonActionEntry OBJECT-TYPE
+    SYNTAX      IbTSSlotMonActionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Entry items"
+    INDEX
+        {
+            ibTSFrameIndex,
+            ibTSSlotIndex
+        }
+    ::= { ibTSSlotMonActionTable 1 }
+
+IbTSSlotMonActionEntry ::= SEQUENCE
+    {
+        ibTSSlotMonPacketDropAction        INTEGER
+    }
+
+ibTSSlotMonPacketDropAction OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            noAction(0),
+            shutdown(1),
+            reboot(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Always return noAction(0) when read.
+        Return shutdown(1) the slot when the number of dropped packets exceeds the upper threshold.
+        Rerurn reboot(2) the slot when the timer times out."
+    DEFVAL { 0 }
+    ::= { ibTSSlotMonActionEntry 1 }
+
+-- =================================================================
+-- Traps are defined below.
+
+ibTSSlotMonTrap OBJECT IDENTIFIER ::= { ibTrafficStat 3 }
+ibTSSlotMonTrapPrex OBJECT IDENTIFIER ::= { ibTSSlotMonTrap 0 }
+-- All trap definitions should be placed under this object.
+
+ibTSSlotMonPacketDropRising NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTSFrameIndex,
+            ibTSSlotIndex,
+            ibTSSlotMonPacketDropStatistics,
+            ibTSSlotMonPacketDropLowThres,
+            ibTSSlotMonPacketDropHighThres,
+            ibTSSlotMonPacketDropInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of dropped packets exceeds the
+         upper threshold."
+    ::= { ibTSSlotMonTrapPrex 1 }
+
+ibTSSlotMonPacketDropResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTSFrameIndex,
+            ibTSSlotIndex,
+            ibTSSlotMonPacketDropStatistics,
+            ibTSSlotMonPacketDropLowThres,
+            ibTSSlotMonPacketDropHighThres,
+            ibTSSlotMonPacketDropInterval
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of dropped packets drops from
+         above the upper threshold to below the lower threshold."
+    ::= { ibTSSlotMonTrapPrex 2 }
+
+
+END
+

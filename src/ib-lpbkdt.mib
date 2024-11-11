@@ -1,0 +1,356 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Loopback detection MIB
+-- Reference:
+-- Version: V1.5
+-- History:
+-- V1.0 2008-09-27 Created by LuoXuefang
+-- V1.1 2009-03-30 Added ibLpbkdtTrapPerVlanLoopbacked,
+--                 ibLpbkdtTrapPerVlanRecovered and
+--                 ibLpbkdtObjects by TongWei.
+-- V1.2 2014-07-26 Added ibLpbkdtVlanEnable, ibLpbkdtAction,
+--                 ibLpbkdtIntervalTime, ibLpbkdtPortTable,
+--                 ibLpbkdtPortEntry, ibLpbkdtPortIfIndex,
+--                 ibLpbkdtPortVlanEnable, ibLpbkdtPortAction and
+--                 ibLpbkdtPortLoopbacked by ZhangWei.
+-- V1.3 2022-05-27 Added ibLpbkdtTrapVsiLoopbacked,
+--                 ibLpbkdtTrapVsiRecovered by zhengjun.
+-- V1.4 2022-07-18 Added ibLpbkdtTrapActionLOG, ibLpbkdtTrapActionLOGClear,
+--                 ibLpbkdtTrapActionBlock, ibLpbkdtTrapActionBlockClear,
+--                 ibLpbkdtTrapActionDown, ibLpbkdtTrapActionDownClear
+--                 by zhengjun.
+-- V1.5 2023-06-06 Added ibLpbkdtTrapVsiBlockFailed by zhengjun.
+-- ==================================================================
+IB-LPBKDT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    ifIndex, ifDescr
+        FROM IF-MIB
+    VlanId
+        FROM Q-BRIDGE-MIB
+    TEXTUAL-CONVENTION, TruthValue, DisplayString
+        FROM SNMPv2-TC
+    OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, Integer32
+        FROM SNMPv2-SMI
+    InterfaceIndex
+        FROM IF-MIB;
+
+ibLpbkdt MODULE-IDENTITY
+    LAST-UPDATED "202306061111Z"        -- June 06, 2023 at 11:11 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Loops may cause broadcast storms.  The purpose of loopback detection
+         is to detect loops on the device and to protect the network."
+    REVISION "202306061111Z"
+    DESCRIPTION
+        "Added ibLpbkdtTrapVsiBlockFailed."
+    REVISION "202207181101Z"
+    DESCRIPTION
+        "Added new trap ibLpbkdtTrapActionLOG, ibLpbkdtTrapActionLOGClear,
+        ibLpbkdtTrapActionBlock, ibLpbkdtTrapActionBlockClear,
+        ibLpbkdtTrapActionDown, ibLpbkdtTrapActionDownClear."
+    REVISION "202205280926Z"
+    DESCRIPTION
+        "Added new trap ibLpbkdtTrapVsiLoopbacked, ibLpbkdtTrapVsiRecovered."
+    REVISION "201407261518Z"
+    DESCRIPTION
+        "Added new nodes to configure the loop detection."
+    REVISION "200903301741Z"
+    DESCRIPTION
+        "To fix bugs in the MIB file."
+    REVISION "200809271504Z"
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 95 }
+
+-- ==================================================================
+--
+-- ======================= definition begin =========================
+--
+-- ==================================================================
+
+IbLpbkdtActionType ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "Loopback detection action on the port on which a loop is detected.
+        When a loop is detected on a port, the device generates a log.  The
+        enumeration 'none(1)' means that the device performs no action on the
+        port.  The enumeration 'block(2)' means that the device disables MAC
+        address learning and blocks traffic on the port.  The enumeration
+        'nolearning(3)' means that the device disables MAC address learning on
+        the port.  The enumeration 'shutdown(4)' means that the device shuts
+        down the port.  The device automatically sets the port to the forwarding
+        state after the time interval configured."
+    SYNTAX  INTEGER {
+            none(1),
+            block(2),
+            nolearning(3),
+            shutdown(4)
+    }
+
+ibLpbkdtNotifications OBJECT IDENTIFIER ::= { ibLpbkdt 1 }
+ibLpbkdtObjects       OBJECT IDENTIFIER ::= { ibLpbkdt 2 }
+ibLpbkdtTrapPrefix    OBJECT IDENTIFIER ::= { ibLpbkdtNotifications 0 }
+
+ibLpbkdtTrapLoopbacked NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifDescr }
+    STATUS current
+    DESCRIPTION
+        "Trap message is generated when the interface is looped."
+    ::= { ibLpbkdtTrapPrefix 1 }
+
+ibLpbkdtTrapRecovered NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifDescr }
+    STATUS current
+    DESCRIPTION
+        "Trap message is generated when the loops on the interface
+         are eliminated."
+    ::= { ibLpbkdtTrapPrefix 2 }
+
+ibLpbkdtTrapPerVlanLoopbacked NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifDescr, ibLpbkdtVlanID }
+    STATUS current
+    DESCRIPTION
+        "Trap message is generated when the interface is looped in the VLAN."
+    ::= { ibLpbkdtTrapPrefix 3 }
+
+ibLpbkdtTrapPerVlanRecovered NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifDescr, ibLpbkdtVlanID }
+    STATUS current
+    DESCRIPTION
+        "Trap message is generated when the loop on the interface
+         is eliminated in the VLAN."
+    ::= { ibLpbkdtTrapPrefix 4 }
+
+ibLpbkdtTrapVsiLoopbacked NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ibLpbkdtACName, ibLpbkdtVsiName, ibLpbkdtSVlanID, ibLpbkdtCVlanID }
+    STATUS current
+    DESCRIPTION
+        "This trap message is generated when an interface is looped in a VSI."
+    ::= { ibLpbkdtTrapPrefix 5 }
+
+ibLpbkdtTrapVsiRecovered NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ibLpbkdtACName, ibLpbkdtVsiName }
+    STATUS current
+    DESCRIPTION
+        "This trap message is generated when the loops on a VSI
+         are eliminated."
+    ::= { ibLpbkdtTrapPrefix 6 }
+
+ibLpbkdtTrapActionLOG NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifDescr }
+    STATUS current
+    DESCRIPTION
+        "This trap message is generated when the log action is triggered
+         by a loop on an interface."
+    ::= { ibLpbkdtTrapPrefix 7 }
+
+ibLpbkdtTrapActionLOGClear NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifDescr }
+    STATUS current
+    DESCRIPTION
+        "This trap message is generated when a loop is removed from an
+         interface when the log action is triggered."
+    ::= { ibLpbkdtTrapPrefix 8 }
+
+ibLpbkdtTrapActionBlock NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifDescr }
+    STATUS current
+    DESCRIPTION
+        "This trap message is generated when the block action is triggered
+         by a loop on an interface."
+    ::= { ibLpbkdtTrapPrefix 9 }
+
+ibLpbkdtTrapActionBlockClear NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifDescr }
+    STATUS current
+    DESCRIPTION
+        "This trap message is generated when a loop is removed froam an
+         interface where the block is triggered."
+    ::= { ibLpbkdtTrapPrefix 10 }
+
+ibLpbkdtTrapActionDown NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifDescr }
+    STATUS current
+    DESCRIPTION
+        "This trap message is generated when the shutdown action triggeded
+         by a loop on an interface."
+    ::= { ibLpbkdtTrapPrefix 11 }
+
+ibLpbkdtTrapActionDownClear NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifDescr }
+    STATUS current
+    DESCRIPTION
+        "This trap message is generated when a loop is removed from an interface
+         where the shutdown action is triggered."
+    ::= { ibLpbkdtTrapPrefix 12 }
+
+ibLpbkdtTrapVsiBlockFailed NOTIFICATION-TYPE
+    OBJECTS { ifIndex, ifDescr, ibLpbkdtVsiName, ibLpbkdtSrvID }
+    STATUS current
+    DESCRIPTION
+        "This trap is generated when a VSI blocking failure occurs on the interface."
+    ::= { ibLpbkdtTrapPrefix 13 }
+
+ibLpbkdtVlanID OBJECT-TYPE
+    SYNTAX      VlanId
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The ID of VLAN."
+    ::= { ibLpbkdtObjects 1 }
+
+ibLpbkdtVlanEnable OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(512))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+       "Whether the loop detection is enabled globally for the VLANs.  Each
+       octet within this value specifies a set of eight VLANs, with the first
+       octet specifying VLANs 1 through 8, the second octet specifying VLANs 9
+       through 16, etc.  Within each octet, the most significant bit represents
+       the highest numbered VLAN, and the least significant bit represents the
+       lowest numbered VLAN.  Thus, each VLAN is represented by a single bit
+       within the value of this object.  A bit with a value of '1' indicates
+       that the loop detection is enabled globally for the VLAN; the loop
+       detection is disabled globally for the VLAN if its bit has a value of
+       '0'.  The 4095th and 4096th bits must be have a value of '0'."
+    ::= { ibLpbkdtObjects 2 }
+
+ibLpbkdtAction OBJECT-TYPE
+    SYNTAX      IbLpbkdtActionType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global loopback detection action on the port on which a loop is
+        detected.  The global action applies to all ports.  The per-port action
+        takes precedence over the global action."
+    DEFVAL      { none }
+    ::= { ibLpbkdtObjects 3 }
+
+ibLpbkdtIntervalTime OBJECT-TYPE
+    SYNTAX      Integer32(1..300)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The interval at which loop detection frames are transmitted."
+    DEFVAL      { 30 }
+    ::= { ibLpbkdtObjects 4 }
+
+ibLpbkdtPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbLpbkdtPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table containing information about the loop detection configurations
+        and status for individual ports."
+    ::= { ibLpbkdtObjects  5 }
+
+ibLpbkdtPortEntry OBJECT-TYPE
+    SYNTAX      IbLpbkdtPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Detailed information of a specified port."
+    INDEX   { ibLpbkdtPortIfIndex }
+    ::= { ibLpbkdtPortTable 1 }
+
+IbLpbkdtPortEntry  ::= SEQUENCE
+    {
+        ibLpbkdtPortIfIndex       InterfaceIndex,
+        ibLpbkdtPortVlanEnable    OCTET STRING,
+        ibLpbkdtPortAction        IbLpbkdtActionType,
+        ibLpbkdtPortLoopbacked    TruthValue
+    }
+
+ibLpbkdtPortIfIndex OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The ifIndex of the port."
+    ::={ ibLpbkdtPortEntry 1 }
+
+ibLpbkdtPortVlanEnable OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(512))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Whether the loop detection is enabled on the port for the VLANs.  Each
+        octet within this value specifies a set of eight VLANs, with the first
+        octet specifying VLANs 1 through 8, the second octet specifying VLANs 9
+        through 16, etc.  Within each octet, the most significant bit represents
+        the highest numbered VLAN, and the least significant bit represents the
+        lowest numbered VLAN.  Thus, each VLAN is represented by a single bit
+        within the value of this object.  A bit with a value of '1' indicates
+        that the loop detection is enabled on the port for the VLAN; the loop
+        detection is disabled on the port for the VLAN if its bit has a value of
+        '0'.  The 4095th and 4096th bits must be have a value of '0'."
+    ::={ ibLpbkdtPortEntry 2 }
+
+ibLpbkdtPortAction OBJECT-TYPE
+    SYNTAX      IbLpbkdtActionType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Loopback detection action on the port on which a loop is detected.  The
+        per-port action takes precedence over the global action."
+    ::={ ibLpbkdtPortEntry 3 }
+
+ibLpbkdtPortLoopbacked OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Whether the port is looped."
+    ::={ ibLpbkdtPortEntry 4 }
+
+ibLpbkdtTrapOjbects OBJECT IDENTIFIER ::= { ibLpbkdtNotifications 1 }
+
+ibLpbkdtVsiName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..255))
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "VSI name."
+    ::= { ibLpbkdtTrapOjbects 1 }
+
+ibLpbkdtSVlanID OBJECT-TYPE
+    SYNTAX VlanId
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "Outer VLAN ID."
+    ::= { ibLpbkdtTrapOjbects 2 }
+
+ibLpbkdtCVlanID OBJECT-TYPE
+    SYNTAX VlanId
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "Inner VLAN ID."
+    ::= { ibLpbkdtTrapOjbects 3 }
+
+ibLpbkdtACName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..255))
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "Ethernet service instance name."
+    ::= { ibLpbkdtTrapOjbects 4 }
+
+ibLpbkdtSrvID OBJECT-TYPE
+    SYNTAX Integer32(1..4096)
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "Service instance ID."
+    ::= { ibLpbkdtTrapOjbects 5 }
+
+END

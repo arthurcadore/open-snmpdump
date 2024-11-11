@@ -1,0 +1,1591 @@
+-- =========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:  DHCP Server MIB
+-- Reference:  Enterprise MIB
+-- Version:V1.52
+-- History:
+--     initial version 2003-03-06
+--     V1.0 6th Mar 2004
+--  V1.1 Modified by chenhua 2004-08-13
+--   Add 0 to the vlaue list of ibDHCPSIPResetFlag for get-opporation
+--  V1.2 Modified by chenhua 2004-09-16
+--   Modify  the default value of ibDHCPSWriteDataDelay  to 300
+--  V1.3 2004-10-12 updated by gaolong
+--   Import TEXTUAL-CONVENTION
+--  v1.4 Modified by xinhaing 2004-03-03
+--   Add a new table  : ibDHCPSIPInUseExTable
+--   The satus of the table ibDHCPSIPInUseTable is modified to be deprecated
+--   Correct some spelling errors in ibDHCPSIPInUseTable's description
+--   Adjust file format
+-- v1.5 2006-02-22 Modified by xuyufei
+--   Modify the default value of ibDHCPSDetectingServerStatus to disabled
+--   Modify the default value of ibDHCPSGlobalPoolClientNetbiosType
+--   and ibDHCPSInterfacePoolClientNetbiosType to 0
+--   Correct the description of ibDHCPSGlobalPoolOptionHexString,
+--   ibDHCPSInterfacePoolOptionHexString, ibDHCPSGlobalPoolNumber,
+--   ibDHCPSInterfacePoolNumber
+-- v1.51 2006-04-13
+--   change value range of ibDHCPSIPInUsePoolName and ibDHCPSIPInUsePoolNameEx
+-- v1.52 2011-01-19 Modified by ganchanghua
+--   change SYNTAX of ibDHCPSConflictIPDetectTime to OCTET STRING(SIZE(1..20))
+-- =========================================================================
+IB-DHCPS-MIB DEFINITIONS ::= BEGIN
+    IMPORTS
+        ibRhw
+            FROM IB-OID-MIB
+        ifIndex
+            FROM RFC1213-MIB
+        OBJECT-GROUP
+            FROM SNMPv2-CONF
+        IpAddress, Integer32, OBJECT-TYPE, MODULE-IDENTITY
+            FROM SNMPv2-SMI
+        RowStatus, MacAddress, TEXTUAL-CONVENTION
+            FROM SNMPv2-TC;
+
+    ibDHCPServerMib MODULE-IDENTITY
+        LAST-UPDATED "200602200000Z"        -- February 20, 2006 at 00:00 GMT
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+            "This MIB describes objects used for managing DHCP server."
+        ::= { ibRhw 2 }
+--
+-- Textual Conventions
+--
+
+    IbDhcpSEnabledStatus ::= TEXTUAL-CONVENTION
+        STATUS      current
+        DESCRIPTION
+            "To descript the status of some function is Enabled or
+            Disabled."
+        SYNTAX      INTEGER
+            {
+                enabled(1),
+                disabled(0)
+            }
+
+--
+-- Node definitions
+--
+
+    ibDHCPServerMibObject OBJECT IDENTIFIER ::= { ibDHCPServerMib 1 }
+
+--  Part 1: For DHCP server global pool
+--
+-- =================================================================
+-- 1st Table of ibDHCPServerMibObject: ibDHCPSGlobalPoolTable
+-- =================================================================
+    ibDHCPSGlobalPoolTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSGlobalPoolEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for creating DHCP server global pools."
+        ::= { ibDHCPServerMibObject 1 }
+
+    ibDHCPSGlobalPoolEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSGlobalPoolEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry containing objects for creating or
+            deleting a global pool for the DHCP server."
+        INDEX { ibDHCPSGlobalPoolName }
+        ::= { ibDHCPSGlobalPoolTable 1 }
+
+    IbDHCPSGlobalPoolEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSGlobalPoolName         OCTET STRING,
+                ibDHCPSGlobalPoolRowStatus    RowStatus
+            }
+
+    ibDHCPSGlobalPoolName OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..255))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "DHCP server global pool name."
+        ::= { ibDHCPSGlobalPoolEntry 1 }
+
+    ibDHCPSGlobalPoolRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus. Three actions are used: active,
+            createAndGo, destroy."
+        ::= { ibDHCPSGlobalPoolEntry 2 }
+
+--  =================================================================
+-- 2nd Table of ibDHCPServerMibObject: ibDHCPSGlobalPoolConfigTable
+-- =================================================================
+    ibDHCPSGlobalPoolConfigTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSGlobalPoolConfigEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table containing the configurations of dhcp
+            server global pools."
+        ::= { ibDHCPServerMibObject 2 }
+
+    ibDHCPSGlobalPoolConfigEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSGlobalPoolConfigEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry containing the objects for configuring
+            the network ip or host ip etc. to global pools for
+            DHCP server."
+        INDEX { ibDHCPSGlobalPoolName }
+        ::= { ibDHCPSGlobalPoolConfigTable 1 }
+
+    IbDHCPSGlobalPoolConfigEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSGlobalPoolType              INTEGER,
+                ibDHCPSGlobalPoolNetwork           IpAddress,
+                ibDHCPSGlobalPoolNetworkMask       IpAddress,
+                ibDHCPSGlobalPoolHostIPAddr        IpAddress,
+                ibDHCPSGlobalPoolHostMask          IpAddress,
+                ibDHCPSGlobalPoolHostHAddr         MacAddress,
+                ibDHCPSGlobalPoolConfigUndoFlag    INTEGER
+            }
+
+    ibDHCPSGlobalPoolType OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                null(0),
+                host(1),
+                network(2)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Type of a DHCP global pool. Any operations of
+            this object will be bound with the operations
+            of ibDHCPSGlobalPoolNetwork, ibDHCPSGlobalPoolHostIPAddr,
+            or ibDHCPSGlobalPoolHostHAddr.
+            That means any operation of this object alone will
+            be regarded as invalid operation."
+        ::= { ibDHCPSGlobalPoolConfigEntry 1 }
+
+    ibDHCPSGlobalPoolNetwork OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Network ip of a DHCP global pool.
+            To delete a configured network ip, please set
+            ibDHCPSGlobalPoolConfigUndoFlag to 1."
+        ::= { ibDHCPSGlobalPoolConfigEntry 2 }
+
+    ibDHCPSGlobalPoolNetworkMask OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Net mask of a DHCP global pool(network).
+            The SET operation to this object ought to be with
+            the SET of ibDHCPSGlobalPoolNetwork together, and
+            any SET operation alone to this object will be
+            regarded as an invalid operation.
+            When a network ip of a DHCP global pool was
+            deleted, the net mask would also be deleted
+            automatically, and no further operation needed."
+        ::= { ibDHCPSGlobalPoolConfigEntry 3 }
+
+    ibDHCPSGlobalPoolHostIPAddr OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Host ip of a DHCP global pool.
+            To delete a configured network ip, please set
+            ibDHCPSGlobalPoolConfigUndoFlag to 2."
+        ::= { ibDHCPSGlobalPoolConfigEntry 4 }
+
+    ibDHCPSGlobalPoolHostMask OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Net mask of a DHCP global pool(host)
+            The SET operation to this object ought to be with
+            the SET of ibDHCPSGlobalPoolHostIPAddr together,
+            and any SET operation alone to this object will be
+            regarded as an invalid operation.
+            When a host ip of a DHCP global pool was
+            deleted, the net mask would also be deleted
+            automatically, and no further operation needed."
+        ::= { ibDHCPSGlobalPoolConfigEntry 5 }
+
+    ibDHCPSGlobalPoolHostHAddr OBJECT-TYPE
+        SYNTAX      MacAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Hardware address of a DHCP global pool(host).
+            To delete a configured hardware address, please
+            set ibDHCPSGlobalPoolConfigUndoFlag to 3."
+        ::= { ibDHCPSGlobalPoolConfigEntry 6 }
+
+    ibDHCPSGlobalPoolConfigUndoFlag OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                undonetworkip(1),
+                undohostip(2),
+                undohosthaddr(3)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Flag of undo operation for ibDHCPSGlobalPoolConfigTable."
+        ::= { ibDHCPSGlobalPoolConfigEntry 7 }
+
+--  =================================================================
+-- 3rd Table of ibDHCPServerMibObject: ibDHCPSGlobalPoolParaTable
+-- =================================================================
+    ibDHCPSGlobalPoolParaTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSGlobalPoolParaEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for configuring parameters to DHCP global
+            pools."
+        ::= { ibDHCPServerMibObject 3 }
+
+    ibDHCPSGlobalPoolParaEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSGlobalPoolParaEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry containing the objects for the
+            configurations of parameters of DHCP global pools."
+        INDEX { ibDHCPSGlobalPoolName }
+        ::= { ibDHCPSGlobalPoolParaTable 1 }
+
+    IbDHCPSGlobalPoolParaEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSGlobalPoolLeaseDay                 INTEGER,
+                ibDHCPSGlobalPoolLeaseHour                INTEGER,
+                ibDHCPSGlobalPoolLeaseMinute              INTEGER,
+                ibDHCPSGlobalPoolLeaseUnlimited           INTEGER,
+                ibDHCPSGlobalPoolDomainName               OCTET STRING,
+                ibDHCPSGlobalPoolClientGatewayIPString    OCTET STRING,
+                ibDHCPSGlobalPoolClientGatewayIPUndo      IpAddress,
+                ibDHCPSGlobalPoolClientDNSIPString        OCTET STRING,
+                ibDHCPSGlobalPoolClientDNSIPUndo          IpAddress,
+                ibDHCPSGlobalPoolClientNetbiosType        INTEGER,
+                ibDHCPSGlobalPoolClientNbnsIPString       OCTET STRING,
+                ibDHCPSGlobalPoolClientNbnsIPUndo         IpAddress,
+                ibDHCPSGlobalPoolParaUndoFlag             INTEGER,
+                ibDHCPSGlobalPoolIPInUseReset             INTEGER
+            }
+
+    ibDHCPSGlobalPoolLeaseDay OBJECT-TYPE
+        SYNTAX      INTEGER(0..365)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Number of days of the lease."
+        DEFVAL { 1 }
+        ::= { ibDHCPSGlobalPoolParaEntry 1 }
+
+    ibDHCPSGlobalPoolLeaseHour OBJECT-TYPE
+        SYNTAX      INTEGER(0..23)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Number of hours of the lease."
+        DEFVAL { 0 }
+        ::= { ibDHCPSGlobalPoolParaEntry 2 }
+
+    ibDHCPSGlobalPoolLeaseMinute OBJECT-TYPE
+        SYNTAX      INTEGER(0..59)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Number of minutes of the lease."
+        DEFVAL { 0 }
+        ::= { ibDHCPSGlobalPoolParaEntry 3 }
+
+    ibDHCPSGlobalPoolLeaseUnlimited OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                invalid(0),
+                unlimited(1)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "A flag denoting if the lease of a pool is
+            unlimited."
+        ::= { ibDHCPSGlobalPoolParaEntry 4 }
+
+    ibDHCPSGlobalPoolDomainName OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..255))
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Domain name for DHCP clients."
+        ::= { ibDHCPSGlobalPoolParaEntry 5 }
+
+    ibDHCPSGlobalPoolClientGatewayIPString OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..129))
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "String of gateway ip addresses for DHCP clients.
+            Since mostly 8 ip can be configured for a pool
+            totally, a string is defined to get or configure 8 ip
+            ip at a time."
+        ::= { ibDHCPSGlobalPoolParaEntry 6 }
+
+    ibDHCPSGlobalPoolClientGatewayIPUndo OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "A gateway ip address to delete. This object is
+            only for deleting a given ip of gateway router."
+        ::= { ibDHCPSGlobalPoolParaEntry 7 }
+
+    ibDHCPSGlobalPoolClientDNSIPString OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..129))
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "String of DNS server ip addresses for DHCP clients.
+            Since mostly 8 ip can be configured for a pool
+            totally, a string is defined to get or configure 8
+            ip at a time."
+        ::= { ibDHCPSGlobalPoolParaEntry 8 }
+
+    ibDHCPSGlobalPoolClientDNSIPUndo OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "A DNS server ip address to delete. This object
+            is only for deleting a given ip of DNS server."
+        ::= { ibDHCPSGlobalPoolParaEntry 9 }
+
+    ibDHCPSGlobalPoolClientNetbiosType OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                null(0),
+                bnode(1),
+                pnode(2),
+                mnode(4),
+                hnode(8)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "NetBios node type for DHCP clients."
+        DEFVAL { 0 }
+        ::= { ibDHCPSGlobalPoolParaEntry 10 }
+
+    ibDHCPSGlobalPoolClientNbnsIPString OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..129))
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "String of NetBios server ip addresses for DHCP
+            clients. Since mostly 8 ip can be configured for
+            a pool totally, so a string is defined to get or
+            configure 8 ip at a time."
+        ::= { ibDHCPSGlobalPoolParaEntry 11 }
+
+    ibDHCPSGlobalPoolClientNbnsIPUndo OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "A NetBios server ip address to delete. This
+            object is only for deleting a given ip of NetBios
+            server."
+        ::= { ibDHCPSGlobalPoolParaEntry 12 }
+
+    ibDHCPSGlobalPoolParaUndoFlag OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                undoDomain(1),
+                undoLease(2),
+                undoGateway(3),
+                undoDns(4),
+                undoNbns(5),
+                undoNbType(6)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Flag of undo-operation for ibDHCPSGlobalPoolParaTable."
+        ::= { ibDHCPSGlobalPoolParaEntry 13 }
+
+    ibDHCPSGlobalPoolIPInUseReset OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                reset(1)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Reset the auto binding ip of the given global
+            pool for DHCP server."
+        ::= { ibDHCPSGlobalPoolParaEntry 14 }
+
+--  =================================================================
+-- 4th Table of ibDHCPServerMibObject: ibDHCPSGlobalPoolOptionTable
+-- =================================================================
+    ibDHCPSGlobalPoolOptionTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSGlobalPoolOptionEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for configuring options to DHCP global pools."
+        ::= { ibDHCPServerMibObject 4 }
+
+    ibDHCPSGlobalPoolOptionEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSGlobalPoolOptionEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry containing the objects for configuring
+            options to DHCP global pools."
+        INDEX { ibDHCPSGlobalPoolName, ibDHCPSGlobalPoolOptionCode }
+        ::= { ibDHCPSGlobalPoolOptionTable 1 }
+
+    IbDHCPSGlobalPoolOptionEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSGlobalPoolOptionCode         INTEGER,
+                ibDHCPSGlobalPoolOptionType         INTEGER,
+                ibDHCPSGlobalPoolOptionAscii        OCTET STRING,
+                ibDHCPSGlobalPoolOptionHexString    OCTET STRING,
+                ibDHCPSGlobalPoolOptionIPString     OCTET STRING,
+                ibDHCPSGlobalPoolOptionRowStatus    RowStatus
+             }
+
+    ibDHCPSGlobalPoolOptionCode OBJECT-TYPE
+        SYNTAX      INTEGER(1..254)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Option code."
+        ::= { ibDHCPSGlobalPoolOptionEntry 1 }
+
+    ibDHCPSGlobalPoolOptionType OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                ascii(1),
+                hex(2),
+                ip(3)
+            }
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Option type."
+        ::= { ibDHCPSGlobalPoolOptionEntry 2 }
+
+    ibDHCPSGlobalPoolOptionAscii OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..63))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Ascii string of an option."
+        ::= { ibDHCPSGlobalPoolOptionEntry 3 }
+
+    ibDHCPSGlobalPoolOptionHexString OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..143))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Hex string of an option. 1st to 16th hex strings,
+            which are 2 bytes, 4 bytes, 6 bytes or 8 bytes,
+            can be configured at most simultaneously.
+            That means the format of each string
+            must be '12', '1234', '123456' or '12345678'."
+        ::= { ibDHCPSGlobalPoolOptionEntry 4 }
+
+    ibDHCPSGlobalPoolOptionIPString OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..129))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Ip string of an option. 1 to 8 ip addresses  can
+            be configured at most simultaneously."
+        ::= { ibDHCPSGlobalPoolOptionEntry 5 }
+
+    ibDHCPSGlobalPoolOptionRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus. Three actions are used: active,
+            createAndGo, destroy."
+        ::= { ibDHCPSGlobalPoolOptionEntry 6 }
+
+--  =================================================================
+-- 5th Table of ibDHCPServerMibObject:ibDHCPSGlobalTreeTable
+-- =================================================================
+    ibDHCPSGlobalTreeTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSGlobalTreeEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table containing the information of the tree of
+            DHCP global pools."
+        ::= { ibDHCPServerMibObject 5 }
+
+    ibDHCPSGlobalTreeEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSGlobalTreeEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry of objects containing the information
+            for displaying the tree of DHCP global pools."
+        INDEX { ibDHCPSGlobalPoolName }
+        ::= { ibDHCPSGlobalTreeTable 1 }
+
+    IbDHCPSGlobalTreeEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSGlobalTreeParentNodeName        OCTET STRING,
+                ibDHCPSGlobalTreeChildNodeName         OCTET STRING,
+                ibDHCPSGlobalTreePreSiblingNodeName    OCTET STRING,
+                ibDHCPSGlobalTreeSiblingNodeName       OCTET STRING
+             }
+
+    ibDHCPSGlobalTreeParentNodeName OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..255))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Pool name of the parent node."
+        ::= { ibDHCPSGlobalTreeEntry 1 }
+
+    ibDHCPSGlobalTreeChildNodeName OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..255))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Pool name of the child node."
+        ::= { ibDHCPSGlobalTreeEntry 2 }
+
+    ibDHCPSGlobalTreePreSiblingNodeName OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..255))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Pool name of the presibling node."
+        ::= { ibDHCPSGlobalTreeEntry 3 }
+
+    ibDHCPSGlobalTreeSiblingNodeName OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..255))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Pool name of the sibling node."
+        ::= { ibDHCPSGlobalTreeEntry 4 }
+
+--  Part 2: For DHCP server interface pool
+--
+-- =================================================================
+-- 6th Table of ibDHCPServerMibObject: ibDHCPSInterfacePoolParaTable
+-- =================================================================
+    ibDHCPSInterfacePoolParaTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSInterfacePoolParaEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for configuring parameters to DHCP interface
+            pools."
+        ::= { ibDHCPServerMibObject 6 }
+
+    ibDHCPSInterfacePoolParaEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSInterfacePoolParaEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry of objects for configuring parameters
+            to DHCP interface pools.
+            The index of this entry is the ifIndex of ethernet."
+        INDEX { ifIndex }
+        ::= { ibDHCPSInterfacePoolParaTable 1 }
+
+    IbDHCPSInterfacePoolParaEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSInterfacePoolLeaseDay              INTEGER,
+                ibDHCPSInterfacePoolLeaseHour             INTEGER,
+                ibDHCPSInterfacePoolLeaseMinute           INTEGER,
+                ibDHCPSInterfacePoolLeaseUnlimited        INTEGER,
+                ibDHCPSInterfacePoolDomainName            OCTET STRING,
+                ibDHCPSInterfacePoolClientDNSIPString     OCTET STRING,
+                ibDHCPSInterfacePoolClientDNSIPUndo       IpAddress,
+                ibDHCPSInterfacePoolClientNetbiosType     INTEGER,
+                ibDHCPSInterfacePoolClientNbnsIPString    OCTET STRING,
+                ibDHCPSInterfacePoolClientNbnsIPUndo      IpAddress,
+                ibDHCPSInterfacePoolParaUndoFlag          INTEGER,
+                ibDHCPSInterfacePoolIPInUseReset          INTEGER
+    }
+
+    ibDHCPSInterfacePoolLeaseDay OBJECT-TYPE
+        SYNTAX      INTEGER(0..365)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Number of days of the lease."
+        DEFVAL { 1 }
+        ::= { ibDHCPSInterfacePoolParaEntry 1 }
+
+    ibDHCPSInterfacePoolLeaseHour OBJECT-TYPE
+        SYNTAX      INTEGER(0..23)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Number of hours of the lease."
+        DEFVAL { 0 }
+        ::= { ibDHCPSInterfacePoolParaEntry 2 }
+
+    ibDHCPSInterfacePoolLeaseMinute OBJECT-TYPE
+        SYNTAX      INTEGER(0..59)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Number of minutes of the lease."
+        DEFVAL { 0 }
+        ::= { ibDHCPSInterfacePoolParaEntry 3 }
+
+    ibDHCPSInterfacePoolLeaseUnlimited OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                invalid(0),
+                unlimited(1)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "A flag denoting if the lease of a pool is
+            unlimited."
+        ::= { ibDHCPSInterfacePoolParaEntry 4 }
+
+    ibDHCPSInterfacePoolDomainName OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..255))
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Domain name for DHCP clients."
+        ::= { ibDHCPSInterfacePoolParaEntry 5 }
+
+    ibDHCPSInterfacePoolClientDNSIPString OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..129))
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "String of DNS server ip addresses for DHCP clients.
+            Since mostly 8 ip can be configured for a pool
+            totally, a string is defined to get or configure 8
+            ip at a time."
+        ::= { ibDHCPSInterfacePoolParaEntry 6 }
+
+    ibDHCPSInterfacePoolClientDNSIPUndo OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "A DNS server ip address to delete. This object
+            is only for deleting a given ip of DNS server."
+        ::= { ibDHCPSInterfacePoolParaEntry 7 }
+
+    ibDHCPSInterfacePoolClientNetbiosType OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                 null(0),
+                 bnode(1),
+                 pnode(2),
+                 mnode(4),
+                 hnode(8)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "NetBios node type for DHCP clients."
+        DEFVAL { 0 }
+        ::= { ibDHCPSInterfacePoolParaEntry 8 }
+
+    ibDHCPSInterfacePoolClientNbnsIPString OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..129))
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "String of NetBios server ip addresses for DHCP
+            clients. Since mostly 8 ip can be configured for
+            a pool totally, so a string is defined to get or
+            configure 8 ip at a time."
+        ::= { ibDHCPSInterfacePoolParaEntry 9 }
+
+    ibDHCPSInterfacePoolClientNbnsIPUndo OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "A NetBios server ip address to delete. This
+            object is only for deleting a given ip of NetBios
+            server."
+        ::= { ibDHCPSInterfacePoolParaEntry 10 }
+
+    ibDHCPSInterfacePoolParaUndoFlag OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                undoDomain(1),
+                undoLease(2),
+                undoDns(4),
+                undoNbns(5),
+                undoNbType(6)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Flag of undo-operation for
+            ibDHCPSInterfacePoolParaTable."
+        ::= { ibDHCPSInterfacePoolParaEntry 11 }
+
+    ibDHCPSInterfacePoolIPInUseReset OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                reset(1)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Reset the auto binding ip of the given interface
+            pool for DHCP server."
+        ::= { ibDHCPSInterfacePoolParaEntry 12 }
+
+--  =====================================================================
+-- 7th Table of ibDHCPServerMibObject: ibDHCPSInterfacePoolOptionTable
+-- =====================================================================
+    ibDHCPSInterfacePoolOptionTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSInterfacePoolOptionEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for configuring options to DHCP interface pools."
+        ::= { ibDHCPServerMibObject 7 }
+
+    ibDHCPSInterfacePoolOptionEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSInterfacePoolOptionEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry of objects for configuring options
+            to DHCP interface pools.
+            The index of this entry is the ifIndex of ethernet."
+        INDEX { ifIndex, ibDHCPSInterfacePoolOptionCode }
+        ::= { ibDHCPSInterfacePoolOptionTable 1 }
+
+    IbDHCPSInterfacePoolOptionEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSInterfacePoolOptionCode         INTEGER,
+                ibDHCPSInterfacePoolOptionType         INTEGER,
+                ibDHCPSInterfacePoolOptionAscii        OCTET STRING,
+                ibDHCPSInterfacePoolOptionHexString    OCTET STRING,
+                ibDHCPSInterfacePoolOptionIPString     OCTET STRING,
+                ibDHCPSInterfacePoolOptionRowStatus    RowStatus
+             }
+
+    ibDHCPSInterfacePoolOptionCode OBJECT-TYPE
+        SYNTAX      INTEGER(1..254)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Option Code."
+        ::= { ibDHCPSInterfacePoolOptionEntry 1 }
+
+    ibDHCPSInterfacePoolOptionType OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                ascii(1),
+                hex(2),
+                ip(3)
+            }
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Option type."
+        ::= { ibDHCPSInterfacePoolOptionEntry 2 }
+
+    ibDHCPSInterfacePoolOptionAscii OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..63))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Ascii string of an option."
+        ::= { ibDHCPSInterfacePoolOptionEntry 3 }
+
+    ibDHCPSInterfacePoolOptionHexString OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..143))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Hex string of an option. 1st to 16th hex strings,
+            which are 2 bytes, 4 bytes, 6 bytes or 8 bytes,
+            can be configured at most simultaneously.
+            That means the format of each string
+            must be '12', '1234', '123456' or '12345678'."
+        ::= { ibDHCPSInterfacePoolOptionEntry 4 }
+
+    ibDHCPSInterfacePoolOptionIPString OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..129))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Ip string of an option. 1 to 8 ip addresses  can
+            be configured at most simultaneously."
+        ::= { ibDHCPSInterfacePoolOptionEntry 5 }
+
+    ibDHCPSInterfacePoolOptionRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus. Three actions are used: active,
+            createAndGo, destroy."
+        ::= { ibDHCPSInterfacePoolOptionEntry 6 }
+
+--  =========================================================================
+-- 8th Table of ibDHCPServerMibObject: ibDHCPSInterfacePoolStaticBindTable
+-- =========================================================================
+    ibDHCPSInterfacePoolStaticBindTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSInterfacePoolStaticBindEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for configuring static binding to DHCP
+            interface pools."
+        ::= { ibDHCPServerMibObject 8 }
+
+    ibDHCPSInterfacePoolStaticBindEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSInterfacePoolStaticBindEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry of objects for configuring static
+            binding to DHCP interface pools.
+            The index of this entry is the ifIndex of ethernet."
+        INDEX { ifIndex, ibDHCPSInterfacePoolStaticBindIP }
+        ::= { ibDHCPSInterfacePoolStaticBindTable 1 }
+
+    IbDHCPSInterfacePoolStaticBindEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSInterfacePoolStaticBindIP           IpAddress,
+                ibDHCPSInterfacePoolStaticBindMac          MacAddress,
+                ibDHCPSInterfacePoolStaticBindRowStatus    RowStatus
+            }
+
+    ibDHCPSInterfacePoolStaticBindIP OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Ip address in static binding for DHCP
+            interface pools."
+        ::= { ibDHCPSInterfacePoolStaticBindEntry 1 }
+
+    ibDHCPSInterfacePoolStaticBindMac OBJECT-TYPE
+        SYNTAX      MacAddress
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Hardware address in static binding for DHCP
+            interface pools."
+        ::= { ibDHCPSInterfacePoolStaticBindEntry 2 }
+
+    ibDHCPSInterfacePoolStaticBindRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus. Three actions are used: active,
+            createAndGo, destroy."
+        ::= { ibDHCPSInterfacePoolStaticBindEntry 3 }
+
+--  Part 3: For DHCP server
+--
+-- =================================================================
+-- 9th Table of ibDHCPServerMibObject: ibDHCPSIPInUseTable
+-- =================================================================
+    ibDHCPSIPInUseTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSIPInUseEntry
+        MAX-ACCESS  not-accessible
+        STATUS      deprecated
+        DESCRIPTION
+            "A table for displaying the information of ip in use
+            for DHCP server pools."
+        ::= { ibDHCPServerMibObject 9 }
+
+    ibDHCPSIPInUseEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSIPInUseEntry
+        MAX-ACCESS  not-accessible
+        STATUS      deprecated
+        DESCRIPTION
+            "An entry of objects for displaying information
+            of ip in use for DHCP server pools."
+        INDEX { ibDHCPSIPInUseHAddr }
+        ::= { ibDHCPSIPInUseTable 1 }
+
+    IbDHCPSIPInUseEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSIPInUseHAddr        MacAddress,
+                ibDHCPSIPInUseIP           IpAddress,
+                ibDHCPSIPInUseEndLease     OCTET STRING,
+                ibDHCPSIPInUseType         INTEGER,
+                ibDHCPSIPInUsePoolName     OCTET STRING,
+                ibDHCPSIPInUseInterface    INTEGER,
+                ibDHCPSIPInUseVlan         INTEGER,
+                ibDHCPSIPInUseAtmpvc       INTEGER
+            }
+
+    ibDHCPSIPInUseHAddr OBJECT-TYPE
+        SYNTAX      MacAddress
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "Hardware address."
+        ::= { ibDHCPSIPInUseEntry 1 }
+
+    ibDHCPSIPInUseIP OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "Ip address in use."
+        ::= { ibDHCPSIPInUseEntry 2 }
+
+    ibDHCPSIPInUseEndLease OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..20))
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "End time of lease.
+            The structure of the OCTET STRING is
+            month/day/year hour:munite:second --
+            MM/DD/YYYY hh:mm:ss. "
+        ::= { ibDHCPSIPInUseEntry 3 }
+
+    ibDHCPSIPInUseType OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                manual(1),
+                auto(2),
+                release(3)
+            }
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "Type of binding."
+        ::= { ibDHCPSIPInUseEntry 4 }
+
+    ibDHCPSIPInUsePoolName OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..255))
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "Name of the DHCP server pool the ip belongs to."
+        ::= { ibDHCPSIPInUseEntry 5 }
+
+    ibDHCPSIPInUseInterface OBJECT-TYPE
+        SYNTAX      INTEGER
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "Interface index information."
+        ::= { ibDHCPSIPInUseEntry 6 }
+
+    ibDHCPSIPInUseVlan OBJECT-TYPE
+        SYNTAX      INTEGER(1..4094)
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "Vlan information."
+        ::= { ibDHCPSIPInUseEntry 7 }
+
+    ibDHCPSIPInUseAtmpvc OBJECT-TYPE
+        SYNTAX      INTEGER
+        MAX-ACCESS  read-only
+        STATUS      deprecated
+        DESCRIPTION
+            "Pvc information."
+        ::= { ibDHCPSIPInUseEntry 8 }
+
+--  =================================================================
+-- 10th Table of ibDHCPServerMibObject: ibDHCPSForbiddenIPTable
+-- =================================================================
+    ibDHCPSForbiddenIPTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSForbiddenIPEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for configuring forbidden ip to DHCP server."
+        ::= { ibDHCPServerMibObject 10 }
+
+    ibDHCPSForbiddenIPEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSForbiddenIPEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry for configuring forbidden ip to DHCP
+            server."
+        INDEX { ibDHCPSForbiddenIPStart, ibDHCPSForbiddenIPEnd }
+        ::= { ibDHCPSForbiddenIPTable 1 }
+
+    IbDHCPSForbiddenIPEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSForbiddenIPStart        IpAddress,
+                ibDHCPSForbiddenIPEnd          IpAddress,
+                ibDHCPSForbiddenIPRowStatus    RowStatus
+            }
+
+    ibDHCPSForbiddenIPStart OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Start ip of forbidden ip."
+        ::= { ibDHCPSForbiddenIPEntry 1 }
+
+    ibDHCPSForbiddenIPEnd OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "End ip of forbidden ip."
+        ::= { ibDHCPSForbiddenIPEntry 2 }
+
+    ibDHCPSForbiddenIPRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus. Three actions are used: active,
+            createAndGo, destroy."
+        ::= { ibDHCPSForbiddenIPEntry 3 }
+
+--  =================================================================
+-- 11th Table of ibDHCPServerMibObject: ibDHCPSConflictIPTable
+-- =================================================================
+    ibDHCPSConflictIPTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSConflictIPEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for displaying the information of conflict
+            ip for DHCP server."
+        ::= { ibDHCPServerMibObject 11 }
+
+    ibDHCPSConflictIPEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSConflictIPEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry for displaying the information of
+            conflict ip for DHCP server."
+        INDEX { ibDHCPSConflictIP }
+        ::= { ibDHCPSConflictIPTable 1 }
+
+    IbDHCPSConflictIPEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSConflictIP              IpAddress,
+                ibDHCPSConflictIPType          INTEGER,
+                ibDHCPSConflictIPDetectTime    OCTET STRING
+            }
+
+    ibDHCPSConflictIP OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Conflict ip."
+        ::= { ibDHCPSConflictIPEntry 1 }
+
+    ibDHCPSConflictIPType OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                ping(1),
+                arp(2)
+            }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Type of the detection of conflict ip."
+        ::= { ibDHCPSConflictIPEntry 2 }
+
+    ibDHCPSConflictIPDetectTime OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..20))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Time when the conflict is detected.
+            The structure of the OCTET STRING is
+            month/day/year hour:munite:second --
+            MM/DD/YYYY hh:mm:ss."
+        ::= { ibDHCPSConflictIPEntry 3 }
+
+--  Part 4: Non-table object
+--
+    ibDHCPSServiceStatus OBJECT-TYPE
+        SYNTAX      IbDhcpSEnabledStatus
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The status of DHCP service."
+        DEFVAL { enabled }
+        ::= { ibDHCPServerMibObject 12 }
+
+    ibDHCPSDetectingServerStatus OBJECT-TYPE
+        SYNTAX      IbDhcpSEnabledStatus
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The status of DHCP servers detecting function."
+        DEFVAL { disabled }
+        ::= { ibDHCPServerMibObject 13 }
+
+    ibDHCPSPingNum OBJECT-TYPE
+        SYNTAX      INTEGER(0..10)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The number of ping packets sent out."
+        DEFVAL { 2 }
+        ::= { ibDHCPServerMibObject 14 }
+
+    ibDHCPSPingTimeout OBJECT-TYPE
+        SYNTAX      INTEGER(0..10000)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The delay for the reply of a ping packet.
+            Unit: millisecond."
+        DEFVAL { 500 }
+        ::= { ibDHCPServerMibObject 15 }
+
+    ibDHCPSWriteDataStatus OBJECT-TYPE
+        SYNTAX      IbDhcpSEnabledStatus
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The status of the function writing data to the
+            harddisk."
+        DEFVAL { disabled }
+        ::= { ibDHCPServerMibObject 16 }
+
+    ibDHCPSWriteDataDirection OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..255))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The direction of writing data to a harddisk."
+        ::= { ibDHCPServerMibObject 17 }
+
+    ibDHCPSWriteDataDelay OBJECT-TYPE
+        SYNTAX      INTEGER(300..86400)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The allowable delay of writing data to the
+            harddisk. Unit: second."
+        DEFVAL { 300 }
+        ::= { ibDHCPServerMibObject 18 }
+
+    ibDHCPSWriteDataRecover OBJECT-TYPE
+        SYNTAX      IbDhcpSEnabledStatus
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The flag used to recover DHCP data with the data on
+            the harddisk."
+        ::= { ibDHCPServerMibObject 19 }
+
+    ibDHCPSIPInUseResetIP OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "An ip in use that will be cleared. 0 returned for SET
+            operation."
+        ::= { ibDHCPServerMibObject 20 }
+
+    ibDHCPSConflictIPResetIP OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "A conflict ip that will be cleared. 0 returned for
+            SET operation."
+        ::= { ibDHCPServerMibObject 21 }
+
+    ibDHCPSIPResetFlag OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                invalid(0),
+                ipInUse(1),
+                conflictIp(2)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "A flag that descript the reset operation."
+        ::= { ibDHCPServerMibObject 22 }
+
+    ibDHCPSGlobalPoolNumber OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of DHCP server global-pools."
+        ::= { ibDHCPServerMibObject 23 }
+
+    ibDHCPSGlobalPoolAutoBindingNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of auto binding ip in DHCP server global-pools."
+        ::= { ibDHCPServerMibObject 24 }
+
+    ibDHCPSGlobalPoolManualBindingNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of manual binding ip in DHCP
+            server global-pools."
+        ::= { ibDHCPServerMibObject 25 }
+
+    ibDHCPSGlobalPoolExpiredBindingNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of expired binding ip in DHCP
+            server global-pools."
+        ::= { ibDHCPServerMibObject 26 }
+
+    ibDHCPSInterfacePoolNumber OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of DHCP server interface-pools."
+        ::= { ibDHCPServerMibObject 27 }
+
+    ibDHCPSInterfacePoolAutoBindingNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of auto binding ip in DHCP server
+            interface-pools."
+        ::= { ibDHCPServerMibObject 28 }
+
+    ibDHCPSInterfacePoolManualBindingNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of manual binding ip in DHCP server
+            interface-pools."
+        ::= { ibDHCPServerMibObject 29 }
+
+    ibDHCPSInterfacePoolExpiredBindingNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of expired binding ip in DHCP server
+            interface-pools."
+        ::= { ibDHCPServerMibObject 30 }
+
+    ibDHCPSBadPktNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of the bad packets received."
+        ::= { ibDHCPServerMibObject 31 }
+
+    ibDHCPSBootRequestPktNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of the packets received by DHCP
+            Server from DHCP clients."
+        ::= { ibDHCPServerMibObject 32 }
+
+    ibDHCPSDiscoverPktNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of the DHCP Discover packets
+            received from the DHCP clients."
+        ::= { ibDHCPServerMibObject 33 }
+
+    ibDHCPSRequestPktNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of the DHCP Request packets
+            received from the DHCP clients."
+        ::= { ibDHCPServerMibObject 34 }
+
+    ibDHCPSDeclinePktNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of the DHCP Decline packets
+            received from the DHCP clients."
+        ::= { ibDHCPServerMibObject 35 }
+
+    ibDHCPSReleasePktNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of the DHCP Release packets
+            received from the DHCP clients."
+        ::= { ibDHCPServerMibObject 36 }
+
+    ibDHCPSInformPktNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of the DHCP Inform packets
+            received from the DHCP clients."
+        ::= { ibDHCPServerMibObject 37 }
+
+    ibDHCPSBootReplyPktNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of the packets sent by DHCP server
+            to DHCP clients."
+        ::= { ibDHCPServerMibObject 38 }
+
+    ibDHCPSOfferPktNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of the DHCP Offer packets
+            sent by the DHCP server."
+        ::= { ibDHCPServerMibObject 39 }
+
+    ibDHCPSAckPktNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of the DHCP Ack packets
+            sent by the DHCP server."
+        ::= { ibDHCPServerMibObject 40 }
+
+    ibDHCPSNakPktNum OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of the DHCP Nak packets
+            sent by the DHCP server."
+        ::= { ibDHCPServerMibObject 41 }
+
+    ibDHCPSStatisticsReset OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                reset(1)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Reset the above statistic information of packets
+            received and sent by the DHCP server."
+        ::= { ibDHCPServerMibObject 42 }
+
+-- =================================================================
+-- 43th Table of ibDHCPServerMibObject: ibDHCPSIPInUseTableEx
+-- =================================================================
+    ibDHCPSIPInUseExTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbDHCPSIPInUseExEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "A table for displaying the information of ip in use
+            for DHCP Server pools. "
+        ::= { ibDHCPServerMibObject 43 }
+
+    ibDHCPSIPInUseExEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSIPInUseExEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry of objects for displaying information
+            of ip in use for DHCP server pools."
+        INDEX { ibDHCPSIPInUseHAddrEx, ibDHCPSIPInUseVlanIdEx }
+        ::= { ibDHCPSIPInUseExTable 1 }
+
+    IbDHCPSIPInUseExEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSIPInUseHAddrEx               MacAddress,
+                ibDHCPSIPInUseVlanIdEx              INTEGER,
+                ibDHCPSIPInUseIPEx                  IpAddress,
+                ibDHCPSIPInUseEndLeaseEx            OCTET STRING,
+                ibDHCPSIPInUseTypeEx                INTEGER,
+                ibDHCPSIPInUsePoolNameEx            OCTET STRING,
+                ibDHCPSIPInUseIfIndexEx             INTEGER,
+                ibDHCPSIPInUseServerPortVlanIdEx    INTEGER,
+                ibDHCPSIPInUseAtmpvcEx              INTEGER
+            }
+
+    ibDHCPSIPInUseHAddrEx OBJECT-TYPE
+        SYNTAX      MacAddress
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Hardware address."
+        ::= { ibDHCPSIPInUseExEntry 1 }
+
+    ibDHCPSIPInUseVlanIdEx OBJECT-TYPE
+        SYNTAX      INTEGER(1..4094|60000)
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "User's vlanID.
+            60000 means that a client doesn't have vlanID or have an
+            invalid vlanID."
+        ::= { ibDHCPSIPInUseExEntry 2 }
+
+    ibDHCPSIPInUseIPEx OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Ip address in use."
+        ::= { ibDHCPSIPInUseExEntry 3 }
+
+    ibDHCPSIPInUseEndLeaseEx OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..20))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "End time of lease.
+            The structure of the OCTET STRING is
+            month/day/year hour:munite:second --
+            MM/DD/YYYY hh:mm:ss."
+        ::= { ibDHCPSIPInUseExEntry 4 }
+
+    ibDHCPSIPInUseTypeEx OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                manual(1),
+                auto(2),
+                release(3)
+            }
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Type of binding."
+        ::= { ibDHCPSIPInUseExEntry 5 }
+
+    ibDHCPSIPInUsePoolNameEx OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(1..255))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Name of the DHCP server pool the ip belongs to."
+        ::= { ibDHCPSIPInUseExEntry 6 }
+
+    ibDHCPSIPInUseIfIndexEx OBJECT-TYPE
+        SYNTAX      INTEGER
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Interface index information."
+        ::= { ibDHCPSIPInUseExEntry 7 }
+
+    ibDHCPSIPInUseServerPortVlanIdEx OBJECT-TYPE
+        SYNTAX      INTEGER(1..4094)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Vlan information of port on server through
+             which the client user accesses server."
+        ::= { ibDHCPSIPInUseExEntry 8 }
+
+    ibDHCPSIPInUseAtmpvcEx OBJECT-TYPE
+        SYNTAX      INTEGER
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Pvc information."
+        ::= { ibDHCPSIPInUseExEntry 9 }
+
+--  Conformance information
+--
+    ibDHCPServerMIBConformance OBJECT IDENTIFIER ::= { ibDHCPServerMib 2 }
+
+    ibDHCPServerMIBCompliances OBJECT IDENTIFIER ::= { ibDHCPServerMIBConformance 1 }
+
+    ibDHCPServerMIBGroups OBJECT IDENTIFIER ::= { ibDHCPServerMIBConformance 2 }
+
+--  Units of conformance
+--
+    ibDHCPServerMIBGroup OBJECT-GROUP
+        OBJECTS { ibDHCPSGlobalPoolName, ibDHCPSGlobalPoolRowStatus, ibDHCPSGlobalPoolType, ibDHCPSGlobalPoolNetwork, ibDHCPSGlobalPoolNetworkMask,
+            ibDHCPSGlobalPoolHostIPAddr, ibDHCPSGlobalPoolHostMask, ibDHCPSGlobalPoolHostHAddr, ibDHCPSGlobalPoolConfigUndoFlag, ibDHCPSGlobalPoolLeaseDay,
+            ibDHCPSGlobalPoolLeaseHour, ibDHCPSGlobalPoolLeaseMinute, ibDHCPSGlobalPoolLeaseUnlimited, ibDHCPSGlobalPoolDomainName, ibDHCPSGlobalPoolClientGatewayIPString,
+            ibDHCPSGlobalPoolClientGatewayIPUndo, ibDHCPSGlobalPoolClientDNSIPString, ibDHCPSGlobalPoolClientDNSIPUndo, ibDHCPSGlobalPoolClientNetbiosType, ibDHCPSGlobalPoolClientNbnsIPString,
+            ibDHCPSGlobalPoolClientNbnsIPUndo, ibDHCPSGlobalPoolParaUndoFlag, ibDHCPSGlobalPoolIPInUseReset, ibDHCPSGlobalPoolOptionCode, ibDHCPSGlobalPoolOptionType,
+            ibDHCPSGlobalPoolOptionAscii, ibDHCPSGlobalPoolOptionHexString, ibDHCPSGlobalPoolOptionIPString, ibDHCPSGlobalPoolOptionRowStatus, ibDHCPSGlobalTreeParentNodeName,
+            ibDHCPSGlobalTreeChildNodeName, ibDHCPSGlobalTreePreSiblingNodeName, ibDHCPSGlobalTreeSiblingNodeName, ibDHCPSInterfacePoolLeaseDay, ibDHCPSInterfacePoolLeaseHour,
+            ibDHCPSInterfacePoolLeaseMinute, ibDHCPSInterfacePoolLeaseUnlimited, ibDHCPSInterfacePoolDomainName, ibDHCPSInterfacePoolClientDNSIPString, ibDHCPSInterfacePoolClientDNSIPUndo,
+            ibDHCPSInterfacePoolClientNetbiosType, ibDHCPSInterfacePoolClientNbnsIPString, ibDHCPSInterfacePoolClientNbnsIPUndo, ibDHCPSInterfacePoolParaUndoFlag, ibDHCPSInterfacePoolIPInUseReset,
+            ibDHCPSInterfacePoolOptionCode, ibDHCPSInterfacePoolOptionType, ibDHCPSInterfacePoolOptionAscii, ibDHCPSInterfacePoolOptionHexString, ibDHCPSInterfacePoolOptionIPString,
+            ibDHCPSInterfacePoolOptionRowStatus, ibDHCPSInterfacePoolStaticBindIP, ibDHCPSInterfacePoolStaticBindMac, ibDHCPSInterfacePoolStaticBindRowStatus, ibDHCPSIPInUseHAddr,
+            ibDHCPSIPInUseIP, ibDHCPSIPInUseEndLease, ibDHCPSIPInUseType, ibDHCPSIPInUsePoolName, ibDHCPSIPInUseInterface,
+            ibDHCPSIPInUseVlan, ibDHCPSIPInUseAtmpvc, ibDHCPSForbiddenIPStart, ibDHCPSForbiddenIPEnd, ibDHCPSForbiddenIPRowStatus,
+            ibDHCPSConflictIP, ibDHCPSConflictIPType, ibDHCPSConflictIPDetectTime, ibDHCPSServiceStatus, ibDHCPSDetectingServerStatus,
+            ibDHCPSPingNum, ibDHCPSPingTimeout, ibDHCPSWriteDataStatus, ibDHCPSWriteDataDirection, ibDHCPSWriteDataDelay,
+            ibDHCPSWriteDataRecover, ibDHCPSIPInUseResetIP, ibDHCPSConflictIPResetIP, ibDHCPSIPResetFlag, ibDHCPSGlobalPoolNumber,
+            ibDHCPSGlobalPoolAutoBindingNum, ibDHCPSGlobalPoolManualBindingNum, ibDHCPSGlobalPoolExpiredBindingNum, ibDHCPSInterfacePoolNumber, ibDHCPSInterfacePoolAutoBindingNum,
+            ibDHCPSInterfacePoolManualBindingNum, ibDHCPSInterfacePoolExpiredBindingNum, ibDHCPSBadPktNum, ibDHCPSBootRequestPktNum, ibDHCPSDiscoverPktNum,
+            ibDHCPSRequestPktNum, ibDHCPSDeclinePktNum, ibDHCPSReleasePktNum, ibDHCPSInformPktNum, ibDHCPSBootReplyPktNum,
+            ibDHCPSOfferPktNum, ibDHCPSAckPktNum, ibDHCPSNakPktNum, ibDHCPSStatisticsReset,ibDHCPSIPInUseHAddrEx,ibDHCPSIPInUseVlanIdEx,
+            ibDHCPSIPInUseIPEx, ibDHCPSIPInUseEndLeaseEx,ibDHCPSIPInUseTypeEx, ibDHCPSIPInUsePoolNameEx, ibDHCPSIPInUseIfIndexEx,
+            ibDHCPSIPInUseServerPortVlanIdEx, ibDHCPSIPInUseAtmpvcEx }
+        STATUS      current
+        DESCRIPTION
+            "The basic collection of objects providing management of
+            DHCP server."
+        ::= { ibDHCPServerMIBGroups 1 }
+
+
+    END

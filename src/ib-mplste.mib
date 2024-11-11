@@ -1,0 +1,359 @@
+-- =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Multiprotocol Label Switching Traffic Engineering MIB
+-- Reference:
+-- Version: V1.2
+-- History:
+--   V1.0 2013-06-13 Initial version Created by Neng Yan
+--   V1.1 2022-06-09 Modified by Zhou wan, Added ibMplsTeNotifications
+--   V1.2 2022-07-10 Modified by Zhu jieyi, Modified ibMplsTeNotifications
+-- =============================================================================
+IB-MPLSTE-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Unsigned32, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    RowStatus, TruthValue
+        FROM SNMPv2-TC
+    ibCommon
+        FROM IB-OID-MIB
+    ;
+
+-- =============================================================================
+-- module identity part
+-- =============================================================================
+ibMplsTe MODULE-IDENTITY
+    LAST-UPDATED
+        "202207101100Z"        -- July 10, 2022 at 11:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Multiprotocol Label Switching Traffic Engineering MIB"
+    REVISION
+        "202207101100Z"   -- July 10, 2022 at 11:00 GMT
+    DESCRIPTION
+        "Modified ibMplsTeNotifications."
+    REVISION
+        "202206091100Z"   -- Jan 09, 2022 at 11:00 GMT
+    DESCRIPTION
+        "Added ibMplsTeNotifications."
+    REVISION
+        "201306131800Z"   -- Jan 13, 2013 at 18:00 GMT
+    DESCRIPTION
+        "Initial version of this MIB."
+    ::= { ibCommon 143 }
+
+-- =============================================================================
+-- object definition begin
+-- =============================================================================
+ibMplsTeNotifications OBJECT IDENTIFIER ::= { ibMplsTe 0 }
+
+ibMplsTeObjects       OBJECT IDENTIFIER ::= { ibMplsTe 1 }
+
+ibMplsTeScalarGroup   OBJECT IDENTIFIER ::= { ibMplsTeObjects 1 }
+
+ibMplsTeStatus    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The global configuration of MPLS(Multiprotocol Label Switching)
+        TE(Traffic Engineering)."
+    ::= { ibMplsTeScalarGroup 1 }
+
+ibMplsTeRsvpStatus    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The global configuration of RSVP(Resource Reservation Protocol)."
+    ::= { ibMplsTeScalarGroup 2 }
+
+ibMplsTeTunnelInfo    OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..127))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of MPLS(Multiprotocol Label Switching)
+         TE(Traffic Engineering) Tunnel."
+    ::= { ibMplsTeScalarGroup 3 }
+
+-- =============================================================================
+-- ibMplsTeTable Definition
+-- =============================================================================
+ibMplsTeTable     OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMplsTeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring MPLS TE parameters."
+    ::= { ibMplsTeObjects 2 }
+
+ibMplsTeEntry     OBJECT-TYPE
+    SYNTAX      IbMplsTeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for configuring MPLS TE parameters."
+    INDEX
+    {
+        ibMplsTeIndex
+    }
+    ::= { ibMplsTeTable 1 }
+
+IbMplsTeEntry ::=
+    SEQUENCE
+    {
+        ibMplsTeIndex                 Unsigned32,
+        ibMplsTeCapability            TruthValue,
+        ibMplsTeRowStatus             RowStatus
+    }
+
+ibMplsTeIndex     OBJECT-TYPE
+    SYNTAX      Unsigned32(1..4294967295)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Index of TE interface."
+    ::= { ibMplsTeEntry 1 }
+
+ibMplsTeCapability    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The TE capability of an interface."
+    DEFVAL { false }
+    ::= { ibMplsTeEntry 2 }
+
+ibMplsTeRowStatus     OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry. A row entry cannot
+        be modified when the value of this object is 'active'."
+    ::= { ibMplsTeEntry 3 }
+-- =============================================================================
+-- End of ibMplsTeTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibMplsTeRsvpTable Definition
+-- =============================================================================
+ibMplsTeRsvpTable     OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMplsTeRsvpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring RSVP(Resource Reservation Protocol)
+        TE parameters."
+    ::= { ibMplsTeObjects 3 }
+
+ibMplsTeRsvpEntry     OBJECT-TYPE
+    SYNTAX      IbMplsTeRsvpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for configuring RSVP TE parameters."
+    INDEX
+    {
+        ibMplsTeRsvpIndex
+    }
+    ::= { ibMplsTeRsvpTable 1 }
+
+IbMplsTeRsvpEntry ::=
+    SEQUENCE
+    {
+        ibMplsTeRsvpIndex                 Unsigned32,
+        ibMplsTeRsvpCapability            TruthValue,
+        ibMplsTeRsvpRowStatus             RowStatus
+    }
+
+ibMplsTeRsvpIndex     OBJECT-TYPE
+    SYNTAX      Unsigned32(1..4294967295)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Index of RSVP interface."
+    ::= { ibMplsTeRsvpEntry 1 }
+
+ibMplsTeRsvpCapability    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The RSVP capability of an interface."
+    DEFVAL { false }
+    ::= { ibMplsTeRsvpEntry 2 }
+
+ibMplsTeRsvpRowStatus     OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry. A row entry cannot
+        be modified when the value of this object is 'active'."
+    ::= { ibMplsTeRsvpEntry 3 }
+-- =============================================================================
+-- End of ibMplsTeRsvpTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- Notifications
+-- =============================================================================
+ibMplsTeTunnelHsbSwitch  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the flow switched
+       from main LSP to hot-standby LSP."
+    ::= { ibMplsTeNotifications 1 }
+
+ibMplsTeTunnelHsbResume  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the flow switched
+       back from hot-standby LSP to main LSP."
+    ::= { ibMplsTeNotifications 2 }
+
+ibMplsTeTunnelObSwitch  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the flow switched
+       from main LSP to Ordinary Backup LSP."
+    ::= { ibMplsTeNotifications 3 }
+
+ibMplsTeTunnelObResume  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the flow switched
+       back from Ordinary Backup LSP to main LSP."
+    ::= { ibMplsTeNotifications 4 }
+
+ibMplsTeTunnelHsbLspDown  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the hot-standby LSP
+       of the tunnel changed to Down."
+    ::= { ibMplsTeNotifications 5 }
+
+ibMplsTeTunnelHsbLspUp  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the hot-standby LSP
+       of the tunnel changed to Up."
+    ::= { ibMplsTeNotifications 6 }
+
+ibMplsTeTunnelObLspDown  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the ordinary backup LSP
+       of the tunnel changed to Down."
+    ::= { ibMplsTeNotifications 7 }
+
+ibMplsTeTunnelObLspUp  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the ordinary backup LSP
+       of the tunnel changed to Up."
+    ::= { ibMplsTeNotifications 8 }
+
+ibMplsTeTunnelMainLspDown  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the Main LSP
+       of the tunnel changed to Down."
+    ::= { ibMplsTeNotifications 9 }
+
+ibMplsTeTunnelMainLspUp  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the Main LSP
+       of the tunnel changed to Up."
+    ::= { ibMplsTeNotifications 10 }
+
+ibMplsTeTunnelChangeBw  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the Bandwidth
+       of the tunnel changed."
+    ::= { ibMplsTeNotifications 11 }
+
+ibMplsTeAutoTunnelUp   NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the auto tunnel changed to Up."
+    ::= { ibMplsTeNotifications 12 }
+
+ibMplsTeLspBfdDown   NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the status of BFD
+       for TE LSP changed to down."
+    ::= { ibMplsTeNotifications 13 }
+
+ibMplsTeLspBfdDownClear   NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the BFD for TE LSP
+       down alarm is cleared."
+    ::= { ibMplsTeNotifications 14 }
+
+ibMplsTeTunnelDelete   NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the MPLS TE Tunnel is deleted."
+    ::= { ibMplsTeNotifications 15 }
+
+ibMplsTeAutoTunnelMainLspUp   NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the Main Lsp of
+       TE Auto Tunnel changed to up."
+    ::= { ibMplsTeNotifications 16 }
+
+ibMplsTeP2mpTunnelSubLspDown   NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the status of
+       P2MP TE Tunnel sub-lsp changed to down."
+    ::= { ibMplsTeNotifications 17 }
+
+ibMplsTeP2mpTunnelDown   NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the P2MP TE Tunnel changed to down."
+    ::= { ibMplsTeNotifications 18 }
+
+ibMplsTeP2mpTunnelUp   NOTIFICATION-TYPE
+    OBJECTS {  ibMplsTeTunnelInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the P2MP TE Tunnel changed to up."
+    ::= { ibMplsTeNotifications 19 }
+
+-- =============================================================================
+-- End of notifications.
+-- =============================================================================
+
+END

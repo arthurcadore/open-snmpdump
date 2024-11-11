@@ -1,0 +1,142 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- Description:  The purpose of this MIB file is to provide the definition of
+--               the DAC(Data Analysis Center) trap.
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2022/07/15 created by suncao
+--      The initial revision of this MIB module.
+--      Add ibDacTrapStoreFull,
+--      ibDacTrapStoreDeleteFile,
+--      ibDacTrapStorageChange,
+--      ibDacTrapTotalStoreFull.
+-- ============================================================================
+IB-DAC-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI;
+
+ibDac MODULE-IDENTITY
+    LAST-UPDATED "202207151100Z"             -- July 15, 2022 at 11:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Add ibDacTrapStoreFull,
+        ibDacTrapStoreDeleteFile,
+        ibDacTrapStorageChange,
+        ibDacTrapTotalStoreFull"
+
+    REVISION "202207151100Z"                -- July 15, 2022 at 11:00 GMT
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 237 }
+
+--
+-- Node definitions
+--
+
+-- Global Variants
+ibDacStoreTraps OBJECT IDENTIFIER ::= { ibDac 1 }
+
+--                     **************Global Variants***************
+-- Describe objects for dac trap
+ibDacTrapsStorePrefix OBJECT IDENTIFIER ::= { ibDacStoreTraps 0 }
+ibDacTrapStoreFull NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDacStoreServiceName,
+            ibDacStoreThresholdType,
+            ibDacStoreThresholdValue
+        }
+    STATUS    current
+    DESCRIPTION
+        "Send trap when storage space or storage time reaches the upper limit."
+    ::= { ibDacTrapsStorePrefix 1 }
+ibDacTrapStoreDeleteFile NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDacStoreServiceName,
+            ibDacStoreThresholdType
+        }
+    STATUS    current
+    DESCRIPTION
+        "When the storage space or storage time reaches the upper limit,
+        delete the data beyond the upper limit."
+    ::= { ibDacTrapsStorePrefix 2 }
+ibDacTrapStorageChange NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDacNewStorageMedia,
+            ibDacOldStorageMedia,
+            ibDacStorageChangeReason,
+            ibDacStorageChangeTip
+        }
+    STATUS    current
+    DESCRIPTION
+        "Log storage media switching."
+    ::= { ibDacTrapsStorePrefix 3 }
+ibDacTrapTotalStoreFull NOTIFICATION-TYPE
+    STATUS    current
+    DESCRIPTION
+        "The total storage space utilization rate of DAC business has reached 98%."
+    ::= { ibDacTrapsStorePrefix 4 }
+
+ibDacTrapsStoreObjects OBJECT IDENTIFIER ::= { ibDacStoreTraps 1 }
+ibDacStoreServiceName OBJECT-TYPE
+    SYNTAX    OCTET STRING(SIZE(0..36))
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Service identification of storage alarm."
+    ::= { ibDacTrapsStoreObjects 1 }
+ibDacStoreThresholdType OBJECT-TYPE
+    SYNTAX    Unsigned32(1..2)
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Storage time alarm or storage space alarm."
+    ::= { ibDacTrapsStoreObjects 2 }
+ibDacStoreThresholdValue OBJECT-TYPE
+    SYNTAX    OCTET STRING(SIZE(0..16))
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Storage alarm threshold."
+    ::= { ibDacTrapsStoreObjects 3 }
+ibDacNewStorageMedia OBJECT-TYPE
+    SYNTAX    OCTET STRING(SIZE(0..32))
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "New storage media file system name after switching."
+    ::= { ibDacTrapsStoreObjects 4 }
+ibDacOldStorageMedia OBJECT-TYPE
+    SYNTAX    OCTET STRING(SIZE(0..32))
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Old storage media file system name after switching."
+    ::= { ibDacTrapsStoreObjects 5 }
+ibDacStorageChangeReason OBJECT-TYPE
+    SYNTAX    OCTET STRING(SIZE(0..128))
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "The reason for switching storage media."
+    ::= { ibDacTrapsStoreObjects 6 }
+ibDacStorageChangeTip OBJECT-TYPE
+    SYNTAX    OCTET STRING(SIZE(0..128))
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "If the new storage medium is not memory, this item is empty.
+        Otherwise, the corresponding prompt message will be prompted."
+    ::= { ibDacTrapsStoreObjects 7 }
+
+END

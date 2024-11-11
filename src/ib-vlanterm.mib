@@ -1,0 +1,213 @@
+-- =========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:  Eth vlan termination mib
+-- Reference:
+-- Version: V1.0
+-- History:
+--     V1.0 Initial version 2020-09-01   by zhangxing
+-- =========================================================================
+IB-VLANTERM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    Unsigned32, OBJECT-TYPE, MODULE-IDENTITY
+        FROM SNMPv2-SMI
+    TruthValue
+        FROM SNMPv2-TC
+    InterfaceIndex
+        FROM IF-MIB
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibVlanTerm MODULE-IDENTITY
+    LAST-UPDATED "202009011638Z"        -- September 01, 2020 at 16:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+         "The VLAN Terminaion MIB."
+    REVISION  "202009011638Z"        -- September 01, 2020 at 16:00 GMT
+    DESCRIPTION "Creation Date."
+    ::= { ibCommon 193 }
+
+ibVlanTermObjects       OBJECT IDENTIFIER ::= { ibVlanTerm 1 }
+
+-- ---------------------------------------------------------- --
+-- The vlan dot1q termination Table
+-- ---------------------------------------------------------- --
+
+ibVlanTermDot1qTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbVlanTermDot1qEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The entry of ibVlanTermDot1qTable."
+    ::= { ibVlanTermObjects 1 }
+
+ibVlanTermDot1qEntry OBJECT-TYPE
+    SYNTAX IbVlanTermDot1qEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry represents the parameters of an interface."
+    INDEX { ibVlanTermDot1qIfIndex,
+            ibVlanTermDot1qVidStart
+          }
+    ::= { ibVlanTermDot1qTable 1 }
+
+IbVlanTermDot1qEntry ::=
+    SEQUENCE {
+        ibVlanTermDot1qIfIndex           InterfaceIndex,
+        ibVlanTermDot1qVidStart          Unsigned32,
+        ibVlanTermDot1qVidEnd            Unsigned32,
+        ibVlanTermDot1qEncapFlag         INTEGER,
+        ibVlanTermDot1qIsUserVlanMode    TruthValue
+        }
+
+ibVlanTermDot1qIfIndex OBJECT-TYPE
+    SYNTAX InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Subinterface index."
+    ::= { ibVlanTermDot1qEntry 1 }
+
+ibVlanTermDot1qVidStart OBJECT-TYPE
+    SYNTAX Unsigned32 (1..4094)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Start outermost VLAN ID."
+    ::= { ibVlanTermDot1qEntry 2 }
+
+ibVlanTermDot1qVidEnd OBJECT-TYPE
+    SYNTAX    Unsigned32 (1..4094)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "End outermost VLAN ID."
+    ::= { ibVlanTermDot1qEntry 3 }
+
+ibVlanTermDot1qEncapFlag OBJECT-TYPE
+    SYNTAX    INTEGER {
+                         strict(0),
+                         loose(1)
+                      }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "A subinterface to receive and terminate packets
+         that include two or more layers of VLAN tags."
+    ::= { ibVlanTermDot1qEntry 4 }
+
+ibVlanTermDot1qIsUserVlanMode OBJECT-TYPE
+    SYNTAX    TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "VLAN termination mode.
+         true : user-vlan
+         false : vlan-type"
+    ::= { ibVlanTermDot1qEntry 5 }
+
+-- ---------------------------------------------------------- --
+-- The vlan qinq termination Table
+-- ---------------------------------------------------------- --
+
+ibVlanTermQinqTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbVlanTermQinqEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The entry of ibVlanTermQinqTable."
+    ::= { ibVlanTermObjects 2 }
+
+ibVlanTermQinqEntry OBJECT-TYPE
+    SYNTAX IbVlanTermQinqEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry represents the parameters of an interface."
+    INDEX { ibVlanTermQinQIfIndex,
+            ibVlanTermQinQFirstVlan,
+            ibVlanTermQinQSecondVlanStart
+          }
+    ::= { ibVlanTermQinqTable 1 }
+
+IbVlanTermQinqEntry ::=
+    SEQUENCE {
+        ibVlanTermQinQIfIndex          InterfaceIndex,
+        ibVlanTermQinQFirstVlan        Unsigned32,
+        ibVlanTermQinQSecondVlanStart  Unsigned32,
+        ibVlanTermQinQSecondVlanEnd    Unsigned32,
+        ibVlanTermQinQQinqAny          TruthValue,
+        ibVlanTermQinQEncapFlag        INTEGER,
+        ibVlanTermQinQIsUserVlanMode   TruthValue
+        }
+
+ibVlanTermQinQIfIndex OBJECT-TYPE
+    SYNTAX InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Subinterface index."
+    ::= { ibVlanTermQinqEntry 1 }
+
+ibVlanTermQinQFirstVlan OBJECT-TYPE
+    SYNTAX Unsigned32 (1..4094)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The outermost VLAN ID."
+    ::= { ibVlanTermQinqEntry 2 }
+
+ibVlanTermQinQSecondVlanStart OBJECT-TYPE
+    SYNTAX Unsigned32 (1..4095)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Start innermost VLAN ID.
+         When it is 4095, only ibVlanTermQinQQinqAny is true."
+    ::= { ibVlanTermQinqEntry 3 }
+
+ibVlanTermQinQSecondVlanEnd OBJECT-TYPE
+    SYNTAX Unsigned32 (1..4095)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "End innermost vlan ID.
+         When it is 4095, only ibVlanTermQinQQinqAny is true."
+    ::= { ibVlanTermQinqEntry 4 }
+
+ibVlanTermQinQQinqAny OBJECT-TYPE
+    SYNTAX    TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "true : Specifies all values between 1 and 4094."
+    ::= { ibVlanTermQinqEntry 5 }
+
+ibVlanTermQinQEncapFlag OBJECT-TYPE
+    SYNTAX    INTEGER {
+                         strict(0),
+                         loose(1)
+                      }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "A subinterface to receive and terminate packets
+         that include two or more layers of VLAN tags."
+    ::= { ibVlanTermQinqEntry 6 }
+
+ibVlanTermQinQIsUserVlanMode OBJECT-TYPE
+    SYNTAX    TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "VLAN termination mode.
+         true : user-vlan
+         false : vlan-type"
+    ::= { ibVlanTermQinqEntry 7 }
+
+END

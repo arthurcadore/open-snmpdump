@@ -1,0 +1,375 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Resource Monitor MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2017-04-01 created by yanfang.
+-- ============================================================================
+IB-RES-MON-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM  IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY,
+    NOTIFICATION-TYPE, Unsigned32
+        FROM SNMPv2-SMI
+    TruthValue
+        FROM SNMPv2-TC;
+
+ibResMon MODULE-IDENTITY
+    LAST-UPDATED "201704010000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Resource monitor information base for managing devices."
+    REVISION
+         "201704010000Z"
+    DESCRIPTION
+        "The first version of this module."
+    ::= { ibCommon 169 }
+
+--
+-- Nodes defined
+--
+ibResMonScalarObjects OBJECT IDENTIFIER ::= { ibResMon 1 }
+
+ibResMonMinorResendEnable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The switch for enabling or disabling retransmission of
+        minor resource depletion alarms."
+    ::= { ibResMonScalarObjects 1 }
+
+ibResMonOutputEnable OBJECT-TYPE
+    SYNTAX BITS
+    {
+        syslog(0),
+        snmpNotification(1),
+        netconfEvent(2)
+    }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Destinations for resource depletion alarms,
+        including syslog, SNMP notification, and NETCONF event."
+    ::= { ibResMonScalarObjects 2 }
+
+ibResMonTables OBJECT IDENTIFIER ::= { ibResMon 2 }
+
+--
+-- Node of ibResMonConfigTable
+--
+ibResMonConfigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbResMonConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Table for resource monitoring configuration."
+    ::= { ibResMonTables 1 }
+
+ibResMonConfigEntry OBJECT-TYPE
+    SYNTAX IbResMonConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Entry of ibResMonConfigTable."
+    INDEX
+    {
+        ibResMonChassisIndex,
+        ibResMonSlotIndex,
+        ibResMonCpuIndex,
+        ibResMonResourceName
+    }
+    ::= { ibResMonConfigTable 1 }
+
+IbResMonConfigEntry ::=
+    SEQUENCE
+    {
+        ibResMonChassisIndex                 Unsigned32,
+        ibResMonSlotIndex                    Unsigned32,
+        ibResMonCpuIndex                     Unsigned32,
+        ibResMonResourceName                 OCTET STRING,
+        ibResMonThresholdUnit                INTEGER,
+        ibResMonMinorThreshold               Unsigned32,
+        ibResMonSevereThreshold              Unsigned32
+    }
+
+ibResMonChassisIndex OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Member ID of the member device where the entity resides."
+    ::= { ibResMonConfigEntry 1 }
+
+ibResMonSlotIndex OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Slot number of the device node."
+    ::= { ibResMonConfigEntry 2 }
+
+ibResMonCpuIndex OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "CPU ID."
+    ::= { ibResMonConfigEntry 3 }
+
+ibResMonResourceName OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(1..31))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Resource name."
+    ::= { ibResMonConfigEntry 4 }
+
+ibResMonThresholdUnit OBJECT-TYPE
+    SYNTAX INTEGER
+    {
+        absolute(1),
+        percentage(2)
+    }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Unit for resource depletion thresholds."
+    ::= { ibResMonConfigEntry 5 }
+
+ibResMonMinorThreshold OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Minor resource depletion threshold."
+    ::= { ibResMonConfigEntry 6 }
+
+ibResMonSevereThreshold OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Severe resource depletion threshold."
+    ::= { ibResMonConfigEntry 7 }
+
+--
+-- Node of ibResMonInfoTable
+--
+ibResMonInfoTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbResMonInfoEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Table for resource monitoring information."
+    ::= { ibResMonTables 2 }
+
+ibResMonInfoEntry OBJECT-TYPE
+    SYNTAX IbResMonInfoEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Entry of ibResMonInfoEntry."
+    INDEX
+    {
+        ibResMonChassisIndex,
+        ibResMonSlotIndex,
+        ibResMonCpuIndex,
+        ibResMonResourceName
+    }
+    ::= { ibResMonInfoTable 1 }
+
+    IbResMonInfoEntry ::=
+    SEQUENCE
+    {
+        ibResMonUnit              INTEGER,
+        ibResMonCurrent           Unsigned32,
+        ibResMonFree              Unsigned32,
+        ibResMonTotal             Unsigned32
+    }
+
+ibResMonUnit OBJECT-TYPE
+    SYNTAX INTEGER
+    {
+        absolute(1),
+        percentage(2)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Unit for resource information."
+    ::= { ibResMonInfoEntry 1 }
+
+ibResMonCurrent OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Amount of the used resource."
+    ::= { ibResMonInfoEntry 2 }
+
+ibResMonFree OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Amount of the free resource."
+    ::= { ibResMonInfoEntry 3 }
+
+ibResMonTotal OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total size of resource."
+    ::= { ibResMonInfoEntry 4 }
+
+--
+-- Nodes of ibResMonNotification
+--
+ibResMonNotification OBJECT IDENTIFIER ::= { ibResMon 3 }
+
+ibResMonTrapPrefix OBJECT IDENTIFIER ::= { ibResMonNotification 0 }
+
+ibResMonMinorNotification NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibResMonChassisIndex,
+        ibResMonSlotIndex,
+        ibResMonCpuIndex,
+        ibResMonResourceName,
+        ibResMonThresholdUnit,
+        ibResMonMinorThreshold,
+        ibResMonSevereThreshold,
+        ibResMonCurrent,
+        ibResMonFree,
+        ibResMonTotal,
+        ibResMonAdditionalInfo
+    }
+    STATUS current
+    DESCRIPTION
+        "The notification indicates that the amount of the free resource
+        decreased to or below the hhcResMonMinorThreshold"
+    ::= { ibResMonTrapPrefix 1 }
+
+ibResMonMinorRecoverNotification NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibResMonChassisIndex,
+        ibResMonSlotIndex,
+        ibResMonCpuIndex,
+        ibResMonResourceName,
+        ibResMonThresholdUnit,
+        ibResMonMinorThreshold,
+        ibResMonSevereThreshold,
+        ibResMonCurrent,
+        ibResMonFree,
+        ibResMonTotal,
+        ibResMonAdditionalInfo
+    }
+    STATUS current
+    DESCRIPTION
+        "The notification indicates that the amount of the free resource
+        increased to or above the hhcResMonMinorThreshold."
+    ::= { ibResMonTrapPrefix 2 }
+
+ibResMonSevereNotification NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibResMonChassisIndex,
+        ibResMonSlotIndex,
+        ibResMonCpuIndex,
+        ibResMonResourceName,
+        ibResMonThresholdUnit,
+        ibResMonMinorThreshold,
+        ibResMonSevereThreshold,
+        ibResMonCurrent,
+        ibResMonFree,
+        ibResMonTotal,
+        ibResMonAdditionalInfo
+    }
+    STATUS current
+    DESCRIPTION
+        "The notification indicates that the amount of the free resource
+        decreased to or below the hhcResMonSevereThreshold."
+    ::= { ibResMonTrapPrefix 3 }
+
+ibResMonSevereRecoverNotification NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibResMonChassisIndex,
+        ibResMonSlotIndex,
+        ibResMonCpuIndex,
+        ibResMonResourceName,
+        ibResMonThresholdUnit,
+        ibResMonMinorThreshold,
+        ibResMonSevereThreshold,
+        ibResMonCurrent,
+        ibResMonFree,
+        ibResMonTotal,
+        ibResMonAdditionalInfo
+    }
+    STATUS current
+    DESCRIPTION
+        "The notification indicates that the amount of the free resource
+        increased to or above hhcResMonSevereThreshold."
+    ::= { ibResMonTrapPrefix 4 }
+
+ibResMonUsedUpNotification NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibResMonChassisIndex,
+        ibResMonSlotIndex,
+        ibResMonCpuIndex,
+        ibResMonResourceName,
+        ibResMonThresholdUnit,
+        ibResMonMinorThreshold,
+        ibResMonSevereThreshold,
+        ibResMonCurrent,
+        ibResMonFree,
+        ibResMonTotal,
+        ibResMonAdditionalInfo
+    }
+    STATUS current
+    DESCRIPTION
+        "This notification indicates that the resource is used up."
+    ::= { ibResMonTrapPrefix 5 }
+
+ibResMonUsedUpRecoverNotification NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibResMonChassisIndex,
+        ibResMonSlotIndex,
+        ibResMonCpuIndex,
+        ibResMonResourceName,
+        ibResMonThresholdUnit,
+        ibResMonMinorThreshold,
+        ibResMonSevereThreshold,
+        ibResMonCurrent,
+        ibResMonFree,
+        ibResMonTotal,
+        ibResMonAdditionalInfo
+    }
+    STATUS current
+    DESCRIPTION
+        "This notification indicates that the free resource increases from zero up."
+    ::= { ibResMonTrapPrefix 6 }
+
+ibResMonTrapInfor OBJECT IDENTIFIER ::= { ibResMonNotification 1 }
+
+ibResMonAdditionalInfo OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(0..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Additional information for a notification."
+    ::= { ibResMonTrapInfor 1 }
+
+END

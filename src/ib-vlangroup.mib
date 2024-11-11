@@ -1,0 +1,66 @@
+-- =============================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: vlan-group mib
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 2018-10-26
+--        Initial Version by mazhixing
+-- =============================================================
+IB-VLANGROUP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+            FROM IB-OID-MIB
+    MODULE-IDENTITY, OBJECT-TYPE
+            FROM SNMPv2-SMI;
+
+ibVlanGroup  MODULE-IDENTITY
+    LAST-UPDATED    "201810241436Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+         "This MIB provides VLAN group information."
+    REVISION        "201810241436Z"
+    DESCRIPTION
+            "Initial version of this MIB module.
+             Added ibVlanGroupTable"
+    ::= { ibCommon 178 }
+
+-- ibVlanGroupTable:
+
+ibVlanGroupTable     OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVlanGroupEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+     "A list of VLAN groups."
+    ::= { ibVlanGroup 1 }
+
+ibVlanGroupEntry     OBJECT-TYPE
+    SYNTAX         IbVlanGroupEntry
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION
+     "This entry contains VLAN group information."
+    INDEX {
+            ibVlanGroupName
+    }
+    ::= { ibVlanGroupTable 1 }
+
+IbVlanGroupEntry ::= SEQUENCE  {
+    ibVlanGroupName          OCTET STRING
+    }
+
+ibVlanGroupName      OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1..31))
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+     "Name of the VLAN group."
+    ::= { ibVlanGroupEntry 1 }
+
+END

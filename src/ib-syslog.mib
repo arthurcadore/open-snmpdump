@@ -1,0 +1,835 @@
+-- ==========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Syslog MIB
+-- Reference: RFC5424
+-- Version: V1.5
+-- History:
+--   V1.0 Initial version 2005-08-20 by wangrui
+--   V1.1 added ibSyslogLoghostIpaddressPort by jinyi
+--   V1.2 2010-06-09 added ibSyslogLogGlobalLevel by haoyan
+--                   added ibSyslogLoghostTAddress by jinyi
+--   V1.3 2012-06-06 added ibSyslogLogbufContTable, ibSyslogLogbufContEntry,
+--                         ibLogbufContIndex, ibLogbufContDescription by jixugang
+--   V1.4 2013-09-13 added ibSyslogState2 by duyanbing
+--   V1.5 2014-03-04 repalce ibSyslogLogGlobalLevel by ibSyslogLogGlobalLevelRfc by chengpengxing
+-- ==========================================================================
+IB-SYSLOG-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    DisplayString, TruthValue, RowStatus, TAddress, TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    Integer32, Counter32, Unsigned32, OBJECT-TYPE, MODULE-IDENTITY
+        FROM SNMPv2-SMI
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB;
+
+ibSyslog MODULE-IDENTITY
+    LAST-UPDATED "201006091050Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "All the configuration of the syslog can be managed
+        by syslog Mib."
+    REVISION "201006091050Z"
+    DESCRIPTION
+        "The initial revision of this MIB module."
+     ::= { ibCommon 63 }
+
+--
+-- Textual conventions
+--
+
+MessageLevelType ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "Specify severity level of message."
+    SYNTAX INTEGER
+        {
+            emergency(1),
+            alert(2),
+            critical(3),
+            error(4),
+            warning(5),
+            notice(6),
+            informational(7),
+            debug(8),
+            invalid(9)
+        }
+
+TimeStampType ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "Specify operation types on time stamp of message.
+        none: no time stamp information in message.
+        date: the time stamp type of message is date.
+        boot: the time stamp type of message is the time from
+            uptime of system.
+        dateWithoutYear: the time stamp type of message is date
+            without year information."
+    SYNTAX INTEGER
+        {
+            none(1),
+            date(2),
+            boot(3),
+            dateWithoutYear(4)
+        }
+
+FacilityType ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "Specify loghost facility which generates messages."
+    SYNTAX INTEGER
+        {
+            kernel(0),
+            userLevel(1),
+            mailSystem(2),
+            systemDaemons(3),
+            securityAuthorization(4),
+            internallyMessages(5),
+            linePrinter(6),
+            networkNews(7),
+            uucp(8),
+            clockDaemon(9),
+            securityAuthorization2(10),
+            ftpDaemon(11),
+            ntp(12),
+            logAudit(13),
+            logAlert(14),
+            clockDaemon2(15),
+            local0(16),
+            local1(17),
+            local2(18),
+            local3(19),
+            local4(20),
+            local5(21),
+            local6(22),
+            local7(23)
+        }
+
+--
+-- Node definitions
+--
+
+ibSyslogObjects OBJECT IDENTIFIER ::= { ibSyslog 1 }
+
+ibSyslogObject OBJECT IDENTIFIER ::= { ibSyslogObjects 1 }
+
+ibSyslogState OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The state of syslog: true(1):enable.
+                              false(2):disable."
+    ::= { ibSyslogObject 1 }
+
+ibSyslogMaxLoghost OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The object shows the maximum number of rows in
+         ibLoghostTable."
+    ::= { ibSyslogObject 2 }
+
+ibSyslogMaxChannel OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The object shows the maximum number of channels in
+         ibSyslogChannelTable."
+    ::= { ibSyslogObject 3 }
+
+ibSyslogMaxLogbufferSize OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The maximum number of messages that can be stored
+         in logbuffer."
+    ::= { ibSyslogObject 4 }
+
+ibSyslogMaxTrapbufferSize OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The maximum number of messages that can be stored
+         in trapbuffer."
+    ::= { ibSyslogObject 5 }
+
+ibSyslogState2 OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+            off(0),
+            on(1)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Status of syslog, on for enabled or off for disabled.
+        This node differs from ibSyslogState in value."
+    ::= { ibSyslogObject 6 }
+
+ibSyslogConsole OBJECT IDENTIFIER ::= { ibSyslogObjects 2 }
+
+ibSyslogConsoleChannel OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The channel number of console."
+    DEFVAL { 0 }
+    ::= { ibSyslogConsole 1 }
+
+ibSyslogMonitor OBJECT IDENTIFIER ::= { ibSyslogObjects 3 }
+
+ibSyslogMonitorChannel OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The channel number of monitor."
+    DEFVAL { 1 }
+    ::= { ibSyslogMonitor 1 }
+
+ibSyslogSnmp OBJECT IDENTIFIER ::= { ibSyslogObjects 4 }
+
+ibSyslogSnmpChannel OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The channel number of snmp."
+    DEFVAL { 5 }
+    ::= { ibSyslogSnmp 1 }
+
+ibSyslogLogbuffer OBJECT IDENTIFIER ::= { ibSyslogObjects 5 }
+
+ibSyslogLogbufferChannel OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The channel number of logbuffer."
+    DEFVAL { 4 }
+    ::= { ibSyslogLogbuffer 1 }
+
+ibSyslogLogbufferSize OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The capacity of logbuffer which can be customized by users.
+         The valid range is from 0 to ibSyslogMaxLogbufferSize."
+    DEFVAL { 512 }
+    ::= { ibSyslogLogbuffer 2 }
+
+ibSyslogLogbufferTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSyslogLogbufferEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The table of logbuffer."
+    ::= { ibSyslogLogbuffer 3 }
+
+ibSyslogLogbufferEntry OBJECT-TYPE
+    SYNTAX IbSyslogLogbufferEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The logbuffer entry of syslog."
+    INDEX { ibLogbufferIndex }
+    ::= { ibSyslogLogbufferTable 1 }
+
+IbSyslogLogbufferEntry ::=
+    SEQUENCE {
+        ibLogbufferIndex                    Integer32,
+        ibLogbufferCurrentMessages          Unsigned32,
+        ibLogbufferOverwrittenMessages      Counter32,
+        ibLogbufferDroppedMessages          Counter32
+        }
+
+ibLogbufferIndex OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The index of this table."
+    ::= { ibSyslogLogbufferEntry 1 }
+
+ibLogbufferCurrentMessages OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of log messages stored in logbuffer."
+    ::= { ibSyslogLogbufferEntry 2 }
+
+ibLogbufferOverwrittenMessages OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of log messages overwritten in logbuffer."
+    ::= { ibSyslogLogbufferEntry 3 }
+
+ibLogbufferDroppedMessages OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of log messages dropped in logbuffer."
+    ::= { ibSyslogLogbufferEntry 4 }
+
+ibSyslogLogbufContTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSyslogLogbufContEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The table of logbuffer contents."
+    ::= { ibSyslogLogbuffer 4 }
+
+ibSyslogLogbufContEntry OBJECT-TYPE
+    SYNTAX IbSyslogLogbufContEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The contens entry of logbuffer."
+    INDEX { ibLogbufContIndex }
+    ::= { ibSyslogLogbufContTable 1 }
+
+IbSyslogLogbufContEntry ::=
+    SEQUENCE {
+        ibLogbufContIndex            Integer32,
+        ibLogbufContDescription      DisplayString
+        }
+
+ibLogbufContIndex OBJECT-TYPE
+    SYNTAX Integer32 (1..2147483647)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The index of this table."
+    ::= { ibSyslogLogbufContEntry 1 }
+
+ibLogbufContDescription OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..1600))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The contents of logbuffer."
+    ::= { ibSyslogLogbufContEntry 2 }
+
+ibSyslogTrapbuffer OBJECT IDENTIFIER ::= { ibSyslogObjects 6 }
+
+ibSyslogTrapbufferChannel OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The channel number of trapbuffer."
+    DEFVAL { 3 }
+    ::= { ibSyslogTrapbuffer 1 }
+
+ibSyslogTrapbufferSize OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The capacity of the trapbuffer which can be customized by users.
+         The valid range is from 0 to ibSyslogMaxTrapbufferSize."
+    DEFVAL { 256 }
+    ::= { ibSyslogTrapbuffer 2 }
+
+ibSyslogTrapbufferTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSyslogTrapbufferEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The table of trapbuffer."
+    ::= { ibSyslogTrapbuffer 3 }
+
+ibSyslogTrapbufferEntry OBJECT-TYPE
+    SYNTAX IbSyslogTrapbufferEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The trapbuffer entry of syslog."
+    INDEX { ibTrapbufferIndex }
+    ::= { ibSyslogTrapbufferTable 1 }
+
+IbSyslogTrapbufferEntry ::=
+    SEQUENCE {
+        ibTrapbufferIndex                      Integer32,
+        ibTrapbufferCurrentMessages            Unsigned32,
+        ibTrapbufferOverwrittenMessages        Counter32,
+        ibTrapbufferDroppedMessages            Counter32
+        }
+
+ibTrapbufferIndex OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The index of this table."
+    ::= { ibSyslogTrapbufferEntry 1 }
+
+ibTrapbufferCurrentMessages OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of trap messages stored in trapbuffer."
+    ::= { ibSyslogTrapbufferEntry 2 }
+
+ibTrapbufferOverwrittenMessages OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of trap messages overwritten in trapbuffer."
+    ::= { ibSyslogTrapbufferEntry 3 }
+
+ibTrapbufferDroppedMessages OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of trap messages dropped in trapbuffer."
+    ::= { ibSyslogTrapbufferEntry 4 }
+
+ibSyslogLoghost OBJECT IDENTIFIER ::= { ibSyslogObjects 7 }
+
+ibSyslogLoghostSourceInterface OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The source interface which sends message to loghost.
+         All loghosts use the same source interface."
+    ::= { ibSyslogLoghost 1 }
+
+ibSyslogLoghostTimestampType OBJECT-TYPE
+    SYNTAX TimeStampType
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Time stamp type of message sent to loghost."
+    DEFVAL { date }
+    ::= { ibSyslogLoghost 2 }
+
+ibSyslogLoghostTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSyslogLoghostEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The table of loghost."
+    ::= { ibSyslogLoghost 3 }
+
+ibSyslogLoghostEntry OBJECT-TYPE
+    SYNTAX IbSyslogLoghostEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The loghost entry of syslog."
+    INDEX { ibSyslogLoghostIndex }
+    ::= { ibSyslogLoghostTable 1 }
+
+IbSyslogLoghostEntry ::=
+    SEQUENCE {
+        ibSyslogLoghostIndex                   Integer32,
+        ibSyslogLoghostChannel                 Integer32,
+        ibSyslogLoghostIpaddressType           InetAddressType,
+        ibSyslogLoghostIpaddress               InetAddress,
+        ibSyslogLoghostFacility                FacilityType,
+        ibSyslogLoghostLanguage                INTEGER,
+        ibSyslogLoghostOperateRowStatus        RowStatus,
+        ibSyslogLoghostIpaddressPort           Integer32,
+        ibSyslogLoghostTAddress                TAddress
+    }
+
+ibSyslogLoghostIndex OBJECT-TYPE
+    SYNTAX Integer32(1..64)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The index of this table."
+    ::= { ibSyslogLoghostEntry 1 }
+
+ibSyslogLoghostChannel OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The channel number of loghost."
+    DEFVAL { 2 }
+    ::= { ibSyslogLoghostEntry 2 }
+
+ibSyslogLoghostIpaddressType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The ip address type of loghost."
+    DEFVAL { ipv4 }
+    ::= { ibSyslogLoghostEntry 3 }
+
+ibSyslogLoghostIpaddress OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The ip address of loghost."
+    ::= { ibSyslogLoghostEntry 4 }
+
+ibSyslogLoghostFacility OBJECT-TYPE
+    SYNTAX FacilityType
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The operations staff can selectively filter the messages
+         with priority which consists of facility that generates
+         the message and severity of the message.
+         "
+    DEFVAL { local7 }
+    ::= { ibSyslogLoghostEntry 5 }
+
+ibSyslogLoghostLanguage OBJECT-TYPE
+    SYNTAX INTEGER {
+        chinese(1),
+        english(2)
+        }
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The language of the message sent to the loghost."
+    DEFVAL { english }
+    ::= { ibSyslogLoghostEntry 6 }
+
+ibSyslogLoghostOperateRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The status of this table entry."
+    ::= { ibSyslogLoghostEntry 7 }
+
+ibSyslogLoghostIpaddressPort OBJECT-TYPE
+    SYNTAX Integer32(1..65535)
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The loghost server port."
+    DEFVAL { 514 }
+    ::= { ibSyslogLoghostEntry 8 }
+
+ibSyslogLoghostTAddress OBJECT-TYPE
+    SYNTAX TAddress
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The loghost server transport address."
+    ::= { ibSyslogLoghostEntry 9 }
+
+ibSyslogChannel OBJECT IDENTIFIER ::= { ibSyslogObjects 8 }
+
+ibSyslogChannelTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSyslogChannelEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table of syslog channel."
+    ::= { ibSyslogChannel 1 }
+
+ibSyslogChannelEntry OBJECT-TYPE
+    SYNTAX IbSyslogChannelEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The channel entry of syslog."
+    INDEX { ibSyslogChannelIndex }
+    ::= { ibSyslogChannelTable 1 }
+
+IbSyslogChannelEntry ::=
+    SEQUENCE {
+        ibSyslogChannelIndex       Integer32,
+        ibSyslogChannelName        DisplayString
+        }
+
+ibSyslogChannelIndex OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The index of this table."
+    ::= { ibSyslogChannelEntry 1 }
+
+ibSyslogChannelName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (1..30))
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The name of channel.
+         The channel name must be different from each other."
+    ::= { ibSyslogChannelEntry 2 }
+
+ibSyslogModule OBJECT IDENTIFIER ::= { ibSyslogObjects 9 }
+
+ibSyslogModuleTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSyslogModuleEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table of syslog module."
+    ::= { ibSyslogModule 1 }
+
+ibSyslogModuleEntry OBJECT-TYPE
+    SYNTAX IbSyslogModuleEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The module entry of syslog."
+    INDEX { ibSyslogModuleIndex }
+    ::= { ibSyslogModuleTable 1 }
+
+IbSyslogModuleEntry ::=
+    SEQUENCE {
+        ibSyslogModuleIndex        Integer32,
+        ibSyslogModuleName         DisplayString
+        }
+
+ibSyslogModuleIndex OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The index of this table."
+    ::= { ibSyslogModuleEntry 1 }
+
+ibSyslogModuleName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (1..20))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The name of module."
+    ::= { ibSyslogModuleEntry 2 }
+
+ibSyslogLog OBJECT IDENTIFIER ::= { ibSyslogObjects 10 }
+
+ibSyslogLogTimestampType OBJECT-TYPE
+    SYNTAX TimeStampType
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Time stamp type of log message."
+    DEFVAL { date }
+    ::= { ibSyslogLog 1 }
+
+ibSyslogLogTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSyslogLogEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table of syslog module."
+    ::= { ibSyslogLog 2 }
+
+ibSyslogLogEntry OBJECT-TYPE
+    SYNTAX IbSyslogLogEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The log entry of syslog."
+    INDEX { ibSyslogChannelIndex,
+            ibSyslogModuleIndex
+          }
+    ::= { ibSyslogLogTable 1 }
+
+IbSyslogLogEntry ::=
+    SEQUENCE {
+        ibSyslogLogState           TruthValue,
+        ibSyslogLogLevel           MessageLevelType,
+        ibSyslogLogRowStatus       RowStatus
+        }
+
+ibSyslogLogState OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The switch state of log."
+    ::= { ibSyslogLogEntry 1 }
+
+ibSyslogLogLevel OBJECT-TYPE
+    SYNTAX MessageLevelType
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The level of log message."
+    ::= { ibSyslogLogEntry 2 }
+
+ibSyslogLogRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The status of this table entry."
+    ::= { ibSyslogLogEntry 3 }
+
+ibSyslogLogGlobalLevel OBJECT-TYPE
+    SYNTAX MessageLevelType
+    MAX-ACCESS read-write
+    STATUS obsolete
+    DESCRIPTION
+        "The global level of log message.  This object is replaced by
+        ibSyslogLogGlobalLevelRfc because its value does not accord
+        with RFC5424."
+    ::= { ibSyslogLog 3 }
+
+ibSyslogLogGlobalLevelRfc OBJECT-TYPE
+    SYNTAX INTEGER {
+        emergency(0),
+        alert(1),
+        critical(2),
+        error(3),
+        warning(4),
+        notice(5),
+        informational(6),
+        debug(7)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The global level of log message.  This object replaces
+        ibSyslogLogGlobalLevel because it observes the terms of RFC5424."
+    ::= { ibSyslogLog 4 }
+
+ibSyslogTrap OBJECT IDENTIFIER ::= { ibSyslogObjects 11 }
+
+ibSyslogTrapTimestampType OBJECT-TYPE
+    SYNTAX TimeStampType
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Time stamp type of trap message."
+    DEFVAL { date }
+    ::= { ibSyslogTrap 1 }
+
+ibSyslogTrapTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSyslogTrapEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table of syslog module."
+    ::= { ibSyslogTrap 2 }
+
+ibSyslogTrapEntry OBJECT-TYPE
+    SYNTAX IbSyslogTrapEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The trap entry of syslog."
+    INDEX { ibSyslogChannelIndex,
+            ibSyslogModuleIndex
+          }
+    ::= { ibSyslogTrapTable 1 }
+
+IbSyslogTrapEntry ::=
+    SEQUENCE {
+        ibSyslogTrapState              TruthValue,
+        ibSyslogTrapLevel              MessageLevelType,
+        ibSyslogTrapRowStatus          RowStatus
+        }
+
+ibSyslogTrapState OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The switch state of trap."
+    ::= { ibSyslogTrapEntry 1 }
+
+ibSyslogTrapLevel OBJECT-TYPE
+    SYNTAX MessageLevelType
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The level of trap message."
+    ::= { ibSyslogTrapEntry 2 }
+
+ibSyslogTrapRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The status of this table entry."
+    ::= { ibSyslogTrapEntry 3 }
+
+ibSyslogDebug OBJECT IDENTIFIER ::= { ibSyslogObjects 12 }
+
+ibSyslogDebugTimestampType OBJECT-TYPE
+    SYNTAX TimeStampType
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Time stamp type of debug message."
+    DEFVAL { boot }
+    ::= { ibSyslogDebug 1 }
+
+ibSyslogDebugTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSyslogDebugEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table of syslog module."
+    ::= { ibSyslogDebug 2 }
+
+ibSyslogDebugEntry OBJECT-TYPE
+    SYNTAX IbSyslogDebugEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The debug entry of syslog."
+    INDEX { ibSyslogChannelIndex,
+            ibSyslogModuleIndex
+          }
+    ::= { ibSyslogDebugTable 1 }
+
+IbSyslogDebugEntry ::=
+    SEQUENCE {
+        ibSyslogDebugState             TruthValue,
+        ibSyslogDebugLevel             MessageLevelType,
+        ibSyslogDebugRowStatus         RowStatus
+        }
+
+ibSyslogDebugState OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The switch state of debug."
+    ::= { ibSyslogDebugEntry 1 }
+
+ibSyslogDebugLevel OBJECT-TYPE
+    SYNTAX MessageLevelType
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The level of debug message."
+    ::= { ibSyslogDebugEntry 2 }
+
+ibSyslogDebugRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The status of this table entry."
+    ::= { ibSyslogDebugEntry 3 }
+
+END

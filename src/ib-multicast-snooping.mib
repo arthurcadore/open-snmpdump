@@ -1,0 +1,1171 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Multicast Snooping MIB
+-- Reference:
+-- Version: V1.3
+-- History:
+-- V1.0 2014-06-17 Created by Huang Yun
+-- V1.1 2017-09-26 Modified by meihaitao and yangjingdong
+--      Added ibMcsVUProxyEnabled and ibMcsVUQuerierElection to ibMcsVirtualUnitConfigTable.
+--      Modified the description of object ibMcsL2EntryIfIndex.
+--      Added 'tunnel(6)', 'mtunnel(7)' to object ibMcsL2EntryPortType.
+--      Added 'b(6)', 'e(7)', 'de(8)', 'ee(9)', 'suc(10)', 'f(11)' to object ibMcsL2EntryPortAttribute.
+--      Modified the description of object ibMcsL2EntryPortAttribute.
+-- V1.2 2022-06-27 Add ibMcsNotifications, ibMcsTrapBindObjects, ibMcsNotificationsExceedLimit
+--      ibMcsNotificationsAddressType and ibMcsGlobalEntryExceed by jiayunda
+-- V1.3 2022-07-21 Add ibMcsNotificationsSourceAddr, ibMcsNotificationsGroupAddr,
+--      ibMcsNotificationsVUType, ibMcsNotificationsVUID, ibMcsEntryRefreshFailAlarm by jiayunda
+-- ==================================================================
+--
+-- Variables and types be imported
+--
+-- ==================================================================
+IB-MULTICAST-SNOOPING-MIB DEFINITIONS ::= BEGIN
+
+
+IMPORTS
+
+    MODULE-IDENTITY,OBJECT-TYPE,Unsigned32,Counter64,
+    NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+
+    TEXTUAL-CONVENTION,RowStatus,TruthValue
+        FROM SNMPv2-TC
+
+    ibCommon
+        FROM IB-OID-MIB
+
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB
+
+    InterfaceIndex
+        FROM IF-MIB;
+
+ibMulticastSnoop MODULE-IDENTITY
+    LAST-UPDATED "202207211356Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "IGMP/MLD Snooping Management MIB"
+    -- Revision history.
+    REVISION "202207211356Z"
+    DESCRIPTION
+        "Add ibMcsNotificationsSourceAddr, ibMcsNotificationsGroupAddr,
+         ibMcsNotificationsVUType, ibMcsNotificationsVUID,
+         ibMcsEntryRefreshFailAlarm."
+    REVISION "202206271300Z"
+    DESCRIPTION
+        "Add ibMcsNotifications, ibMcsTrapBindObjects, ibMcsNotificationsExceedLimit
+         ibMcsNotificationsAddressType and ibMcsGlobalEntryExceed."
+    REVISION "201709260950Z"
+    DESCRIPTION
+        "Added ibMcsVUProxyEnabled and ibMcsVUQuerierElection to ibMcsVirtualUnitConfigTable.
+        Modified the description of object ibMcsL2EntryIfIndex.
+        Added 'tunnel(6)', 'mtunnel(7)' to object ibMcsL2EntryPortType.
+        Added 'b(6)', 'e(7)', 'de(8)', 'ee(9)', 'suc(10)', 'f(11)' to object ibMcsL2EntryPortAttribute.
+        Modified the description of object ibMcsL2EntryPortAttribute."
+    REVISION "201405141700Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 123 }
+
+IbVirtualUnitType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "VLAN configuration or VSI configuration."
+    SYNTAX      INTEGER  { vlan(1), vsi(2) }
+
+-- ==================================================================
+--
+-- ======================= definition begin =========================
+--
+-- ==================================================================
+ibMcsNotifications OBJECT IDENTIFIER ::= { ibMulticastSnoop 0 }
+ibMulticastSnoopObject OBJECT IDENTIFIER ::= {   ibMulticastSnoop 1  }
+ibMcsTrapBindObjects OBJECT IDENTIFIER ::= { ibMulticastSnoop 2 }
+
+ibMcsGlobalConfigTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbMcsGlobalConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Table containing information about the global
+        configuration of IGMP/MLD snooping."
+    ::= { ibMulticastSnoopObject  1 }
+
+ibMcsGlobalConfigEntry OBJECT-TYPE
+    SYNTAX     IbMcsGlobalConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Entry containing information about the global
+        configuration of IGMP/MLD snooping."
+    INDEX      {  ibMcsGlbSnoopingType }
+    ::= { ibMcsGlobalConfigTable 1 }
+
+IbMcsGlobalConfigEntry ::=
+    SEQUENCE
+    {
+        ibMcsGlbSnoopingType           InetAddressType,
+        ibMcsGlbRowStatus              RowStatus,
+        ibMcsGlbEntryLimit             Unsigned32,
+        ibMcsGlbHostAgingTime          Unsigned32,
+        ibMcsGlbMaxResponseTime        Unsigned32,
+        ibMcsGlbRouterAgingTime        Unsigned32,
+        ibMcsGlbLastMemQryInterval     Unsigned32,
+        ibMcsGlbDropUnknownEnabled     TruthValue
+    }
+
+ibMcsGlbSnoopingType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Type of the global configuration.  IPv4 means IGMP snooping
+        configuration, and IPv6 means MLD snooping configuration."
+    ::= { ibMcsGlobalConfigEntry 1 }
+
+ibMcsGlbRowStatus OBJECT-TYPE
+    SYNTAX  RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The activation of a row enables IGMP/MLD snooping globally.
+        The destruction of a row disables IGMP/MLD snooping globally."
+    ::= { ibMcsGlobalConfigEntry 2 }
+
+ibMcsGlbEntryLimit   OBJECT-TYPE
+    SYNTAX  Unsigned32
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Global maximum number of IGMP/MLD snooping forwarding entries."
+    ::= { ibMcsGlobalConfigEntry  3 }
+
+ibMcsGlbHostAgingTime   OBJECT-TYPE
+    SYNTAX  Unsigned32  (1..8097894)
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Global aging time of the multicast group on ports."
+    DEFVAL  {260}
+    ::= { ibMcsGlobalConfigEntry  4 }
+
+ibMcsGlbMaxResponseTime  OBJECT-TYPE
+    SYNTAX  Unsigned32   (1..3174)
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Global maximum query response time."
+    DEFVAL  {10}
+    ::= { ibMcsGlobalConfigEntry  5 }
+
+ibMcsGlbRouterAgingTime  OBJECT-TYPE
+    SYNTAX  Unsigned32 (1..8097894)
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Global aging time of router ports."
+    DEFVAL  {260}
+    ::= { ibMcsGlobalConfigEntry  6 }
+
+ibMcsGlbLastMemQryInterval  OBJECT-TYPE
+    SYNTAX  Unsigned32 (1..25)
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Global last member query interval."
+    DEFVAL  {1}
+    ::= { ibMcsGlobalConfigEntry  7 }
+
+ibMcsGlbDropUnknownEnabled OBJECT-TYPE
+    SYNTAX     TruthValue
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "Whether the feature of dropping unknown packets is enabled globally."
+    DEFVAL     { false }
+    ::= { ibMcsGlobalConfigEntry  8 }
+
+ibMcsVirtualUnitConfigTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbMcsVirtualUnitConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Table containing configuration information about the specified
+        VLAN or VSI."
+    ::= { ibMulticastSnoopObject  2 }
+
+ibMcsVirtualUnitConfigEntry OBJECT-TYPE
+    SYNTAX     IbMcsVirtualUnitConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Entry containing information of the specified VLAN or VSI."
+    INDEX
+    {
+        ibMcsVUType,
+        ibMcsVUID,
+        ibMcsVUSnoopingType
+    }
+    ::= { ibMcsVirtualUnitConfigTable 1 }
+
+IbMcsVirtualUnitConfigEntry ::=
+    SEQUENCE
+    {
+        ibMcsVUType                     IbVirtualUnitType,
+        ibMcsVUID                       Unsigned32,
+        ibMcsVUSnoopingType             InetAddressType,
+        ibMcsVURowStatus                RowStatus,
+        ibMcsVUHostAgingTime            Unsigned32,
+        ibMcsVUMaxResponseTime          Unsigned32,
+        ibMcsVURouterAgingTime          Unsigned32,
+        ibMcsVULastMemQryInterval       Unsigned32,
+        ibMcsVUDropUnknownEnabled       TruthValue,
+        ibMcsVUPimSnoopingEnabled       TruthValue,
+        ibMcsVUVersion                  Unsigned32,
+        ibMcsVUQuerierEnabled           TruthValue,
+        ibMcsVUQuerierInterval          Unsigned32,
+        ibMcsVUGeneQuerierSourceAddress InetAddress,
+        ibMcsVUSpecQuerierSourceAddress InetAddress,
+        ibMcsVULeaveSourceAddress       InetAddress,
+        ibMcsVUReportSourceAddress      InetAddress,
+        ibMcsVUProxyEnabled             TruthValue,
+        ibMcsVUQuerierElection          TruthValue
+    }
+
+ibMcsVUType  OBJECT-TYPE
+    SYNTAX     IbVirtualUnitType
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Type of virtual unit."
+    ::= { ibMcsVirtualUnitConfigEntry 1 }
+
+ibMcsVUID  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "VLAN ID or VSI Index.  Its value ranges from 1 to 4094 when type is
+        VLAN, and from 0 to 0xFFFFFFFE when type is VSI"
+    ::= { ibMcsVirtualUnitConfigEntry 2 }
+
+ibMcsVUSnoopingType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Type of the configuration.  IPv4 means IGMP snooping configuration,
+        and IPv6 means MLD snooping configuration."
+    ::= { ibMcsVirtualUnitConfigEntry 3 }
+
+ibMcsVURowStatus OBJECT-TYPE
+    SYNTAX  RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The activation of a row enables IGMP/MLD snooping in the VLAN or
+        VSI.  The destruction of a row disables IGMP/MLD snooping in the
+        VLAN or VSI."
+    ::= { ibMcsVirtualUnitConfigEntry 4 }
+
+ibMcsVUHostAgingTime   OBJECT-TYPE
+    SYNTAX  Unsigned32  (0..8097894)
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Aging time of the multicast group on ports in the VLAN or VSI.
+        A value of zero indicates that it is not configured in the VLAN
+        or VSI."
+    ::= { ibMcsVirtualUnitConfigEntry  5 }
+
+ibMcsVUMaxResponseTime  OBJECT-TYPE
+    SYNTAX  Unsigned32   (0..3174)
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Maximum query response time in the VLAN or VSI.  A value of
+        zero indicates that it is not configured in the VLAN or VSI."
+    ::= { ibMcsVirtualUnitConfigEntry  6 }
+
+ibMcsVURouterAgingTime  OBJECT-TYPE
+    SYNTAX  Unsigned32 (0..8097894)
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Aging time of the router port in the VLAN or VSI.  A value of
+        zero indicates that it is not configured in the VLAN or VSI."
+    ::= { ibMcsVirtualUnitConfigEntry  7 }
+
+ibMcsVULastMemQryInterval  OBJECT-TYPE
+    SYNTAX  Unsigned32 (0..25)
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Last member query interval in the VLAN or VSI.  A value of
+        zero indicates that it is not configured in the VLAN or VSI."
+    ::= { ibMcsVirtualUnitConfigEntry  8 }
+
+ibMcsVUDropUnknownEnabled OBJECT-TYPE
+    SYNTAX     TruthValue
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "Whether the feature of dropping unknown packets is enabled in
+        the VLAN or VSI."
+    DEFVAL     { false }
+    ::= { ibMcsVirtualUnitConfigEntry  9 }
+
+ibMcsVUPimSnoopingEnabled OBJECT-TYPE
+    SYNTAX     TruthValue
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "Whether PIM snooping is enabled in the VLAN or VSI."
+    DEFVAL     { false }
+    ::= { ibMcsVirtualUnitConfigEntry  10 }
+
+ibMcsVUVersion OBJECT-TYPE
+    SYNTAX     Unsigned32 (2|3)
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "Version of IGMP/MLD snooping that is running on the VLAN.
+        Value 2 represents IGMPv2 snooping and MLDv1 snooping,
+        and value 3 represents IGMPv3 snooping and MLDv2 snooping."
+    DEFVAL     { 2 }
+    ::= { ibMcsVirtualUnitConfigEntry 11 }
+
+ibMcsVUQuerierEnabled OBJECT-TYPE
+    SYNTAX     TruthValue
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "Whether the querier feature is enabled in the VLAN or VSI."
+    DEFVAL     { false }
+    ::= { ibMcsVirtualUnitConfigEntry  12 }
+
+ibMcsVUQuerierInterval OBJECT-TYPE
+    SYNTAX     Unsigned32 (2..31744)
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "Query interval."
+    DEFVAL     { 125 }
+    ::= { ibMcsVirtualUnitConfigEntry  13 }
+
+ibMcsVUGeneQuerierSourceAddress OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "Source IP address of IGMP or MLD general query packets.  Its value
+        is 255.255.255.255 or FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF
+        when not configured."
+    ::= { ibMcsVirtualUnitConfigEntry 14 }
+
+ibMcsVUSpecQuerierSourceAddress OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "Source IP address of IGMP or MLD group-specific query packets.  Its
+        value is 255.255.255.255 or FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF
+        when not configured."
+    ::= { ibMcsVirtualUnitConfigEntry 15 }
+
+ibMcsVULeaveSourceAddress OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "Source IP address of IGMP or MLD leave packets.  Its value is
+        255.255.255.255 or FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF
+        when not configured."
+    ::= { ibMcsVirtualUnitConfigEntry 16 }
+
+ibMcsVUReportSourceAddress OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "Source IP address of IGMP or MLD report packets.  Its value is
+        255.255.255.255 or FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF
+        when not configured."
+    ::= { ibMcsVirtualUnitConfigEntry 17 }
+
+ibMcsVUProxyEnabled OBJECT-TYPE
+    SYNTAX     TruthValue
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "Whether the proxy feature is enabled in the VLAN or VSI."
+    DEFVAL     { false }
+    ::= { ibMcsVirtualUnitConfigEntry  18 }
+
+ibMcsVUQuerierElection OBJECT-TYPE
+    SYNTAX     TruthValue
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "Whether the querier election feature is enabled in the VLAN or VSI."
+    DEFVAL     { false }
+    ::= { ibMcsVirtualUnitConfigEntry  19 }
+
+ibMcsL2EntryTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbMcsL2EntryEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Table containing a list of Layer 2 multicast group entries."
+    ::= { ibMulticastSnoopObject 3 }
+
+ibMcsL2EntryEntry OBJECT-TYPE
+    SYNTAX     IbMcsL2EntryEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Entry of l2-multicast group, which is created for each group
+        learned or configured in the VLAN or VSI."
+    INDEX
+    {
+        ibMcsL2EntryVUType,
+        ibMcsL2EntryVUID,
+        ibMcsL2EntryAddressType,
+        ibMcsL2EntryGroupAddress,
+        ibMcsL2EntrySourceAddress,
+        ibMcsL2EntryIfIndex
+    }
+    ::= { ibMcsL2EntryTable 1 }
+
+IbMcsL2EntryEntry ::=
+    SEQUENCE
+    {
+        ibMcsL2EntryVUType          IbVirtualUnitType,
+        ibMcsL2EntryVUID            Unsigned32,
+        ibMcsL2EntryAddressType     InetAddressType,
+        ibMcsL2EntryGroupAddress    InetAddress,
+        ibMcsL2EntrySourceAddress   InetAddress,
+        ibMcsL2EntryIfIndex         InterfaceIndex,
+        ibMcsL2EntryPortType        INTEGER,
+        ibMcsL2EntryPortAttribute   BITS
+    }
+
+ibMcsL2EntryVUType  OBJECT-TYPE
+    SYNTAX     IbVirtualUnitType
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Type of virtual unit."
+    ::= { ibMcsL2EntryEntry 1 }
+
+ibMcsL2EntryVUID  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "VLAN ID or VSI Index.  Its value ranges from 1 to 4094 when type is
+        VLAN, and from 0 to 0xFFFFFFFE when type is VSI."
+    ::= { ibMcsL2EntryEntry 2 }
+
+ibMcsL2EntryAddressType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Type of multicast IP address."
+    ::= { ibMcsL2EntryEntry 3 }
+
+ibMcsL2EntryGroupAddress OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "IP address of the multicast group which the port joined."
+    ::= { ibMcsL2EntryEntry 4 }
+
+ibMcsL2EntrySourceAddress OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "IP address of the unicast source which the port joined."
+    ::= { ibMcsL2EntryEntry 5 }
+
+ibMcsL2EntryIfIndex  OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "In the VLAN, interface index of the port that joined the Layer 2 IP
+        multicast group.  In the VSI, link ID of the AC, PW, or tunnel that
+        joined the Layer 2 IP multicast group."
+    ::= { ibMcsL2EntryEntry 6 }
+
+ibMcsL2EntryPortType  OBJECT-TYPE
+    SYNTAX     INTEGER
+               {
+                   interface(1),
+                   ac(2),
+                   npw(3),
+                   upw(4),
+                   trill(5),
+                   tunnel(6),
+                   mtunnel(7)
+               }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Type of the port."
+    ::= { ibMcsL2EntryEntry 7 }
+
+ibMcsL2EntryPortAttribute  OBJECT-TYPE
+    SYNTAX           BITS
+    {
+        d(0),
+        s(1),
+        p(2),
+        k(3),
+        r(4),
+        w(5),
+        b(6),
+        e(7),
+        de(8),
+        ee(9),
+        suc(10),
+        f(11)
+    }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Attribute of the port.  'd' means learned from IGMP/MLD packets,
+        's' means configured statically, 'p' means learned from PIM packets,
+        'k' means obtained from the kernel, 'r' means learned from (*, *)
+        entries, 'w' means learned from (*, G) entries,
+        'b' means broadcast port, 'e' means learned from EVPN BGP route,
+        'de' means learned from IGMP/MLD packets in Exclude filter mode,
+        'ee' means learned from EVPN BGP routein Exclude filter mode,
+        'suc' means processing has succeeded,
+        'f' means processing has failed."
+    ::= { ibMcsL2EntryEntry 8 }
+
+ibMcsPacketStatisticsTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbMcsPacketStatisticsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Table containing the IGMP/MLD packets statistics."
+    ::= { ibMulticastSnoopObject 4 }
+
+ibMcsPacketStatisticsEntry OBJECT-TYPE
+    SYNTAX     IbMcsPacketStatisticsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Entry containing the statistic information of IGMP/MLD packets
+        that have been transmitted and received in the device."
+    INDEX      {  ibMcsStatisticsSnoopingType }
+    ::= { ibMcsPacketStatisticsTable 1 }
+
+IbMcsPacketStatisticsEntry ::=
+    SEQUENCE
+    {
+        ibMcsStatisticsSnoopingType   InetAddressType,
+        ibMcsRxGeneryQueryNum         Counter64,
+        ibMcsRxV2SpecificQueryNum     Counter64,
+        ibMcsRxV3SpecificQueryNum     Counter64,
+        ibMcsRxV3SpecificSGQueryNum   Counter64,
+        ibMcsRxV1ReportNum            Counter64,
+        ibMcsRxV2ReportNum            Counter64,
+        ibMcsRxV3ReportNum            Counter64,
+        ibMcsRxV3ErrCorReportNum      Counter64,
+        ibMcsRxLeaveNum               Counter64,
+        ibMcsRxPimHelloNum            Counter64,
+        ibMcsRxErrorPacketNum         Counter64,
+        ibMcsTxV2SpecificQueryNum     Counter64,
+        ibMcsTxV3SpecificQueryNum     Counter64,
+        ibMcsTxV3SpecificSGQueryNum   Counter64
+    }
+
+ibMcsStatisticsSnoopingType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Type of the snooping, IPv4 means the statistics for IGMP
+        snooping, and IPv6 means the statistics for MLD snooping."
+    ::= { ibMcsPacketStatisticsEntry 1 }
+
+ibMcsRxGeneryQueryNum OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Statistics of IGMP or MLD general query packets received on
+        the device."
+    ::= { ibMcsPacketStatisticsEntry 2 }
+
+ibMcsRxV2SpecificQueryNum OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Statistics of IGMPv2 or MLDv1 group-specific query packets
+        received on the device."
+    ::= { ibMcsPacketStatisticsEntry 3 }
+
+ibMcsRxV3SpecificQueryNum OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The statistics of IGMPv3 or MLDv2 group-specific query packets
+        received on the device."
+    ::= { ibMcsPacketStatisticsEntry 4 }
+
+ibMcsRxV3SpecificSGQueryNum OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Statistics of IGMPv3 or MLDv2 group-and-source-specific query
+        packets received on the device."
+    ::= { ibMcsPacketStatisticsEntry 5 }
+
+ibMcsRxV1ReportNum OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Statistics of IGMPv1 report packets received on the device."
+    ::= { ibMcsPacketStatisticsEntry 6 }
+
+ibMcsRxV2ReportNum OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Statistics of IGMPv2 or MLDv1 report packets received on the
+        device."
+    ::= { ibMcsPacketStatisticsEntry 7 }
+
+ibMcsRxV3ReportNum OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Statistics of IGMPv3 or MLDv2 report packets received on
+        the device."
+    ::= { ibMcsPacketStatisticsEntry 8 }
+
+ibMcsRxV3ErrCorReportNum OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Statistics of IGMPv3 or MLDv2 report packets with correct and
+        incorrect records received on the device."
+    ::= { ibMcsPacketStatisticsEntry 9 }
+
+ibMcsRxLeaveNum OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Statistics of leave packets received on the device."
+    ::= { ibMcsPacketStatisticsEntry 10 }
+
+ibMcsRxPimHelloNum OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Statistics of PIM hello packets received on the device."
+    ::= { ibMcsPacketStatisticsEntry 11 }
+
+ibMcsRxErrorPacketNum OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Statistics of error IGMP/MLD packets received on the device."
+    ::= { ibMcsPacketStatisticsEntry 12 }
+
+ibMcsTxV2SpecificQueryNum OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Statistics of IGMPv2 or MLDv1 group-specific query packets sent
+        from the device."
+    ::= { ibMcsPacketStatisticsEntry 13 }
+
+ibMcsTxV3SpecificQueryNum OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Statistics of IGMPv3 or MLDv2 group-specific query packets sent
+        from the device."
+    ::= { ibMcsPacketStatisticsEntry 14 }
+
+ibMcsTxV3SpecificSGQueryNum OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Statistics of IGMPv3 or MLDv2 group-and-source-specific query
+        packets sent from the device."
+    ::= { ibMcsPacketStatisticsEntry 15 }
+
+ibMcsPortJoinGroupConfigTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbMcsPortJoinGroupConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Table for configuring a port as a simulated member host for a
+        multicast group."
+    ::= { ibMulticastSnoopObject 5 }
+
+ibMcsPortJoinGroupConfigEntry OBJECT-TYPE
+    SYNTAX     IbMcsPortJoinGroupConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Entry for configuring a port as a simulated member host for a
+        multicast group."
+    INDEX
+    {
+        ibMcsPortJoinGroupIfIndex,
+        ibMcsPortJoinGroupSnoopingType,
+        ibMcsPortJoinGroupVlanID,
+        ibMcsPortJoinGroupGroupAddress,
+        ibMcsPortJoinGroupSourceAddress
+    }
+    ::= { ibMcsPortJoinGroupConfigTable 1 }
+
+IbMcsPortJoinGroupConfigEntry ::=
+    SEQUENCE
+    {
+        ibMcsPortJoinGroupIfIndex         InterfaceIndex,
+        ibMcsPortJoinGroupSnoopingType    InetAddressType,
+        ibMcsPortJoinGroupVlanID          Unsigned32,
+        ibMcsPortJoinGroupGroupAddress    InetAddress,
+        ibMcsPortJoinGroupSourceAddress   InetAddress,
+        ibMcsPortJoinGroupStatus          RowStatus
+    }
+
+ibMcsPortJoinGroupIfIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Port for which this entry contains information."
+    ::= { ibMcsPortJoinGroupConfigEntry 1 }
+
+ibMcsPortJoinGroupSnoopingType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Type of the configuration.  IPv4 means IGMP snooping configuration,
+        and IPv6 means MLD snooping configuration."
+    ::= { ibMcsPortJoinGroupConfigEntry 2 }
+
+ibMcsPortJoinGroupVlanID OBJECT-TYPE
+    SYNTAX     Unsigned32(1..4094)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Index uniquely identifying the specified VLAN in which a host
+        on a port joined the multicast group."
+    ::= { ibMcsPortJoinGroupConfigEntry 3 }
+
+ibMcsPortJoinGroupGroupAddress OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "IP address of the group to which the host belongs."
+    ::= { ibMcsPortJoinGroupConfigEntry 4 }
+
+ibMcsPortJoinGroupSourceAddress OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "IP address of the source.  A value of zero indicates that the
+        multicast packets of this group can come from any sources."
+    ::= { ibMcsPortJoinGroupConfigEntry 5 }
+
+ibMcsPortJoinGroupStatus OBJECT-TYPE
+    SYNTAX     RowStatus
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "This object is responsible for managing rows, which supports
+        'active', 'createAndGo' and 'destroy'."
+    ::= { ibMcsPortJoinGroupConfigEntry 6 }
+
+ibMcsPortStaticGroupConfigTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbMcsPortStaticGroupConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Table for configuring static group membership entries on a port."
+    ::= { ibMulticastSnoopObject 6 }
+
+ibMcsPortStaticGroupConfigEntry OBJECT-TYPE
+    SYNTAX     IbMcsPortStaticGroupConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Entry for configuring static group membership entries on a port."
+    INDEX
+    {
+        ibMcsPortStaticGroupIfIndex,
+        ibMcsPortStaticGroupSnoopingType,
+        ibMcsPortStaticGroupVlanID,
+        ibMcsPortStaticGroupGroupAddress,
+        ibMcsPortStaticGroupSourceAddress
+    }
+    ::= { ibMcsPortStaticGroupConfigTable 1 }
+
+IbMcsPortStaticGroupConfigEntry ::=
+    SEQUENCE
+    {
+        ibMcsPortStaticGroupIfIndex           InterfaceIndex,
+        ibMcsPortStaticGroupSnoopingType      InetAddressType,
+        ibMcsPortStaticGroupVlanID            Unsigned32,
+        ibMcsPortStaticGroupGroupAddress      InetAddress,
+        ibMcsPortStaticGroupSourceAddress     InetAddress,
+        ibMcsPortStaticGroupStatus            RowStatus
+    }
+
+ibMcsPortStaticGroupIfIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Port for which this entry contains information."
+    ::= { ibMcsPortStaticGroupConfigEntry 1 }
+
+ibMcsPortStaticGroupSnoopingType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Type of the configuration.  IPv4 means IGMP snooping configuration,
+        and IPv6 means MLD snooping configuration."
+    ::= { ibMcsPortStaticGroupConfigEntry 2 }
+
+ibMcsPortStaticGroupVlanID OBJECT-TYPE
+    SYNTAX     Unsigned32(1..4094)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Index uniquely identifying the specified VLAN in which a port
+        statically joined the multicast group."
+    ::= { ibMcsPortStaticGroupConfigEntry 3 }
+
+ibMcsPortStaticGroupGroupAddress OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "IP address of the multicast group."
+    ::= { ibMcsPortStaticGroupConfigEntry 4 }
+
+ibMcsPortStaticGroupSourceAddress OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "IP address of the source.  A value of zero indicates that the
+        multicast packets of this group can come from any sources."
+    ::= { ibMcsPortStaticGroupConfigEntry 5 }
+
+ibMcsPortStaticGroupStatus OBJECT-TYPE
+    SYNTAX     RowStatus
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "This object is responsible for managing the creation and
+        deletion of rows, which supports 'active', 'createAndGo'
+        and 'destroy'."
+    ::= { ibMcsPortStaticGroupConfigEntry 6 }
+
+ibMcsRouterPortConfigTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF IbMcsRouterPortConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Table for configuring a port as a static router port."
+    ::= { ibMulticastSnoopObject 7 }
+
+ibMcsRouterPortConfigEntry OBJECT-TYPE
+    SYNTAX  IbMcsRouterPortConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Entry for configuring a port as a static router port."
+    INDEX
+    {
+        ibMcsRouterPortConfigIfIndex,
+        ibMcsRouterPortConfigSnoopingType,
+        ibMcsRouterPortConfigVlanID
+    }
+    ::= { ibMcsRouterPortConfigTable 1 }
+
+IbMcsRouterPortConfigEntry ::=
+    SEQUENCE
+    {
+        ibMcsRouterPortConfigIfIndex               InterfaceIndex,
+        ibMcsRouterPortConfigSnoopingType          InetAddressType,
+        ibMcsRouterPortConfigVlanID                Unsigned32,
+        ibMcsRouterPortConfigRowStatus             RowStatus
+    }
+
+ibMcsRouterPortConfigIfIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Port for which this entry contains information."
+    ::= { ibMcsRouterPortConfigEntry 1 }
+
+ibMcsRouterPortConfigSnoopingType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Type of the configuration.  IPv4 means IGMP snooping configuration,
+        and IPv6 means MLD snooping configuration."
+    ::= { ibMcsRouterPortConfigEntry 2 }
+
+ibMcsRouterPortConfigVlanID OBJECT-TYPE
+    SYNTAX     Unsigned32(1..4094)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Index uniquely identifying the specified VLAN in which a port
+        act as a static router port."
+    ::= { ibMcsRouterPortConfigEntry 3 }
+
+ibMcsRouterPortConfigRowStatus OBJECT-TYPE
+    SYNTAX     RowStatus
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "This object is a conceptual row entry that allows to add
+        or delete entries to or from the ibMcsRouterPortConfigTable.
+        When an entry is created in this table 'createAndGo' method
+        is used and the value of this object is set to 'active'.
+        Deactivation of an 'active' entry is not allowed.  When
+        an entry is deleted in this table 'destroy' method is used."
+    ::= { ibMcsRouterPortConfigEntry 4 }
+
+ibMcsPortConfigTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF IbMcsPortConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Table for configuring the fast leave status, group limit number,
+        group policy parameter and overflow replace status on a port in
+        the specified VLAN."
+    ::= { ibMulticastSnoopObject 8 }
+
+ibMcsPortConfigEntry OBJECT-TYPE
+    SYNTAX  IbMcsPortConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Entry containing information about the fast leave status, group
+        limit number, group policy parameter and overflow replace status
+        of a port in the specified VLAN."
+    INDEX
+    {
+        ibMcsPortConfigIfIndex,
+        ibMcsPortConfigSnoopingType,
+        ibMcsPortConfigVlanID
+    }
+    ::= { ibMcsPortConfigTable 1 }
+
+IbMcsPortConfigEntry ::=
+    SEQUENCE
+    {
+        ibMcsPortConfigIfIndex               InterfaceIndex,
+        ibMcsPortConfigSnoopingType          InetAddressType,
+        ibMcsPortConfigVlanID                Unsigned32,
+        ibMcsPortConfigGroupLimitNumber      Unsigned32,
+        ibMcsPortConfigFastLeaveStatus       TruthValue,
+        ibMcsPortConfigGroupPolicyParameter  Unsigned32,
+        ibMcsPortConfigOverflowReplace       TruthValue,
+        ibMcsPortConfigRowStatus             RowStatus
+    }
+
+ibMcsPortConfigIfIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Port for which this entry contains information."
+    ::= { ibMcsPortConfigEntry 1 }
+
+ibMcsPortConfigSnoopingType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "Type of the configuration.  IPv4 means IGMP snooping configuration,
+        and IPv6 means MLD snooping configuration."
+    ::= { ibMcsPortConfigEntry 2 }
+
+ibMcsPortConfigVlanID OBJECT-TYPE
+    SYNTAX     Unsigned32(1..4094)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "VLAN ID."
+    ::= { ibMcsPortConfigEntry 3 }
+
+ibMcsPortConfigGroupLimitNumber OBJECT-TYPE
+    SYNTAX  Unsigned32
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Group limit number of the port."
+    ::= { ibMcsPortConfigEntry 4 }
+
+ibMcsPortConfigFastLeaveStatus OBJECT-TYPE
+    SYNTAX  TruthValue
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Fast leave status of the port."
+    DEFVAL  { false }
+    ::= { ibMcsPortConfigEntry 5 }
+
+ibMcsPortConfigGroupPolicyParameter OBJECT-TYPE
+    SYNTAX  Unsigned32(0|2000..3999)
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "ACL number which is used as the group policy parameter of the port."
+    DEFVAL  { 0 }
+    ::= { ibMcsPortConfigEntry 6 }
+
+ibMcsPortConfigOverflowReplace OBJECT-TYPE
+    SYNTAX  TruthValue
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "This object is related to the object ibMcsPortConfigGroupLimitNumber.
+        If the current group number is less than the value of
+        ibMcsPortConfigGroupLimitNumber, any new group is permitted.
+        If the current group number equals to the value of
+        ibMcsPortConfigGroupLimitNumber and the value of this object is enabled,
+        the group with the minimum multicast address will be replaced by the new
+        group.
+        If the current group number equals to the value of
+        ibMcsPortConfigGroupLimitNumber and the value of this object is disabled,
+        none of new group will be permitted."
+    DEFVAL  { false }
+    ::= { ibMcsPortConfigEntry 7 }
+
+ibMcsPortConfigRowStatus OBJECT-TYPE
+    SYNTAX  RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The object is responsible for managing the creation and deletion
+        of rows, which supports 'active', 'createAndGo' and 'destroy'."
+    ::= { ibMcsPortConfigEntry 8 }
+
+--
+-- notification configuration
+--
+
+ibMcsNotificationsAddressType OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS accessible-for-notify
+    STATUS     current
+    DESCRIPTION
+        "The address type of the global configuration. IPv4 means IGMP snooping
+        configuration, and IPv6 means MLD snooping configuration."
+    ::= { ibMcsTrapBindObjects 1 }
+
+ibMcsNotificationsExceedLimit OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS     current
+    DESCRIPTION
+        "The maximum number of global L2 multicast entries."
+    ::= { ibMcsTrapBindObjects 2 }
+
+ibMcsNotificationsSourceAddr OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS     current
+    DESCRIPTION
+            "The source address of the Layer 2 multicast entry that failed
+             to set to the driver."
+    ::= { ibMcsTrapBindObjects 3 }
+
+ibMcsNotificationsGroupAddr OBJECT-TYPE
+    SYNTAX     InetAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS     current
+    DESCRIPTION
+            "The multicast group address of the Layer 2 multicast entry that failed
+             to set to the driver."
+    ::= { ibMcsTrapBindObjects 4 }
+
+ibMcsNotificationsVUType  OBJECT-TYPE
+    SYNTAX     IbVirtualUnitType
+    MAX-ACCESS accessible-for-notify
+    STATUS     current
+    DESCRIPTION
+        "Type of virtual unit."
+    ::= { ibMcsTrapBindObjects 5 }
+
+ibMcsNotificationsVUID  OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS     current
+    DESCRIPTION
+        "VLAN ID or VSI Index.  The value ranges is 1 to 4094 when for a
+        VLAN and 0 to 0xFFFFFFFE for a VSI"
+    ::= { ibMcsTrapBindObjects 6 }
+
+--
+-- trap
+--
+ibMcsGlobalEntryExceed  NOTIFICATION-TYPE
+    OBJECTS { ibMcsNotificationsAddressType,
+              ibMcsNotificationsExceedLimit
+            }
+    STATUS    current
+    DESCRIPTION
+            "The ibMcsGlobalEntryExceed is generated when the total number of
+            global L2 multicast entries exceeds the maximum number of global
+            L2 multicast entries."
+    ::= { ibMcsNotifications 1 }
+
+ibMcsEntryRefreshFailAlarm  NOTIFICATION-TYPE
+    OBJECTS { ibMcsNotificationsAddressType,
+              ibMcsNotificationsVUType,
+              ibMcsNotificationsVUID,
+              ibMcsNotificationsSourceAddr,
+              ibMcsNotificationsGroupAddr
+            }
+    STATUS    current
+    DESCRIPTION
+            "The ibMcsEntryRefreshFailAlarm is generated when  Layer 2 multicast
+             entry fails to set to the driver."
+    ::= { ibMcsNotifications 2 }
+END

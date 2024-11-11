@@ -1,0 +1,557 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:  RIB (Routing Information Base) MIB
+-- Reference:
+-- Version: V1.1
+-- History:
+--   V1.0 2022-06-16 Created by Mei Haitao
+--     Initial version.
+--   V1.1 2022-07-12 Updated by Zhang Yao
+--     Add the objects of ibRibPublicNotifyObjects, ibRibNotifyObjects,
+--     ibRibPublicNotifications and ibRibNotifications.
+-- =================================================================
+IB-RIB-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibRib MODULE-IDENTITY
+    LAST-UPDATED "202207121002Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB file provides information about RIB."
+
+    REVISION "202207121002Z"
+    DESCRIPTION
+        "Add the objects of ibRibPublicNotifyObjects, ibRibNotifyObjects,
+         ibRibPublicNotifications and ibRibNotifications."
+
+    REVISION "202205311002Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+
+    ::= { ibCommon 219 }
+
+ibRibVrfNotifyObjects           OBJECT IDENTIFIER ::= { ibRib 1 }
+ibRibVrfNotifications           OBJECT IDENTIFIER ::= { ibRib 2 }
+ibRibPublicNotifyObjects        OBJECT IDENTIFIER ::= { ibRib 3 }
+ibRibPublicNotifications        OBJECT IDENTIFIER ::= { ibRib 4 }
+ibRibNotifyObjects              OBJECT IDENTIFIER ::= { ibRib 5 }
+ibRibNotifications              OBJECT IDENTIFIER ::= { ibRib 6 }
+
+ibRibVrfNotifyPrefix            OBJECT IDENTIFIER ::= { ibRibVrfNotifications 0 }
+ibRibPublicNotifyPrefix         OBJECT IDENTIFIER ::= { ibRibPublicNotifications 0 }
+ibRibNotifyPrefix               OBJECT IDENTIFIER ::= { ibRibNotifications 0 }
+
+ibRibVrfRestrainType OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1..31))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Family type of the VPN route."
+    ::= { ibRibVrfNotifyObjects 1 }
+
+ibRibVrfName OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (0..31))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Name of the VPN instance."
+    ::= { ibRibVrfNotifyObjects 2 }
+
+ibRibVrfIndex OBJECT-TYPE
+    SYNTAX Unsigned32 (0..65535)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Index value of the VPN instance."
+    ::= { ibRibVrfNotifyObjects 3 }
+
+ibRibVrfRtNexthopAddress OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1..46))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Next hop address of the VPN route."
+    ::= { ibRibVrfNotifyObjects 4 }
+
+ibRibVrfRtProtocol OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1..31))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Protocol type of the VPN route."
+    ::= { ibRibVrfNotifyObjects 5 }
+
+ibRibVrfIPv4PrefixNumber OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Current number of IPv4 route prefixes in the VPN instance."
+    ::= { ibRibVrfNotifyObjects 6 }
+
+ibRibVrfIPv4PrefixLimit OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Upper limit of IPv4 route prefixes in the VPN instance."
+    ::= { ibRibVrfNotifyObjects 7 }
+
+ibRibVrfIPv4PrefixTHLimit OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Threshold of IPv4 route prefixes in the VPN instance."
+    ::= { ibRibVrfNotifyObjects 8 }
+
+ibRibVrfIPv6PrefixNumber OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Current number of IPv6 route prefixes in the VPN instance."
+    ::= { ibRibVrfNotifyObjects 9 }
+
+ibRibVrfIPv6PrefixLimit OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Upper limit of IPv6 route prefixes in the VPN instance."
+    ::= { ibRibVrfNotifyObjects 10 }
+
+ibRibVrfIPv6PrefixTHLimit OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Threshold of IPv6 route prefixes in the VPN instance."
+    ::= { ibRibVrfNotifyObjects 11 }
+
+ibRibPublicIPv4PrefixNumber OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Current number of IPv4 route prefixes."
+    ::= { ibRibPublicNotifyObjects 1 }
+
+ibRibPublicIPv4PrefixLimit OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Upper limit of IPv4 route prefixes."
+    ::= { ibRibPublicNotifyObjects 2 }
+
+ibRibPublicIPv4PrefixTHLimit OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Threshold of IPv4 route prefixes."
+    ::= { ibRibPublicNotifyObjects 3 }
+
+ibRibPublicIPv6PrefixNumber OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Current number of IPv6 route prefixes."
+    ::= { ibRibPublicNotifyObjects 4 }
+
+ibRibPublicIPv6PrefixLimit OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Upper limit of IPv6 route prefixes."
+    ::= { ibRibPublicNotifyObjects 5 }
+
+ibRibPublicIPv6PrefixTHLimit OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Threshold of IPv6 route prefixes."
+    ::= { ibRibPublicNotifyObjects 6 }
+
+ibRibIPv4PrefixNumber OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Current number of IPv4 route prefixes."
+    ::= { ibRibNotifyObjects 1 }
+
+ibRibIPv4PrefixLimit OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Upper limit of IPv4 route prefixes."
+    ::= { ibRibNotifyObjects 2 }
+
+ibRibIPv4PrefixTHLimit OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Threshold of IPv4 route prefixes."
+    ::= { ibRibNotifyObjects 3 }
+
+ibRibIPv6PrefixNumber OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Current number of IPv6 route prefixes."
+    ::= { ibRibNotifyObjects 4 }
+
+ibRibIPv6PrefixLimit OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Upper limit of IPv6 route prefixes."
+    ::= { ibRibNotifyObjects 5 }
+
+ibRibIPv6PrefixTHLimit OBJECT-TYPE
+    SYNTAX Unsigned32 (0..4294967295)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Threshold of IPv6 route prefixes."
+    ::= { ibRibNotifyObjects 6 }
+
+ibRibCyclicIterateRestrain NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibVrfRestrainType,
+        ibRibVrfName,
+        ibRibVrfIndex,
+        ibRibVrfRtNexthopAddress,
+        ibRibVrfRtProtocol
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when suppression for next hop recursion loop is
+         enabled."
+    ::= { ibRibVrfNotifyPrefix 1 }
+
+ibRibCyclicIterateRestrainClr NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibVrfRestrainType,
+        ibRibVrfName,
+        ibRibVrfIndex,
+        ibRibVrfRtNexthopAddress,
+        ibRibVrfRtProtocol
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when suppression for next hop recursion loop
+         is disabled."
+    ::= { ibRibVrfNotifyPrefix 2 }
+
+ibRibVrfIPv4PrefixExceed NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibVrfName,
+        ibRibVrfIndex,
+        ibRibVrfIPv4PrefixNumber,
+        ibRibVrfIPv4PrefixLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv4 route prefixes in the
+         VPN instance exceeded the maximum value."
+    ::= { ibRibVrfNotifyPrefix 3 }
+
+ibRibVrfIPv4PrefixExceedClear NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibVrfName,
+        ibRibVrfIndex,
+        ibRibVrfIPv4PrefixNumber,
+        ibRibVrfIPv4PrefixLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv4 route prefixes in the
+         VPN instance fell below the maximum value."
+    ::= { ibRibVrfNotifyPrefix 4 }
+
+ibRibVrfIPv4PrefixTHExceed NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibVrfName,
+        ibRibVrfIndex,
+        ibRibVrfIPv4PrefixNumber,
+        ibRibVrfIPv4PrefixTHLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv4 route prefixes in the VPN
+         instance exceeded the warning threshold multiplied by the maximum
+         value."
+    ::= { ibRibVrfNotifyPrefix 5 }
+
+ibRibVrfIPv4PrefixTHExceedClr NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibVrfName,
+        ibRibVrfIndex,
+        ibRibVrfIPv4PrefixNumber,
+        ibRibVrfIPv4PrefixTHLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv4 route prefixes in the VPN
+         instance fell below the warning threshold multiplied by the maximum
+         value."
+    ::= { ibRibVrfNotifyPrefix 6 }
+
+ibRibVrfIPv6PrefixExceed NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibVrfName,
+        ibRibVrfIndex,
+        ibRibVrfIPv6PrefixNumber,
+        ibRibVrfIPv6PrefixLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv6 route prefixes in the VPN
+         instance exceeded the maximum value."
+    ::= { ibRibVrfNotifyPrefix 7 }
+
+ibRibVrfIPv6PrefixExceedClear NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibVrfName,
+        ibRibVrfIndex,
+        ibRibVrfIPv6PrefixNumber,
+        ibRibVrfIPv6PrefixLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv6 route prefixes in the VPN
+         instance fell below the maximum value."
+    ::= { ibRibVrfNotifyPrefix 8 }
+
+ibRibVrfIPv6PrefixTHExceed NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibVrfName,
+        ibRibVrfIndex,
+        ibRibVrfIPv6PrefixNumber,
+        ibRibVrfIPv6PrefixTHLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv6 route prefixes in the VPN
+         instance exceeded the warning threshold multiplied by the maximum
+         value."
+    ::= { ibRibVrfNotifyPrefix 9 }
+
+ibRibVrfIPv6PrefixTHExceedClr NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibVrfName,
+        ibRibVrfIndex,
+        ibRibVrfIPv6PrefixNumber,
+        ibRibVrfIPv6PrefixTHLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv6 route prefixes in the VPN
+         instance fell below the warning threshold multiplied by the maximum
+         value."
+    ::= { ibRibVrfNotifyPrefix 10 }
+
+ibRibPUBIPv4PrefixExceed NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibPublicIPv4PrefixNumber,
+        ibRibPublicIPv4PrefixLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv4 route prefixes in the
+         public network exceeded the maximum value."
+    ::= { ibRibPublicNotifyPrefix 1 }
+
+ibRibPUBIPv4PrefixExceedClear NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibPublicIPv4PrefixNumber,
+        ibRibPublicIPv4PrefixLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv4 route prefixes in the
+         public network fell below the maximum value."
+    ::= { ibRibPublicNotifyPrefix 2 }
+
+ibRibPUBIPv4PrefixTHExceed NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibPublicIPv4PrefixNumber,
+        ibRibPublicIPv4PrefixTHLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv4 route prefixes in the
+         public network exceeded the warning threshold multiplied by the
+         maximum value."
+    ::= { ibRibPublicNotifyPrefix 3 }
+
+ibRibPUBIPv4PrefixTHExceedClr NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibPublicIPv4PrefixNumber,
+        ibRibPublicIPv4PrefixTHLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv4 route prefixes in the
+         public network fell below the warning threshold multiplied by the
+         maximum value."
+    ::= { ibRibPublicNotifyPrefix 4 }
+
+ibRibPUBIPv6PrefixExceed NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibPublicIPv6PrefixNumber,
+        ibRibPublicIPv6PrefixLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv6 route prefixes in the
+         public network exceeded the maximum value."
+    ::= { ibRibPublicNotifyPrefix 5 }
+
+ibRibPUBIPv6PrefixExceedClear NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibPublicIPv6PrefixNumber,
+        ibRibPublicIPv6PrefixLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv6 route prefixes in the
+         public network fell below the maximum value."
+    ::= { ibRibPublicNotifyPrefix 6 }
+
+ibRibPUBIPv6PrefixTHExceed NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibPublicIPv6PrefixNumber,
+        ibRibPublicIPv6PrefixTHLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv6 route prefixes in the
+         public network exceeded the warning threshold multiplied by the
+         maximum value."
+    ::= { ibRibPublicNotifyPrefix 7 }
+
+ibRibPUBIPv6PrefixTHExceedClr NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibPublicIPv6PrefixNumber,
+        ibRibPublicIPv6PrefixTHLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv6 route prefixes in the
+         public network fell below the warning threshold multiplied by the
+         maximum value."
+    ::= { ibRibPublicNotifyPrefix 8 }
+
+ibRibIPv4PrefixExceed NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibIPv4PrefixNumber,
+        ibRibIPv4PrefixLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv4 route prefixes in the
+         public network and all VPN instances exceeded the maximum value."
+    ::= { ibRibNotifyPrefix 1 }
+
+ibRibIPv4PrefixExceedClear NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibIPv4PrefixNumber,
+        ibRibIPv4PrefixLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv4 route prefixes in the
+         public network and all VPN instances fell below the maximum value."
+    ::= { ibRibNotifyPrefix 2 }
+
+ibRibIPv4PrefixTHExceed NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibIPv4PrefixNumber,
+        ibRibIPv4PrefixTHLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv4 route prefixes in the
+         public network and all VPN instances exceeded the warning threshold
+         multiplied by the maximum value."
+    ::= { ibRibNotifyPrefix 3 }
+
+ibRibIPv4PrefixTHExceedClr NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibIPv4PrefixNumber,
+        ibRibIPv4PrefixTHLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv4 route prefixes in the
+         public network and all VPN instances fell below the warning threshold
+         multiplied by the maximum value."
+    ::= { ibRibNotifyPrefix 4 }
+
+ibRibIPv6PrefixExceed NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibIPv6PrefixNumber,
+        ibRibIPv6PrefixLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv6 route prefixes in the
+         public network and all VPN instances exceeded the maximum value."
+    ::= { ibRibNotifyPrefix 5 }
+
+ibRibIPv6PrefixExceedClear NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibIPv6PrefixNumber,
+        ibRibIPv6PrefixLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv6 route prefixes in the
+         public network and all VPN instances fell below the maximum value."
+    ::= { ibRibNotifyPrefix 6 }
+
+ibRibIPv6PrefixTHExceed NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibIPv6PrefixNumber,
+        ibRibIPv6PrefixTHLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv6 route prefixes in the
+         public network and all VPN instances exceeded the warning threshold
+         multiplied by the maximum value."
+    ::= { ibRibNotifyPrefix 7 }
+
+ibRibIPv6PrefixTHExceedClr NOTIFICATION-TYPE
+    OBJECTS {
+        ibRibIPv6PrefixNumber,
+        ibRibIPv6PrefixTHLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when the number of IPv6 route prefixes in the
+         public network and all VPN instances fell below the warning threshold
+         multiplied by the maximum value."
+    ::= { ibRibNotifyPrefix 8 }
+
+END

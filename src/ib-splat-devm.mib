@@ -1,0 +1,818 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Device Management MIB
+-- Reference:
+-- Version: V3.0
+-- History:
+--      V1.0 (1) Created by Hou Qiang, 2001.06.29
+--           (2) Revised by Qi Zhenglin, 2001.12.30 ----r003 revision
+--      V1.1 2004/7/20 import ibLswFrameIndex, ibLswSlotIndex
+--           FROM IB-LSW-DEV-ADM-MIB
+--      V1.2 2004/09/10
+--           1) change all MIB objects' STATUS from mandatory to current.
+--           2) remove statement before ibLswdevMMib
+--           3) adjust file format, change tab to space and some small
+--              changes.
+--           4) change STATUS of ibCfmWriteFlash and ibCfmEraseFlash
+--              from write-only to read-write.
+--      V2.0 2004-10-12 updated by gaolong
+--           Import Gauge32, OBJECT-IDENTITY.
+--           Relocate ibLswdevMMib MODULE-IDENTITY clause.
+--           Change ACCESS to MAX-ACCESS
+--           Change Gauge to Gauge32.
+--           Change value of ibDevMFanStatus and ibDevMPowerStatus from underscores to hyphens.
+--      V2.1  2005-01-12
+--           Change the description of ibFlhTotalSize and ibFlhTotalFree by sunqiang
+--      V2.2  2005-06-10 updated by Chen Xi
+--           Modify the SYNTAX and DESCRIPTION of ibLinkUpDownTrapEnable
+--           and adjust file format.
+--      V2.3  2011-11-26 updated by duyanbing
+--           Add ibDevMFirstTrapTime.
+--      V2.4  2012-04-26
+--           Added ibdevMExternalAlarmStatus for reserving by wangcong.
+--      V2.5  2014-09-26
+--           Added ibDevMFanPosFrame, ibDevMFanPosSlot, ibDevMFanPosIndex, ibDevMFanMaxSpeed
+--           and ibDevMFanCurrentSpeed by fangliwen.
+--      V2.6  2017-07-17
+--           Added ibDevMPowerEntIndex by fangliwen.
+--      V2.7  2020-05-11
+--           Added ibDevMPowerRatedVoltage, ibDevMPowerRatedCurrent, ibDevMPowerLoadFactor,
+--           ibDevMPowerUsedPower and ibDevMPowerRemainingPower by meishenhe.
+--      V2.8  2022-11-03
+--           Added ibDevMPowerSupplyType by fangliwen.
+--      V2.9  2023-02-17
+--           Added ibDevMFanSpeedPercent, ibDevMFanSpeedMode, ibDevMPowerOutputVoltage,
+--           ibDevMPowerOutputCurrent and ibDevMPowerCapacity by hezheng
+--      V3.0  2023-05-11
+--           Added ibDevMFanSpeedPolicy , ibDevMFanCurrentPower ,
+--           ibDevMPowerInputPower , ibDevMPowerInputVoltage by zhaomangyu
+-- ==================================================================
+-- ==================================================================
+--
+-- Varibles and types be imported
+--
+-- ==================================================================
+IB-LswDEVM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    DisplayString
+        FROM SNMPv2-TC
+    MODULE-IDENTITY, OBJECT-TYPE, TimeTicks, Gauge32, Integer32, OBJECT-IDENTITY
+        FROM SNMPv2-SMI
+
+    iblswCommon, ibRhw
+        FROM IB-OID-MIB
+    ibLswFrameIndex, ibLswSlotIndex
+        FROM IB-LSW-DEV-ADM-MIB
+        ;
+
+ibLswdevMMib MODULE-IDENTITY
+        LAST-UPDATED "202305110000Z"
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+        "Added ibDevMFanSpeedPolicy , ibDevMFanCurrentPower ,
+        ibDevMPowerInputPower , ibDevMPowerInputVoltage."
+        REVISION "202305110000Z"
+        DESCRIPTION
+        "Added ibDevMFanSpeedPercent, ibDevMFanSpeedMode,
+        ibDevMPowerOutputVoltage, ibDevMPowerOutputCurrent and
+        ibDevMPowerCapacity."
+        REVISION "202302170000Z"
+        DESCRIPTION
+        "Added ibDevMPowerSupplyType."
+        REVISION "202211030000Z"
+        DESCRIPTION
+        "Added ibDevMPowerRatedVoltage, ibDevMPowerRatedCurrent, ibDevMPowerLoadFactor,
+        ibDevMPowerUsedPower and ibDevMPowerRemainingPower."
+        REVISION "202005110000Z"
+        DESCRIPTION
+        "The objects in this MIB module are used to display
+        information about physical resource."
+        REVISION "201707170000Z"
+        DESCRIPTION
+        "Added ibDevMPowerEntIndex."
+        REVISION "200106290000Z"
+        DESCRIPTION
+        "The initial version of this MIB module."
+        ::= { iblswCommon  9 }
+
+ibDevice OBJECT IDENTIFIER ::= { ibRhw 8 }
+
+-- ==================================================================
+--
+-- ======================= definition begin =========================
+--
+-- ==================================================================
+
+ibCpuTable  OBJECT-TYPE
+    SYNTAX  SEQUENCE OF IbCpuEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+            "A table of CPU statistics."
+    ::= { ibDevice 1 }
+
+ibCpuEntry  OBJECT-TYPE
+    SYNTAX  IbCpuEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+            "The Entries of ibCpuTable."
+    INDEX   { ibCpuIndex }
+    ::= { ibCpuTable  1 }
+
+IbCpuEntry ::=
+   SEQUENCE {
+            ibCpuIndex          Integer32,
+            ibCpuCostRate       Gauge32,
+            ibCpuCostRatePer1Min       Gauge32,
+            ibCpuCostRatePer5Min       Gauge32
+           }
+
+ibCpuIndex  OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+            "Index of ibCpuTable. This integer is a unique number to
+             identify the CPU(s). We recommend two Number Plans in this
+             paper, Logical Number or Physical Number. For the first
+             case, ibCpuIndex is a integer, range from 1 to the Maximum
+             number, for example 1,2,3,4,5 ..., where 1 represents
+             the first CPU, 2 represents the second CPU, etc.  For the
+             second case ibCpuIndex represents physical card position
+             (Shelf Number, Frame Number, Slot Number, SubSlotNumber)
+             where the CPU residing, for example, 0x01020304 represent
+             the CPU on the 4th subslot of the 3th slot of the 2nd frame
+             of the 1st Shelf. In the condition of multiple CPU system
+             where CPU group coordinately  process on one board, we see
+             the CPUs as one CPU"
+    ::= { ibCpuEntry 1 }
+
+ibCpuCostRate  OBJECT-TYPE
+   SYNTAX  Gauge32
+   MAX-ACCESS  read-only
+   STATUS  current
+   DESCRIPTION
+           "The overall CPU busy percentage in the last 5 second period. "
+   ::= { ibCpuEntry 2 }
+
+ibCpuCostRatePer1Min OBJECT-TYPE
+   SYNTAX  Gauge32
+   MAX-ACCESS  read-only
+   STATUS  current
+   DESCRIPTION
+           "The overall CPU cost percentage in the last 1 minute period. "
+   ::= { ibCpuEntry 3 }
+
+ibCpuCostRatePer5Min OBJECT-TYPE
+   SYNTAX  Gauge32
+   MAX-ACCESS  read-only
+   STATUS  current
+   DESCRIPTION
+           "The overall CPU cost percentage in the last 5 minutes period. "
+   ::= { ibCpuEntry 4 }
+
+ibMem   OBJECT IDENTIFIER ::= { ibDevice 2 }
+
+ibMemTable  OBJECT-TYPE
+    SYNTAX  SEQUENCE OF IbMemEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+            "This table contains memory information.  "
+    ::= { ibMem 1 }
+
+ibMemEntry  OBJECT-TYPE
+    SYNTAX  IbMemEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+            "The Entries of ibMemTable"
+    INDEX   { ibMemModuleIndex }
+            ::= { ibMemTable  1 }
+
+IbMemEntry ::=
+   SEQUENCE {
+            ibMemModuleIndex     Integer32,
+            ibMemSize            Gauge32,
+            ibMemFree            Gauge32,
+            ibMemRawSliceUsed    Gauge32,
+            ibMemLgFree          Gauge32,
+            ibMemFail            Gauge32,
+            ibMemFailNoMem       Gauge32
+            }
+
+ibMemModuleIndex   OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+            "Index of ibMemTable. This integer is a unique number to
+             identify the memory module. We recommend two Number Plans
+             in this paper, Logical Number or Physical Number. For the
+             first case, ibMemModuleIndex is a integer, range from 1 to
+             the Maximum number, for example 1,2,3,4,5 ..., where 1
+             represents the first memory module, 2 represents the second
+             memory module, etc.  For the second case ibMemModuleIndex
+             represents physical card position (Shelf Number, Frame Number,
+             Slot Number, SubSlotNumber) where the memory module residing,
+             for example, 0x01020304 represent the memory module on the 4th
+             subslot of the 3th slot of the 2nd frame of the 1st Shelf. "
+    ::= { ibMemEntry  1 }
+
+ibMemSize OBJECT-TYPE
+    SYNTAX  Gauge32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+           "Indicates the total size of the memory module
+            which is on the managed object."
+    ::= { ibMemEntry  2 }
+
+ibMemFree OBJECT-TYPE
+    SYNTAX  Gauge32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+           "Indicates the free size of the memory"
+    ::= { ibMemEntry  3 }
+
+ibMemRawSliceUsed OBJECT-TYPE
+    SYNTAX  Gauge32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+           "Indicates the used size of the raw slice memory"
+    ::= { ibMemEntry  4 }
+
+ibMemLgFree OBJECT-TYPE
+    SYNTAX  Gauge32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+           "The largest free size of the contiguous area in the memory.
+           The unit is byte."
+    ::= { ibMemEntry  5 }
+
+ibMemFail OBJECT-TYPE
+     SYNTAX  Gauge32
+     MAX-ACCESS  read-only
+     STATUS  current
+     DESCRIPTION
+             "The times of memory allocation failures"
+     ::= { ibMemEntry 6 }
+
+ibMemFailNoMem OBJECT-TYPE
+     SYNTAX  Gauge32
+     MAX-ACCESS  read-only
+     STATUS  current
+     DESCRIPTION
+             "The times of memory allocation failures due to no free memory."
+     ::= { ibMemEntry 7 }
+
+ibBufTable    OBJECT-TYPE
+    SYNTAX  SEQUENCE OF IbBufEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+            "This table contains buffer information.  "
+    ::= { ibMem 2 }
+
+ibBufEntry   OBJECT-TYPE
+    SYNTAX  IbBufEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+            "The Entries of ibBufferTable"
+    INDEX   { ibBufModuleIndex , ibBufSize }
+    ::= { ibBufTable  1 }
+
+IbBufEntry ::=
+   SEQUENCE {
+            ibBufModuleIndex     Integer32,
+            ibBufSize            Integer32,
+            ibBufCurrentTotal    Gauge32,
+            ibBufCurrentUsed     Gauge32
+           }
+
+ibBufModuleIndex   OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+            "Index of ibBufferTable. This integer is a unique number to
+             identify the buffer module. We recommend two Number Plans
+             in this paper, Logical Number or Physical Number. For the
+             first case, ibBufferModuleIndex is a integer, range from 1 to
+             the Maximum number, for example 1,2,3,4,5 ..., where 1
+             represents the first buffer module, 2 represents the second
+             buffer module, etc.  For the second case ibBufferModuleIndex
+             represents physical card position (Shelf Number, Frame Number,
+             Slot Number, SubSlotNumber) where the buffer module residing,
+             for example, 0x01020304 represent the buffer module on the 4th
+             subslot of the 3th slot of the 2nd frame of the 1st Shelf. "
+    ::= { ibBufEntry  1 }
+
+ibBufSize OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+            "The size of buffer,unit is byte."
+    ::= { ibBufEntry 2 }
+
+ibBufCurrentTotal OBJECT-TYPE
+    SYNTAX  Gauge32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+            "The total number of buffer currently."
+    ::= { ibBufEntry 3 }
+
+ibBufCurrentUsed OBJECT-TYPE
+    SYNTAX  Gauge32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+            "The number of used buffer currently."
+    ::= { ibBufEntry 4 }
+
+ibFlh   OBJECT IDENTIFIER ::= { ibDevice 3 }
+
+-- Local Flash Group
+-- This group is present in all products which contain flash"
+
+ibFlhTotalSize OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+           "The flash memory's total size, in kilobyte"
+    ::= { ibFlh 1 }
+
+ibFlhTotalFree OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+           "The free space in internal flash memory, in kilobyte"
+    ::= { ibFlh 2 }
+
+ibFlhLastDelTime OBJECT-TYPE
+    SYNTAX  TimeTicks
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+           "The time since system up of the latest deleting operation of
+            flash memory. The value of Zero indicates there is no erasing operation
+            since system up"
+    DEFVAL { 0 }
+    ::= { ibFlh 3 }
+
+ibFlhDelState OBJECT-TYPE
+    SYNTAX  INTEGER {
+        executing(1),
+        ok(2),
+        error(3),
+        readOnly(4),
+        failtoopen(5),
+        blockMallocFail(6),
+        noneDelOperationSinceStart(7)
+    }
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+           "The state indicates the result of current or
+            latest flash memory deleting operation"
+    ::= { ibFlh 4 }
+
+ibFlhState OBJECT-TYPE
+    SYNTAX  INTEGER {
+        busy(1),
+        free(2)
+    }
+    MAX-ACCESS  read-only
+    STATUS  current
+    DESCRIPTION
+           "Busy indicates the flash memory is unavailable due to others may be using it,
+            and free indicates the flash memory is available now"
+    ::= { ibFlh 5 }
+
+-- ==================================================================
+
+ibLswdevMMibObject OBJECT-IDENTITY
+    STATUS current
+    DESCRIPTION
+        "Description."
+    ::= { ibLswdevMMib 1 }
+
+ibdevMFanStatusTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbDevMFanStatusEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION " Fan status description table "
+        ::= { ibLswdevMMibObject  1 }
+
+ibdevMFanStatusEntry OBJECT-TYPE
+        SYNTAX IbDevMFanStatusEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION " Fan status description table entry "
+        INDEX   { ibDevMFanNum }
+        ::= { ibdevMFanStatusTable 1}
+
+IbDevMFanStatusEntry ::=
+   SEQUENCE {
+                ibDevMFanNum           Integer32,
+                ibDevMFanStatus        INTEGER,
+                ibDevMFanPosFrame      Integer32,
+                ibDevMFanPosSlot       Integer32,
+                ibDevMFanPosIndex      Integer32,
+                ibDevMFanMaxSpeed      Integer32,
+                ibDevMFanCurrentSpeed  Integer32,
+                ibDevMFanSpeedPercent  Integer32,
+                ibDevMFanSpeedMode     INTEGER,
+                ibDevMFanSpeedPolicy   DisplayString,
+                ibDevMFanCurrentPower  Integer32
+            }
+
+ibDevMFanNum  OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " Fan number "
+        ::= { ibdevMFanStatusEntry 1 }
+
+ibDevMFanStatus  OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        active     (1),
+        deactive   (2),
+        not-install  (3),
+        unsupport    (4)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " Fan status: active (1), deactive (2) not installed (3) and unsupported (4)"
+        ::= { ibdevMFanStatusEntry 2 }
+
+ibDevMFanPosFrame  OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " Frame number of the fan"
+        ::= { ibdevMFanStatusEntry 3 }
+
+ibDevMFanPosSlot  OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " Slot number of the fan"
+        ::= { ibdevMFanStatusEntry 4 }
+
+ibDevMFanPosIndex  OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " ID of the fan"
+        ::= { ibdevMFanStatusEntry 5 }
+
+ibDevMFanMaxSpeed  OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " Maximum speed of the fan, in RPM"
+        ::= { ibdevMFanStatusEntry 6 }
+
+ibDevMFanCurrentSpeed  OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " Current speed of the fan, in RPM"
+        ::= { ibdevMFanStatusEntry 7 }
+
+ibDevMFanSpeedPercent OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " Percentage of current fan speed to maximum fan speed "
+        ::= { ibdevMFanStatusEntry 8 }
+
+ibDevMFanSpeedMode OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        auto(1),
+        manual(2)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " Speed mode of a fan "
+        ::= { ibdevMFanStatusEntry 9 }
+
+ibDevMFanSpeedPolicy  OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE(1..32))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " Fan speed policy "
+        ::= { ibdevMFanStatusEntry 10 }
+
+ibDevMFanCurrentPower   OBJECT-TYPE
+        SYNTAX  Integer32
+        UNITS      "W"
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " Current power of the fan tray. "
+        ::= { ibdevMFanStatusEntry 11 }
+
+ibdevMPowerStatusTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbDevMPowerStatusEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION " Power status description table  "
+        ::= { ibLswdevMMibObject  2 }
+
+ibdevMPowerStatusEntry OBJECT-TYPE
+        SYNTAX IbDevMPowerStatusEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION " Power status description table entry   "
+        INDEX   { ibDevMPowerNum }
+        ::= { ibdevMPowerStatusTable 1}
+
+IbDevMPowerStatusEntry ::=
+   SEQUENCE {
+                ibDevMPowerNum            Integer32,
+                ibDevMPowerStatus         INTEGER,
+                ibDevMPowerEntIndex       Integer32,
+                ibDevMPowerRatedVoltage   Integer32,
+                ibDevMPowerRatedCurrent   Integer32,
+                ibDevMPowerLoadFactor     Integer32,
+                ibDevMPowerUsedPower      Integer32,
+                ibDevMPowerRemainingPower Integer32,
+                ibDevMPowerSupplyType     INTEGER,
+                ibDevMPowerOutputVoltage  Integer32,
+                ibDevMPowerOutputCurrent  Integer32,
+                ibDevMPowerCapacity       Integer32,
+                ibDevMPowerInputPower     Integer32,
+                ibDevMPowerInputVoltage   Integer32
+            }
+
+ibDevMPowerNum  OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Power number "
+        ::= { ibdevMPowerStatusEntry 1 }
+
+ibDevMPowerStatus OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        active     (1),
+        deactive   (2),
+        not-install (3),
+        unsupport    (4)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " Power status: active (1), deactive (2) not installed (3) and unsupported    "
+        ::= { ibdevMPowerStatusEntry 2 }
+
+ibDevMPowerEntIndex  OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Power entity index "
+        ::= { ibdevMPowerStatusEntry 3 }
+
+ibDevMPowerRatedVoltage  OBJECT-TYPE
+        SYNTAX  Integer32
+        UNITS      "mV"
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Power rated voltage "
+        ::= { ibdevMPowerStatusEntry 4 }
+
+ibDevMPowerRatedCurrent  OBJECT-TYPE
+        SYNTAX  Integer32
+        UNITS      "mA"
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Power rated current "
+        ::= { ibdevMPowerStatusEntry 5 }
+
+ibDevMPowerLoadFactor  OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Power load factor "
+        ::= { ibdevMPowerStatusEntry 6 }
+
+ibDevMPowerUsedPower  OBJECT-TYPE
+        SYNTAX  Integer32
+        UNITS      "mW"
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Power usage "
+        ::= { ibdevMPowerStatusEntry 7 }
+
+ibDevMPowerRemainingPower  OBJECT-TYPE
+        SYNTAX  Integer32
+        UNITS      "mW"
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Remaining of power "
+        ::= { ibdevMPowerStatusEntry 8 }
+
+ibDevMPowerSupplyType  OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        ac    (1),
+        dc    (2),
+        hvdc  (3)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Power supply type"
+        ::= { ibdevMPowerStatusEntry 9 }
+
+ibDevMPowerOutputVoltage OBJECT-TYPE
+        SYNTAX  Integer32
+        UNITS      "V"
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Power output voltage "
+        ::= { ibdevMPowerStatusEntry 10 }
+
+ibDevMPowerOutputCurrent OBJECT-TYPE
+        SYNTAX  Integer32
+        UNITS      "A"
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Power output current "
+        ::= { ibdevMPowerStatusEntry 11 }
+
+ibDevMPowerCapacity OBJECT-TYPE
+        SYNTAX  Integer32
+        UNITS      "W"
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Power capacity "
+        ::= { ibdevMPowerStatusEntry 12 }
+
+ibDevMPowerInputPower  OBJECT-TYPE
+        SYNTAX  Integer32
+        UNITS      "mW"
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Input power of the power supply. "
+        ::= { ibdevMPowerStatusEntry 13 }
+
+ibDevMPowerInputVoltage  OBJECT-TYPE
+        SYNTAX  Integer32
+        UNITS      "V"
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Input voltage of the power supply."
+        ::= { ibdevMPowerStatusEntry 14 }
+
+ibdevMSlotEnvironmentTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbdevMSlotEnvironmentEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION " environment description table  "
+        ::= { ibLswdevMMibObject  3 }
+
+ibdevMSlotEnvironmentEntry OBJECT-TYPE
+        SYNTAX IbdevMSlotEnvironmentEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION " environment description table entry   "
+        INDEX   { ibLswFrameIndex, ibLswSlotIndex, ibdevMSlotEnvironmentType }
+        ::= { ibdevMSlotEnvironmentTable 1 }
+
+IbdevMSlotEnvironmentEntry ::=
+   SEQUENCE {
+                ibdevMSlotEnvironmentType               INTEGER,
+                ibDevMSlotEnvironmentStatus             INTEGER,
+                ibDevMSlotEnvironmentValue              Integer32,
+                ibDevMSlotEnvironmentUpperLimit         Integer32,
+                ibDevMSlotEnvironmentLowerLimit         Integer32
+           }
+
+ibdevMSlotEnvironmentType  OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        temperature(1),
+        humidity(2),
+        fog(3)
+        }
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "Environment type "
+        ::= { ibdevMSlotEnvironmentEntry 1 }
+
+ibDevMSlotEnvironmentStatus OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        normal(1),
+        upper(2),
+        lower(3)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " Environment status"
+        ::= { ibdevMSlotEnvironmentEntry 2 }
+
+ibDevMSlotEnvironmentValue OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " Environment value"
+        ::= { ibdevMSlotEnvironmentEntry 3 }
+
+ibDevMSlotEnvironmentUpperLimit  OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Environment upper limit "
+        ::= { ibdevMSlotEnvironmentEntry 4 }
+
+ibDevMSlotEnvironmentLowerLimit OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION " Environment Lower limit"
+        ::= { ibdevMSlotEnvironmentEntry 5 }
+
+ibLinkUpDownTrapEnable  OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        enableBoth(1) ,
+        disableBoth(2) ,
+        enableLinkUpTrapOnly(3) ,
+        enableLinkDownTrapOnly(4)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+        "Enable/Disable linkUp/linkDown traps of the device, determining whether
+         to enable linkUp/linkDown traps with that of the interface.
+         When the value is enableBoth(1), the linkUp/linkDown traps are both
+         enabled.
+         When the value is disableBoth(2), the linkUp/linkDown traps are both
+         disabled.
+         When the value is enableLinkUpTrapOnly(3), the linkUp traps is enabled
+         and the linkDown traps is disabled.
+         When the value is enableLinkDownTrapOnly(4), the linkUp traps is
+         disabled and the linkDown traps is enabled. "
+        ::= { ibLswdevMMibObject  9 }
+
+ibdot1qTpFdbLearnStatus OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+                enabled(1),
+                disabled(2)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION " Enable/Disable the address learning."
+        ::= { ibLswdevMMibObject  10 }
+
+ibCfmWriteFlash OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+                write(1)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION " Write the current effective configuration into the Flash memory.
+                      This object does not support read operation."
+        ::= { ibLswdevMMibObject  11 }
+
+ibCfmEraseFlash OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+                erase(1)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION " Delete the configuration from the Flash memory.
+                      This object does not support read operation."
+        ::= { ibLswdevMMibObject  12 }
+
+ibDevMFirstTrapTime OBJECT-TYPE
+    SYNTAX      TimeTicks
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the first trap time."
+    ::= { ibLswdevMMibObject 13 }
+
+ibdevMExternalAlarmStatus OBJECT IDENTIFIER ::= { ibLswdevMMibObject 14 }
+
+END

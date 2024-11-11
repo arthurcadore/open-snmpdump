@@ -1,0 +1,308 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- 
+-- Description: This MIB file is used for inquiring for MP (Multilink PPP)
+--              link status information.
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 tianli,2004.5.18,publish 
+-- =================================================================
+
+IB-MP-MIB DEFINITIONS ::= BEGIN
+
+        IMPORTS
+            ifIndex			
+                FROM RFC1213-MIB
+            ibRhw
+                FROM IB-OID-MIB                                                     
+            OBJECT-GROUP, MODULE-COMPLIANCE                 
+                FROM SNMPv2-CONF                        
+            Integer32, Counter32, OBJECT-TYPE, MODULE-IDENTITY                   
+                FROM SNMPv2-SMI
+            TEXTUAL-CONVENTION, DisplayString
+                FROM SNMPv2-TC;        
+
+        ibMultilinkPPP MODULE-IDENTITY 
+                LAST-UPDATED "200405180000Z"            -- May 18, 2004 at 00:00 GMT
+                ORGANIZATION
+                    "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+                CONTACT-INFO
+                    ""
+                DESCRIPTION 
+                        "The IB-MP-MIB provides read access to MP(Multilink PPP) link
+                        status information. The information available through this MIB includes:
+                        the father channel, the bundled son channel, the slot on which MP bundled, 
+                        the number of son channels, the bundle name,
+                        the statistic of lost fragments, reordered packets, unassigned packets, 
+                        interleaved packets, and the received/sent sequence, etc.
+                        "
+                ::= { ibRhw 33 }
+
+--
+-- Node definitions
+--        
+        
+        ibMpObjects OBJECT IDENTIFIER ::= { ibMultilinkPPP  1 }
+        
+        ibMpMultilinkTable OBJECT-TYPE
+                SYNTAX SEQUENCE OF IbMpMultilinkEntry
+                MAX-ACCESS not-accessible
+                STATUS current
+                DESCRIPTION
+                        "This table describes the information of MP link. 
+                        The index of this table is the interface index of MP group or 
+                        VT(Virtual Template)."
+                ::= { ibMpObjects 1 }
+
+        ibMpMultilinkEntry OBJECT-TYPE
+                SYNTAX IbMpMultilinkEntry
+                MAX-ACCESS not-accessible
+                STATUS current
+                DESCRIPTION
+                        "Each entry in this table describes the information of MP link.
+                        The available information includes: 
+                        the father channel, the slot on which MP bundled, 
+                        the number of bundled son channels, 
+                        the statistics of lost fragments, reordered packets, 
+                        unassigned packets, interleaved packets, 
+                        and received/sent sequence.                         
+                        "
+                INDEX { ifIndex }
+                ::= { ibMpMultilinkTable 1 }
+        
+        IbMpMultilinkEntry ::=
+                SEQUENCE {
+                        ibMpMultilinkDescr
+                                DisplayString,   
+                        ibMpBundleName
+                                DisplayString,                                               
+                        ibMpBundledSlot
+                                Integer32,
+                        ibMpBundledMemberCnt
+                                Integer32,
+			ibMpLostFragments
+				Counter32,
+			ibMpReorderedPkts
+				Counter32,
+			ibMpUnassignedPkts
+				Counter32,
+			ibMpInterleavedPkts
+				Counter32,
+			ibMpRcvdSequence
+				Integer32,
+			ibMpSentSequence
+				Integer32																														
+                 } 
+                                         
+        ibMpMultilinkDescr OBJECT-TYPE
+                SYNTAX DisplayString
+                MAX-ACCESS read-only
+                STATUS current
+                DESCRIPTION
+                        "The interface name of the father interface on which MP bundled. 
+                        It is the name of a Virtual Temblate or a MP group."
+                ::= { ibMpMultilinkEntry 1 } 
+                
+        ibMpBundleName OBJECT-TYPE
+                SYNTAX DisplayString
+                MAX-ACCESS read-only
+                STATUS current
+                DESCRIPTION
+                        "The bundle name of the multilink. 
+                        when authentication is configured, the bundle name is the authenticated
+                        user name; when authentication not configured, the bundle name is
+                        multilink.
+                        "
+                ::= { ibMpMultilinkEntry 2 }                 
+                
+        ibMpBundledSlot OBJECT-TYPE
+                SYNTAX Integer32
+                MAX-ACCESS read-only
+                STATUS current
+                DESCRIPTION
+                        "The slot on which MP bundled. 
+                        "
+                ::= { ibMpMultilinkEntry 3 }
+        
+        ibMpBundledMemberCnt OBJECT-TYPE
+                SYNTAX Integer32
+                MAX-ACCESS read-only
+                STATUS current
+                DESCRIPTION
+                        "The number of the bundled son channel of the MP link. "
+                ::= { ibMpMultilinkEntry 4 }
+
+        ibMpLostFragments OBJECT-TYPE
+                SYNTAX Counter32
+                MAX-ACCESS read-only
+                STATUS current
+                DESCRIPTION
+                        "The number of fragments of the MP link discarded because 
+                        bad fragments received, or assembling packet failed, etc."
+                ::= { ibMpMultilinkEntry 5 }
+
+         ibMpReorderedPkts OBJECT-TYPE
+                SYNTAX Counter32
+                MAX-ACCESS read-only
+                STATUS current
+                DESCRIPTION
+                        "The number of received packets of the MP link reordered.
+                        "
+                ::= { ibMpMultilinkEntry 6 }                       
+
+         ibMpUnassignedPkts OBJECT-TYPE
+                SYNTAX Counter32
+                MAX-ACCESS read-only
+                STATUS current
+                DESCRIPTION
+                        "The number of received packets of the MP link waiting for reordering.
+                        "
+                ::= { ibMpMultilinkEntry 7 }      
+                
+         ibMpInterleavedPkts OBJECT-TYPE
+                SYNTAX Counter32
+                MAX-ACCESS read-only
+                STATUS current
+                DESCRIPTION
+                        "The number of received packets of the MP link interleaved by the 
+                        packets queued in RTPQ(Real-time Transport Protocol Queue) or 
+                        LLQ(Low Latency Queue).
+                        "
+                ::= { ibMpMultilinkEntry 8 }  
+                
+         ibMpRcvdSequence OBJECT-TYPE
+                SYNTAX Integer32
+                MAX-ACCESS read-only
+                STATUS current
+                DESCRIPTION
+                        "The current sequence number of the MP link for receiving.
+                        "
+                ::= { ibMpMultilinkEntry 9 }   
+
+         ibMpSentSequence OBJECT-TYPE
+                SYNTAX Integer32
+                MAX-ACCESS read-only
+                STATUS current
+                DESCRIPTION
+                        "The current sequence number of the MP link for sending.
+                        "
+                ::= { ibMpMultilinkEntry 10 }
+
+
+        ibMpMemberlinkTable OBJECT-TYPE
+                SYNTAX SEQUENCE OF IbMpMemberlinkEntry
+                MAX-ACCESS not-accessible
+                STATUS current
+                DESCRIPTION
+                        "This table describes the information of son channels of the MP link.
+                        The index of this table is the interface index of MP group or
+                        VT(Virtual Template). 
+                        "
+                ::= { ibMpObjects 2 }
+
+        ibMpMemberlinkEntry OBJECT-TYPE
+                SYNTAX IbMpMemberlinkEntry
+                MAX-ACCESS not-accessible
+                STATUS current
+                DESCRIPTION
+                        "Each entry in this table describes the information of the bundled
+                        son channels of MP link. The available information includes: 
+                        the interface index of the son channel, 
+                        the interface name of the son channel.
+                        "
+                INDEX { ifIndex, ibMpMemberlinkSeqNumber }
+                ::= { ibMpMemberlinkTable 1 }
+        
+        IbMpMemberlinkEntry ::=
+                SEQUENCE {
+                        ibMpMemberlinkSeqNumber
+                                Integer32,
+                        ibMpMemberlinkIfIndex
+                                Integer32,
+                        ibMpMemberlinkDescr
+                                DisplayString,
+                        ibMpMemberlinkMpStatus
+                                Integer32																													
+                 } 
+
+        ibMpMemberlinkSeqNumber OBJECT-TYPE
+                SYNTAX Integer32
+                MAX-ACCESS read-only
+                STATUS current
+                DESCRIPTION
+                        "The bundled sequence number of the son channels of the MP link.
+                        This object is one of the index of the table.
+                        "
+                ::= { ibMpMemberlinkEntry 1 }  
+
+        ibMpMemberlinkIfIndex OBJECT-TYPE
+                SYNTAX Integer32
+                MAX-ACCESS read-only
+                STATUS current
+                DESCRIPTION
+                        "The interface index of the son channels of the MP link.
+                        "
+                ::= { ibMpMemberlinkEntry 2 } 
+                
+        ibMpMemberlinkDescr OBJECT-TYPE
+                SYNTAX DisplayString
+                MAX-ACCESS read-only
+                STATUS current
+                DESCRIPTION
+                        "The interface name of the son channels of the MP link.
+                        "
+                ::= { ibMpMemberlinkEntry 3 } 
+                
+        ibMpMemberlinkMpStatus OBJECT-TYPE
+                SYNTAX Integer32
+                MAX-ACCESS read-only
+                STATUS current
+                DESCRIPTION
+                        "The MP status of the son channels of the MP link.
+                        "
+                ::= { ibMpMemberlinkEntry 4 } 
+                                
+         ibMpNotifications OBJECT IDENTIFIER ::= { ibMultilinkPPP 2 }
+
+         
+         ibMpConformance OBJECT IDENTIFIER ::= { ibMultilinkPPP 3 }
+
+         
+         ibMpCompliances OBJECT IDENTIFIER ::= { ibMpConformance 1 }
+
+         
+         ibMpCompliance MODULE-COMPLIANCE
+                 STATUS current
+                 DESCRIPTION 
+                         "The compliance statement for entities which 
+                         implement the Multilink PPP MIB."
+                 MODULE -- this module
+                         MANDATORY-GROUPS { ibMpMandatoryGroup }
+                 ::= { ibMpCompliances 1 }
+
+         
+         ibMpGroups OBJECT IDENTIFIER ::= { ibMpConformance 2 }
+
+         
+         ibMpMandatoryGroup OBJECT-GROUP
+                 OBJECTS { ibMpBundledMemberCnt, ibMpMemberlinkSeqNumber, ibMpMemberlinkIfIndex }
+                 STATUS current
+                 DESCRIPTION 
+                         "A collection of objects providing mandatory MP information."
+                 ::= { ibMpGroups 1 }
+         
+         ibMpInfoGroup OBJECT-GROUP
+                 OBJECTS { ibMpMultilinkDescr, ibMpBundleName, 
+                         ibMpBundledSlot, ibMpBundledMemberCnt,
+                         ibMpLostFragments, ibMpReorderedPkts, 
+                         ibMpUnassignedPkts, ibMpInterleavedPkts, 
+                         ibMpRcvdSequence, ibMpSentSequence,
+                         ibMpMemberlinkDescr,ibMpMemberlinkMpStatus }
+                 STATUS current
+                 DESCRIPTION 
+                         "All running information of MP feature."
+                 ::= { ibMpGroups 2 }                                                                                        
+                                                                                                                                                                                    
+   END
+                                                                                                       

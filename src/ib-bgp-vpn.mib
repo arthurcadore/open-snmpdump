@@ -1,0 +1,1278 @@
+--  =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+--  Description: This MIB module contains managed object definitions for
+--               Border Gateway Protocol (BGP) Virtual Private Networks (VPNs).
+--  Reference:
+--  Version: V1.2
+--  History:
+--    V1.0 2021-02-04 Initial version Created by Yueyongxia
+--    V1.1 2021-06-04 Add mib table items by Wangchao
+--    V1.2 2022-08-18 Add IbBgpAFI and IbBgpSAFI items and a trap node
+--                    ibBgpPeerGRStatusChange by Baisong
+--  =============================================================================
+IB-BGP-VPN-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        OBJECT-TYPE, MODULE-IDENTITY,
+        Unsigned32, Counter32, Gauge32, Integer32, NOTIFICATION-TYPE
+            FROM SNMPv2-SMI
+        TEXTUAL-CONVENTION
+            FROM SNMPv2-TC
+        InetAddressType, InetAddress
+            FROM INET-ADDRESS-MIB
+        ibCommon
+            FROM IB-OID-MIB;
+
+--  =============================================================================
+--  module identity part
+--  =============================================================================
+ibBgpVpn MODULE-IDENTITY
+    LAST-UPDATED "202208180000Z"        -- Aug 18, 2022 at 00:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB module for management of Border Gateway Protocol (BGP)
+         Virtual Private Networks (VPNs)."
+    REVISION "202208180000Z"            -- Aug 18, 2022 at 00:00 GMT
+    DESCRIPTION
+        "Add a new trap ibBgpPeerGRStatusChange, in addition,
+         modify IbBgpAFI and IbBgpSAFI."
+    REVISION "202106040000Z"            -- Jun 04, 2021 at 00:00 GMT
+    DESCRIPTION
+        "Add some MIB nodes and trap nodes for ibBgpVpn."
+    REVISION "202102040000Z"            -- Feb 04, 2021 at 00:00 GMT
+    DESCRIPTION
+        "Update"
+    ::= { ibCommon 202 }
+
+-- Textual Conventions.
+
+IbBgpAFI ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+        "The Address Family Identifier(AFI) of BGP peer."
+    SYNTAX INTEGER
+                {
+                ipv4(1),
+                ipv6(2),
+                l2vpn(25),
+                l2vpnDraft(196),
+                dedicated(6000)
+                }
+
+IbBgpSAFI ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+        "The Subsequent Address Family Identifier(SAFI) of BGP peer."
+    SYNTAX INTEGER
+                {
+                unicast(1),
+                multicast(2),
+                mpls(4),
+                mcastVpn(5),
+                l2vpn(65),
+                mdt(66),
+                evpn(70),
+                vpn(128),
+                routeTarget(132),
+                dedicated(255)
+                }
+
+IbBgpVpnId ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT "31a"
+    STATUS       current
+    DESCRIPTION
+        "An identifier that is assigned to each MPLS/BGP VPN and
+         is used to uniquely identify it.  This is assigned by the
+         system operator or NMS and SHOULD be unique throughout
+         the MPLS domain.  If this is the case, then this identifier
+         can then be used at any LSR within a specific MPLS domain
+         to identify this MPLS/BGP VPN.  It may also be possible to
+         preserve the uniqueness of this identifier across MPLS
+         domain boundaries, in which case this identifier can then
+         be used to uniquely identify MPLS/BGP VPNs on a more global
+         basis."
+    REFERENCE
+        "RFC 2685 [VPN-RFC2685] Fox B., et al, 'Virtual Private
+         Networks Identifier', September 1999."
+    SYNTAX OCTET STRING(SIZE (0..31))
+
+--  =============================================================================
+--  ibBgpVpnObjects definition begin
+--  =============================================================================
+ibBgpVpnObjects OBJECT IDENTIFIER ::= { ibBgpVpn 1 }
+ibBgpPeers      OBJECT IDENTIFIER ::= { ibBgpVpnObjects 1 }
+ibBgpVpnRoute   OBJECT IDENTIFIER ::= { ibBgpVpnObjects 2 }
+--  =============================================================================
+--  ibBgpPeerAddrFamilyTable Definition
+--  =============================================================================
+ibBgpPeerAddrFamilyTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbBgpPeerAddrFamilyEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table is BGP peer address family table,
+         it contains the address family information of BGP peers."
+    ::= { ibBgpPeers 1 }
+
+ibBgpPeerAddrFamilyEntry OBJECT-TYPE
+    SYNTAX IbBgpPeerAddrFamilyEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An entry in this table contains the information address family
+         information of BGP peers."
+    INDEX {
+            ibBgpPeerInstanceId,
+            ibBgpPeerVpnIndex,
+            ibBgpPeerAddrFamilyId,
+            ibBgpPeerSubAddrFamilyId,
+            ibBgpPeerType,
+            ibBgpPeerIPAddr
+          }
+    ::= { ibBgpPeerAddrFamilyTable 1 }
+
+IbBgpPeerAddrFamilyEntry ::= SEQUENCE {
+    ibBgpPeerInstanceId                Unsigned32,
+    ibBgpPeerVpnIndex                  Unsigned32,
+    ibBgpPeerAddrFamilyId              IbBgpAFI,
+    ibBgpPeerSubAddrFamilyId           IbBgpSAFI,
+    ibBgpPeerType                      InetAddressType,
+    ibBgpPeerIPAddr                    InetAddress,
+    ibBgpPeerVpnName                   IbBgpVpnId
+}
+
+ibBgpPeerInstanceId OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..4294967295)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Denotes the identifier of the BGP peer instance."
+    ::= { ibBgpPeerAddrFamilyEntry 1 }
+
+ibBgpPeerVpnIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Denotes the identifier of the BGP peer instance."
+    ::= { ibBgpPeerAddrFamilyEntry 2 }
+
+ibBgpPeerAddrFamilyId OBJECT-TYPE
+    SYNTAX      IbBgpAFI
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Denotes the identifier of the BGP peer address family."
+    ::= { ibBgpPeerAddrFamilyEntry 3 }
+
+ibBgpPeerSubAddrFamilyId OBJECT-TYPE
+    SYNTAX      IbBgpSAFI
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Denotes the identifier of the BGP peer sub-address family."
+    ::= { ibBgpPeerAddrFamilyEntry 4 }
+
+ibBgpPeerType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Denotes the type of the BGP peer address family."
+    ::= { ibBgpPeerAddrFamilyEntry 5 }
+
+ibBgpPeerIPAddr OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Denotes the IP address of the BGP peer."
+    ::= { ibBgpPeerAddrFamilyEntry 6 }
+
+ibBgpPeerVpnName OBJECT-TYPE
+    SYNTAX      IbBgpVpnId
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The human-readable name of this VPN.  This MAY
+         be equivalent to the RFC2685 VPN-ID."
+    ::= { ibBgpPeerAddrFamilyEntry 7 }
+--  =============================================================================
+--  ibBgpPeerTable   Definition
+--  =============================================================================
+ibBgpPeerTable OBJECT-TYPE
+     SYNTAX SEQUENCE OF IbBgpPeerEntry
+     MAX-ACCESS not-accessible
+     STATUS current
+     DESCRIPTION
+         "BGP Peer Table.
+         This table contains information about the connections for BGP peers."
+     ::= { ibBgpPeers 2 }
+
+ibBgpPeerEntry OBJECT-TYPE
+     SYNTAX IbBgpPeerEntry
+     MAX-ACCESS not-accessible
+     STATUS current
+     DESCRIPTION
+         "The information about the connections with BGP peers."
+     INDEX {
+            ibBgpPeerInstanceId,
+            ibBgpPeerVpnIndex,
+            ibBgpPeerAddrFamilyId,
+            ibBgpPeerSubAddrFamilyId,
+            ibBgpPeerType,
+            ibBgpPeerIPAddr
+          }
+     ::= { ibBgpPeerTable 1 }
+
+IbBgpPeerEntry ::= SEQUENCE {
+    ibBgpPeerNegotiatedVersion     Unsigned32,
+    ibBgpPeerRemoteAs              Unsigned32,
+    ibBgpPeerRemoteAddr            InetAddress,
+    ibBgpPeerState                 INTEGER,
+    ibBgpPeerFsmEstablishedCounter Unsigned32,
+    ibBgpPeerFsmEstablishedTime    Gauge32,
+    ibBgpPeerGRStatus              INTEGER,
+    ibBgpPeerLastError             OCTET STRING,
+    ibBgpPeerUnAvaiReason          INTEGER,
+    ibBgpPeerAdminStatus           INTEGER
+    }
+
+ibBgpPeerNegotiatedVersion OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+         "The version negotiated with the remote BGP peer."
+    ::= { ibBgpPeerEntry 1 }
+
+ibBgpPeerRemoteAs OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The AS number of the remote BGP peer."
+    ::= { ibBgpPeerEntry 2 }
+
+
+ibBgpPeerRemoteAddr OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The IP address of the remote BGP peer."
+    ::= { ibBgpPeerEntry 3 }
+
+ibBgpPeerState OBJECT-TYPE
+     SYNTAX INTEGER
+     {
+         idle(1),
+         connect(2),
+         active(3),
+         openSent(4),
+         openConfirm(5),
+         established(6)
+      }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+           "The status of the remote BGP peer, including:
+            1: Idle(1)
+            2: Connect(2)
+            3: Active(3)
+            4: OpenSent(4)
+            5: OpenConfirm(5)
+            6: Established(6)"
+      ::= { ibBgpPeerEntry 4 }
+
+ibBgpPeerFsmEstablishedCounter OBJECT-TYPE
+      SYNTAX Unsigned32
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+          "The Counter That Records the Times the Remote BGP Peer Is Correctly Connected
+          The counter is increased by one if the remote BGP peer is correctly connected once.
+          The counter could be set to zero."
+      ::= { ibBgpPeerEntry 5 }
+
+ibBgpPeerFsmEstablishedTime OBJECT-TYPE
+      SYNTAX Gauge32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+          "The counter that records the times the remote BGP peer is correctly connected."
+      ::= { ibBgpPeerEntry 6 }
+
+ibBgpPeerGRStatus OBJECT-TYPE
+      SYNTAX INTEGER
+          {
+             peerNotBeingHelped(1),
+             peerRestarting(2),
+             peerFinishRestart(3),
+             peerHelping(4)
+          }
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+          "Graceful restart status of the BGP peer, including:
+          1: peerNotBeingHelped, indicating that the BGP peer will not be helped during restarting.
+          2: peerRestarting, indicating that the BGP peer is detected restarting.
+          3: peerFinishRestart, indicating that the BGP peer finishes the latest GR.
+          4: peerHelping, indicating that the BGP peer is helping the local end to perform GR."
+      ::= { ibBgpPeerEntry 7 }
+
+ibBgpPeerLastError OBJECT-TYPE
+      SYNTAX OCTET STRING(SIZE (0..31))
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+          "The last error code and subcode seen by this
+          peer on this connection.  If no error has
+          occurred, this field is zero.  Otherwise, the
+          first byte of this two byte OCTET STRING
+          contains the error code, and the second byte
+          contains the subcode."
+      ::= { ibBgpPeerEntry 8 }
+
+ibBgpPeerUnAvaiReason OBJECT-TYPE
+     SYNTAX INTEGER
+     {
+          otherErrCode(1),
+          errSubCodeUnspecified(2),
+          unknownErrSubcode(3),
+          connectionNoSynchronized(4),
+          badMessageLength(5),
+          badMessageType(6),
+          unsupportedVersionNumber(7),
+          badPeerAS(8),
+          badBGPIdentifier(9),
+          unsupportedOptionalParameter(10),
+          authenticationFailure(11),
+          unacceptableHoldTime(12),
+          unsupportedCapability(13),
+          malformedAttributeList(14),
+          unrecognizedWellknownAttr(15),
+          missingWellknownAttribute(16),
+          attributeFlagsError(17),
+          attributeLengthError(18),
+          invalidORIGINAttribute(19),
+          asRoutingLoop(20),
+          invalidNEXTHOPAttribute(21),
+          optionalAttributeError(22),
+          invalidNetworkField(23),
+          malformedASPATH(24),
+          receiveUnexpectedMessageinOpenSent(25),
+          receiveUnexpectedMessageinOpenConfirm(26),
+          receiveUnexpectedMessageinEstablished(27),
+          maximumNumberofPrefixesReached(28),
+          administrativeShutdown(29),
+          peerDeconfigured(30),
+          administrativeReset(31),
+          connectionRejected(32),
+          otherConfigurationChange(33),
+          connectionCollisionResolution(34),
+          outofResources(35)
+      }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+          "The reason of BGP states change."
+      ::= { ibBgpPeerEntry 9 }
+
+ibBgpPeerAdminStatus OBJECT-TYPE
+      SYNTAX     INTEGER {
+          stop(1),
+          start(2)
+          }
+      MAX-ACCESS read-only
+      STATUS     current
+      DESCRIPTION
+          "The desired state of the BGP connection.
+          A transition from 'stop' to 'start' will
+          cause the BGP Start Event to be generated.
+          A transition from 'start' to 'stop' will
+          cause the BGP Stop Event to be generated.
+          This parameter can be used to restart BGP
+          peer connections.  Care should be used in
+          providing write access to this object
+          without adequate authentication."
+       ::= { ibBgpPeerEntry 10 }
+--  =============================================================================
+--  ibBgpPeerRouteTable Definition
+--  =============================================================================
+ibBgpPeerRouteTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbBgpPeerRouteEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table is BGP peer route table, it contains routing
+         information of BGP peers."
+    ::= { ibBgpPeers 3 }
+
+ibBgpPeerRouteEntry OBJECT-TYPE
+    SYNTAX IbBgpPeerRouteEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Denotes the routing information of BGP peers."
+    INDEX {
+            ibBgpPeerInstanceId,
+            ibBgpPeerVpnIndex,
+            ibBgpPeerAddrFamilyId,
+            ibBgpPeerSubAddrFamilyId,
+            ibBgpPeerType,
+            ibBgpPeerIPAddr
+          }
+    ::= { ibBgpPeerRouteTable 1 }
+
+IbBgpPeerRouteEntry ::= SEQUENCE {
+    ibBgpPeerRouteRcvCount        Counter32,
+    ibBgpPeerRouteActiveCount     Counter32,
+    ibBgpPeerRouteAdvCount        Counter32
+}
+
+ibBgpPeerRouteRcvCount OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Denotes the number of routes received from the BGP peer."
+    ::= { ibBgpPeerRouteEntry 1 }
+
+ibBgpPeerRouteActiveCount OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Denotes the number of active routes received from the BGP peer."
+    ::= { ibBgpPeerRouteEntry 2 }
+
+ibBgpPeerRouteAdvCount OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Denotes the number of routes sent to the BGP peer."
+    ::= { ibBgpPeerRouteEntry 3 }
+--  =============================================================================
+--  ibBgpPeerConfigTable Definition
+--  =============================================================================
+ibBgpPeerConfigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbBgpPeerConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table is BGP peer configuration table, it contains configuration
+        information of BGP peers."
+    ::= { ibBgpPeers 4 }
+
+ibBgpPeerConfigEntry OBJECT-TYPE
+    SYNTAX IbBgpPeerConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Denotes the configurations of BGP peers."
+    INDEX {
+            ibBgpPeerInstanceId,
+            ibBgpPeerVpnIndex,
+            ibBgpPeerAddrFamilyId,
+            ibBgpPeerSubAddrFamilyId,
+            ibBgpPeerType,
+            ibBgpPeerIPAddr
+          }
+    ::= { ibBgpPeerConfigTable 1 }
+
+IbBgpPeerConfigEntry ::= SEQUENCE {
+    ibBgpPeerConfigRouteLimitNum       Unsigned32,
+    ibBgpPeerConfigRouteLimitThreshold Unsigned32
+}
+
+ibBgpPeerConfigRouteLimitNum OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Denotes the maximum routes received from the BGP peer."
+    ::= { ibBgpPeerConfigEntry 1 }
+
+ibBgpPeerConfigRouteLimitThreshold OBJECT-TYPE
+    SYNTAX Unsigned32 (0..100)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Denotes the alarm threshold (%) of the maximum routes received from the BGP peer."
+    ::= { ibBgpPeerConfigEntry 2 }
+
+--  =============================================================================
+--  ibBgpPeerStatisticTable Definition
+--  =============================================================================
+
+ibBgpPeerStatisticTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbBgpPeerStatisticEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "BGP neighbor statistic table.which contains BGP neighbor connection information,
+        and each BGP neighbor corresponds to a table item."
+    ::= { ibBgpPeers 5 }
+
+ibBgpPeerStatisticEntry OBJECT-TYPE
+    SYNTAX IbBgpPeerStatisticEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An entry containing connection information with a BGP peer."
+    INDEX {
+            ibBgpPeerProcessId,
+            ibBgpPeerVrfInstanceId,
+            ibBgpPeerAddr
+          }
+    ::= { ibBgpPeerStatisticTable 1 }
+
+IbBgpPeerStatisticEntry ::= SEQUENCE {
+    ibBgpPeerProcessId                      Unsigned32,
+    ibBgpPeerVrfInstanceId                Unsigned32,
+    ibBgpPeerAddr                       InetAddress,
+    ibBgpPeerFsmEstablishedTransitions      Counter32,
+    ibBgpPeerDownCounts                 Counter32,
+    ibBgpPeerInUpdateMsgs               Counter32,
+    ibBgpPeerOutUpdateMsgs              Counter32,
+    ibBgpPeerInTotalMsgs                Counter32,
+    ibBgpPeerOutTotalMsgs               Counter32
+}
+
+ibBgpPeerProcessId OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The process ID of the BGP instance."
+    ::= { ibBgpPeerStatisticEntry 1 }
+
+ibBgpPeerVrfInstanceId OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "VPN instance ID index of remote BGP peer."
+    ::= { ibBgpPeerStatisticEntry 2 }
+
+ibBgpPeerAddr OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The IP address of the BGP neighbor."
+    ::= { ibBgpPeerStatisticEntry 3 }
+
+ibBgpPeerFsmEstablishedTransitions OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "BGP FSM migrates to the established state count."
+    ::= { ibBgpPeerStatisticEntry 4 }
+
+ibBgpPeerDownCounts OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Based on peer BGP FSM migration from established to non-established state count."
+    ::= { ibBgpPeerStatisticEntry 5 }
+
+ibBgpPeerInUpdateMsgs OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of Update messages received from BGP neighbors."
+    ::= { ibBgpPeerStatisticEntry 6 }
+
+ibBgpPeerOutUpdateMsgs OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of Update messages sent to BGP neighbors."
+    ::= { ibBgpPeerStatisticEntry 7 }
+
+ibBgpPeerInTotalMsgs OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of all packets received from BGP neighbors."
+    ::= { ibBgpPeerStatisticEntry 8 }
+
+ibBgpPeerOutTotalMsgs OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of all packets sent to BGP neighbors."
+    ::= { ibBgpPeerStatisticEntry 9 }
+
+--  =============================================================================
+--  ibBgpPeerSessionTable Definition
+--  =============================================================================
+ibBgpPeerSessionTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbBgpPeerSessionEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "BGP Peer Session Table.
+        This table contains BGP peer session informations."
+    ::= { ibBgpPeers 6 }
+
+ibBgpPeerSessionEntry OBJECT-TYPE
+    SYNTAX IbBgpPeerSessionEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The information about the BGP peer sessions."
+    INDEX {
+             ibBgpPeerSessionVrfId,
+             ibBgpPeerSessionRemoteAddrType,
+             ibBgpPeerSessionRemoteAddr
+           }
+    ::= { ibBgpPeerSessionTable 1 }
+
+IbBgpPeerSessionEntry ::= SEQUENCE {
+    ibBgpPeerSessionVrfId             Unsigned32,
+    ibBgpPeerSessionRemoteAddrType    InetAddressType,
+    ibBgpPeerSessionRemoteAddr        InetAddress,
+    ibBgpPeerSessionRemotePort        Integer32,
+    ibBgpPeerSessionLocalAddrType     InetAddressType,
+    ibBgpPeerSessionLocalAddr         InetAddress,
+    ibBgpPeerSessionLocalPort         Integer32,
+    ibBgpPeerSessionUnavailableType   INTEGER,
+    ibBgpPeerSessionLocalIfName       OCTET STRING,
+    ibBgpPeerSessionReason            INTEGER,
+    ibBgpPeerSessionVrfName           OCTET STRING
+}
+
+ibBgpPeerSessionVrfId OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The VPN instance Id of the remote BGP peer."
+    ::= { ibBgpPeerSessionEntry 1 }
+
+ibBgpPeerSessionRemoteAddrType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "BGP peer session remote address type."
+    ::= { ibBgpPeerSessionEntry 2 }
+
+ibBgpPeerSessionRemoteAddr OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "BGP peer session remote address."
+    ::= { ibBgpPeerSessionEntry 3 }
+
+ibBgpPeerSessionRemotePort OBJECT-TYPE
+    SYNTAX     Integer32 (0..65535)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The remote port for BGP peers."
+    ::= { ibBgpPeerSessionEntry 4 }
+
+ibBgpPeerSessionLocalAddrType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "BGP peer session local address type."
+    ::= { ibBgpPeerSessionEntry 5 }
+
+ibBgpPeerSessionLocalAddr OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "BGP peer session local address."
+    ::= { ibBgpPeerSessionEntry 6 }
+
+ibBgpPeerSessionLocalPort OBJECT-TYPE
+    SYNTAX     Integer32 (0..65535)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The local port for BGP peers."
+    ::= { ibBgpPeerSessionEntry 7 }
+
+ibBgpPeerSessionUnavailableType OBJECT-TYPE
+    SYNTAX INTEGER {
+                upToDown(1),
+                alwaysDown(2)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "BGP peer unavailable type including:
+        1: Up To Down(1)
+        2: Always Down(2)"
+    ::= { ibBgpPeerSessionEntry 8 }
+
+ibBgpPeerSessionLocalIfName OBJECT-TYPE
+    SYNTAX OCTET STRING(SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "BGP peer session local IFName."
+    ::= { ibBgpPeerSessionEntry 9 }
+
+ibBgpPeerSessionReason OBJECT-TYPE
+    SYNTAX INTEGER {
+          otherErrCode(1),
+          errSubCodeUnspecified(2),
+          unknownErrSubcode(3),
+          connectionNoSynchronized(4),
+          badMessageLength(5),
+          badMessageType(6),
+          unsupportedVersionNumber(7),
+          badPeerAS(8),
+          badBGPIdentifier(9),
+          unsupportedOptionalParameter(10),
+          authenticationFailure(11),
+          unacceptableHoldTime(12),
+          unsupportedCapability(13),
+          malformedAttributeList(14),
+          unrecognizedWellknownAttr(15),
+          missingWellknownAttribute(16),
+          attributeFlagsError(17),
+          attributeLengthError(18),
+          invalidORIGINAttribute(19),
+          asRoutingLoop(20),
+          invalidNEXTHOPAttribute(21),
+          optionalAttributeError(22),
+          invalidNetworkField(23),
+          malformedASPATH(24),
+          receiveUnexpectedMessageinOpenSent(25),
+          receiveUnexpectedMessageinOpenConfirm(26),
+          receiveUnexpectedMessageinEstablished(27),
+          maximumNumberofPrefixesReached(28),
+          administrativeShutdown(29),
+          peerDeconfigured(30),
+          administrativeReset(31),
+          connectionRejected(32),
+          otherConfigurationChange(33),
+          connectionCollisionResolution(34),
+          outofResources(35)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The reason of BGP states change."
+    ::= { ibBgpPeerSessionEntry 10 }
+
+ibBgpPeerSessionVrfName OBJECT-TYPE
+    SYNTAX OCTET STRING(SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The name of the VPN instance."
+    ::= { ibBgpPeerSessionEntry 11 }
+--  =============================================================================
+--  ibBgpPeerMessageTable Definition
+--  =============================================================================
+ibBgpPeerMessageTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbBgpPeerMessageEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Protocol Packet data Table for BGP Peers.
+        This table contains information about the protocol packet data of BGP peers."
+    ::= { ibBgpPeers 7 }
+
+ibBgpPeerMessageEntry OBJECT-TYPE
+    SYNTAX IbBgpPeerMessageEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The information about the protocol packet data of the BGP peers."
+    INDEX {
+            ibBgpPeerInstanceId,
+            ibBgpPeerVpnIndex,
+            ibBgpPeerAddrFamilyId,
+            ibBgpPeerSubAddrFamilyId,
+            ibBgpPeerType,
+            ibBgpPeerIPAddr
+          }
+    ::= { ibBgpPeerMessageTable 1 }
+
+IbBgpPeerMessageEntry ::= SEQUENCE {
+    ibBgpPeerInTotalMsgCounter         Counter32,
+    ibBgpPeerOutTotalMsgCounter        Counter32,
+    ibBgpPeerInOpenMsgCounter          Counter32,
+    ibBgpPeerInUpdateMsgCounter        Counter32,
+    ibBgpPeerInNotificationMsgCounter  Counter32,
+    ibBgpPeerInKeepAliveMsgCounter     Counter32,
+    ibBgpPeerInRouteFreshMsgCounter    Counter32,
+    ibBgpPeerOutOpenMsgCounter         Counter32,
+    ibBgpPeerOutUpdateMsgCounter       Counter32,
+    ibBgpPeerOutNotificationMsgCounter Counter32,
+    ibBgpPeerOutKeepAliveMsgCounter    Counter32,
+    ibBgpPeerOutRouteFreshMsgCounter   Counter32
+}
+
+ibBgpPeerInTotalMsgCounter OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of protocol packet data received from the remote BGP peer."
+    ::= { ibBgpPeerMessageEntry 1 }
+
+ibBgpPeerOutTotalMsgCounter OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of protocol packet data sent to the remote BGP peer."
+    ::= { ibBgpPeerMessageEntry 2 }
+
+ibBgpPeerInOpenMsgCounter OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of Open packet data received from the remote BGP peer."
+    ::= { ibBgpPeerMessageEntry 3 }
+
+ibBgpPeerInUpdateMsgCounter OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of Update packet data received from the remote BGP peer."
+    ::= { ibBgpPeerMessageEntry 4 }
+
+ibBgpPeerInNotificationMsgCounter OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of Notification packet data received from the remote BGP peer."
+    ::= { ibBgpPeerMessageEntry 5 }
+
+ibBgpPeerInKeepAliveMsgCounter OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of Keepalive packet data received from the remote BGP peer."
+    ::= { ibBgpPeerMessageEntry 6 }
+
+ibBgpPeerInRouteFreshMsgCounter OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of Route-Refresh packet data received from the remote BGP peer."
+    ::= { ibBgpPeerMessageEntry 7 }
+
+ibBgpPeerOutOpenMsgCounter OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of Open packet data sent to the remote BGP peer."
+    ::= { ibBgpPeerMessageEntry 8 }
+
+ibBgpPeerOutUpdateMsgCounter OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of Update packet data sent to the remote BGP peer."
+    ::= { ibBgpPeerMessageEntry 9 }
+
+ibBgpPeerOutNotificationMsgCounter OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of Notification packet data sent to the remote BGP peer."
+    ::= { ibBgpPeerMessageEntry 10 }
+
+ibBgpPeerOutKeepAliveMsgCounter OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of Keepalive packet data sent to the remote BGP peer."
+    ::= { ibBgpPeerMessageEntry 11 }
+
+ibBgpPeerOutRouteFreshMsgCounter OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of Route-Refresh packet data sent to the remote BGP peer."
+    ::= { ibBgpPeerMessageEntry 12 }
+
+--  =============================================================================
+--  ibBgpVpnRouteTable Definition
+--  =============================================================================
+
+ibBgpVpnRouteTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbBgpVpnRouteEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "BGP VRF routing table."
+    ::= { ibBgpVpnRoute 1 }
+
+ibBgpVpnRouteEntry OBJECT-TYPE
+    SYNTAX     IbBgpVpnRouteEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "BGP routing entry."
+    INDEX { ibBgpVpnRouteType, ibBgpVpnInstName, ibBgpVpnAddressFamily }
+    ::= { ibBgpVpnRouteTable 1 }
+
+IbBgpVpnRouteEntry ::= SEQUENCE {
+    ibBgpVpnRouteType      Unsigned32,
+    ibBgpVpnInstName       IbBgpVpnId,
+    ibBgpVpnAddressFamily  Unsigned32,
+    ibBgpVpnCurrRouteNum   Unsigned32,
+    ibBgpVpnThresholdValue Unsigned32
+}
+
+ibBgpVpnRouteType OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Route type."
+    ::= { ibBgpVpnRouteEntry 1 }
+
+ibBgpVpnInstName OBJECT-TYPE
+     SYNTAX IbBgpVpnId
+     MAX-ACCESS accessible-for-notify
+     STATUS current
+     DESCRIPTION
+         "VPN instance name."
+     ::= { ibBgpVpnRouteEntry 2 }
+
+ibBgpVpnAddressFamily OBJECT-TYPE
+     SYNTAX Unsigned32
+     MAX-ACCESS accessible-for-notify
+     STATUS current
+     DESCRIPTION
+         "Address family."
+     ::= { ibBgpVpnRouteEntry 3 }
+
+ibBgpVpnCurrRouteNum OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Current number of BGP peer routes."
+    ::= { ibBgpVpnRouteEntry 4 }
+
+ibBgpVpnThresholdValue OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Total threshold value."
+    ::= { ibBgpVpnRouteEntry 5 }
+--  =============================================================================
+--  ibBgpVpnScalars Definition
+--  =============================================================================
+ibBgpVpnScalars OBJECT IDENTIFIER ::= { ibBgpVpnObjects 3 }
+
+ibBgpConfiguredVrfs OBJECT-TYPE
+    SYNTAX        Unsigned32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The number of VRFs on this node."
+    ::= { ibBgpVpnScalars 1 }
+
+ibBgpConfiguredIpv4Vrfs  OBJECT-TYPE
+    SYNTAX        Unsigned32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The number of IPv4-family VRFs on this node."
+    ::= { ibBgpVpnScalars 2 }
+
+ibBgpConfiguredIpv6Vrfs  OBJECT-TYPE
+    SYNTAX        Unsigned32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The number of IPv6-family VRFs on this node."
+    ::= { ibBgpVpnScalars 3 }
+
+ibBgpConfiguredIpv4Flowspec OBJECT-TYPE
+    SYNTAX        Unsigned32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The number of IPv4-Flowspec-family VRFs on this node."
+    ::= { ibBgpVpnScalars 4 }
+
+ibBgpConfiguredIpv6Flowspec  OBJECT-TYPE
+    SYNTAX        Unsigned32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The number of IPv6-Flowspec-family VRFs on this node."
+    ::= { ibBgpVpnScalars 5 }
+
+ibBgpConfiguredEvpnVrfs  OBJECT-TYPE
+    SYNTAX        Unsigned32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The number of Evpn-family VRFs on this node."
+    ::= { ibBgpVpnScalars 6 }
+
+--  ============================================================================
+--  End of ibBgpVpnObjects Definition
+--  ============================================================================
+
+--  ============================================================================
+--  Begin of ibBgpProcess Definition
+--  ============================================================================
+ibBgpInstanceObjects OBJECT IDENTIFIER ::= { ibBgpVpn 2 }
+
+ibBgpInstance OBJECT IDENTIFIER ::= { ibBgpInstanceObjects 1 }
+
+--  ==============================================================================
+--  ibBgpInstanceCommTable Definition
+--  =============================================================================
+ibBgpInstanceCommTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbBgpInstanceCommEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table describe BGP peer address family table,
+         it shows the address family information of BGP peers."
+    ::= { ibBgpInstance 1 }
+
+ibBgpInstanceCommEntry OBJECT-TYPE
+    SYNTAX IbBgpInstanceCommEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An entry in this table shows the information address family
+         information of BGP peers."
+    INDEX {
+            ibBgpInstanceName
+          }
+    ::= { ibBgpInstanceCommTable 1 }
+
+IbBgpInstanceCommEntry ::= SEQUENCE {
+    ibBgpInstanceName                   OCTET STRING,
+    ibBgpInstanceId                     Unsigned32
+}
+
+ibBgpInstanceName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The parameter of BGP instance name."
+    ::= { ibBgpInstanceCommEntry 1 }
+
+ibBgpInstanceId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The parameter of BGP instance ID."
+    ::= { ibBgpInstanceCommEntry 2 }
+--  ============================================================================
+--  End of ibBgpProcessObjects Definition
+--  ============================================================================
+
+--  ============================================================================
+--  Begin of ibBgpVpnRpkiObjects Definition
+--  ============================================================================
+ibBgpVpnRpkiObjects OBJECT IDENTIFIER ::= { ibBgpVpn 3 }
+
+ibBgpVpnRpkiSessions OBJECT IDENTIFIER ::= { ibBgpVpnRpkiObjects 1 }
+
+ibBgpVpnRpkiTraps OBJECT IDENTIFIER ::= { ibBgpVpnRpkiObjects 2 }
+
+--  =============================================================================
+--  ibBgpVpnRpkiSessions Definition
+--  =============================================================================
+
+ibBgpVpnRpkiSessionVrfName OBJECT-TYPE
+    SYNTAX IbBgpVpnId
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The index of the instance session."
+    ::= { ibBgpVpnRpkiSessions 1 }
+
+ibBgpVpnRpkiSessionType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The address family type for the remote session."
+    ::= { ibBgpVpnRpkiSessions 2 }
+
+ibBgpVpnRpkiSessionIPAddr OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The session IP address."
+    ::= { ibBgpVpnRpkiSessions 3 }
+
+ibBgpVpnRpkiSessionRoaLimitNum OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Restriction number of rpki session ROA."
+    ::= { ibBgpVpnRpkiSessions 4 }
+
+--  =============================================================================
+--  ibBgpVpnRpkiTrapNotifications Definition
+--  =============================================================================
+ibBgpVpnRpkiTrapNotifications OBJECT IDENTIFIER ::= { ibBgpVpnRpkiTraps 0 }
+
+ibBgpVpnRpkiSessionRoaExceed NOTIFICATION-TYPE
+    OBJECTS { ibBgpVpnRpkiSessionRoaLimitNum }
+    STATUS current
+    DESCRIPTION
+        "The RPKI SessionRoaExceed event will be generated when the number of rpki session ROA exceeds."
+    ::= { ibBgpVpnRpkiTrapNotifications 1 }
+
+ibBgpVpnRpkiSessionRoaExceedClear NOTIFICATION-TYPE
+    OBJECTS { ibBgpVpnRpkiSessionRoaLimitNum }
+    STATUS current
+    DESCRIPTION
+        "Generate rpki sessionroaedeclear event when the number of rpki session ROAs exceeds clear."
+    ::= { ibBgpVpnRpkiTrapNotifications 2 }
+
+ibBgpVpnTraps OBJECT IDENTIFIER ::= { ibBgpVpn 4 }
+
+ibBgpVpnTrapNotifications OBJECT IDENTIFIER ::= { ibBgpVpnTraps 0 }
+
+ibBgpPeerRouteNumThresholdExceed NOTIFICATION-TYPE
+    OBJECTS { ibBgpPeerConfigRouteLimitNum, ibBgpPeerConfigRouteLimitThreshold }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when the number of routes received from the BGP peer exceeds the alarm threshold."
+    ::= { ibBgpVpnTrapNotifications 1 }
+
+ibBgpPeerRouteNumThresholdClear NOTIFICATION-TYPE
+    OBJECTS { ibBgpPeerConfigRouteLimitNum, ibBgpPeerConfigRouteLimitThreshold }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when the number of routes received from the BGP peer decreases below the alarm threshold."
+    ::= { ibBgpVpnTrapNotifications 2 }
+
+ibBgpPeerRouteExceed NOTIFICATION-TYPE
+    OBJECTS { ibBgpPeerConfigRouteLimitNum, ibBgpPeerConfigRouteLimitThreshold }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when bgp peer session route number exceed."
+    ::= { ibBgpVpnTrapNotifications 3 }
+
+ibBgpPeerRouteExceedClear NOTIFICATION-TYPE
+    OBJECTS { ibBgpPeerConfigRouteLimitNum, ibBgpPeerConfigRouteLimitThreshold }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when bgp peer session route number exceed clear."
+    ::= { ibBgpVpnTrapNotifications 4 }
+
+ibBgpPeerEstablished NOTIFICATION-TYPE
+    OBJECTS { ibBgpPeerLastError, ibBgpPeerState }
+    STATUS current
+    DESCRIPTION
+        "When the BGP FSM enters the established state, the BGP established event is generated."
+    ::= { ibBgpVpnTrapNotifications 5 }
+
+ibBgpPeerBackwardTransition NOTIFICATION-TYPE
+    OBJECTS { ibBgpPeerLastError, ibBgpPeerState, ibBgpPeerUnAvaiReason}
+    STATUS current
+    DESCRIPTION
+        "The BGPBackwardTransition Event is generated
+        when the BGP FSM number moves from a higher
+        state to a lower state."
+    ::= { ibBgpVpnTrapNotifications 6 }
+
+ibBgpVrfRouteNumReachThreshold NOTIFICATION-TYPE
+    OBJECTS { ibBgpVpnRouteType, ibBgpVpnInstName, ibBgpVpnAddressFamily, ibBgpVpnCurrRouteNum, ibBgpVpnThresholdValue }
+    STATUS current
+    DESCRIPTION
+        "The VPN instance routes reached the alarm threshould."
+    ::= { ibBgpVpnTrapNotifications 7 }
+
+ibBgpVrfRouteNumReachThresholdClear NOTIFICATION-TYPE
+    OBJECTS { ibBgpVpnRouteType, ibBgpVpnInstName, ibBgpVpnAddressFamily, ibBgpVpnCurrRouteNum, ibBgpVpnThresholdValue }
+    STATUS current
+    DESCRIPTION
+        "The VPN instance routes fell below the clear alarm threshold."
+    ::= { ibBgpVpnTrapNotifications 8 }
+
+ibBgpPeerAFRouteThresholdExceed NOTIFICATION-TYPE
+    OBJECTS { ibBgpVpnAddressFamily, ibBgpPeerConfigRouteLimitNum, ibBgpPeerConfigRouteLimitThreshold, ibBgpInstanceName }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when when the number of
+        routes received by the neighbor under the BGP address family
+        reaches an alarm threshold state."
+    ::= { ibBgpVpnTrapNotifications 9 }
+
+ibBgpPeerAFRouteThresholdClear NOTIFICATION-TYPE
+    OBJECTS { ibBgpVpnAddressFamily, ibBgpPeerConfigRouteLimitNum, ibBgpPeerConfigRouteLimitThreshold, ibBgpInstanceName }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when the number of
+        routes received by the neighbor below the BGP address
+        family drops below the alert threshold."
+    ::= { ibBgpVpnTrapNotifications 10 }
+
+ibBgpPeerAFRouteExceed NOTIFICATION-TYPE
+    OBJECTS { ibBgpVpnAddressFamily, ibBgpPeerConfigRouteLimitNum, ibBgpInstanceName }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when the number of
+        routes received by the neighbor under the BGP address
+        family reaches a maximum state."
+    ::= { ibBgpVpnTrapNotifications 11 }
+
+ibBgpPeerAFRouteExceedClear NOTIFICATION-TYPE
+    OBJECTS { ibBgpVpnAddressFamily, ibBgpPeerConfigRouteLimitNum, ibBgpInstanceName }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when the number of
+        routes received by the neighbors below the BGP address
+        family drops below a maximum."
+    ::= { ibBgpVpnTrapNotifications 12 }
+
+ibBgpPeerGRStatusChange NOTIFICATION-TYPE
+    OBJECTS { ibBgpPeerGRStatus }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when the graceful restart status of the
+        BGP peer is changed."
+    ::= { ibBgpVpnTrapNotifications 13 }
+
+--  End of IB-BGP-VPN-MIB
+END
+

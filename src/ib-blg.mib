@@ -1,0 +1,139 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: This MIB file is used for management of Balance Group
+--              information.
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 2009-09-15 Created by xupengfei02152
+-- ==================================================================
+IB-BLG-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Integer32, Counter64, OBJECT-TYPE, MODULE-IDENTITY
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION
+        FROM SNMPv2-TC;
+
+ibBlg MODULE-IDENTITY
+    LAST-UPDATED "200909151111Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB module defines a set of basic objects for
+        configuring switches and routers to set/get balance
+        group information."
+    REVISION
+        "200909151111Z"
+    DESCRIPTION
+        "The initial version of this MIB."
+
+   ::= { ibCommon 108 }
+
+CounterClear ::= TEXTUAL-CONVENTION
+    STATUS  current
+    DESCRIPTION
+        "Cleared: reset the value of the group's counter.
+         Nouse: 'nouse' will be returned when getting."
+    SYNTAX INTEGER
+    {
+        cleared(1),
+        nouse(2)
+    }
+
+ibBlgObjects OBJECT IDENTIFIER  ::= { ibBlg 1 }
+
+ibBlgStatsTable  OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbBlgStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table contains the statistics information
+        about balance groups."
+    ::= { ibBlgObjects 1 }
+
+ibBlgStatsEntry OBJECT-TYPE
+    SYNTAX IbBlgStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This list contains statistics information."
+    INDEX { ibBlgIndex }
+    ::= { ibBlgStatsTable 1 }
+
+IbBlgStatsEntry ::=
+   SEQUENCE
+   {
+       ibBlgIndex
+           Integer32,
+       ibBlgGroupTxPacketCount
+           Counter64,
+       ibBlgGroupRxPacketCount
+           Counter64,
+       ibBlgGroupTxByteCount
+           Counter64,
+       ibBlgGroupRxByteCount
+           Counter64,
+       ibBlgGroupCountClear
+           CounterClear
+   }
+
+ibBlgIndex OBJECT-TYPE
+    SYNTAX      Integer32 (1..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The index of the balance group."
+    ::= { ibBlgStatsEntry 1 }
+
+ibBlgGroupTxPacketCount OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "When retrieved, this object returns the count of
+        packets the balance group has sent."
+    ::= { ibBlgStatsEntry 2 }
+
+ibBlgGroupRxPacketCount OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "When retrieved, this object returns the count of
+        packets the balance group has received."
+    ::= { ibBlgStatsEntry 3 }
+
+ibBlgGroupTxByteCount OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "When retrieved, this object returns the count of
+        bytes the balance group has sent."
+    ::= { ibBlgStatsEntry 4 }
+
+ibBlgGroupRxByteCount OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "When retrieved, this object returns the count of
+        bytes the balance group has received."
+    ::= { ibBlgStatsEntry 5 }
+
+ibBlgGroupCountClear OBJECT-TYPE
+    SYNTAX CounterClear
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "This object is used to reset the counter of the balance group.
+        Read operation is meaningless."
+    ::= { ibBlgStatsEntry 6 }
+
+END

@@ -1,0 +1,1446 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The MIB is designed to configure the Two-Way Active Measurement Protocol.
+-- Reference:
+-- Version: V1.5
+-- History:
+-- V1.0 2019-06-22, Zhan Baobin, Initial Version
+-- V1.1 2019-12-04 Modified by Zhang Zheng
+--      Add interval10s in ibTwamplightSendAdminTxPeriod.
+-- V1.2 2020-09-10 Modified by Zhan Baobin
+--      Complement the MIB of TWAMP-light according to the NETCONF.
+--      Contains IbTwamplightClientEntry,ibTwamplightReactionTable.
+-- V1.3 2022-06-28 Modified by Du Wei
+--      Complement the MIB of TWAMP-light notifications.
+--      Modify the value range for ibTwamplightSendAdminDuration and
+--      ibTwamplightSendAdminTimeOut.
+-- V1.4 2022-09-01 Modified by Du Wei
+--      Added ibTwampRespSessionNumLimit.
+-- V1.5 2022-12-01 Modified by Du Wei
+--      Added ibTwampSenderStartFailure for trap.
+--      Added ibTwampRespStartFailure for trap.
+--      Added ibTwampStatisticsAbnormal for trap.
+-- =================================================================
+IB-TWAMP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE,
+    Integer32, Gauge32, Unsigned32
+        FROM SNMPv2-SMI
+    DateAndTime, DisplayString, RowStatus, TruthValue, MacAddress
+        FROM SNMPv2-TC
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB
+    ibCommon
+        FROM IB-OID-MIB;
+
+
+ibTwamp MODULE-IDENTITY
+    LAST-UPDATED "202212010000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The private MIB file includes the test information of the
+        device.  It is to configure the Two-Way Active Measurement Protocol."
+    REVISION "202212010000Z"
+    DESCRIPTION
+        "Added ibTwampSenderStartFailure for trap.
+         Added ibTwampRespStartFailure for trap.
+         Added ibTwampStatisticsAbnormal for trap."
+    REVISION "202209010000Z"
+    DESCRIPTION
+        "Added ibTwampRespSessionNumLimit."
+    REVISION "202206280000Z"
+    DESCRIPTION
+        "Complement the MIB of TWAMP-light notifications.
+         Modify the value range for ibTwamplightSendAdminDuration and
+         ibTwamplightSendAdminTimeOut"
+    REVISION "202009100000Z"
+    DESCRIPTION
+        "Complement the MIB of TWAMP-light according to the NETCONF.  Contains
+         IbTwamplightClientEntry,ibTwamplightReactionTable."
+    REVISION "201912040000Z"
+    DESCRIPTION
+        "Add interval10s in ibTwamplightSendAdminTxPeriod."
+    ::= { ibCommon 184 }
+
+
+ibTwampNotifications OBJECT IDENTIFIER ::= { ibTwamp 1 }
+
+ibTwampNotification OBJECT IDENTIFIER ::= { ibTwampNotifications 0 }
+
+ibTwampTwoWayLossExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTwamplightControllerID,
+            ibTwamplightReactItemIndex,
+            ibTwamplightReactValue,
+            ibTwamplightReactUpperLimit,
+            ibTwamplightReactLowerLimit
+         }
+    STATUS current
+    DESCRIPTION
+        "It is generated when the monitored condition is above threshold.
+
+          1. The two-way loss value is not in the range of
+             ibTwamplightReactLowerLimit through
+             ibTwamplightReactUpperLimit.
+
+        This notification is valid only when ibTwamplightReactActionType
+        is 'trapOnly'."
+    ::= { ibTwampNotification 1 }
+
+ibTwampTwoWayLossRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTwamplightControllerID,
+            ibTwamplightReactItemIndex,
+            ibTwamplightReactValue,
+            ibTwamplightReactUpperLimit,
+            ibTwamplightReactLowerLimit
+         }
+    STATUS current
+    DESCRIPTION
+        "It is generated when the monitored condition is below threshold.
+
+          1. The two-way loss value is in the range of
+             ibTwamplightReactLowerLimit through
+             ibTwamplightReactUpperLimit.
+
+        This notification is valid only when ibTwamplightReactActionType
+        is 'trapOnly'."
+    ::= { ibTwampNotification 2 }
+
+ibTwampTwoWayDelayExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTwamplightControllerID,
+            ibTwamplightReactItemIndex,
+            ibTwamplightReactValue,
+            ibTwamplightReactUpperLimit,
+            ibTwamplightReactLowerLimit
+         }
+    STATUS current
+    DESCRIPTION
+        "It is generated when the monitored condition is above threshold.
+
+          1. The two-way delay value is not in the range of
+             ibTwamplightReactLowerLimit through
+             ibTwamplightReactUpperLimit.
+
+        This notification is valid only when ibTwamplightReactActionType
+        is 'trapOnly'."
+    ::= { ibTwampNotification 3 }
+
+ibTwampTwoWayDelayRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTwamplightControllerID,
+            ibTwamplightReactItemIndex,
+            ibTwamplightReactValue,
+            ibTwamplightReactUpperLimit,
+            ibTwamplightReactLowerLimit
+         }
+    STATUS current
+    DESCRIPTION
+        "It is generated when the monitored condition is below threshold.
+
+          1. The two-way delay value is in the range of
+             ibTwamplightReactLowerLimit through
+             ibTwamplightReactUpperLimit.
+
+        This notification is valid only when ibTwamplightReactActionType
+        is 'trapOnly'."
+    ::= { ibTwampNotification 4 }
+
+ibTwampTwoWayJitterExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTwamplightControllerID,
+            ibTwamplightReactItemIndex,
+            ibTwamplightReactValue,
+            ibTwamplightReactUpperLimit,
+            ibTwamplightReactLowerLimit
+         }
+    STATUS current
+    DESCRIPTION
+        "It is generated when the monitored condition is above threshold.
+
+          1. The two-way jitter value is in the range of
+             ibTwamplightReactLowerLimit through
+             ibTwamplightReactUpperLimit.
+
+        This notification is valid only when ibTwamplightReactActionType
+        is 'trapOnly'."
+    ::= { ibTwampNotification 5 }
+
+ibTwampTwoWayJitterRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTwamplightControllerID,
+            ibTwamplightReactItemIndex,
+            ibTwamplightReactValue,
+            ibTwamplightReactUpperLimit,
+            ibTwamplightReactLowerLimit
+         }
+    STATUS current
+    DESCRIPTION
+        "It is generated when the monitored condition is below threshold.
+
+          1. The two-way jitter value is in the range of
+             ibTwamplightReactLowerLimit through
+             ibTwamplightReactUpperLimit.
+
+        This notification is valid only when ibTwamplightReactActionType
+        is 'trapOnly'."
+    ::= { ibTwampNotification 6 }
+
+ibTwampSenderSessionNumLimit NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+        "It is generated when the number of sessions reaches the limit."
+::= { ibTwampNotification 7 }
+
+ibTwampRespSessionNumLimit NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+        "It is generated when the number of responder sessions reaches the limit."
+    ::= { ibTwampNotification 8 }
+
+ibTwampSenderStartFailure NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibTwamplightControllerID
+    }
+    STATUS current
+    DESCRIPTION
+        "It is generated when TWAMP Light sender test session failed to start."
+    ::= { ibTwampNotification 9 }
+
+ibTwampRespStartFailure NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibTwamplightRespID
+    }
+    STATUS current
+    DESCRIPTION
+        "It is generated when TWAMP Light responder test session failed to start."
+    ::= { ibTwampNotification 10 }
+
+ibTwampStatisticsAbnormal NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibTwamplightControllerID,
+        ibTwamplightTWLossSeq
+    }
+    STATUS current
+    DESCRIPTION
+        "It is generated when the number of packets captured for statistics collection is invalid."
+    ::= { ibTwampNotification 11 }
+
+ibTwamplightObjects OBJECT IDENTIFIER ::= { ibTwamp 2 }
+
+ibTwamplightController            OBJECT IDENTIFIER ::= { ibTwamplightObjects 1 }
+ibTwamplightReponsder             OBJECT IDENTIFIER ::= { ibTwamplightObjects 2 }
+
+ibTwamplightClientEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Control TWAMP-light control-client function.
+            true: Enable TWAMP-light control-client function.
+            false: Delete the TWAMP-light client and all its sessions and statistics."
+    DEFVAL      { false }
+    ::= {ibTwamplightController 1 }
+
+ibTwamplightSenderEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Control TWAMP-light control-sender function.
+            true: Enable TWAMP-light control-sender function.
+            false: Stop all TWAMP-light test sessions."
+    DEFVAL      { false }
+    ::= {ibTwamplightController 2 }
+
+ibTwamplightClientTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTwamplightClientEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines TWAMP-light control-client test session parameter configuration."
+    ::= { ibTwamplightController 3 }
+
+ibTwamplightClientEntry OBJECT-TYPE
+    SYNTAX      IbTwamplightClientEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines an entry in the ibTwamplightClientTable."
+    INDEX {
+              ibTwamplightControllerID
+          }
+    ::= { ibTwamplightClientTable 1 }
+
+IbTwamplightClientEntry ::=
+    SEQUENCE {
+        ibTwamplightControllerID           Integer32,
+        ibTwamplightClientSrcAddrType      InetAddressType,
+        ibTwamplightClientSrcAddr          InetAddress,
+        ibTwamplightClientTrgtAddrType     InetAddressType,
+        ibTwamplightClientTrgtAddr         InetAddress,
+        ibTwamplightClientSrcPort          Integer32,
+        ibTwamplightClientTrgtPort         Integer32,
+        ibTwamplightClientVPN              DisplayString,
+        ibTwamplightClientDscp             Integer32,
+        ibTwamplightClientDataSize         Integer32,
+        ibTwamplightClientDescription      DisplayString,
+        ibTwamplightClientRowStatus        RowStatus,
+        ibTwamplightClientSrcIfName        DisplayString,
+        ibTwamplightClientServiceID        Unsigned32,
+        ibTwamplightClientDesMac           MacAddress,
+        ibTwamplightClientSrcMac           MacAddress,
+        ibTwamplightClientTimeFormat       INTEGER,
+        ibTwamplightClientDataFill         DisplayString,
+        ibTwamplightClientDataFillType     INTEGER,
+        ibTwamplightClientSVlanID          Unsigned32,
+        ibTwamplightClientCVlanID          Unsigned32,
+        ibTwamplightClientVlanPriority     Unsigned32,
+        ibTwamplightClientBindIfName       DisplayString
+    }
+
+ibTwamplightControllerID OBJECT-TYPE
+    SYNTAX      Integer32 (1..512)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+       "The session ID of the TWAMP-light test."
+    ::= { ibTwamplightClientEntry 1 }
+
+ibTwamplightClientSrcAddrType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specifies the type of the source address,
+        ibTwamplightClientSrcAddr, to be used at a remote host
+        when performing the TWAMP-light test."
+    ::= { ibTwamplightClientEntry 2 }
+
+ibTwamplightClientSrcAddr OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Use the specified IP address (which must be given
+        in numeric form, not as a hostname) as the source
+        address in outgoing probe packets.  On hosts with
+        more than one IP address, this option can be used
+        to force the source address to be something other
+        than the primary IP address of the interface the
+        probe packet is sent on.  A zero length octet string
+        value for this object disables source address
+        specification.
+
+        The address type (InetAddressType) that relates to
+        this object is specified by the corresponding value
+        of ibTwamplightClientSrcAddrType."
+    DEFVAL { ''H }
+    ::= { ibTwamplightClientEntry 3 }
+
+ibTwamplightClientTrgtAddrType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specifies the type of host address to be used at a remote
+        host for performing a TWAMP-light test."
+    ::= { ibTwamplightClientEntry 4 }
+
+ibTwamplightClientTrgtAddr OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specifies the host address to be used at a remote host for
+        performing a TWAMP-light test.  The host address type is
+        determined by the object value of corresponding
+        ibTwamplightClientTrgtAddrType."
+    DEFVAL { ''H }
+    ::= { ibTwamplightClientEntry 5 }
+
+ibTwamplightClientSrcPort          OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The source port be used by a TWAMP-light test."
+    DEFVAL      { 0 }
+    ::= { ibTwamplightClientEntry 6 }
+
+ibTwamplightClientTrgtPort          OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The destination port that be used by a TWAMP-light test."
+    DEFVAL      { 0 }
+    ::= { ibTwamplightClientEntry 7 }
+
+ibTwamplightClientVPN OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..31))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "VPN name by which system finds route in the specified VPN
+        to send TWAMP probe packets."
+    DEFVAL      { "" }
+    ::= { ibTwamplightClientEntry 8 }
+
+ibTwamplightClientDscp OBJECT-TYPE
+    SYNTAX      Integer32 (0..63)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specifies the value to store in the Differentiated
+        Services Code Point (DSCP) in the IP packet used to
+        encapsulate the TWAMP probe.  The DSCP field is defined
+        as the Type of Service (TOS) octet in a IPv4 header
+        or as the Traffic Class octet in a IPv6 header.
+
+        The value of this object must be a decimal integer
+        in the range from 0 to 63.  This option can be used
+        to determine what effect an explicit DSCP field setting
+        has on a TWAMP response."
+    DEFVAL { 0 }
+    ::= { ibTwamplightClientEntry 9 }
+
+ibTwamplightClientDataSize OBJECT-TYPE
+    SYNTAX      Integer32 (44..1518)
+    UNITS       "octets"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specifies the size of the data portion to be
+        transmitted in a TWAMP operation in octets."
+    DEFVAL { 142 }
+    ::= { ibTwamplightClientEntry 10 }
+
+ibTwamplightClientDescription OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..200))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "A comment describing this session."
+    DEFVAL      { "" }
+    ::= { ibTwamplightClientEntry 11 }
+
+ibTwamplightClientRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object allows entries to be created and deleted
+        in the ibTwamplightClientTable.  Deletion of an entry
+        in this table results in deletion of all corresponding (same
+        ibTwamplightControllerID index values)
+        ibTwamplightSenderAdminTable and all related representations
+        entries."
+    REFERENCE
+        "See definition of RowStatus in RFC 2579, 'Textual
+        Conventions for SMIv2.'"
+    ::= { ibTwamplightClientEntry 12 }
+
+ibTwamplightClientSrcIfName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..47))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The source interface for the probe packets."
+    DEFVAL      { "" }
+    ::= { ibTwamplightClientEntry 13 }
+
+ibTwamplightClientServiceID OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..4096)
+    UNITS       "octets"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "An Ethernet service instance by its ID for test."
+    ::= { ibTwamplightClientEntry 14 }
+
+ibTwamplightClientDesMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The destination MAC address for the TWAMP-light test."
+    ::= { ibTwamplightClientEntry 15 }
+
+ibTwamplightClientSrcMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The source MAC address for the TWAMP-light test."
+    ::= { ibTwamplightClientEntry 16 }
+
+ibTwamplightClientTimeFormat OBJECT-TYPE
+    SYNTAX      INTEGER {
+                            ntp (1),
+                            ptp (2)
+                        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The timestamp format for probe packets in
+        the TWAMP-light test."
+    ::= { ibTwamplightClientEntry 17 }
+
+ibTwamplightClientDataFill OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (1..200))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The payload fill string for each probe packet in the TWAMP-light
+         test.  If the ibTwamplightClientDataFillType is string,
+         the string length is 1 to 200.  When ibTwamplightClientDataFillType
+         is hex, the datafill should contain any even number of characters in
+         the range of 2 to 200."
+    ::= { ibTwamplightClientEntry 18 }
+
+ibTwamplightClientDataFillType OBJECT-TYPE
+    SYNTAX      INTEGER {
+                            string (1),
+                            hex (2)
+                        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specify the type of ibTwamplightClientDataFill."
+    ::= { ibTwamplightClientEntry 19 }
+
+ibTwamplightClientSVlanID OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specify the ID of the VLAN to which the
+         probe packets belong."
+    ::= { ibTwamplightClientEntry 20 }
+
+ibTwamplightClientCVlanID OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specify the ID of the custom VLAN to which the
+         probe packets belong.
+         The ibTwamplightClientSVlanID must be specified
+         first before the ibTwamplightClientCVlanID."
+    ::= { ibTwamplightClientEntry 21 }
+
+ibTwamplightClientVlanPriority OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..7)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specify set the 802.1p priority for the probe
+         packets."
+    ::= { ibTwamplightClientEntry 22 }
+
+ibTwamplightClientBindIfName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..47))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Associate the TWAMP-light test with an interface."
+    DEFVAL      { "" }
+    ::= { ibTwamplightClientEntry 23 }
+
+ibTwamplightSenderAdminTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTwamplightSenderAdminEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines TWAMP-light control-sender's management table,
+        starts or stops TWAMP light test function.  When the
+        RowStatus is CreatAndGo, only one among ibTwamplightSendAdminContinual,
+        ibTwamplightSendAdminDuration, and ibTwamplightSendAdminPktCount
+        must be configured."
+    ::= { ibTwamplightController 4 }
+
+ibTwamplightSenderAdminEntry OBJECT-TYPE
+    SYNTAX      IbTwamplightSenderAdminEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines an entry in the ibTwamplightSenderAdminTable."
+    INDEX {
+              ibTwamplightControllerID
+          }
+    ::= { ibTwamplightSenderAdminTable 1 }
+
+IbTwamplightSenderAdminEntry ::=
+    SEQUENCE {
+        ibTwamplightSendAdminContinual              TruthValue,
+        ibTwamplightSendAdminDuration               Integer32,
+        ibTwamplightSendAdminPktCount               Integer32,
+        ibTwamplightSendAdminTxPeriod               INTEGER,
+        ibTwamplightSendAdminTimeOut                Integer32,
+        ibTwamplightSendAdminRowStatus              RowStatus
+    }
+
+ibTwamplightSendAdminContinual OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Defineds to control the TWAMP test type.
+           true:  Permanent test.
+           false: On demand test."
+    ::= { ibTwamplightSenderAdminEntry 1 }
+
+ibTwamplightSendAdminDuration OBJECT-TYPE
+    SYNTAX      Integer32 (60..3600)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Defines the duration the session runs for TWAMP test
+        before being stopped."
+        ::= { ibTwamplightSenderAdminEntry 2 }
+
+ibTwamplightSendAdminPktCount OBJECT-TYPE
+    SYNTAX      Integer32 (100..30000)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Defines the number of packets to send for TWAMP
+        test before the session is stopped."
+        ::= { ibTwamplightSenderAdminEntry 3 }
+
+ibTwamplightSendAdminTxPeriod OBJECT-TYPE
+    SYNTAX      INTEGER {
+                          interval10ms(1),
+                          interval100ms(2),
+                          interval1s(3),
+                          interval30s(4),
+                          interval10s(5)
+                        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Defines the interval at which probe packets are sent
+        for TWAMP test."
+    DEFVAL      { interval100ms }
+    ::= { ibTwamplightSenderAdminEntry 4 }
+
+ibTwamplightSendAdminTimeOut OBJECT-TYPE
+    SYNTAX      Integer32 (1..60)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Defines the timeout time for TWAMP response packets."
+    DEFVAL      { 5 }
+        ::= { ibTwamplightSenderAdminEntry 5 }
+
+ibTwamplightSendAdminRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object allows entries to be created and deleted
+        in the ibTwamplightSenderAdminTable."
+    REFERENCE
+        "See definition of RowStatus in RFC 2579, 'Textual
+        Conventions for SMIv2.'"
+    ::= { ibTwamplightSenderAdminEntry 6 }
+
+ibTwamplightSenderStatusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTwamplightSenderStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines TWAMP-light control-sender's status table."
+    ::= { ibTwamplightController 5 }
+
+ibTwamplightSenderStatusEntry OBJECT-TYPE
+    SYNTAX      IbTwamplightSenderStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines an entry in the ibTwamplightSenderStatusTable."
+    INDEX {
+              ibTwamplightControllerID
+          }
+    ::= { ibTwamplightSenderStatusTable 1 }
+
+IbTwamplightSenderStatusEntry ::=
+    SEQUENCE {
+        ibTwamplightSenderStatus         INTEGER,
+        ibTwamplightSenderStatusType     INTEGER,
+        ibTwamplightLastStartTime        DateAndTime,
+        ibTwamplightLastStopTime         DateAndTime
+    }
+
+ibTwamplightSenderStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                            inactive(1),
+                            active(2)
+                        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Reflects the operational state of a TWAMP test:
+           inactive: TWAMP test is in progress.
+           active: TWAMP test has stopped."
+    ::= { ibTwamplightSenderStatusEntry 1 }
+
+ibTwamplightSenderStatusType OBJECT-TYPE
+    SYNTAX      INTEGER {
+                            init(0),
+                            continual(1),
+                            onDemand(2)
+                        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Reflects the operational start type of a TWAMP test:
+           init: Initial status.
+           continual: Permanent test.
+           onDemand: On demand test."
+    ::= { ibTwamplightSenderStatusEntry 2 }
+
+ibTwamplightLastStartTime OBJECT-TYPE
+    SYNTAX      DateAndTime (SIZE (8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Date and time when the last test started."
+    ::= { ibTwamplightSenderStatusEntry 4 }
+
+ibTwamplightLastStopTime OBJECT-TYPE
+    SYNTAX      DateAndTime (SIZE (8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Date and time when the last test stopped."
+    ::= { ibTwamplightSenderStatusEntry 5 }
+
+ibTwamplightTwoWayDelayTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTwamplightTwoWayDelayEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines the statistics result table for TWAMP test."
+    ::= { ibTwamplightController 6 }
+
+ibTwamplightTwoWayDelayEntry OBJECT-TYPE
+    SYNTAX      IbTwamplightTwoWayDelayEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines an entry in the ibTwamplightTwoWayDelayTable."
+    INDEX {
+              ibTwamplightControllerID,
+              ibTwamplightTWDelaySeq
+          }
+    ::= { ibTwamplightTwoWayDelayTable 1 }
+
+IbTwamplightTwoWayDelayEntry ::=
+    SEQUENCE {
+        ibTwamplightTWDelaySeq                   Gauge32,
+        ibTwamplightTWDelayAvgDelay              Integer32,
+        ibTwamplightTWDelayMaxDelay              Integer32,
+        ibTwamplightTWDelayMinDelay              Integer32,
+        ibTwamplightTWDelayAvgJitter             Integer32,
+        ibTwamplightTWDelayMaxJitter             Integer32,
+        ibTwamplightTWDelayMinJitter             Integer32,
+        ibTwamplightTWDelayAvgJitterSD           Integer32,
+        ibTwamplightTWDelayMaxJitterSD           Integer32,
+        ibTwamplightTWDelayMinJitterSD           Integer32,
+        ibTwamplightTWDelayAvgJitterDS           Integer32,
+        ibTwamplightTWDelayMaxJitterDS           Integer32,
+        ibTwamplightTWDelayMinJitterDS           Integer32
+        }
+
+ibTwamplightTWDelaySeq OBJECT-TYPE
+    SYNTAX      Gauge32 (1..4294967295)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An entry in this table is created when the statistics
+        result of a TWAMP test is determined.
+
+        An implementation MUST start assigning
+        ibTwamplightTWDelaySeq values at 1 and
+        wrap after exceeding the maximum possible value as
+        defined by the limit of this object ('ffffffff'h)."
+    ::= { ibTwamplightTwoWayDelayEntry 1 }
+
+ibTwamplightTWDelayAvgDelay OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the average two-way-delay
+        value in the TWAMP test."
+    ::= { ibTwamplightTwoWayDelayEntry 2 }
+
+ibTwamplightTWDelayMaxDelay OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the maximum two-way-delay
+        value in the TWAMP test."
+    ::= { ibTwamplightTwoWayDelayEntry 3 }
+
+ibTwamplightTWDelayMinDelay OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the minimum two-way-delay
+        value in the TWAMP test."
+    ::= { ibTwamplightTwoWayDelayEntry 4 }
+
+ibTwamplightTWDelayAvgJitter OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the average jitter value
+        in the TWAMP test."
+    ::= { ibTwamplightTwoWayDelayEntry 5 }
+
+ibTwamplightTWDelayMaxJitter OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the maximum jitter value
+        in the TWAMP test."
+    ::= { ibTwamplightTwoWayDelayEntry 6 }
+
+ibTwamplightTWDelayMinJitter OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the minimum jitter value
+        in the TWAMP test."
+    ::= { ibTwamplightTwoWayDelayEntry 7 }
+
+ibTwamplightTWDelayAvgJitterSD OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the average jitter value from
+        source to destination in the TWAMP test."
+    ::= { ibTwamplightTwoWayDelayEntry 8 }
+
+ibTwamplightTWDelayMaxJitterSD OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the maximum jitter value from
+        source to destination in the TWAMP test."
+    ::= { ibTwamplightTwoWayDelayEntry 9 }
+
+ibTwamplightTWDelayMinJitterSD OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the minimum jitter value from
+        source to destination in the TWAMP test."
+    ::= { ibTwamplightTwoWayDelayEntry 10 }
+
+ibTwamplightTWDelayAvgJitterDS OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the average jitter value from
+        destination to source in the TWAMP test."
+    ::= { ibTwamplightTwoWayDelayEntry 11 }
+
+ibTwamplightTWDelayMaxJitterDS OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the maximum jitter value from
+        destination to source in the TWAMP test."
+    ::= { ibTwamplightTwoWayDelayEntry 12 }
+
+ibTwamplightTWDelayMinJitterDS OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the minimum jitter value from
+        destination to source in the TWAMP test."
+    ::= { ibTwamplightTwoWayDelayEntry 13 }
+
+ibTwamplightTwoWayLossTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTwamplightTwoWayLossEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines the TWAMP-light loss statistics result Table for providing,
+        via SNMP."
+    ::= { ibTwamplightController 7 }
+
+ibTwamplightTwoWayLossEntry OBJECT-TYPE
+    SYNTAX      IbTwamplightTwoWayLossEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines an entry in the ibTwamplightTwoWayLossTable."
+    INDEX {
+              ibTwamplightControllerID,
+              ibTwamplightTWLossSeq
+          }
+    ::= { ibTwamplightTwoWayLossTable 1 }
+
+IbTwamplightTwoWayLossEntry ::=
+    SEQUENCE {
+        ibTwamplightTWLossSeq                     Gauge32,
+        ibTwamplightTWLossValue                   Integer32,
+        ibTwamplightTWSentCount                   Integer32,
+        ibTwamplightTWTotalLossValue              Integer32,
+        ibTwamplightTWTotalSentCount              Integer32,
+        ibTwamplightTWErrorCount                  Unsigned32,
+        ibTwamplightTWTotalErrorCount             Unsigned32
+        }
+
+ibTwamplightTWLossSeq OBJECT-TYPE
+    SYNTAX      Gauge32 (1..4294967295)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An entry in this table is created when statistics
+        result of a TWAMP test is determined.
+
+        An implementation MUST start assigning
+        ibTwamplightTWLossSeq values at 1 and
+        wrap after exceeding the maximum possible value as
+        defined by the limit of this object ('ffffffff'h)."
+    ::= { ibTwamplightTwoWayLossEntry 1 }
+
+ibTwamplightTWLossValue OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of lost packets in a statistical cycle
+        of a TWAMP test."
+    ::= { ibTwamplightTwoWayLossEntry 2 }
+
+ibTwamplightTWSentCount OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets were sent in a statistical cycle
+        of a TWAMP test."
+    ::= { ibTwamplightTwoWayLossEntry 3 }
+
+ibTwamplightTWTotalLossValue OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of lost packets number in last 30 statistical
+        cycle of a TWAMP test."
+    ::= { ibTwamplightTwoWayLossEntry 4 }
+
+ibTwamplightTWTotalSentCount OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets sent in last 30 statistical
+        cycle of a TWAMP test."
+    ::= { ibTwamplightTwoWayLossEntry 5 }
+
+ibTwamplightTWErrorCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of error packets received in a statistical cycle
+        of a TWAMP-light test."
+    ::= { ibTwamplightTwoWayLossEntry 6 }
+
+ibTwamplightTWTotalErrorCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of error packets received in last 30 statistical
+        cycles of a TWAMP-light test."
+    ::= { ibTwamplightTwoWayLossEntry 7 }
+
+ibTwamplightSenderLossSeqTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTwamplightSenderLossSeqEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The largest index value in TWAMP Loss results.
+
+        When a TWAMP test starts, TWAMP will generats
+        a set of statistics at regular intervals, and the
+        index information will be incremented by one for each result."
+    ::= { ibTwamplightController 8 }
+
+ibTwamplightSenderLossSeqEntry OBJECT-TYPE
+    SYNTAX      IbTwamplightSenderLossSeqEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines an entry in the ibTwamplightSenderLossSeqTable."
+    INDEX {
+              ibTwamplightControllerID
+          }
+    ::= { ibTwamplightSenderLossSeqTable 1 }
+
+IbTwamplightSenderLossSeqEntry ::=
+    SEQUENCE {
+        ibTwamplightLossSeqNumValue                   Gauge32
+        }
+
+ibTwamplightLossSeqNumValue OBJECT-TYPE
+    SYNTAX      Gauge32 (1..4294967295)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The largest index value in a TWAMP packet Loss test session."
+    ::= { ibTwamplightSenderLossSeqEntry 1 }
+
+
+ibTwamplightSendDelaySeqTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTwamplightSendDelaySeqEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The largest index value in TWAMP delay results.
+
+        When a TWAMP test startes, TWAMP will generates
+        a set of statistics at regular intervals, and the
+        index information will be incremented by one for each result."
+    ::= { ibTwamplightController 9 }
+
+ibTwamplightSendDelaySeqEntry OBJECT-TYPE
+    SYNTAX      IbTwamplightSendDelaySeqEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines an entry in the ibTwamplightSendDelaySeqTable.  The
+        operation of this table is same as that of pingResultsTable."
+    INDEX {
+              ibTwamplightControllerID
+          }
+    ::= { ibTwamplightSendDelaySeqTable 1 }
+
+IbTwamplightSendDelaySeqEntry ::=
+    SEQUENCE {
+        ibTwamplightSenderDelaySeqNum                   Gauge32
+        }
+
+ibTwamplightSenderDelaySeqNum OBJECT-TYPE
+    SYNTAX      Gauge32 (1..4294967295)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The largest index value in a TWAMP packet delay test session."
+    ::= { ibTwamplightSendDelaySeqEntry 1 }
+
+ibTwamplightResetStatTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTwamplightResetStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines to clear TWAMP test statistics."
+    ::= { ibTwamplightController 10 }
+
+ibTwamplightResetStatEntry OBJECT-TYPE
+    SYNTAX      IbTwamplightResetStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines an entry in the ibTwamplightResetStatTable."
+    INDEX {
+              ibTwamplightControllerID
+          }
+    ::= { ibTwamplightResetStatTable 1 }
+
+IbTwamplightResetStatEntry ::=
+    SEQUENCE {
+        ibTwamplightResetStatistics                   INTEGER
+        }
+
+ibTwamplightResetStatistics OBJECT-TYPE
+    SYNTAX      INTEGER {
+                          single(1),
+                          all(2)
+                        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Clear TWAMP test statistics.
+          single: reset single.
+          all: reset all."
+    ::= { ibTwamplightResetStatEntry 1 }
+
+ibTwamplightReactionTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTwamplightReactionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines TWAMP-light control-client test session reaction
+         configuration."
+    ::= { ibTwamplightController 11 }
+
+ibTwamplightReactionEntry OBJECT-TYPE
+    SYNTAX      IbTwamplightReactionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines an entry in the ibTwamplightReactionTable."
+    INDEX {
+              ibTwamplightControllerID,
+              ibTwamplightReactItemIndex
+          }
+    ::= { ibTwamplightReactionTable 1 }
+
+IbTwamplightReactionEntry ::=
+    SEQUENCE {
+        ibTwamplightReactItemIndex           Unsigned32,
+        ibTwamplightReactCheckElement        INTEGER,
+        ibTwamplightReactUpperLimit          Unsigned32,
+        ibTwamplightReactLowerLimit          Unsigned32,
+        ibTwamplightReactActionType          INTEGER,
+        ibTwamplightReactRowStatus           RowStatus,
+        ibTwamplightReactValue               Unsigned32
+    }
+
+ibTwamplightReactItemIndex OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..10)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The second index of ibTwamplightReactionTable, It definitely
+        identifies one of the reaction configurations for TWAMP-light test."
+    ::= { ibTwamplightReactionEntry 1 }
+
+ibTwamplightReactCheckElement OBJECT-TYPE
+    SYNTAX      INTEGER {
+                          twoWayDelay(1),
+                          twoWayJitter(2),
+                          twoWayLoss(3)
+                        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "A list of reaction condition type."
+    ::= { ibTwamplightReactionEntry 2 }
+
+ibTwamplightReactUpperLimit OBJECT-TYPE
+    SYNTAX      Unsigned32 (2..1000000)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object defines an administrative upper-threshold value for
+        ibTwamplightReactCheckElement."
+    ::= { ibTwamplightReactionEntry 3 }
+
+ibTwamplightReactLowerLimit OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..999999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object defines an administrative lower-threshold value for
+        ibTwamplightReactCheckElement."
+    ::= { ibTwamplightReactionEntry 4 }
+
+ibTwamplightReactActionType OBJECT-TYPE
+    SYNTAX      INTEGER {
+                           none(0),
+                           trapOnly(1)
+                        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specifies the type of reaction to generate if the specified
+         violation type occurs for the monitored element:
+
+        none               - No reaction is generated
+        trapOnly           - A trap is generated"
+    DEFVAL { none }
+    ::= { ibTwamplightReactionEntry 5 }
+
+ibTwamplightReactRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object allows entries to be created and deleted
+        in the ibTwamplightReactionTable.  Deletion of an entry
+        in this table results in deletion of all corresponding (same
+        ibTwamplightControllerID index values)
+        ibTwamplightSenderAdminTable and all related representations
+        entries."
+    REFERENCE
+        "See definition of RowStatus in RFC 2579, 'Textual
+        Conventions for SMIv2.'"
+    ::= { ibTwamplightReactionEntry 6 }
+
+ibTwamplightReactValue OBJECT-TYPE
+    SYNTAX Unsigned32 (1..1000000)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "This object defines current value for the monitored element."
+    ::= { ibTwamplightReactionEntry 7 }
+
+ibTwamplightResponderEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Control TWAMP-light responder function.
+            true: Enable TWAMP-light responder function.
+            false: Disable TWAMP-light responder function."
+    DEFVAL      { false }
+    ::= { ibTwamplightReponsder 1 }
+
+ibTwamplightResponderTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTwamplightResponderEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines the TWAMP-light reflector Table, and configures
+        TWAMP test session.  When the RowStatus is Active or CreatAndGo,
+        the source address and target address, source port,
+        target  port must be configured.  When the RowStatus
+        is Destroy, Except for fields ResponderID and RowStatus,
+        The rest can't be configured."
+    ::= { ibTwamplightReponsder 2 }
+
+ibTwamplightResponderEntry OBJECT-TYPE
+    SYNTAX      IbTwamplightResponderEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines an entry in the ibTwamplightResponderTable."
+    INDEX {
+              ibTwamplightRespID
+          }
+    ::= { ibTwamplightResponderTable 1 }
+
+IbTwamplightResponderEntry ::=
+    SEQUENCE {
+        ibTwamplightRespID               Integer32,
+        ibTwamplightRespSrcAddrType      InetAddressType,
+        ibTwamplightRespSrcAddr          InetAddress,
+        ibTwamplightRespTrgtAddrType     InetAddressType,
+        ibTwamplightRespTrgtAddr         InetAddress,
+        ibTwamplightRespSrcPort          Integer32,
+        ibTwamplightRespTrgtPort         Integer32,
+        ibTwamplightRespVPN              DisplayString,
+        ibTwamplightRespDescription      DisplayString,
+        ibTwamplightRespRowStatus        RowStatus,
+        ibTwamplightRespSrcIfName        DisplayString,
+        ibTwamplightRespServiceID        Unsigned32,
+        ibTwamplightRespDesMac           MacAddress,
+        ibTwamplightRespSrcMac           MacAddress,
+        ibTwamplightRespTimeFormat       INTEGER,
+        ibTwamplightRespSVlanID          Unsigned32,
+        ibTwamplightRespCVlanID          Unsigned32
+    }
+
+ibTwamplightRespID OBJECT-TYPE
+    SYNTAX      Integer32 (1..512)
+    MAX-ACCESS accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+       "TWAMP test session reflector index."
+    ::= { ibTwamplightResponderEntry 1 }
+
+ibTwamplightRespSrcAddrType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specifies the type of the source address,
+        ibTwamplightClientSrcAddr, to be used at a remote host
+        when performing the TWAMP-light test."
+    ::= { ibTwamplightResponderEntry 2 }
+
+ibTwamplightRespSrcAddr OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Use the specified IP address (which must be given
+        in numeric form, not as a hostname) as the source
+        address for outgoing probe packets.  On hosts with
+        more than one IP address, this option can be used
+        to force the source address to be something other
+        than the primary IP address of the interface the
+        probe packet is sent on.  A zero length octet string
+        value for this object disables source address
+        specification.
+
+        The address type (InetAddressType) that relates to
+        this object is specified by the corresponding value
+        of ibTwamplightClientSrcAddrType."
+    DEFVAL { ''H }
+    ::= { ibTwamplightResponderEntry 3 }
+
+ibTwamplightRespTrgtAddrType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specifies the type of host address to be used at a remote
+        host for performing a TWAMP-light test."
+    ::= { ibTwamplightResponderEntry 4 }
+
+ibTwamplightRespTrgtAddr OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specifies the host address to be used at a remote host for
+        performing a TWAMP-light test.  The host address type is
+        determined by the object value of corresponding
+        ibTwamplightClientTrgtAddrType."
+    DEFVAL { ''H }
+    ::= { ibTwamplightResponderEntry 5 }
+
+ibTwamplightRespSrcPort          OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The source port be used by a TWAMP-light test."
+    ::= { ibTwamplightResponderEntry 6 }
+
+ibTwamplightRespTrgtPort          OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The destination port to be used by a TWAMP-light test."
+    ::= { ibTwamplightResponderEntry 7 }
+
+ibTwamplightRespVPN OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (1..31))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "VPN name by which the system finds route in the specified VPN
+        to send TWAMP probe packets."
+    DEFVAL      { "" }
+    ::= { ibTwamplightResponderEntry 8 }
+
+ibTwamplightRespDescription OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (1..200))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "A comment describing this session."
+    DEFVAL      { "" }
+    ::= { ibTwamplightResponderEntry 9 }
+
+ibTwamplightRespRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object allows entries to be created and deleted
+        in the IbTwamplightResponderEntry."
+    REFERENCE
+        "See definition of RowStatus in RFC 2579, 'Textual
+        Conventions for SMIv2.'"
+    ::= { ibTwamplightResponderEntry 10 }
+
+ibTwamplightRespSrcIfName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..47))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The source interface for the response packets."
+    DEFVAL      { "" }
+    ::= { ibTwamplightResponderEntry 11 }
+
+ibTwamplightRespServiceID OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..4096)
+    UNITS       "octets"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "An Ethernet service instance by its ID for test."
+    ::= { ibTwamplightResponderEntry 12 }
+
+ibTwamplightRespDesMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The destination MAC address for the TWAMP-light test."
+    ::= { ibTwamplightResponderEntry 13 }
+
+ibTwamplightRespSrcMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The source MAC address for the TWAMP-light response message."
+    ::= { ibTwamplightResponderEntry 14 }
+
+ibTwamplightRespTimeFormat OBJECT-TYPE
+    SYNTAX      INTEGER {
+                            auto (0),
+                            ntp  (1),
+                            ptp  (2)
+                        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The timestamp format for probe packets in the TWAMP-light test."
+    ::= { ibTwamplightResponderEntry 15 }
+
+ibTwamplightRespSVlanID OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specify the ID of the VLAN to which the
+         probe packets belong."
+    ::= { ibTwamplightResponderEntry 16 }
+
+ibTwamplightRespCVlanID OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specify the ID of the custom vlan to which the
+         probe packets belong.
+         The ibTwamplightRespSVlanID must be specified
+         first before the ibTwamplightRespCVlanID."
+    ::= { ibTwamplightResponderEntry 17 }
+
+END
+

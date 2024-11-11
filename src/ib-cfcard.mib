@@ -1,0 +1,307 @@
+-- =============================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:  provide the info about CF Card.
+-- Version: V1.0
+-- History:
+--   V1.0 Initial Version created by lizhiyong
+-- =============================================================
+IB-CFCARD-MIB DEFINITIONS ::= BEGIN
+
+        IMPORTS
+            ibCfCard
+                FROM IB-OID-MIB
+            OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP
+                FROM SNMPv2-CONF
+            Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, OBJECT-IDENTITY, NOTIFICATION-TYPE
+                FROM SNMPv2-SMI;
+
+
+--  December 24, 2004 at 15:41 GMT
+        ibCfCardMIB MODULE-IDENTITY
+            LAST-UPDATED "200412240000Z"
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION
+                "This MIB provides the information about CF Card."
+            ::= { ibCfCard 1 }
+
+
+
+
+        ibCfCardMIBObjects OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION
+                "Objects used for CF Card management."
+            ::= { ibCfCardMIB 1 }
+
+
+        ibCfCardScalarObjects OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION
+                "The scalar objects for the CF Card(s)."
+            ::= { ibCfCardMIBObjects 1 }
+
+
+        ibCfCardNumber OBJECT-TYPE
+            SYNTAX INTEGER (0..255)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total number of the CF Card(s) at present."
+            ::= { ibCfCardScalarObjects 1 }
+
+
+        ibCfCardInfoObjects OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION
+                "The basic information about CF Card(s)."
+            ::= { ibCfCardMIBObjects 2 }
+
+
+        ibCfCardInfoTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IBCfCardInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This table contains the basic information about CF Card(s)."
+            ::= { ibCfCardInfoObjects 2 }
+
+
+        ibCfCardInfoEntry OBJECT-TYPE
+            SYNTAX IBCfCardInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This list contains the basic information about CF Card."
+            INDEX { ibCfCardIndex }
+            ::= { ibCfCardInfoTable 1 }
+
+
+        IBCfCardInfoEntry ::=
+            SEQUENCE {
+                ibCfCardIndex
+                    INTEGER,
+                ibCfCardIsPresent
+                    INTEGER,
+                ibCfCardContainedIn
+                    INTEGER,
+                ibCfCardParentRelPos
+                    INTEGER,
+                ibCfCardDescription
+                    OCTET STRING,
+                ibCfCardSerialNumber
+                    OCTET STRING,
+                ibCfCardFirewareVersion
+                    OCTET STRING,
+                ibCfCardModelNumber
+                    OCTET STRING,
+                ibCfCardState
+                    INTEGER,
+                ibCfCardSize
+                    Unsigned32,
+                ibCfCardUsedSize
+                    Unsigned32,
+                ibCfCardFreeSize
+                    Unsigned32
+             }
+
+        ibCfCardIndex OBJECT-TYPE
+            SYNTAX INTEGER (1..255)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The index of the table."
+            ::= { ibCfCardInfoEntry 1 }
+
+
+        ibCfCardIsPresent OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                yes(1),
+                no(2)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The value indicates whether the CF Card is present or not."
+            ::= { ibCfCardInfoEntry 2 }
+
+
+        ibCfCardContainedIn OBJECT-TYPE
+            SYNTAX INTEGER (0..255)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The number of the slot which containes this CF Card "
+            ::= { ibCfCardInfoEntry 3 }
+
+
+        ibCfCardParentRelPos OBJECT-TYPE
+            SYNTAX INTEGER (0..255)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "An indication of the relative position of this CF Card
+                among all the CF Card contained in the same slot."
+            ::= { ibCfCardInfoEntry 4 }
+
+
+        ibCfCardDescription OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE (0..255))
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Description of CF Card."
+            ::= { ibCfCardInfoEntry 5 }
+
+
+        ibCfCardSerialNumber OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE (0..255))
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The serial number of CF Card."
+            ::= { ibCfCardInfoEntry 6 }
+
+
+        ibCfCardFirewareVersion OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE (0..255))
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The firmware revision of CF Card."
+            ::= { ibCfCardInfoEntry 7 }
+
+
+        ibCfCardModelNumber OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE (0..255))
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The model number containing infomation of manufacturer."
+            ::= { ibCfCardInfoEntry 8 }
+
+
+        ibCfCardState OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                sNoError(1),          -- No error
+                sFormatError(2),      -- Format error
+                sSectorBufferError(3),-- Sector Buffer error
+                sECCError(4),         -- ECC circuitry error
+                sCMPError(5),         -- Controlling microprocessor error
+                sSlaveError(128),     -- Slave error in True IDE Mode
+                sIOError(240),        -- I/O error
+                sOther(255)           -- Unknown status
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The state of CF Card."
+            ::= { ibCfCardInfoEntry 9 }
+
+
+        ibCfCardSize OBJECT-TYPE
+            SYNTAX Unsigned32
+            UNITS "byte"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The size of CF Card."
+            ::= { ibCfCardInfoEntry 10 }
+
+
+        ibCfCardUsedSize OBJECT-TYPE
+            SYNTAX Unsigned32
+            UNITS "byte"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The used size of CF Card."
+            ::= { ibCfCardInfoEntry 11 }
+
+
+        ibCfCardFreeSize OBJECT-TYPE
+            SYNTAX Unsigned32
+            UNITS "byte"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The free size of CF Card."
+            ::= { ibCfCardInfoEntry 12 }
+
+
+        ibCfCardNotifications OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION
+                "Notification about the CF Card."
+            ::= { ibCfCardMIB 2 }
+
+
+        ibCfCardNotificationsV2 OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION
+                "Root node for the Notification."
+            ::= { ibCfCardNotifications 0 }
+
+
+        ibCfCardHotSwapOn NOTIFICATION-TYPE
+            OBJECTS { ibCfCardContainedIn, ibCfCardParentRelPos, ibCfCardDescription }
+            STATUS current
+            DESCRIPTION
+                "This notification is sent when a CF Card is hot swapped in."
+            ::= { ibCfCardNotificationsV2 1 }
+
+
+        ibCfCardHotSwapOff NOTIFICATION-TYPE
+            OBJECTS { ibCfCardContainedIn, ibCfCardParentRelPos, ibCfCardDescription }
+            STATUS current
+            DESCRIPTION
+                "This notification is sent when a CF Card is hot swapped out."
+            ::= { ibCfCardNotificationsV2 2 }
+
+
+        ibCfCardMIBConformance OBJECT IDENTIFIER ::= { ibCfCardMIB 4 }
+
+
+        ibCfCardMIBGroups OBJECT IDENTIFIER ::= { ibCfCardMIBConformance 1 }
+
+
+        ibcurrentObjectGroup OBJECT-GROUP
+            OBJECTS { ibCfCardNumber, ibCfCardIndex, ibCfCardIsPresent,
+                    ibCfCardContainedIn, ibCfCardParentRelPos, ibCfCardDescription,
+                    ibCfCardSerialNumber, ibCfCardFirewareVersion, ibCfCardModelNumber,
+                    ibCfCardState, ibCfCardSize, ibCfCardUsedSize, ibCfCardFreeSize
+                    }
+            STATUS current
+            DESCRIPTION
+                "A collection of objects."
+            ::= { ibCfCardMIBGroups 1 }
+
+
+        ibcurrentNotificationGroup NOTIFICATION-GROUP
+            NOTIFICATIONS { ibCfCardHotSwapOn, ibCfCardHotSwapOff }
+            STATUS current
+            DESCRIPTION
+                "Notification group."
+            ::= { ibCfCardMIBGroups 2 }
+
+
+        ibCfCardMIBCompliances OBJECT IDENTIFIER ::= { ibCfCardMIBConformance 2 }
+
+
+
+        ibbasicCompliance MODULE-COMPLIANCE
+            STATUS current
+            DESCRIPTION
+                "The compliance statement."
+            MODULE -- this module
+                MANDATORY-GROUPS { ibcurrentObjectGroup, ibcurrentNotificationGroup }
+            ::= { ibCfCardMIBCompliances 1 }
+
+
+
+    END

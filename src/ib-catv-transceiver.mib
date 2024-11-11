@@ -1,0 +1,229 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: CATV transceiver MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 created by xujun.
+--     Initial version of the MIB
+-- =================================================================
+IB-CATV-TRANSCEIVER-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        Integer32, OBJECT-TYPE, MODULE-IDENTITY,
+        NOTIFICATION-TYPE
+    FROM SNMPv2-SMI;
+
+ibCATVTransceiver MODULE-IDENTITY
+    LAST-UPDATED "200807251008Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "
+        The objects in this MIB module are used to manage and
+        display common configuration for CATV(Community Antenna
+        Television) transceiver module.
+        "
+    ::= { ibCommon 94 }
+
+--
+-- ibCATVTransceiverStatus
+--
+
+ibCATVTransStatus OBJECT IDENTIFIER ::= { ibCATVTransceiver 1 }
+
+ibCATVTransStatusScalarObjects OBJECT IDENTIFIER ::= { ibCATVTransStatus 1 }
+
+ibCATVTransState OBJECT-TYPE
+    SYNTAX     INTEGER
+    {
+        on         (1),
+        off        (2)
+    }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+         "
+         The state of CATV transceiver.
+         "
+    ::= { ibCATVTransStatusScalarObjects 1 }
+
+ibCATVTransInputPwr OBJECT-TYPE
+    SYNTAX     Integer32
+    UNITS      "dbm"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+         "
+         The input power of CATV transceiver.
+         If transceiver is not on site,
+         the value should be zero.
+         "
+    ::= { ibCATVTransStatusScalarObjects 2 }
+
+ibCATVTransOutputLevel OBJECT-TYPE
+    SYNTAX     Integer32
+    UNITS      "dbuv"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+         "
+         The output level of CATV transceiver.
+         If transceiver is not on site,
+         the value should be zero.
+         "
+    ::= { ibCATVTransStatusScalarObjects 3 }
+
+ibCATVTransTemperature OBJECT-TYPE
+    SYNTAX     Integer32
+    UNITS      "centigrade"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+         "
+         The temperature of CATV transceiver.
+         If transceiver is not on site,
+         the value should be zero.
+         "
+    ::= { ibCATVTransStatusScalarObjects 4 }
+
+
+--
+-- ibCATVTransceiverMan
+--
+
+ibCATVTransceiverMan OBJECT IDENTIFIER ::= { ibCATVTransceiver 2 }
+
+ibCATVTransCtrlScalarObjects OBJECT IDENTIFIER ::= { ibCATVTransceiverMan 1 }
+
+ibCATVTransInputPwrLowerThr OBJECT-TYPE
+    SYNTAX     Integer32
+    UNITS      "dbm"
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        A threshold for the CATV transceiver's input power.
+        When the input power of CATV transceiver is lower
+        than threshold, a trap should be generated.
+        "
+    ::= { ibCATVTransCtrlScalarObjects 1 }
+
+ibCATVTransOutputLvlLowerThr OBJECT-TYPE
+    SYNTAX     Integer32
+    UNITS      "dbuv"
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        A threshold for the CATV transceiver's output level.
+        When the output level of CATV transceiver is lower
+        than threshold, a trap should be generated.
+        "
+    ::= { ibCATVTransCtrlScalarObjects 2 }
+
+ibCATVTransTempratureUpperThr OBJECT-TYPE
+    SYNTAX     Integer32
+    UNITS      "¡æ"
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "
+        A threshold for the CATV transceiver's temperature.
+        When the temperature of CATV transceiver is higher
+        than threshold, a trap should be generated.
+        "
+    ::= { ibCATVTransCtrlScalarObjects 3 }
+
+
+--
+-- ibCATVTransceiver NOTIFICATION
+--
+
+ibCATVTansTrap OBJECT IDENTIFIER ::= { ibCATVTransceiver 3 }
+
+ibCATVTransTrapPrefix OBJECT IDENTIFIER ::= {ibCATVTansTrap 0}
+
+ibCATVTransInputPwrTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCATVTransInputPwr
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibCATVTransInputPwrTrap notification is sent when the
+        input power of CATV transceiver is lower than the threshold.
+        "
+    ::= { ibCATVTransTrapPrefix 1 }
+
+ibCATVTransInputPwrReTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCATVTransInputPwr
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibCATVTransInputPwrReTrap notification is sent when the
+        input power of CATV transceiver recovered from the last trap.
+        "
+    ::= { ibCATVTransTrapPrefix 2 }
+
+ibCATVTransOutputLvlTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCATVTransOutputLevel
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibCATVTransOutputLvlTrap notification is sent when the
+        output level of CATV transceiver is lower than the threshold.
+        "
+    ::= { ibCATVTransTrapPrefix 3 }
+
+ibCATVTransOutputLvlReTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCATVTransOutputLevel
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibCATVTransOutputLvlReTrap notification is sent when the
+        output level of CATV transceiver recovered from the last trap.
+        "
+    ::= { ibCATVTransTrapPrefix 4 }
+
+ibCATVTransTemperatureTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCATVTransTemperature
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibCATVTransTemperatureTrap notification is sent when the
+        temperature of CATV transceiver is higher than the threshold.
+        "
+    ::= { ibCATVTransTrapPrefix 5 }
+
+ibCATVTransTemperatureReTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCATVTransTemperature
+        }
+    STATUS current
+    DESCRIPTION
+        "
+        A ibCATVTransTemperatureReTrap notification is sent when the
+        temperature of CATV transceiver recovered from the last trap.
+        "
+    ::= { ibCATVTransTrapPrefix 6 }
+END

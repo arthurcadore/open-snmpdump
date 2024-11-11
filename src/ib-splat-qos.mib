@@ -1,0 +1,3990 @@
+-- ------------------------------------------------------------------
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Descripton: Qos MIB
+--
+-- History V2.3
+--     V1.0 2002-11-18 created by qizhenglin
+--     V1.1 2004-05-09 add and modify ibPortWredTable by tangshun
+--     V1.2 2004-08-05 modify ibQueueScheduleMode(add hq_wrr(9)) by qizhenglin
+--     v1.3 2004-08-12 add ibFlowtempVlanId,ibFlowtempCos to ibFlowtempTable
+--     v1.4 2004-09-17 change value range of ibRateLimitTargetRateKbps from 200..100000
+--          to 64..1000000 by zhuangyu
+--     v1.5 2004-10-12 updated by gaolong
+--          Import Counter64.
+--          Remove some adjacent hyphens
+--          Rewrite value of ibQueueScheduleMode and ibRateLimitConformActionType.
+--          Change all underscore('_') characters to hyphen characters('-') because
+--          underscore character is not allowed in MIB module.
+--     v1.51 2004-10-27 changed by zhuangyu
+--          1 Add an enumeration in ibRateLimitConformActionType
+--          2 Add ibRateLimitConformCos and ibRateLimitConformDscp in ibRateLimitTable
+--          3 Import IpAddress
+--     v1.52 2004-12-13 updated by jinyi
+--          Fix syntax bugs and adjust format of the whole file.
+--     v1.53 2004-12-13 updated by zhuangyu
+--          Modify description of ibRateLimitExceedDscp,ibRateLimitConformDscp and ibPriorityDscp.
+--     v1.6 2004-12-1 changed by yangjianjun
+--          Add  ibMirroringGroupTable
+--               ibMirroringGroupMirrorTable
+--               ibMirroringGroupMonitorTable
+--               ibMirroringGroupReflectorTable
+--               ibMirroringGroupRprobeVlanTable
+--     v1.7 2005-4-6 changed by fanghailin
+--          Add ibRedirectToSlotNo ibRedirectRemarkedDSCP ibRedirectRemarkedPri ibRedirectRemarkedTos
+--          ibRedirectToNextHop3 ibRedirectTargetVlan ibRedirectMode
+--          in ibRedirectTable Notice:All the nodes are used only for L3plus funtion and speciality.
+--     v1.8 2005-5-18 updated by zhangyinxi
+--          Add  ibRedirectToNestedVlanID and ibRedirectToModifiedVlanID
+--     v1.9 2005-6-27
+--          1. Add ibMirroringGroupMirrorMacTable, ibMirroringGroupMirrorVlanTable,
+--             ibPortTrustTable, ibRemarkVlanIDTable, ibCosToDscpMapTable, ibDscpToLocalPreMapTable,
+--             ibDscpToDropPreMapTable, ibDscpToCosMapTable, ibDscpToDscpMapTable,
+--             ibRateLimitMeterStatByteCount, ibRateLimitMeterStatByteXCount,
+--             ibRateLimitMeterStatState by liyan and wangyingxia
+--          2. Modify the range of ibRateLimitTargetRateKbps by liyan and wangyingxia
+--          3. Add ibMirrorToGroup in ibMirrorTable by yubin
+--     v2.0 2005-10-25 updated by houli
+--          1. Remove value range of ibLineRateValue
+--          2. Remove value range of ibRateLimitTargetRateMbps
+--     V2.1 2005-11-07 update by wangyingxia
+--          1. Add IbMirrorOrMonitorType and ibMirroringGroupMonitorType
+--          2. Modify the description of ibMirroringGroupMonitorIfIndex
+--          3. Change the value range of ibRedirectTargetVlan by lihaijun
+--     V2.2 2005-12-19 update by wangyingxia
+--          1. Add ibMirroringGroupMirrorInTypeList, ibMirroringGroupMirrorOutTypeList
+--             by wangyingxia
+--          2. change the description of ibMirroringGroupMirrorInboundIfIndexList  
+--             add ibMirroringGroupMirrorOutboundIfIndexList by wangyingxia
+--     v2.3 2006-01-16 updated by houli
+--          1. Remove value range of ibTrafficShapeMaxRate
+--          2. Remove value range of ibTrafficShapeBurstSize
+-- ------------------------------------------------------------------
+-- ------------------------------------------------------------------
+--
+-- Import and definition
+--
+-- ------------------------------------------------------------------
+IB-LswQos-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+
+    Integer32, MODULE-IDENTITY,OBJECT-TYPE,Counter32, Counter64,IpAddress
+        FROM SNMPv2-SMI
+    TruthValue, MacAddress, RowStatus, TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    iblswCommon
+        FROM IB-OID-MIB;
+
+
+---------- Following is for Node£ºibLswQosMib --------
+  ibLswQosAclMib MODULE-IDENTITY
+    LAST-UPDATED "200211190000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+      "Module node for qos and acl."
+    REVISION "200211190000Z"
+    DESCRIPTION
+      "Table of qos and acl."
+    ::= { iblswCommon  16 }
+
+  IbMirrorOrMonitorType ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+    "
+     Specify the mirror source or destination type.
+     port(1):
+        the mirror source or destination is port.
+     board(2):
+        the mirror source or destination is board.
+    "
+    SYNTAX INTEGER
+    {
+       port(1),
+       board(2)
+    }
+
+---------- Following is for Node£ºibLswQosMibObject --------
+  ibLswQosMibObject OBJECT IDENTIFIER ::= {  ibLswQosAclMib 2  }
+
+  ibPriorityTrustMode OBJECT-TYPE
+    SYNTAX      INTEGER
+            {
+                default(0),
+                dscp(1),
+                ipprecedence(2),
+                cos(3),
+                localprecedence(4)
+            }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Priority type of inbound queue."
+    DEFVAL      { 0}
+    ::= { ibLswQosMibObject 1 }
+
+  ibPortMonitorBothIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The ifIndex of in/out monitor port."
+    DEFVAL      { 0}
+    ::= { ibLswQosMibObject 2 }
+
+
+ --TABLE: ibQueueTable
+
+  ibQueueTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbQueueEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Queue table which contains queue entry."
+    ::= { ibLswQosMibObject 3 }
+
+  ibQueueEntry OBJECT-TYPE
+    SYNTAX      IbQueueEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "The configuration information of queue."
+    INDEX {
+              ibQueueIfIndex
+          }
+    ::= { ibQueueTable 1 }
+
+  IbQueueEntry ::=
+    SEQUENCE
+    {
+      ibQueueIfIndex    INTEGER,
+      ibQueueScheduleMode    INTEGER,
+      ibQueueWeight1    INTEGER,
+      ibQueueWeight2    INTEGER,
+      ibQueueWeight3    INTEGER,
+      ibQueueWeight4    INTEGER,
+      ibQueueMaxDelay    INTEGER,
+      ibQueueWeight5    INTEGER,
+      ibQueueWeight6    INTEGER,
+      ibQueueWeight7    INTEGER,
+      ibQueueWeight8    INTEGER
+    }
+
+
+  ibQueueIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "ifIndex of port."
+    ::= { ibQueueEntry 1 }
+
+  ibQueueScheduleMode OBJECT-TYPE
+    SYNTAX      INTEGER{
+                        sp(1),
+                        wrr(2),
+                        wrr-max-delay(3),
+                        sc-0(4),
+                        sc-1(5),
+                        sc-2(6),
+                        rr(7),
+                        wfq(8),
+                        hq-wrr(9)
+                       }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The mode of the queue schedule."
+    DEFVAL      { sp }
+    ::= { ibQueueEntry 2 }
+
+  ibQueueWeight1 OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "If queue mode is wfq, then ibQueueWeight1 represent the bandwidth of queue 1.
+      If queue mode is wrr, then ibQueueWeight1 represent the weight of queue 1."
+    ::= { ibQueueEntry 3 }
+
+  ibQueueWeight2 OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "If queue mode is wfq, then ibQueueWeight2 represent the bandwidth of queue 2.
+      If queue mode is wrr, then ibQueueWeight2 represent the weight of queue 2."
+    ::= { ibQueueEntry 4 }
+
+  ibQueueWeight3 OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "If queue mode is wfq, then ibQueueWeight3 represent the bandwidth of queue 3.
+      If queue mode is wrr, then ibQueueWeight3 represent the weight of queue 3."
+    ::= { ibQueueEntry 5 }
+
+  ibQueueWeight4 OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "If queue mode is wfq, then ibQueueWeight4 represent the bandwidth of queue 4.
+      If queue mode is wrr, then ibQueueWeight4 represent the weight of queue 4."
+    ::= { ibQueueEntry 6 }
+
+  ibQueueMaxDelay OBJECT-TYPE
+    SYNTAX      INTEGER(0..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      " "
+    ::= { ibQueueEntry 7 }
+
+  ibQueueWeight5 OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "If queue mode is wfq, then ibQueueWeight5 represent the bandwidth of queue 5.
+      If queue mode is wrr, then ibQueueWeight5 represent the weight of queue 5."
+    ::= { ibQueueEntry 8 }
+
+  ibQueueWeight6 OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "If queue mode is wfq, then ibQueueWeight6 represent the bandwidth of queue 6.
+      If queue mode is wrr, then ibQueueWeight6 represent the weight of queue 6."
+    ::= { ibQueueEntry 9 }
+
+  ibQueueWeight7 OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "If queue mode is wfq, then ibQueueWeight7 represent the bandwidth of queue 7.
+      If queue mode is wrr, then ibQueueWeight7 represent the weight of queue 7."
+    ::= { ibQueueEntry 10 }
+
+  ibQueueWeight8 OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "If queue mode is wfq, then ibQueueWeight8 represent the bandwidth of queue 8.
+      If queue mode is wrr, then ibQueueWeight8 represent the weight of queue 8."
+    ::= { ibQueueEntry 11 }
+
+
+  -- TABLE: ibRateLimitTable ------
+  ibRateLimitTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbRateLimitEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Rate limit table which contains limit entry. "
+    ::= { ibLswQosMibObject 4 }
+
+  ibRateLimitEntry OBJECT-TYPE
+    SYNTAX      IbRateLimitEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "The configuration information of the rate-limited port."
+    INDEX {
+              ibRateLimitAclIndex,
+              ibRateLimitIfIndex,
+              ibRateLimitVlanID,
+              ibRateLimitDirection
+          }
+    ::= { ibRateLimitTable 1 }
+
+  IbRateLimitEntry ::=
+    SEQUENCE
+    {
+      ibRateLimitAclIndex    INTEGER,
+      ibRateLimitIfIndex    INTEGER,
+      ibRateLimitVlanID    INTEGER,
+      ibRateLimitDirection    INTEGER,
+      ibRateLimitUserAclNum    INTEGER,
+      ibRateLimitUserAclRule    INTEGER,
+      ibRateLimitIpAclNum    INTEGER,
+      ibRateLimitIpAclRule    INTEGER,
+      ibRateLimitLinkAclNum    INTEGER,
+      ibRateLimitLinkAclRule    INTEGER,
+      ibRateLimitTargetRateMbps    INTEGER,
+      ibRateLimitTargetRateKbps    INTEGER,
+      ibRateLimitPeakRate    INTEGER,
+      ibRateLimitCIR    INTEGER,
+      ibRateLimitCBS    INTEGER,
+      ibRateLimitEBS    INTEGER,
+      ibRateLimitPIR    INTEGER,
+      ibRateLimitConformLocalPre    INTEGER,
+      ibRateLimitConformActionType    INTEGER,
+      ibRateLimitExceedActionType    INTEGER,
+      ibRateLimitExceedDscp    INTEGER,
+      ibRateLimitRuntime    TruthValue,
+      ibRateLimitRowStatus    RowStatus,
+      ibRateLimitExceedCos INTEGER,
+      ibRateLimitConformCos INTEGER,
+      ibRateLimitConformDscp INTEGER,
+      ibRateLimitMeterStatByteCount Counter64,
+      ibRateLimitMeterStatByteXCount Counter64,
+      ibRateLimitMeterStatState INTEGER
+    }
+
+  ibRateLimitAclIndex OBJECT-TYPE
+    SYNTAX      INTEGER(0..2999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Index of acl rule."
+    ::= { ibRateLimitEntry 1 }
+
+  ibRateLimitIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "ifIndex of the rate-limited port."
+    ::= { ibRateLimitEntry 2 }
+
+  ibRateLimitVlanID OBJECT-TYPE
+    SYNTAX      INTEGER(0..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Vlan ID."
+    ::= { ibRateLimitEntry 3 }
+
+  ibRateLimitDirection OBJECT-TYPE
+    SYNTAX      INTEGER{invalid(0), input(1), output(2)}
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Direction of the rate-limited port."
+    ::= { ibRateLimitEntry 4 }
+
+  ibRateLimitUserAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|5000..5999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of user acl."
+    ::= { ibRateLimitEntry 5 }
+
+  ibRateLimitUserAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of user acl-rule."
+    ::= { ibRateLimitEntry 6 }
+
+  ibRateLimitIpAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|2000..3999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of Ip acl."
+    ::= { ibRateLimitEntry 7 }
+
+  ibRateLimitIpAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of Ip acl-rule."
+    ::= { ibRateLimitEntry 8 }
+
+  ibRateLimitLinkAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|4000..4999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of link acl."
+    ::= { ibRateLimitEntry 9 }
+
+  ibRateLimitLinkAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of link acl-rule."
+    ::= { ibRateLimitEntry 10 }
+
+  ibRateLimitTargetRateMbps OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Target rate: Mbps."
+    ::= { ibRateLimitEntry 11 }
+
+  ibRateLimitTargetRateKbps OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Target rate: Kbps."
+    ::= { ibRateLimitEntry 12 }
+
+  ibRateLimitPeakRate OBJECT-TYPE
+    SYNTAX      INTEGER(0|64..8388608)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Peak rate of the rate-limited port."
+    ::= { ibRateLimitEntry 13 }
+
+  ibRateLimitCIR OBJECT-TYPE
+    SYNTAX      INTEGER(0..34120000)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "CIR of the rate-limited port."
+    ::= { ibRateLimitEntry 14 }
+
+  ibRateLimitCBS OBJECT-TYPE
+    SYNTAX      INTEGER(0..1048575)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Burst traffic of the rate-limited port."
+    ::= { ibRateLimitEntry 15 }
+
+  ibRateLimitEBS OBJECT-TYPE
+    SYNTAX      INTEGER(0..268435455)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Excess burst traffic of the rate-limited port."
+    ::= { ibRateLimitEntry 16 }
+
+  ibRateLimitPIR OBJECT-TYPE
+    SYNTAX      INTEGER(0..34120000)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "PIR of the rate-limited port."
+    ::= { ibRateLimitEntry 17 }
+
+  ibRateLimitConformLocalPre OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Conform local pre."
+    DEFVAL      { 1 }
+    ::= { ibRateLimitEntry 18 }
+
+  ibRateLimitConformActionType OBJECT-TYPE
+    SYNTAX      INTEGER{
+                       invalid(0),
+                       remark-cos(1),
+                       remark-drop-priority(2),
+                       remark-cos-drop-priority(3),
+                       remark-policed-service(4),
+                       remark-dscp(5)
+                       }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Conform action type."
+    DEFVAL      { 1 }
+    ::= { ibRateLimitEntry 19 }
+
+  ibRateLimitExceedActionType OBJECT-TYPE
+    SYNTAX      INTEGER{invalid(0), forward(1), drop(2), remarkdscp(3), exceed-cos(4)}
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Exceed action type."
+    DEFVAL      { 1 }
+    ::= { ibRateLimitEntry 20 }
+
+  ibRateLimitExceedDscp OBJECT-TYPE
+    SYNTAX      INTEGER(0..63|255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Exceed DSCP.
+      <0-63>  Value of DSCP
+      af11    Specify Assured Forwarding 11 service(10)
+      af12    Specify Assured Forwarding 12 service(12)
+      af13    Specify Assured Forwarding 13 service(14)
+      af21    Specify Assured Forwarding 21 service(18)
+      af22    Specify Assured Forwarding 22 service(20)
+      af23    Specify Assured Forwarding 23 service(22)
+      af31    Specify Assured Forwarding 31 service(26)
+      af32    Specify Assured Forwarding 32 service(28)
+      af33    Specify Assured Forwarding 33 service(30)
+      af41    Specify Assured Forwarding 41 service(34)
+      af42    Specify Assured Forwarding 42 service(36)
+      af43    Specify Assured Forwarding 43 service(38)
+      be      Specify Best Effort service(0)
+      cs1     Specify Class Selector 1 service(8)
+      cs2     Specify Class Selector 2 service(16)
+      cs3     Specify Class Selector 3 service(24)
+      cs4     Specify Class Selector 4 service(32)
+      cs5     Specify Class Selector 5 service(40)
+      cs6     Specify Class Selector 6 service(48)
+      cs7     Specify Class Selector 7 service(56)
+      ef      Specify Expedited Forwarding service(46)"
+    DEFVAL      { 255 }
+    ::= { ibRateLimitEntry 21 }
+
+  ibRateLimitRuntime OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Runtime."
+    ::= { ibRateLimitEntry 22 }
+
+  ibRateLimitRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "RowStatus, now support three status: createAndGo, active, destroy."
+    ::= { ibRateLimitEntry 23 }
+
+  ibRateLimitExceedCos OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Exceeding COS of rate-limited port."
+    DEFVAL      { 255 }
+    ::= { ibRateLimitEntry 24 }
+
+  ibRateLimitConformCos OBJECT-TYPE
+    SYNTAX      INTEGER(0..7|255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "If the user choose remark-cos value of the ibRateLimitConformActionType,
+      This object can be used to set the conform COS value.  There are a few
+      enumerations as follows:
+      background          Specify background priority(1)
+      best-effort         Specify best-effort priority(0)
+      controlled-load     Specify controlled-load priority(4)
+      excellent-effort    Specify excellent-effort priority(3)
+      network-management  Specify network-management priority(7)
+      spare               Specify spare priority(2)
+      video               Specify video priority(5)
+      voice               Specify voice priority(6)"
+    DEFVAL      { 255 }
+    ::= { ibRateLimitEntry 25 }
+
+  ibRateLimitConformDscp OBJECT-TYPE
+    SYNTAX      INTEGER(0..63|255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "If the user choose remark-dscp value of the ibRateLimitConformActionType,
+      This object can be used to set the conform dscp value.  There are a few
+      enumerations as follows:
+      <0-63>  Value of DSCP
+      af11    Specify Assured Forwarding 11 service(10)
+      af12    Specify Assured Forwarding 12 service(12)
+      af13    Specify Assured Forwarding 13 service(14)
+      af21    Specify Assured Forwarding 21 service(18)
+      af22    Specify Assured Forwarding 22 service(20)
+      af23    Specify Assured Forwarding 23 service(22)
+      af31    Specify Assured Forwarding 31 service(26)
+      af32    Specify Assured Forwarding 32 service(28)
+      af33    Specify Assured Forwarding 33 service(30)
+      af41    Specify Assured Forwarding 41 service(34)
+      af42    Specify Assured Forwarding 42 service(36)
+      af43    Specify Assured Forwarding 43 service(38)
+      be      Specify Best Effort service(0)
+      cs1     Specify Class Selector 1 service(8)
+      cs2     Specify Class Selector 2 service(16)
+      cs3     Specify Class Selector 3 service(24)
+      cs4     Specify Class Selector 4 service(32)
+      cs5     Specify Class Selector 5 service(40)
+      cs6     Specify Class Selector 6 service(48)
+      cs7     Specify Class Selector 7 service(56)
+      ef      Specify Expedited Forwarding service(46)"
+    DEFVAL      { 255 }
+    ::= { ibRateLimitEntry 26 }
+
+  ibRateLimitMeterStatByteCount  OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+               "The counter of conform byte."
+    ::= { ibRateLimitEntry 27 }
+
+  ibRateLimitMeterStatByteXCount  OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+               "The counter of exceed byte."
+    ::= { ibRateLimitEntry 28 }
+
+  ibRateLimitMeterStatState  OBJECT-TYPE
+    SYNTAX      INTEGER
+                       {
+                       set(1), --enable meter statistic
+                       unDo(2), --undo meter statistic
+                       reset(3), --reset meter statistic
+                       running(4), --status of meter statistic running
+                       notRunning(5) --status of meter statistic not running
+                       }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+               "The status of meter statistic."
+    ::= { ibRateLimitEntry 29 }
+
+  -- TABLE: ibPriorityTable ------
+  ibPriorityTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPriorityEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "The priority table which contains priority entry."
+    ::= { ibLswQosMibObject 5 }
+
+  ibPriorityEntry OBJECT-TYPE
+    SYNTAX      IbPriorityEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "The configuration information of priority."
+    INDEX {
+              ibPriorityAclIndex,
+              ibPriorityIfIndex,
+              ibPriorityVlanID,
+              ibPriorityDirection
+          }
+    ::= { ibPriorityTable 1 }
+
+  IbPriorityEntry ::=
+    SEQUENCE
+    {
+      ibPriorityAclIndex    INTEGER,
+      ibPriorityIfIndex    INTEGER,
+      ibPriorityVlanID    INTEGER,
+      ibPriorityDirection    INTEGER,
+      ibPriorityUserAclNum    INTEGER,
+      ibPriorityUserAclRule    INTEGER,
+      ibPriorityIpAclNum    INTEGER,
+      ibPriorityIpAclRule    INTEGER,
+      ibPriorityLinkAclNum    INTEGER,
+      ibPriorityLinkAclRule    INTEGER,
+      ibPriorityDscp    INTEGER,
+      ibPriorityIpPre    INTEGER,
+      ibPriorityIpPreFromCos    TruthValue,
+      ibPriorityCos    INTEGER,
+      ibPriorityCosFromIpPre    TruthValue,
+      ibPriorityLocalPre    INTEGER,
+      ibPriorityPolicedServiceType    INTEGER,
+      ibPriorityPolicedServiceDscp    INTEGER,
+      ibPriorityPolicedServiceExp    INTEGER,
+      ibPriorityPolicedServiceCos    INTEGER,
+      ibPriorityPolicedServiceLoaclPre    INTEGER,
+      ibPriorityPolicedServiceDropPriority    INTEGER,
+      ibPriorityRuntime    TruthValue,
+      ibPriorityRowStatus    RowStatus
+    }
+
+  ibPriorityAclIndex OBJECT-TYPE
+    SYNTAX      INTEGER(0..2999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Index of acl rule."
+    ::= { ibPriorityEntry 1 }
+
+  ibPriorityIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "ifIndex of the port."
+    ::= { ibPriorityEntry 2 }
+
+  ibPriorityVlanID OBJECT-TYPE
+    SYNTAX      INTEGER(0..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Vlan ID."
+    ::= { ibPriorityEntry 3 }
+
+  ibPriorityDirection OBJECT-TYPE
+    SYNTAX      INTEGER{invalid(0), input(1), output(2)}
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Direction of data stream."
+    ::= { ibPriorityEntry 4 }
+
+  ibPriorityUserAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|5000..5999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of user acl."
+    ::= { ibPriorityEntry 5 }
+
+  ibPriorityUserAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of the user acl."
+    ::= { ibPriorityEntry 6 }
+
+  ibPriorityIpAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|2000..3999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of Ip acl."
+    ::= { ibPriorityEntry 7 }
+
+  ibPriorityIpAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of the IP acl."
+    ::= { ibPriorityEntry 8 }
+
+  ibPriorityLinkAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|4000..4999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of Link acl."
+    ::= { ibPriorityEntry 9 }
+
+  ibPriorityLinkAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of the link acl."
+    ::= { ibPriorityEntry 10 }
+
+  ibPriorityDscp OBJECT-TYPE
+    SYNTAX      INTEGER(0..63|255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Set DSCP Value.
+      <0-63>  Value of DSCP
+      af11    Specify Assured Forwarding 11 service(10)
+      af12    Specify Assured Forwarding 12 service(12)
+      af13    Specify Assured Forwarding 13 service(14)
+      af21    Specify Assured Forwarding 21 service(18)
+      af22    Specify Assured Forwarding 22 service(20)
+      af23    Specify Assured Forwarding 23 service(22)
+      af31    Specify Assured Forwarding 31 service(26)
+      af32    Specify Assured Forwarding 32 service(28)
+      af33    Specify Assured Forwarding 33 service(30)
+      af41    Specify Assured Forwarding 41 service(34)
+      af42    Specify Assured Forwarding 42 service(36)
+      af43    Specify Assured Forwarding 43 service(38)
+      be      Specify Best Effort service(0)
+      cs1     Specify Class Selector 1 service(8)
+      cs2     Specify Class Selector 2 service(16)
+      cs3     Specify Class Selector 3 service(24)
+      cs4     Specify Class Selector 4 service(32)
+      cs5     Specify Class Selector 5 service(40)
+      cs6     Specify Class Selector 6 service(48)
+      cs7     Specify Class Selector 7 service(56)
+      ef      Specify Expedited Forwarding service(46)"
+    DEFVAL      { 255 }
+    ::= { ibPriorityEntry 11 }
+
+  ibPriorityIpPre OBJECT-TYPE
+    SYNTAX      INTEGER(0..7|255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Set Ip precedence."
+    DEFVAL      { 255 }
+    ::= { ibPriorityEntry 12 }
+
+  ibPriorityIpPreFromCos OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Set Ip precedence according to vlan priority."
+    DEFVAL      { 2 }
+    ::= { ibPriorityEntry 13 }
+
+  ibPriorityCos OBJECT-TYPE
+    SYNTAX      INTEGER(0..7|255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Set vlan priority."
+    DEFVAL      { 255 }
+    ::= { ibPriorityEntry 14 }
+
+  ibPriorityCosFromIpPre OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Set vlan priority according to IP precedence."
+    DEFVAL      { 2 }
+    ::= { ibPriorityEntry 15 }
+
+  ibPriorityLocalPre OBJECT-TYPE
+    SYNTAX      INTEGER(0..7|255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Set local precedence."
+    DEFVAL      { 255 }
+    ::= { ibPriorityEntry 16 }
+
+  ibPriorityPolicedServiceType OBJECT-TYPE
+    SYNTAX      INTEGER{invalid(0), auto(1), trust-dscp(2), new-dscp(3), untrusted(4)}
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The service type of proliced Priority."
+    ::= { ibPriorityEntry 17 }
+
+  ibPriorityPolicedServiceDscp OBJECT-TYPE
+    SYNTAX      INTEGER(0..63|255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The service Dscp of proliced Priority."
+    DEFVAL      { 255 }
+    ::= { ibPriorityEntry 18 }
+
+  ibPriorityPolicedServiceExp OBJECT-TYPE
+    SYNTAX      INTEGER(0..7|255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The service Exp of proliced Priority."
+    DEFVAL      { 255 }
+    ::= { ibPriorityEntry 19 }
+
+  ibPriorityPolicedServiceCos OBJECT-TYPE
+    SYNTAX      INTEGER(0..7|255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The service COS of proliced Priority."
+    DEFVAL      { 255 }
+    ::= { ibPriorityEntry 20 }
+
+  ibPriorityPolicedServiceLoaclPre OBJECT-TYPE
+    SYNTAX      INTEGER(0..7|255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The service local pre of proliced Priority."
+    DEFVAL      { 255 }
+    ::= { ibPriorityEntry 21 }
+
+  ibPriorityPolicedServiceDropPriority OBJECT-TYPE
+    SYNTAX      INTEGER(0..2|255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The service drop priority of proliced Priority."
+    DEFVAL      { 255 }
+    ::= { ibPriorityEntry 22 }
+
+  ibPriorityRuntime OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Is run or not."
+    ::= { ibPriorityEntry 23 }
+
+  ibPriorityRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "RowStatus, now support three status: createAndGo, active, destroy."
+    ::= { ibPriorityEntry 24 }
+
+  -- TABLE: ibRedirectTable ------
+  ibRedirectTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbRedirectEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Redirect table which contains rediect entry."
+    ::= { ibLswQosMibObject 6 }
+
+  ibRedirectEntry OBJECT-TYPE
+    SYNTAX      IbRedirectEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information of redirection."
+    INDEX {
+              ibRedirectAclIndex,
+              ibRedirectIfIndex,
+              ibRedirectVlanID,
+              ibRedirectDirection
+          }
+    ::= { ibRedirectTable 1 }
+
+  IbRedirectEntry ::=
+    SEQUENCE
+    {
+      ibRedirectAclIndex    INTEGER,
+      ibRedirectIfIndex    INTEGER,
+      ibRedirectVlanID    INTEGER,
+      ibRedirectDirection    INTEGER,
+      ibRedirectUserAclNum    INTEGER,
+      ibRedirectUserAclRule    INTEGER,
+      ibRedirectIpAclNum    INTEGER,
+      ibRedirectIpAclRule    INTEGER,
+      ibRedirectLinkAclNum    INTEGER,
+      ibRedirectLinkAclRule    INTEGER,
+      ibRedirectToCpu    TruthValue,
+      ibRedirectToIfIndex    INTEGER,
+      ibRedirectToNextHop1    IpAddress,
+      ibRedirectToNextHop2    IpAddress,
+      ibRedirectRuntime    TruthValue,
+      ibRedirectRowStatus    RowStatus,
+      ibRedirectToSlotNo INTEGER,
+      ibRedirectRemarkedDSCP    INTEGER,
+      ibRedirectRemarkedPri  INTEGER,
+      ibRedirectRemarkedTos  INTEGER,
+      ibRedirectToNextHop3  IpAddress,
+      ibRedirectTargetVlanID INTEGER,
+      ibRedirectMode INTEGER,
+      ibRedirectToNestedVlanID Integer32,
+      ibRedirectToModifiedVlanID Integer32
+    }
+
+  ibRedirectAclIndex OBJECT-TYPE
+    SYNTAX      INTEGER(0..2999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Index of acl rule."
+    ::= { ibRedirectEntry 1 }
+
+  ibRedirectIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "ifIndex of port."
+    ::= { ibRedirectEntry 2 }
+
+  ibRedirectVlanID OBJECT-TYPE
+    SYNTAX      INTEGER(0..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Vlan ID."
+    ::= { ibRedirectEntry 3 }
+
+  ibRedirectDirection OBJECT-TYPE
+    SYNTAX      INTEGER{invalid(0), input(1), output(2)}
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Direction of data stream."
+    ::= { ibRedirectEntry 4 }
+
+  ibRedirectUserAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|5000..5999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of the user acl."
+    ::= { ibRedirectEntry 5 }
+
+  ibRedirectUserAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of the user acl."
+    ::= { ibRedirectEntry 6 }
+
+  ibRedirectIpAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|2000..3999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The num of the IP acl."
+    ::= { ibRedirectEntry 7 }
+
+  ibRedirectIpAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of the IP acl."
+    ::= { ibRedirectEntry 8 }
+
+  ibRedirectLinkAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|4000..4999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The num of the link acl."
+    ::= { ibRedirectEntry 9 }
+
+  ibRedirectLinkAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of the link acl."
+    ::= { ibRedirectEntry 10 }
+
+  ibRedirectToCpu OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Redirect to cpu."
+    DEFVAL      { 2 }
+    ::= { ibRedirectEntry 11 }
+
+  ibRedirectToIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The ifIndex of port to be redirect to."
+    ::= { ibRedirectEntry 12 }
+
+  ibRedirectToNextHop1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          " "
+    ::= { ibRedirectEntry 13 }
+
+  ibRedirectToNextHop2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          " "
+    ::= { ibRedirectEntry 14 }
+
+  ibRedirectRuntime OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Is run or not."
+    ::= { ibRedirectEntry 15 }
+
+  ibRedirectRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "RowStatus, now support three status: createAndGo, active, destroy."
+    ::= { ibRedirectEntry 16 }
+
+  ibRedirectToSlotNo OBJECT-TYPE
+    SYNTAX      INTEGER(1..16)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The slot number to process redirection. Default value is 15.
+      When L3plus function is not supported, the default value would be set.
+      For L3plus redirection function, it is necessary."
+    ::= { ibRedirectEntry 17 }
+
+  ibRedirectRemarkedDSCP OBJECT-TYPE
+    SYNTAX      INTEGER(0..63|255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "DSCP of Policy-Based Routing. When L3plus function is not supported,
+      the default value would be set.
+      For L3plus redirection function, it is optional."
+    DEFVAL      { 255 }
+    ::= { ibRedirectEntry 18 }
+
+  ibRedirectRemarkedPri OBJECT-TYPE
+    SYNTAX      INTEGER(0..7|255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The priority of the redirect packet. When L3plus function is not supported,
+      the default value would be set.
+      For L3plus redirection function, it is optional."
+    DEFVAL      { 255 }
+    ::= { ibRedirectEntry 19 }
+
+  ibRedirectRemarkedTos OBJECT-TYPE
+    SYNTAX      INTEGER(0..15|255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The TOS of the redirect packet.
+      When L3plus function is not supported, the default value would be set.
+      For L3plus redirection function, it is optional."
+    DEFVAL      { 255 }
+    ::= { ibRedirectEntry 20 }
+
+  ibRedirectToNextHop3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The third IP address for PBR. Default value is 0xffffffff.
+      When L3plus function is not supported, the default value would be set.
+      The data stream can be redirected to three nexthops at most or one
+      VLAN interface, one nexthop should be set at least if data packets
+      are not redirected to VLAN interface for L3plus redirection function."
+    ::= { ibRedirectEntry 21 }
+
+  ibRedirectTargetVlanID OBJECT-TYPE
+    SYNTAX      INTEGER(0..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The destination vlan ID for PBR. Default value is 0.
+      When L3plus function is not supported, the default value would be set.
+      For L3plus redirection function, it is necessary when no nexthop is set. "
+    ::= { ibRedirectEntry 22 }
+
+  ibRedirectMode OBJECT-TYPE
+    SYNTAX      INTEGER{
+                                strict-priority(1),
+                                load-balance(2)
+                       }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The node denotes the strategy adopted by the PBR.
+      If strict-priority is configured, the most preferential IP address
+      is use as redirected nexthop.
+      If the mode is load-balance, any of the three IP addresses will be
+      the nexthop and the traffic distributes in the three direction.
+      Default value is strict-priority.
+      When L3plus function is not supported, the default value would be set.
+      It is optional. "
+    DEFVAL      { strict-priority }
+    ::= { ibRedirectEntry 23 }
+
+  ibRedirectToNestedVlanID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The nested vlan ID inserted before the original vlan tag. Default value is 0.
+      When the function is not supported, the default value would be set.
+      It is optional."
+    DEFVAL      { 0 }
+    ::= { ibRedirectEntry 24 }
+
+  ibRedirectToModifiedVlanID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The new vlan ID replaced the old one. Default value is 0.
+      When the function is not supported, the default value would be set.
+      It is optional."
+    DEFVAL      { 0 }
+    ::= { ibRedirectEntry 25 }
+
+  -- TABLE: ibStatisticTable ------
+  ibStatisticTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbStatisticEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Statistic table which contains statistic entry."
+    ::= { ibLswQosMibObject 7 }
+
+  ibStatisticEntry OBJECT-TYPE
+    SYNTAX      IbStatisticEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration about statistic information."
+    INDEX {
+              ibStatisticAclIndex,
+              ibStatisticIfIndex,
+              ibStatisticVlanID,
+              ibStatisticDirection
+          }
+    ::= { ibStatisticTable 1 }
+
+  IbStatisticEntry ::=
+    SEQUENCE
+    {
+      ibStatisticAclIndex    INTEGER,
+      ibStatisticIfIndex    INTEGER,
+      ibStatisticVlanID    INTEGER,
+      ibStatisticDirection    INTEGER,
+      ibStatisticUserAclNum    INTEGER,
+      ibStatisticUserAclRule    INTEGER,
+      ibStatisticIpAclNum    INTEGER,
+      ibStatisticIpAclRule    INTEGER,
+      ibStatisticLinkAclNum    INTEGER,
+      ibStatisticLinkAclRule    INTEGER,
+      ibStatisticRuntime    TruthValue,
+      ibStatisticPacketCount    Counter64,
+      ibStatisticByteCount    Counter64,
+      ibStatisticCountClear    INTEGER,
+      ibStatisticRowStatus    RowStatus,
+      ibStatisticPacketXCount Counter64,
+      ibStatisticByteXCount Counter64
+    }
+
+  ibStatisticAclIndex OBJECT-TYPE
+    SYNTAX      INTEGER(0..2999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Index of acl rule."
+    ::= { ibStatisticEntry 1 }
+
+  ibStatisticIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "ifIndex of port."
+    ::= { ibStatisticEntry 2 }
+
+  ibStatisticVlanID OBJECT-TYPE
+    SYNTAX      INTEGER(0..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Vlan ID."
+    ::= { ibStatisticEntry 3 }
+
+  ibStatisticDirection OBJECT-TYPE
+    SYNTAX      INTEGER{invalid(0), input(1), output(2)}
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Direction of data stream."
+    ::= { ibStatisticEntry 4 }
+
+  ibStatisticUserAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|5000..5999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of the user acl."
+    ::= { ibStatisticEntry 5 }
+
+  ibStatisticUserAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of the user acl."
+    ::= { ibStatisticEntry 6 }
+
+  ibStatisticIpAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|2000..3999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of the IP acl."
+    ::= { ibStatisticEntry 7 }
+
+  ibStatisticIpAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of the IP acl."
+    ::= { ibStatisticEntry 8 }
+
+  ibStatisticLinkAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|4000..4999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of the link acl."
+    ::= { ibStatisticEntry 9 }
+
+  ibStatisticLinkAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of the link acl."
+    ::= { ibStatisticEntry 10 }
+
+  ibStatisticRuntime OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Is run or not."
+    ::= { ibStatisticEntry 11 }
+
+  ibStatisticPacketCount OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "The counter of the packets which is matched."
+    ::= { ibStatisticEntry 12 }
+
+  ibStatisticByteCount OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "The counter of the byte which is matched."
+    ::= { ibStatisticEntry 13 }
+
+  ibStatisticCountClear OBJECT-TYPE
+    SYNTAX      INTEGER{cleared(1),nouse(2)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Clear the counter of the packets."
+    ::= { ibStatisticEntry 14 }
+
+  ibStatisticRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "RowStatus, now support three status: createAndGo, active, destroy."
+    ::= { ibStatisticEntry 15 }
+
+  ibStatisticPacketXCount OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "The counter of the outprofile packets."
+    ::= { ibStatisticEntry 16 }
+
+  ibStatisticByteXCount OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "The counter of the outprofile bytes."
+    ::= { ibStatisticEntry 17 }
+
+  -- TABLE: ibMirrorTable ------
+  ibMirrorTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMirrorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Mirror table which contains mirror entry."
+    ::= { ibLswQosMibObject 8 }
+
+  ibMirrorEntry OBJECT-TYPE
+    SYNTAX      IbMirrorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information to be mirrored."
+    INDEX {
+              ibMirrorAclIndex,
+              ibMirrorIfIndex,
+              ibMirrorVlanID,
+              ibMirrorDirection
+          }
+    ::= { ibMirrorTable 1 }
+
+  IbMirrorEntry ::=
+    SEQUENCE
+    {
+      ibMirrorAclIndex    INTEGER,
+      ibMirrorIfIndex    INTEGER,
+      ibMirrorVlanID    INTEGER,
+      ibMirrorDirection    INTEGER,
+      ibMirrorUserAclNum    INTEGER,
+      ibMirrorUserAclRule    INTEGER,
+      ibMirrorIpAclNum    INTEGER,
+      ibMirrorIpAclRule    INTEGER,
+      ibMirrorLinkAclNum    INTEGER,
+      ibMirrorLinkAclRule    INTEGER,
+      ibMirrorToIfIndex    INTEGER,
+      ibMirrorToCpu    TruthValue,
+      ibMirrorRuntime    TruthValue,
+      ibMirrorRowStatus    RowStatus,
+      ibMirrorToGroup       Integer32
+
+    }
+
+  ibMirrorAclIndex OBJECT-TYPE
+    SYNTAX      INTEGER(0..2999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Index of acl rule."
+    ::= { ibMirrorEntry 1 }
+
+  ibMirrorIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "ifIndex of port."
+    ::= { ibMirrorEntry 2 }
+
+  ibMirrorVlanID OBJECT-TYPE
+    SYNTAX      INTEGER(0..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Vlan ID."
+    ::= { ibMirrorEntry 3 }
+
+  ibMirrorDirection OBJECT-TYPE
+    SYNTAX      INTEGER{invalid(0), input(1), output(2)}
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Direction of data stream."
+    ::= { ibMirrorEntry 4 }
+
+  ibMirrorUserAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|5000..5999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of the user acl."
+    ::= { ibMirrorEntry 5 }
+
+  ibMirrorUserAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of the user acl."
+    ::= { ibMirrorEntry 6 }
+
+  ibMirrorIpAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|2000..3999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of the user acl."
+    ::= { ibMirrorEntry 7 }
+
+  ibMirrorIpAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of the IP acl."
+    ::= { ibMirrorEntry 8 }
+
+  ibMirrorLinkAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|4000..4999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of the link acl."
+    ::= { ibMirrorEntry 9 }
+
+  ibMirrorLinkAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of the link acl."
+    ::= { ibMirrorEntry 10 }
+
+  ibMirrorToIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The ifIndex of port that to be mirrored to."
+    ::= { ibMirrorEntry 11 }
+
+  ibMirrorToCpu OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Mirror to cpu."
+    ::= { ibMirrorEntry 12 }
+
+  ibMirrorRuntime OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Is run or not."
+    ::= { ibMirrorEntry 13 }
+
+  ibMirrorRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "RowStatus, now support three status: createAndGo, active, destroy. "
+    ::= { ibMirrorEntry 14 }
+
+  ibMirrorToGroup OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The destination of stream-based mirroring is the mirroring group."
+    ::= { ibMirrorEntry 15 }
+
+
+  -- TABLE: ibPortMirrorTable ------
+  ibPortMirrorTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortMirrorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Port Mirror."
+    ::= { ibLswQosMibObject 9 }
+
+  ibPortMirrorEntry OBJECT-TYPE
+    SYNTAX      IbPortMirrorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information of port mirroring."
+    INDEX {
+              ibPortMirrorIfIndex
+          }
+    ::= { ibPortMirrorTable 1 }
+
+  IbPortMirrorEntry ::=
+    SEQUENCE
+    {
+      ibPortMirrorIfIndex    INTEGER,
+      ibPortMirrorDirection    INTEGER,
+      ibPortMirrorRowStatus    RowStatus
+    }
+
+  ibPortMirrorIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The ifIndex of mirror port."
+    ::= { ibPortMirrorEntry 1 }
+
+  ibPortMirrorDirection OBJECT-TYPE
+    SYNTAX      INTEGER{in(1),out(2),both(3)}
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The direction of mirror port."
+    ::= { ibPortMirrorEntry 2 }
+
+  ibPortMirrorRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "RowStatus, now support three status: createAndGo, active, destroy."
+    ::= { ibPortMirrorEntry 3 }
+
+  -- TABLE: ibLineRateTable ------
+  ibLineRateTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbLineRateEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Line Rate."
+    ::= { ibLswQosMibObject 10 }
+
+  ibLineRateEntry OBJECT-TYPE
+    SYNTAX      IbLineRateEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information of line-rate port."
+    INDEX {
+              ibLineRateIfIndex,
+              ibLineRateDirection
+          }
+    ::= { ibLineRateTable 1 }
+
+  IbLineRateEntry ::=
+    SEQUENCE
+    {
+      ibLineRateIfIndex    INTEGER,
+      ibLineRateDirection    INTEGER,
+      ibLineRateValue    INTEGER,
+      ibLineRateRowStatus    RowStatus
+    }
+
+  ibLineRateIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The ifIndex of port of line rate."
+    ::= { ibLineRateEntry 1 }
+
+  ibLineRateDirection OBJECT-TYPE
+    SYNTAX      INTEGER{in(1),out(2)}
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The direction of line rate."
+    ::= { ibLineRateEntry 2 }
+
+  ibLineRateValue OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The value of the line-rate."
+    ::= { ibLineRateEntry 3 }
+
+  ibLineRateRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "RowStatus, now support three status: createAndGo, active, destroy."
+    ::= { ibLineRateEntry 4 }
+
+  -- TABLE: ibBandwidthTable ------
+  ibBandwidthTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbBandwidthEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Bandwidth."
+    ::= { ibLswQosMibObject 11 }
+
+  ibBandwidthEntry OBJECT-TYPE
+    SYNTAX      IbBandwidthEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information of bandwidth of port."
+    INDEX {
+              ibBandwidthAclIndex,
+              ibBandwidthIfIndex,
+              ibBandwidthVlanID,
+              ibBandwidthDirection
+          }
+    ::= { ibBandwidthTable 1 }
+
+  IbBandwidthEntry ::=
+    SEQUENCE
+    {
+      ibBandwidthAclIndex    INTEGER,
+      ibBandwidthIfIndex    INTEGER,
+      ibBandwidthVlanID    INTEGER,
+      ibBandwidthDirection    INTEGER,
+      ibBandwidthIpAclNum    INTEGER,
+      ibBandwidthIpAclRule    INTEGER,
+      ibBandwidthLinkAclNum    INTEGER,
+      ibBandwidthLinkAclRule    INTEGER,
+      ibBandwidthMinGuaranteedWidth    INTEGER,
+      ibBandwidthMaxGuaranteedWidth    INTEGER,
+      ibBandwidthWeight    INTEGER,
+      ibBandwidthRuntime    TruthValue,
+      ibBandwidthRowStatus    RowStatus
+    }
+
+  ibBandwidthAclIndex OBJECT-TYPE
+    SYNTAX      INTEGER(0..2999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Index of acl rule."
+    ::= { ibBandwidthEntry 1 }
+
+  ibBandwidthIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "ifIndex of port."
+    ::= { ibBandwidthEntry 2 }
+
+  ibBandwidthVlanID OBJECT-TYPE
+    SYNTAX      INTEGER(0..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Vlan ID."
+    ::= { ibBandwidthEntry 3 }
+
+  ibBandwidthDirection OBJECT-TYPE
+    SYNTAX      INTEGER{invalid(0), output(2)}
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Direction of data stream."
+    ::= { ibBandwidthEntry 4 }
+
+  ibBandwidthIpAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|2000..3999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of Ip acl."
+    ::= { ibBandwidthEntry 5 }
+
+  ibBandwidthIpAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of ip acl."
+    ::= { ibBandwidthEntry 6 }
+
+  ibBandwidthLinkAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|4000..4999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of link acl."
+    ::= { ibBandwidthEntry 7 }
+
+  ibBandwidthLinkAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of link acl."
+    ::= { ibBandwidthEntry 8 }
+
+  ibBandwidthMinGuaranteedWidth OBJECT-TYPE
+    SYNTAX      INTEGER(1..8388608)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The min width which is guaranteed."
+    ::= { ibBandwidthEntry 9 }
+
+  ibBandwidthMaxGuaranteedWidth OBJECT-TYPE
+    SYNTAX      INTEGER(1..8388608)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The max width which is guaranteed."
+    ::= { ibBandwidthEntry 10 }
+
+  ibBandwidthWeight OBJECT-TYPE
+    SYNTAX      INTEGER(0..100)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Weight of bandwidth."
+    ::= { ibBandwidthEntry 11 }
+
+  ibBandwidthRuntime OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Is run or not."
+    ::= { ibBandwidthEntry 12 }
+
+  ibBandwidthRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+          "RowStatus, now support three status: createAndGo, active, destroy."
+    ::= { ibBandwidthEntry 13 }
+
+-- TABLE: ibRedTable ------
+  ibRedTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbRedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Red table which contains RED entry."
+    ::= { ibLswQosMibObject 12 }
+
+  ibRedEntry OBJECT-TYPE
+    SYNTAX      IbRedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information of RED."
+    INDEX {
+              ibRedAclIndex,
+              ibRedIfIndex,
+              ibRedVlanID,
+              ibRedDirection
+          }
+    ::= { ibRedTable 1 }
+
+  IbRedEntry ::=
+    SEQUENCE
+    {
+      ibRedAclIndex    INTEGER,
+      ibRedIfIndex    INTEGER,
+      ibRedVlanID    INTEGER,
+      ibRedDirection    INTEGER,
+      ibRedIpAclNum    INTEGER,
+      ibRedIpAclRule    INTEGER,
+      ibRedLinkAclNum    INTEGER,
+      ibRedLinkAclRule    INTEGER,
+      ibRedStartQueueLen    INTEGER,
+      ibRedStopQueueLen    INTEGER,
+      ibRedProbability    INTEGER,
+      ibRedRuntime    TruthValue,
+      ibRedRowStatus    RowStatus
+    }
+
+  ibRedAclIndex OBJECT-TYPE
+    SYNTAX      INTEGER(0..2999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Index of acl rule."
+    ::= { ibRedEntry 1 }
+
+  ibRedIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "ifIndex of port."
+    ::= { ibRedEntry 2 }
+
+  ibRedVlanID OBJECT-TYPE
+    SYNTAX      INTEGER(0..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Vlan ID."
+    ::= { ibRedEntry 3 }
+
+  ibRedDirection OBJECT-TYPE
+    SYNTAX      INTEGER{invalid(0), output(2)}
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Direction of data stream."
+    ::= { ibRedEntry 4 }
+
+  ibRedIpAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|2000..3999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The num of Ip acl."
+    ::= { ibRedEntry 5 }
+
+  ibRedIpAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of Ip acl."
+    ::= { ibRedEntry 6 }
+
+  ibRedLinkAclNum OBJECT-TYPE
+    SYNTAX      INTEGER(0|4000..4999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The number of link acl."
+    ::= { ibRedEntry 7 }
+
+  ibRedLinkAclRule OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The subitem of link acl."
+    ::= { ibRedEntry 8 }
+
+  ibRedStartQueueLen OBJECT-TYPE
+    SYNTAX      INTEGER(0..262128)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The length of Starting queue."
+    ::= { ibRedEntry 9 }
+
+  ibRedStopQueueLen OBJECT-TYPE
+    SYNTAX      INTEGER(0..262128)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The length of stopping queue."
+    ::= { ibRedEntry 10 }
+
+  ibRedProbability OBJECT-TYPE
+    SYNTAX      INTEGER(0..100)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Probability."
+    ::= { ibRedEntry 11 }
+
+  ibRedRuntime OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Is run or not."
+    ::= { ibRedEntry 12 }
+
+  ibRedRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "RowStatus, now support three status: createAndGo, active, destroy."
+    ::= { ibRedEntry 13 }
+
+  -- TABLE: ibMirrorGroupTable ------
+  ibMirrorGroupTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMirrorGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Mirror Group."
+    ::= { ibLswQosMibObject 13 }
+
+  ibMirrorGroupEntry OBJECT-TYPE
+    SYNTAX      IbMirrorGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information of mirroring group."
+    INDEX {
+              ibMirrorGroupID
+          }
+    ::= { ibMirrorGroupTable 1 }
+
+  IbMirrorGroupEntry ::=
+    SEQUENCE
+    {
+      ibMirrorGroupID    INTEGER,
+      ibMirrorGroupDirection    INTEGER,
+      ibMirrorGroupMirrorIfIndexList    OCTET STRING,
+      ibMirrorGroupMonitorIfIndex    INTEGER,
+      ibMirrorGroupRowStatus    RowStatus
+    }
+
+  ibMirrorGroupID OBJECT-TYPE
+    SYNTAX      INTEGER(1..20)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Group ID of mirroring group."
+    ::= { ibMirrorGroupEntry 1 }
+
+  ibMirrorGroupDirection OBJECT-TYPE
+    SYNTAX      INTEGER{input(1),output(2)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Direction of data stream which would be mirrored."
+    ::= { ibMirrorGroupEntry 2 }
+
+  ibMirrorGroupMirrorIfIndexList OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE (1..257))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "ifIndex list of source port."
+    ::= { ibMirrorGroupEntry 3 }
+
+  ibMirrorGroupMonitorIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "ifIndex of destination port."
+    ::= { ibMirrorGroupEntry 4 }
+
+  ibMirrorGroupRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+          "RowStatus, now support three status: createAndGo, active, destroy."
+    ::= { ibMirrorGroupEntry 5 }
+
+  -- TABLE: ibFlowtempTable ------
+  ibFlowtempTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbFlowtempEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Flow-template table which contains flow-template entry."
+    ::= { ibLswQosMibObject 14 }
+
+  ibFlowtempEntry OBJECT-TYPE
+    SYNTAX      IbFlowtempEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information of flow-template."
+    INDEX {
+              ibFlowtempIndex
+          }
+    ::= { ibFlowtempTable 1 }
+
+  IbFlowtempEntry ::=
+    SEQUENCE
+    {
+      ibFlowtempIndex    INTEGER,
+      ibFlowtempIpProtocol    TruthValue,
+      ibFlowtempTcpFlag    TruthValue,
+      ibFlowtempSPort    TruthValue,
+      ibFlowtempDPort    TruthValue,
+      ibFlowtempIcmpType    TruthValue,
+      ibFlowtempIcmpCode    TruthValue,
+      ibFlowtempFragment    TruthValue,
+      ibFlowtempDscp    TruthValue,
+      ibFlowtempIpPre    TruthValue,
+      ibFlowtempTos    TruthValue,
+      ibFlowtempSIp          TruthValue,
+      ibFlowtempSIpMask    IpAddress,
+      ibFlowtempDIp          TruthValue,
+      ibFlowtempDIpMask    IpAddress,
+      ibFlowtempEthProtocol    TruthValue,
+      ibFlowtempSMac          TruthValue,
+      ibFlowtempSMacMask    MacAddress,
+      ibFlowtempDMac          TruthValue,
+      ibFlowtempDMacMask    MacAddress,
+      ibFlowtempVpn    TruthValue,
+      ibFlowtempRowStatus    RowStatus,
+      ibFlowtempVlanId    TruthValue,
+      ibFlowtempCos    TruthValue
+    }
+
+  ibFlowtempIndex OBJECT-TYPE
+    SYNTAX      INTEGER{default(1), user-defined(2)}
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Index of flow template."
+    ::= { ibFlowtempEntry 1 }
+
+  ibFlowtempIpProtocol OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "protocol-type of IP packet."
+    ::= { ibFlowtempEntry 2 }
+
+  ibFlowtempTcpFlag OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The flag of Tcp paceket. "
+    ::= { ibFlowtempEntry 3 }
+
+  ibFlowtempSPort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The port of source."
+    ::= { ibFlowtempEntry 4 }
+
+  ibFlowtempDPort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The port of destination."
+    ::= { ibFlowtempEntry 5 }
+
+  ibFlowtempIcmpType OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The type of Icmp."
+    ::= { ibFlowtempEntry 6 }
+
+  ibFlowtempIcmpCode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The code of Icmp."
+    ::= { ibFlowtempEntry 7 }
+
+  ibFlowtempFragment OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The flag of Fragment. "
+    ::= { ibFlowtempEntry 8 }
+
+  ibFlowtempDscp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Dscp of IP packet."
+    ::= { ibFlowtempEntry 9 }
+
+  ibFlowtempIpPre OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The Precedence of Ip packet. "
+    ::= { ibFlowtempEntry 10 }
+
+  ibFlowtempTos OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Tos of IP packet."
+    ::= { ibFlowtempEntry 11 }
+
+  ibFlowtempSIp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The Ip of source."
+    ::= { ibFlowtempEntry 12 }
+
+  ibFlowtempSIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The mask of source-Ip."
+    ::= { ibFlowtempEntry 13 }
+
+  ibFlowtempDIp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The Ip of destination."
+    ::= { ibFlowtempEntry 14 }
+
+  ibFlowtempDIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The mask of destination-Ip."
+    ::= { ibFlowtempEntry 15 }
+
+  ibFlowtempEthProtocol OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Protocol type of Ethernet."
+    ::= { ibFlowtempEntry 16 }
+
+  ibFlowtempSMac OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The Mac of source."
+    ::= { ibFlowtempEntry 17 }
+
+  ibFlowtempSMacMask OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The mask of source-Mac."
+    ::= { ibFlowtempEntry 18 }
+
+  ibFlowtempDMac OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The mac of destination."
+    ::= { ibFlowtempEntry 19 }
+
+  ibFlowtempDMacMask OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The mask of destination-Mac."
+    ::= { ibFlowtempEntry 20 }
+
+  ibFlowtempVpn OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Vpn"
+    ::= { ibFlowtempEntry 21 }
+
+  ibFlowtempRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "RowStatus, now support three status: createAndGo, active, destroy."
+    ::= { ibFlowtempEntry 22 }
+
+  ibFlowtempVlanId OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Source VLAN ID."
+    ::= { ibFlowtempEntry 23 }
+
+  ibFlowtempCos OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "802.1P priority."
+    ::= { ibFlowtempEntry 24 }
+
+  -- TABLE: ibFlowtempEnableTable ------
+  ibFlowtempEnableTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbFlowtempEnableEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "The table of flow-template."
+    ::= { ibLswQosMibObject 15 }
+
+  ibFlowtempEnableEntry OBJECT-TYPE
+    SYNTAX      IbFlowtempEnableEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Enable entry of flow-template."
+    INDEX {
+              ibFlowtempEnableIfIndex,
+              ibFlowtempEnableVlanID
+          }
+    ::= { ibFlowtempEnableTable 1 }
+
+  IbFlowtempEnableEntry ::=
+    SEQUENCE
+    {
+      ibFlowtempEnableIfIndex    INTEGER,
+      ibFlowtempEnableVlanID    INTEGER,
+      ibFlowtempEnableFlowtempIndex  INTEGER
+    }
+
+  ibFlowtempEnableIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "ifIndex of port."
+    ::= { ibFlowtempEnableEntry 1 }
+
+  ibFlowtempEnableVlanID OBJECT-TYPE
+    SYNTAX      INTEGER(0..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Vlan ID."
+    ::= { ibFlowtempEnableEntry 2 }
+
+  ibFlowtempEnableFlowtempIndex OBJECT-TYPE
+    SYNTAX      INTEGER{default(1), user-defined(2)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The index of Flowtemp table."
+    ::= { ibFlowtempEnableEntry 3 }
+
+  -- TABLE: ibTrafficShapeTable ------
+  ibTrafficShapeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTrafficShapeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "The traffic-shape table which contains traffic-shape entry."
+    ::= { ibLswQosMibObject 16 }
+
+  ibTrafficShapeEntry OBJECT-TYPE
+    SYNTAX      IbTrafficShapeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information of traffic-shape."
+    INDEX {
+              ibTrafficShapeIfIndex,
+              ibTrafficShapeQueueId
+          }
+    ::= { ibTrafficShapeTable 1 }
+
+  IbTrafficShapeEntry ::=
+    SEQUENCE
+    {
+      ibTrafficShapeIfIndex    INTEGER,
+      ibTrafficShapeQueueId    INTEGER,
+      ibTrafficShapeMaxRate    INTEGER,
+      ibTrafficShapeBurstSize    INTEGER,
+      ibTrafficShapeBufferLimit    INTEGER,
+      ibTrafficShapeRowStatus    RowStatus
+    }
+
+  ibTrafficShapeIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "IfIdex of port."
+    ::= { ibTrafficShapeEntry 1 }
+
+  ibTrafficShapeQueueId OBJECT-TYPE
+    SYNTAX      INTEGER(0..7|255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "ID of queue which would be shaped."
+    ::= { ibTrafficShapeEntry 2 }
+
+  ibTrafficShapeMaxRate OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The max rate."
+    ::= { ibTrafficShapeEntry 3 }
+
+  ibTrafficShapeBurstSize OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The size of burst."
+    ::= { ibTrafficShapeEntry 4 }
+
+  ibTrafficShapeBufferLimit OBJECT-TYPE
+    SYNTAX      INTEGER(0|16..8000)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "The limit of buffer."
+    ::= { ibTrafficShapeEntry 5 }
+
+  ibTrafficShapeRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "RowStatus, now support three status: createAndGo, active, destroy."
+    ::= { ibTrafficShapeEntry 6 }
+
+  -- TABLE: ibPortQueueTable ------
+  ibPortQueueTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortQueueEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "The port-queue table which contains port-queue entry."
+    ::= { ibLswQosMibObject 17 }
+
+  ibPortQueueEntry OBJECT-TYPE
+    SYNTAX      IbPortQueueEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information of port-queue."
+    INDEX {
+              ibPortQueueIfIndex,
+              ibPortQueueQueueID
+          }
+    ::= { ibPortQueueTable 1 }
+
+  IbPortQueueEntry ::=
+    SEQUENCE
+    {
+      ibPortQueueIfIndex    INTEGER,
+      ibPortQueueQueueID    INTEGER,
+      ibPortQueueWrrPriority    INTEGER,
+      ibPortQueueWeight    INTEGER
+    }
+
+  ibPortQueueIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "ifIndex of port."
+    ::= { ibPortQueueEntry 1 }
+
+  ibPortQueueQueueID OBJECT-TYPE
+    SYNTAX      INTEGER(0..7)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "ID of port-queue."
+    ::= { ibPortQueueEntry 2 }
+
+  ibPortQueueWrrPriority OBJECT-TYPE
+    SYNTAX      INTEGER{sp(1),wrr-high-priority(2),wrr-low-priority(3)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The priority of Wrr."
+    ::= { ibPortQueueEntry 3 }
+
+  ibPortQueueWeight OBJECT-TYPE
+    SYNTAX      INTEGER(0|1..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The weight of this queue."
+    ::= { ibPortQueueEntry 4 }
+
+  -- TABLE: ibDropModeTable ------
+  ibDropModeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDropModeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "The drop-mode table which contains drop-mode entry."
+    ::= { ibLswQosMibObject 18 }
+
+  ibDropModeEntry OBJECT-TYPE
+    SYNTAX      IbDropModeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information of the drop-mode."
+    INDEX {
+              ibDropModeIfIndex
+          }
+    ::= { ibDropModeTable 1 }
+
+  IbDropModeEntry ::=
+    SEQUENCE
+    {
+      ibDropModeIfIndex    INTEGER,
+      ibDropModeMode    INTEGER,
+      ibDropModeWredIndex    INTEGER
+    }
+
+  ibDropModeIfIndex OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "ifIndex of port."
+    ::= { ibDropModeEntry 1 }
+
+  ibDropModeMode OBJECT-TYPE
+    SYNTAX      INTEGER{random-detect(1),tail-drop(2)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Mode."
+    DEFVAL      { 2 }
+    ::= { ibDropModeEntry 2 }
+
+  ibDropModeWredIndex OBJECT-TYPE
+    SYNTAX      INTEGER(0..3)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The index of Wred table."
+    ::= { ibDropModeEntry 3 }
+
+  -- TABLE: ibWredTable ------
+  ibWredTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbWredEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "The Wred table which contains wred Entry."
+    ::= { ibLswQosMibObject 19 }
+
+  ibWredEntry OBJECT-TYPE
+    SYNTAX      IbWredEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information of Wred."
+    INDEX {
+              ibWredIndex,
+              ibWredQueueId
+          }
+    ::= { ibWredTable 1 }
+
+  IbWredEntry ::=
+    SEQUENCE
+    {
+      ibWredIndex    INTEGER,
+      ibWredQueueId    INTEGER,
+      ibWredGreenMinThreshold    INTEGER,
+      ibWredGreenMaxThreshold    INTEGER,
+      ibWredGreenMaxProb    INTEGER,
+      ibWredYellowMinThreshold    INTEGER,
+      ibWredYellowMaxThreshold    INTEGER,
+      ibWredYellowMaxProb    INTEGER,
+      ibWredRedMinThreshold    INTEGER,
+      ibWredRedMaxThreshold    INTEGER,
+      ibWredRedMaxProb    INTEGER,
+      ibWredExponent    INTEGER
+    }
+
+  ibWredIndex OBJECT-TYPE
+    SYNTAX      INTEGER(0..3)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Index of wred."
+    ::= { ibWredEntry 1 }
+
+  ibWredQueueId OBJECT-TYPE
+    SYNTAX      INTEGER(0..7)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Queue ID."
+    ::= { ibWredEntry 2 }
+
+  ibWredGreenMinThreshold OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The min threshold of Green."
+    ::= { ibWredEntry 3 }
+
+  ibWredGreenMaxThreshold OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The max threshold of Greem."
+    ::= { ibWredEntry 4 }
+
+  ibWredGreenMaxProb OBJECT-TYPE
+    SYNTAX      INTEGER(1..15)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The max prob of Green."
+    ::= { ibWredEntry 5 }
+
+  ibWredYellowMinThreshold OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The min threshold of Yellow."
+    ::= { ibWredEntry 6 }
+
+  ibWredYellowMaxThreshold OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The max threshold of Yellow."
+    ::= { ibWredEntry 7 }
+
+  ibWredYellowMaxProb OBJECT-TYPE
+    SYNTAX      INTEGER(1..15)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The Prob threshold of Yellow."
+    ::= { ibWredEntry 8 }
+
+  ibWredRedMinThreshold OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The min threshold of Red."
+    ::= { ibWredEntry 9 }
+
+  ibWredRedMaxThreshold OBJECT-TYPE
+    SYNTAX      INTEGER(0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The max threshold of Red."
+    ::= { ibWredEntry 10 }
+
+  ibWredRedMaxProb OBJECT-TYPE
+    SYNTAX      INTEGER(1..15)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The max prob of Red."
+    ::= { ibWredEntry 11 }
+
+  ibWredExponent OBJECT-TYPE
+    SYNTAX      INTEGER(1..15)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Exponent."
+    DEFVAL      { 9 }
+    ::= { ibWredEntry 12 }
+
+  -- TABLE: ibCosToLocalPrecedenceMapTable ------
+  ibCosToLocalPrecedenceMapTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbCosToLocalPrecedenceMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Table of map of the COS to local-precedence."
+    ::= { ibLswQosMibObject 20 }
+
+  ibCosToLocalPrecedenceMapEntry OBJECT-TYPE
+    SYNTAX      IbCosToLocalPrecedenceMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information of map of the COS to local precedence."
+    INDEX {
+              ibCosToLocalPrecedenceMapCosIndex
+          }
+    ::= { ibCosToLocalPrecedenceMapTable 1 }
+
+  IbCosToLocalPrecedenceMapEntry ::=
+    SEQUENCE
+    {
+      ibCosToLocalPrecedenceMapCosIndex    INTEGER,
+      ibCosToLocalPrecedenceMapLocalPrecedenceValue       INTEGER
+    }
+
+  ibCosToLocalPrecedenceMapCosIndex OBJECT-TYPE
+    SYNTAX      INTEGER(0..7)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Index of the map."
+    ::= { ibCosToLocalPrecedenceMapEntry 1 }
+
+  ibCosToLocalPrecedenceMapLocalPrecedenceValue OBJECT-TYPE
+    SYNTAX      INTEGER(0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Value of local precedence."
+    ::= { ibCosToLocalPrecedenceMapEntry 2 }
+
+  -- TABLE: ibCosToDropPrecedenceMapTable ------
+  ibCosToDropPrecedenceMapTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbCosToDropPrecedenceMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "The table of map of COS to drop-precedence."
+    ::= { ibLswQosMibObject 21 }
+
+  ibCosToDropPrecedenceMapEntry OBJECT-TYPE
+    SYNTAX      IbCosToDropPrecedenceMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information of the map of the COS to drop-precedence."
+    INDEX {
+              ibCosToDropPrecedenceMapCosIndex
+          }
+    ::= { ibCosToDropPrecedenceMapTable 1 }
+
+  IbCosToDropPrecedenceMapEntry ::=
+    SEQUENCE
+    {
+      ibCosToDropPrecedenceMapCosIndex    INTEGER,
+      ibCosToDropPrecedenceMapDropPrecedenceValue       INTEGER
+    }
+
+  ibCosToDropPrecedenceMapCosIndex OBJECT-TYPE
+    SYNTAX      INTEGER(0..7)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Index of the map."
+    ::= { ibCosToDropPrecedenceMapEntry 1 }
+
+  ibCosToDropPrecedenceMapDropPrecedenceValue OBJECT-TYPE
+    SYNTAX      INTEGER(0..2)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Value of drop-precedence."
+    ::= { ibCosToDropPrecedenceMapEntry 2 }
+
+  -- TABLE: ibDscpMapTable ------
+  ibDscpMapTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDscpMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Table of dscp map."
+    ::= { ibLswQosMibObject 22 }
+
+  ibDscpMapEntry OBJECT-TYPE
+    SYNTAX      IbDscpMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information of Dscp map."
+    INDEX {
+              ibDscpMapConformLevel,
+              ibDscpMapDscpIndex
+          }
+    ::= { ibDscpMapTable 1 }
+
+  IbDscpMapEntry ::=
+    SEQUENCE
+    {
+      ibDscpMapConformLevel    INTEGER,
+      ibDscpMapDscpIndex    INTEGER,
+      ibDscpMapDscpValue    INTEGER,
+      ibDscpMapExpValue    INTEGER,
+      ibDscpMapCosValue    INTEGER,
+      ibDscpMapLocalPrecedence    INTEGER,
+      ibDscpMapDropPrecedence    INTEGER
+    }
+
+  ibDscpMapConformLevel OBJECT-TYPE
+    SYNTAX      INTEGER(0..2)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Conformable level of Dscp-map."
+    ::= { ibDscpMapEntry 1 }
+
+  ibDscpMapDscpIndex OBJECT-TYPE
+    SYNTAX      INTEGER(0..63)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Index of dscp."
+    ::= { ibDscpMapEntry 2 }
+
+  ibDscpMapDscpValue OBJECT-TYPE
+    SYNTAX      INTEGER(0..63)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Value of Dscp."
+    ::= { ibDscpMapEntry 3 }
+
+  ibDscpMapExpValue OBJECT-TYPE
+    SYNTAX      INTEGER(0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Exp value."
+    ::= { ibDscpMapEntry 4 }
+
+  ibDscpMapCosValue OBJECT-TYPE
+    SYNTAX      INTEGER(0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "COS value."
+    ::= { ibDscpMapEntry 5 }
+
+  ibDscpMapLocalPrecedence OBJECT-TYPE
+    SYNTAX      INTEGER(0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The precedence of local."
+    ::= { ibDscpMapEntry 6 }
+
+  ibDscpMapDropPrecedence OBJECT-TYPE
+    SYNTAX      INTEGER(0..2)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The precedence of Drop."
+    ::= { ibDscpMapEntry 7 }
+
+  -- TABLE: ibExpMapTable ------
+  ibExpMapTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbExpMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "The table of Exp-map"
+    ::= { ibLswQosMibObject 23 }
+
+  ibExpMapEntry OBJECT-TYPE
+    SYNTAX      IbExpMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information of Exp-map."
+    INDEX {
+              ibExpMapConformLevel,
+              ibExpMapExpIndex
+          }
+    ::= { ibExpMapTable 1 }
+
+  IbExpMapEntry ::=
+    SEQUENCE
+    {
+      ibExpMapConformLevel    INTEGER,
+      ibExpMapExpIndex     INTEGER,
+      ibExpMapDscpValue    INTEGER,
+      ibExpMapExpValue    INTEGER,
+      ibExpMapCosValue    INTEGER,
+      ibExpMapLocalPrecedence    INTEGER,
+      ibExpMapDropPrecedence    INTEGER
+    }
+
+  ibExpMapConformLevel OBJECT-TYPE
+    SYNTAX      INTEGER(0..2)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Conformable level of Exp-map."
+    ::= { ibExpMapEntry 1 }
+
+  ibExpMapExpIndex OBJECT-TYPE
+    SYNTAX      INTEGER(0..7)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Index of Exp."
+    ::= { ibExpMapEntry 2 }
+
+  ibExpMapDscpValue OBJECT-TYPE
+    SYNTAX      INTEGER(0..63)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Dscp value."
+    ::= { ibExpMapEntry 3 }
+
+  ibExpMapExpValue OBJECT-TYPE
+    SYNTAX      INTEGER(0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Exp value."
+    ::= { ibExpMapEntry 4 }
+
+  ibExpMapCosValue OBJECT-TYPE
+    SYNTAX      INTEGER(0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "COS Value."
+    ::= { ibExpMapEntry 5 }
+
+  ibExpMapLocalPrecedence OBJECT-TYPE
+    SYNTAX      INTEGER(0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The precedence of local."
+    ::= { ibExpMapEntry 6 }
+
+  ibExpMapDropPrecedence OBJECT-TYPE
+    SYNTAX      INTEGER(0..2)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The precedence of Drop."
+    ::= { ibExpMapEntry 7 }
+
+  -- TABLE: ibLocalPrecedenceMapTable ------
+  ibLocalPrecedenceMapTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbLocalPrecedenceMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "The table of local-precedence map."
+    ::= { ibLswQosMibObject 24 }
+
+  ibLocalPrecedenceMapEntry OBJECT-TYPE
+    SYNTAX      IbLocalPrecedenceMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuraion information of local-precedence map."
+    INDEX {
+              ibLocalPrecedenceMapConformLevel,
+              ibLocalPrecedenceMapLocalPrecedenceIndex
+          }
+    ::= { ibLocalPrecedenceMapTable 1 }
+
+  IbLocalPrecedenceMapEntry ::=
+    SEQUENCE
+    {
+      ibLocalPrecedenceMapConformLevel    INTEGER,
+      ibLocalPrecedenceMapLocalPrecedenceIndex    INTEGER,
+      ibLocalPrecedenceMapCosValue       INTEGER
+    }
+
+  ibLocalPrecedenceMapConformLevel OBJECT-TYPE
+    SYNTAX      INTEGER(0..2)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "Conformable level of local-precedence map."
+    ::= { ibLocalPrecedenceMapEntry 1 }
+
+  ibLocalPrecedenceMapLocalPrecedenceIndex OBJECT-TYPE
+    SYNTAX      INTEGER(0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Index of local-precedence."
+    ::= { ibLocalPrecedenceMapEntry 2 }
+
+  ibLocalPrecedenceMapCosValue OBJECT-TYPE
+    SYNTAX      INTEGER(0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "COS value."
+    ::= { ibLocalPrecedenceMapEntry 3 }
+--
+--
+--
+  -- TABLE: ibPortWredTable ---------
+  ibPortWredTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbPortWredEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+      "The table of PortWred."
+    ::= { ibLswQosMibObject 25 }
+
+
+  ibPortWredEntry OBJECT-TYPE
+    SYNTAX IbPortWredEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+      "Configuration information of port Wred."
+    INDEX {
+              ibPortWredIfIndex,
+              ibPortWredQueueID
+          }
+    ::= { ibPortWredTable 1 }
+
+
+    IbPortWredEntry ::=
+    SEQUENCE
+    {
+        ibPortWredIfIndex INTEGER,
+        ibPortWredQueueID INTEGER,
+        ibPortWredQueueStartLength INTEGER,
+        ibPortWredQueueProbability INTEGER
+    }
+
+  ibPortWredIfIndex OBJECT-TYPE
+    SYNTAX INTEGER
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "ifIndex of port."
+    ::= { ibPortWredEntry 1 }
+
+
+  ibPortWredQueueID OBJECT-TYPE
+    SYNTAX  INTEGER(0..7)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+      "ID of port-Wred queue."
+    ::= { ibPortWredEntry 2 }
+
+
+  ibPortWredQueueStartLength OBJECT-TYPE
+    SYNTAX  INTEGER(0..2047)
+    MAX-ACCESS  read-write
+    STATUS current
+    DESCRIPTION
+      "Queue length."
+    ::= { ibPortWredEntry 3 }
+
+
+  ibPortWredQueueProbability OBJECT-TYPE
+    SYNTAX  INTEGER(0..100)
+    MAX-ACCESS  read-write
+    STATUS current
+    DESCRIPTION
+      "Probability."
+    ::= { ibPortWredEntry 4 }
+
+-- TABLE: ibMirroringGroupTable ---------
+  ibMirroringGroupTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMirroringGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "The table of MirrorGroup."
+    ::= { ibLswQosMibObject 26 }
+
+  ibMirroringGroupEntry OBJECT-TYPE
+    SYNTAX      IbMirroringGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "Configuration information of MirrorGroup."
+    INDEX  {
+    	       ibMirroringGroupID
+    	   }
+    ::= { ibMirroringGroupTable 1 }
+
+  IbMirroringGroupEntry ::=
+    SEQUENCE
+    {
+      ibMirroringGroupID    INTEGER,
+      ibMirroringGroupType    INTEGER,
+      ibMirroringGroupStatus    INTEGER,
+      ibMirroringGroupRowStatus    RowStatus
+    }
+
+   ibMirroringGroupID  OBJECT-TYPE
+    SYNTAX      INTEGER(1..20)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "GroupID."
+    ::= { ibMirroringGroupEntry 1 }
+
+    ibMirroringGroupType  OBJECT-TYPE
+    SYNTAX      INTEGER{local(1),remote-source(2),remote-destination(3)}
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "GroupType."
+    ::= { ibMirroringGroupEntry 2 }
+
+    ibMirroringGroupStatus  OBJECT-TYPE
+    SYNTAX      INTEGER{active(1),inactive(2)}
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "MirroringGroup status."
+    ::= { ibMirroringGroupEntry 3 }
+
+    ibMirroringGroupRowStatus  OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "RowStatus, Now support three status: createAndGo, active, destroy."
+    ::= { ibMirroringGroupEntry 4 }
+
+  -- TABLE: ibMirroringGroupMirrorTable ---------
+  ibMirroringGroupMirrorTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMirroringGroupMirrorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "MirroringGroup mirroring-port information."
+    ::= { ibLswQosMibObject 27 }
+
+  ibMirroringGroupMirrorEntry OBJECT-TYPE
+    SYNTAX      IbMirroringGroupMirrorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "MirroringGroup mirroring-port information."
+    INDEX {
+              ibMirroringGroupID
+          }
+    ::= { ibMirroringGroupMirrorTable 1 }
+
+  IbMirroringGroupMirrorEntry ::=
+    SEQUENCE
+    {
+      ibMirroringGroupMirrorInboundIfIndexList    OCTET STRING,
+      ibMirroringGroupMirrorOutboundIfIndexList    OCTET STRING,
+      ibMirroringGroupMirrorRowStatus    RowStatus,
+      ibMirroringGroupMirrorInTypeList         OCTET STRING,
+      ibMirroringGroupMirrorOutTypeList         OCTET STRING
+    }
+
+    ibMirroringGroupMirrorInboundIfIndexList  OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Inbound-Mirror ifIndex(for port) and slot number(for board) list.
+
+      Example A describes the relation between values of
+      ibMirroringGroupMirrorInboundIfIndexList and ibMirroringGroupMirrorInTypeList.
+
+      Example A:
+      ibMirroringGroupMirrorInboundIfIndexList: '00000002 0C000022 00000007'
+      ibMirroringGroupMirrorInTypeList:         '00000002 00000001 00000002'
+
+      Every four octets represent an integer value.
+      The first four octets of them should be same. Here the value '00000002'
+      indicates there are two inbound mirror sources.
+      The following every four octets of ibMirroringGroupMirrorInboundIfIndexList
+      indicate an ifIndex or a slot number of mirror source. For '0C000022' and
+      '00000007' in the value of ibMirroringGroupMirrorInboundIfIndexList above,
+      the corresponding value of ibMirroringGroupMirrorInTypeList is '00000001'
+      and '00000002'(00000001 means the mirror source is port, 00000002 means the 
+      mirror source is board, the meaning reference the object IbMirrorOrMonitorType), 
+      then '0C000022' indicates an ifIndex value 201326626(decimal), and '00000007' 
+      indicates a slot with number 7(decimal).
+
+      Values with different types(port/board) should be set in separate set operations.
+      If one value with port type and one value with board type are set with same
+      ibMirroringGroupID separately, the result of get operation for that entry
+      will be like the example A above.
+      
+      If ibMirroringGroupMirrorInTypeList is not supported, the first four octets
+      of ibMirroringGroupMirrorInboundIfIndexList also indicates the number of mirror
+      source, but the following octets are values for ifIndex(port type).
+
+      ibMirroringGroupMirrorOutboundIfIndexList and ibMirroringGroupMirrorOutTypeList
+      are a pair and have the same relations like ibMirroringGroupMirrorInboundIfIndexList
+      and ibMirroringGroupMirrorInTypeList pair.
+      "
+    ::= { ibMirroringGroupMirrorEntry 1 }
+
+    ibMirroringGroupMirrorOutboundIfIndexList  OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Outbound-Mirror ifIndex and slot number list.
+      Please refer to the description of ibMirroringGroupMirrorInboundIfIndexList."
+    ::= { ibMirroringGroupMirrorEntry 2 }
+
+    ibMirroringGroupMirrorRowStatus  OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "RowStatus, now support three status: createAndGo, active, destroy."
+    ::= { ibMirroringGroupMirrorEntry 3 }
+    
+    ibMirroringGroupMirrorInTypeList  OBJECT-TYPE
+    SYNTAX      OCTET STRING 
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Inbound-Mirror type list.
+      Please refer to the description of ibMirroringGroupMirrorInboundIfIndexList."
+      
+    ::= { ibMirroringGroupMirrorEntry 4 }
+    
+    ibMirroringGroupMirrorOutTypeList  OBJECT-TYPE
+    SYNTAX      OCTET STRING    
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Outbound-Mirror type list.
+      Please refer to the description of ibMirroringGroupMirrorInboundIfIndexList."
+    ::= { ibMirroringGroupMirrorEntry 5 }
+
+  -- TABLE: ibMirroringGroupMonitorTable ---------
+  ibMirroringGroupMonitorTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMirroringGroupMonitorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "MirroringGroup monitor-port information."
+    ::= { ibLswQosMibObject 28 }
+
+  ibMirroringGroupMonitorEntry OBJECT-TYPE
+    SYNTAX      IbMirroringGroupMonitorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "MirroringGroup monitor-port information."
+    INDEX {
+              ibMirroringGroupID
+          }
+    ::= { ibMirroringGroupMonitorTable 1 }
+
+  IbMirroringGroupMonitorEntry ::=
+    SEQUENCE
+    {
+      ibMirroringGroupMonitorIfIndex    INTEGER,
+      ibMirroringGroupMonitorRowStatus    RowStatus,
+      ibMirroringGroupMonitorType IbMirrorOrMonitorType
+    }
+
+    ibMirroringGroupMonitorIfIndex  OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "If the monitor destination is port, the value means the ifIndex of this port.
+      If the monitor destination is board, the value means the slot number of the
+      board. Whether the value means ifIndex or slot number references the object
+      ibMirroringGroupMonitorType."
+    ::= { ibMirroringGroupMonitorEntry 1 }
+
+    ibMirroringGroupMonitorRowStatus  OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "RowStatus, now support three status: createAndGo, active, destroy."
+    ::= { ibMirroringGroupMonitorEntry 2 }
+
+    ibMirroringGroupMonitorType  OBJECT-TYPE
+    SYNTAX      IbMirrorOrMonitorType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Specify whether the monitor destination is port or board. If this object is
+      not supported, then the value of ibMirroringGroupMonitorIfIndex means ifIndex."
+    ::= { ibMirroringGroupMonitorEntry 3 }
+
+  -- TABLE: ibMirroringGroupReflectorTable ---------
+  ibMirroringGroupReflectorTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMirroringGroupReflectorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "MirroringGroup reflector-port information."
+    ::= { ibLswQosMibObject 29 }
+
+  ibMirroringGroupReflectorEntry OBJECT-TYPE
+    SYNTAX      IbMirroringGroupReflectorEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "MirroringGroup reflector-port information."
+    INDEX {
+              ibMirroringGroupID
+          }
+    ::= { ibMirroringGroupReflectorTable 1 }
+
+  IbMirroringGroupReflectorEntry ::=
+    SEQUENCE
+    {
+      ibMirroringGroupReflectorIfIndex    INTEGER,
+      ibMirroringGroupReflectorRowStatus    RowStatus
+    }
+
+  ibMirroringGroupReflectorIfIndex   OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Only valid for remote-source MirroringGroup."
+    ::= { ibMirroringGroupReflectorEntry 1 }
+
+  ibMirroringGroupReflectorRowStatus  OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "RowStatus, now support three status: createAndGo, active, destroy."
+    ::= { ibMirroringGroupReflectorEntry 2 }
+
+  -- TABLE: ibMirroringGroupRprobeVlanTable ---------
+  ibMirroringGroupRprobeVlanTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMirroringGroupRprobeVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "MirroringGroup rprobe-vlan information."
+    ::= { ibLswQosMibObject 30 }
+
+  ibMirroringGroupRprobeVlanEntry OBJECT-TYPE
+    SYNTAX      IbMirroringGroupRprobeVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "MirroringGroup rprobe-vlan information."
+    INDEX {
+              ibMirroringGroupID
+          }
+    ::= { ibMirroringGroupRprobeVlanTable 1 }
+
+  IbMirroringGroupRprobeVlanEntry ::=
+    SEQUENCE
+    {
+      ibMirroringGroupRprobeVlanID    INTEGER,
+      ibMirroringGroupRprobeVlanRowStatus    RowStatus
+    }
+
+  ibMirroringGroupRprobeVlanID   OBJECT-TYPE
+    SYNTAX      INTEGER (0..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "Remote-Probe vlanID.
+      0 is invalid value.
+      Only valid for remote-source and remote-destination MirroringGroup."
+    ::= { ibMirroringGroupRprobeVlanEntry 1 }
+
+  ibMirroringGroupRprobeVlanRowStatus  OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+      "RowStatus, now support three status: createAndGo, active, destroy."
+    ::= { ibMirroringGroupRprobeVlanEntry 2 }
+
+  ibMirroringGroupMirrorMacTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMirroringGroupMirrorMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "MirroringGroup MAC information."
+    ::= { ibLswQosMibObject 31 }
+
+  ibMirroringGroupMirrorMacEntry OBJECT-TYPE
+    SYNTAX      IbMirroringGroupMirrorMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "MirroringGroup MAC information."
+    INDEX {
+           ibMirroringGroupID,
+           ibMirroringGroupMirrorMacSeq
+          }
+    ::= { ibMirroringGroupMirrorMacTable 1 }
+
+  IbMirroringGroupMirrorMacEntry ::=
+    SEQUENCE
+    {
+       ibMirroringGroupMirrorMacSeq  Integer32,
+       ibMirroringGroupMirrorMac  MacAddress,
+       ibMirrorMacVlanID   Integer32,
+       ibMirroringGroupMirroMacStatus RowStatus
+    }
+
+  ibMirroringGroupMirrorMacSeq   OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "The sequence MAC number of the same group."
+    ::= { ibMirroringGroupMirrorMacEntry 1 }
+
+  ibMirroringGroupMirrorMac   OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "The MAC address of the MirroringGroup."
+    ::= { ibMirroringGroupMirrorMacEntry 2 }
+
+  ibMirrorMacVlanID   OBJECT-TYPE
+    SYNTAX      Integer32(0..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "The vlan ID of MAC address ."
+    ::= { ibMirroringGroupMirrorMacEntry 3 }
+
+  ibMirroringGroupMirroMacStatus   OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "The status of this conceptual row."
+    ::= { ibMirroringGroupMirrorMacEntry 4 }
+
+  ibMirroringGroupMirrorVlanTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMirroringGroupMirrorVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "MirroringGroup Vlan Information."
+    ::= { ibLswQosMibObject 32 }
+
+  ibMirroringGroupMirrorVlanEntry OBJECT-TYPE
+    SYNTAX      IbMirroringGroupMirrorVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "MirroringGroup Vlan Information."
+    INDEX {
+           ibMirroringGroupID,
+           ibMirroringGroupMirrorVlanSeq
+           }
+    ::= { ibMirroringGroupMirrorVlanTable 1 }
+
+  IbMirroringGroupMirrorVlanEntry ::=
+    SEQUENCE
+    {
+       ibMirroringGroupMirrorVlanSeq Integer32,
+       ibMirroringGroupMirrorVlanID Integer32,
+       ibMirroringGroupMirrorVlanDirection INTEGER,
+       ibMirroringGroupMirroVlanStatus RowStatus
+    }
+
+  ibMirroringGroupMirrorVlanSeq   OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "The sequence vlan number of the same group."
+    ::= { ibMirroringGroupMirrorVlanEntry  1 }
+
+  ibMirroringGroupMirrorVlanID   OBJECT-TYPE
+    SYNTAX      Integer32(0..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "The vlan ID of MirroringGroup."
+    ::= { ibMirroringGroupMirrorVlanEntry  2 }
+
+  ibMirroringGroupMirrorVlanDirection   OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+       inbound(1),
+       outbound(2),
+       both(3)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "The vlan direction of MirroringGroup."
+    ::= { ibMirroringGroupMirrorVlanEntry  3 }
+
+  ibMirroringGroupMirroVlanStatus   OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "The status of this conceptual row."
+    ::= { ibMirroringGroupMirrorVlanEntry  4 }
+
+  ibPortTrustTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortTrustEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "Port trust information."
+    ::= { ibLswQosMibObject 33 }
+
+  ibPortTrustEntry OBJECT-TYPE
+    SYNTAX      IbPortTrustEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "Port trust information."
+    INDEX  {
+             ibPortTrustIfIndex
+           }
+     ::= { ibPortTrustTable 1 }
+
+  IbPortTrustEntry ::=
+    SEQUENCE
+    {
+       ibPortTrustIfIndex Integer32,
+       ibPortTrustTrustType INTEGER,
+       ibPortTrustOvercastType INTEGER,
+       ibPortTrustReset INTEGER
+    }
+
+  ibPortTrustIfIndex   OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "ifIndex of the port which port trust is configured."
+    ::= { ibPortTrustEntry  1 }
+
+  ibPortTrustTrustType   OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        port(1),  -- port untrust
+        cos(2),   -- port trust cos
+        dscp(3)   -- port trust dscp
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+          "Trust type of port trust."
+    DEFVAL      { port }
+    ::= { ibPortTrustEntry  2 }
+
+  ibPortTrustOvercastType   OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        noOvercast(1),
+        overcastDSCP(2),
+        overcastCOS(3)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+          "Overcast type of port trust."
+    DEFVAL      { noOvercast }
+    ::= { ibPortTrustEntry  3 }
+
+    ibPortTrustReset   OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+       reset(1)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+          "This object is used to reset port trust to default value.
+          Read operation is meaningless."
+    ::= { ibPortTrustEntry  4 }
+
+  ibRemarkVlanIDTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbRemarkVlanIDEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "Remark vlan ID information."
+    ::= { ibLswQosMibObject 34 }
+
+  ibRemarkVlanIDEntry OBJECT-TYPE
+    SYNTAX      IbRemarkVlanIDEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "Remark vlan ID information."
+    INDEX {
+              ibRemarkVlanIDAclIndex,
+              ibRemarkVlanIDIfIndex,
+              ibRemarkVlanIDVlanID,
+              ibRemarkVlanIDDirection
+          }
+    ::= { ibRemarkVlanIDTable 1 }
+
+    IbRemarkVlanIDEntry ::=
+    SEQUENCE
+    {
+       ibRemarkVlanIDAclIndex         Integer32,
+       ibRemarkVlanIDIfIndex          Integer32,
+       ibRemarkVlanIDVlanID           Integer32,
+       ibRemarkVlanIDDirection        INTEGER,
+       ibRemarkVlanIDUserAclNum       Integer32,
+       ibRemarkVlanIDUserAclRule      Integer32,
+       ibRemarkVlanIDIpAclNum         Integer32,
+       ibRemarkVlanIDIpAclRule        Integer32,
+       ibRemarkVlanIDLinkAclNum       Integer32,
+       ibRemarkVlanIDLinkAclRule      Integer32,
+       ibRemarkVlanIDRemarkVlanID     Integer32,
+       ibRemarkVlanIDPacketType       INTEGER,
+       ibRemarkVlanIDRowStatus        RowStatus
+    }
+
+  ibRemarkVlanIDAclIndex   OBJECT-TYPE
+    SYNTAX      Integer32(0..2999)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "Action identifier, acl index."
+    ::= { ibRemarkVlanIDEntry  1 }
+
+  ibRemarkVlanIDIfIndex   OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "Action identifier, ifIndex."
+    ::= { ibRemarkVlanIDEntry  2 }
+
+  ibRemarkVlanIDVlanID   OBJECT-TYPE
+    SYNTAX      Integer32(0..4094)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "Action identifier, vlan ID."
+    ::= { ibRemarkVlanIDEntry  3 }
+
+  ibRemarkVlanIDDirection   OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+       invalid(0),
+       input(1),
+       output(2)
+    }
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "Action identifier, direction of data stream."
+    ::= { ibRemarkVlanIDEntry  4 }
+
+  ibRemarkVlanIDUserAclNum   OBJECT-TYPE
+    SYNTAX      Integer32(0|5000..5999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "The number of the user acl."
+    ::= { ibRemarkVlanIDEntry  5 }
+
+  ibRemarkVlanIDUserAclRule   OBJECT-TYPE
+    SYNTAX      Integer32(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "The subitem of the user acl."
+    ::= { ibRemarkVlanIDEntry  6 }
+
+  ibRemarkVlanIDIpAclNum   OBJECT-TYPE
+    SYNTAX      Integer32(0|2000..3999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "The num of the IP acl."
+    ::= { ibRemarkVlanIDEntry  7 }
+
+  ibRemarkVlanIDIpAclRule   OBJECT-TYPE
+    SYNTAX      Integer32(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "The subitem of the IP acl."
+    ::= { ibRemarkVlanIDEntry  8 }
+
+  ibRemarkVlanIDLinkAclNum   OBJECT-TYPE
+    SYNTAX      Integer32(0|4000..4999|10000..12999)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "The num of the link acl."
+    ::= { ibRemarkVlanIDEntry  9 }
+
+  ibRemarkVlanIDLinkAclRule   OBJECT-TYPE
+    SYNTAX      Integer32(0..65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "The subitem of the link acl."
+    ::= { ibRemarkVlanIDEntry  10 }
+
+  ibRemarkVlanIDRemarkVlanID   OBJECT-TYPE
+    SYNTAX      Integer32(0..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "Remark vlan ID."
+    ::= { ibRemarkVlanIDEntry 11 }
+
+  ibRemarkVlanIDPacketType   OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        all(1),
+        tagged(2),
+        untagged(3)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "Packet type of the remarked vlan ID."
+    ::= { ibRemarkVlanIDEntry 12 }
+
+  ibRemarkVlanIDRowStatus   OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+          "The status of this conceptual row. "
+    ::= { ibRemarkVlanIDEntry 13 }
+
+  ibCosToDscpMapTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbCosToDscpMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "COS to DSCP map information."
+    ::= { ibLswQosMibObject 35 }
+
+  ibCosToDscpMapEntry OBJECT-TYPE
+    SYNTAX      IbCosToDscpMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "COS to DSCP map information."
+    INDEX {
+             ibCosToDscpMapCosIndex
+          }
+    ::= { ibCosToDscpMapTable 1 }
+
+  IbCosToDscpMapEntry ::=
+    SEQUENCE
+    {
+      ibCosToDscpMapCosIndex     Integer32,
+      ibCosToDscpMapDscpValue    Integer32,
+      ibCosToDscpMapReSet        INTEGER
+    }
+
+  ibCosToDscpMapCosIndex   OBJECT-TYPE
+    SYNTAX    Integer32(0..7)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "COS index of COS to DSCP map."
+    ::= { ibCosToDscpMapEntry 1 }
+
+  ibCosToDscpMapDscpValue   OBJECT-TYPE
+    SYNTAX      Integer32(0..63)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+          "DSCP value of COS to DSCP map."
+    ::= { ibCosToDscpMapEntry 2 }
+
+  ibCosToDscpMapReSet   OBJECT-TYPE
+    SYNTAX    INTEGER
+    {
+        reset(1)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+          "This object is used to reset COS to DSCP map to default value.
+          Read operation is meaningless."
+    ::= { ibCosToDscpMapEntry 3 }
+
+  ibDscpToLocalPreMapTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDscpToLocalPreMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "DSCP to Local-precedence map information."
+    ::= { ibLswQosMibObject 36 }
+
+  ibDscpToLocalPreMapEntry OBJECT-TYPE
+    SYNTAX      IbDscpToLocalPreMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "DSCP to Local-precedence map information."
+    INDEX {
+             ibDscpToLocalPreMapDscpIndex
+          }
+    ::= { ibDscpToLocalPreMapTable 1 }
+
+  IbDscpToLocalPreMapEntry ::=
+    SEQUENCE
+    {
+      ibDscpToLocalPreMapDscpIndex     Integer32,
+      ibDscpToLocalPreMapLocalPreVal   Integer32,
+      ibDscpToLocalPreMapReset         INTEGER
+    }
+
+  ibDscpToLocalPreMapDscpIndex   OBJECT-TYPE
+    SYNTAX      Integer32(0..63)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "DSCP Index of DSCP to Local-precedence map."
+    ::= { ibDscpToLocalPreMapEntry 1 }
+
+  ibDscpToLocalPreMapLocalPreVal   OBJECT-TYPE
+    SYNTAX      Integer32(0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+          "Local-precedence value of DSCP to Local-precedence map."
+    ::= { ibDscpToLocalPreMapEntry 2 }
+
+  ibDscpToLocalPreMapReset   OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+       reset(1)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+          "This object is used to reset DSCP to Local-precedence map to default value.
+           Read operation is meaningless."
+    ::= { ibDscpToLocalPreMapEntry 3 }
+
+  ibDscpToDropPreMapTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDscpToDropPreMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "DSCP to Drop-precedence map information."
+    ::= { ibLswQosMibObject 37 }
+
+  ibDscpToDropPreMapEntry OBJECT-TYPE
+    SYNTAX      IbDscpToDropPreMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "DSCP to Drop-precedence map information."
+    INDEX {
+             ibDscpToDropPreMapDscpIndex
+          }
+    ::= { ibDscpToDropPreMapTable 1 }
+
+  IbDscpToDropPreMapEntry ::=
+    SEQUENCE
+    {
+      ibDscpToDropPreMapDscpIndex    Integer32,
+      ibDscpToDropPreMapDropPreVal   Integer32,
+      ibDscpToDropPreMapReset        INTEGER
+    }
+
+  ibDscpToDropPreMapDscpIndex   OBJECT-TYPE
+    SYNTAX      Integer32(0..63)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "DSCP Index of DSCP to Drop-precedence map."
+    ::= { ibDscpToDropPreMapEntry 1 }
+
+  ibDscpToDropPreMapDropPreVal   OBJECT-TYPE
+    SYNTAX      Integer32(0..2)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+          "Drop-precedence value of DSCP to Drop-precedence map."
+    ::= { ibDscpToDropPreMapEntry 2 }
+
+  ibDscpToDropPreMapReset   OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+       reset(1)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+          "This object is used to reset DSCP to Drop-precedence map to default value.
+          Read operation is meaningless."
+    ::= { ibDscpToDropPreMapEntry 3 }
+
+  ibDscpToCosMapTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDscpToCosMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "DSCP to COS map information."
+    ::= { ibLswQosMibObject 38 }
+
+  ibDscpToCosMapEntry OBJECT-TYPE
+    SYNTAX      IbDscpToCosMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "DSCP to COS map information."
+    INDEX {
+             ibDscpToCosMapDscpIndex
+          }
+    ::= { ibDscpToCosMapTable 1 }
+
+  IbDscpToCosMapEntry ::=
+    SEQUENCE
+    {
+      ibDscpToCosMapDscpIndex   Integer32,
+      ibDscpToCosMapCosValue    Integer32,
+      ibDscpToCosMapReset       INTEGER
+    }
+
+  ibDscpToCosMapDscpIndex   OBJECT-TYPE
+    SYNTAX      Integer32(0..63)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "DSCP index of DSCP to COS map."
+    ::= { ibDscpToCosMapEntry 1 }
+
+  ibDscpToCosMapCosValue   OBJECT-TYPE
+    SYNTAX      Integer32(0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+          "COS value of DSCP to COS map."
+    ::= { ibDscpToCosMapEntry 2 }
+
+  ibDscpToCosMapReset   OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+       reset(1)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+          "This object is used to reset DSCP to COS map to default value.
+          Read operation is meaningless."
+    ::= { ibDscpToCosMapEntry 3 }
+
+  ibDscpToDscpMapTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDscpToDscpMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "DSCP to DSCP map information."
+    ::= { ibLswQosMibObject 39 }
+
+    ibDscpToDscpMapEntry OBJECT-TYPE
+    SYNTAX      IbDscpToDscpMapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "DSCP to DSCP map information."
+    INDEX {
+             ibDscpToDscpMapDscpIndex
+          }
+    ::= { ibDscpToDscpMapTable 1 }
+
+  IbDscpToDscpMapEntry ::=
+    SEQUENCE
+    {
+      ibDscpToDscpMapDscpIndex  Integer32,
+      ibDscpToDscpMapDscpValue  Integer32,
+      ibDscpToDscpMapReset    INTEGER
+    }
+
+  ibDscpToDscpMapDscpIndex   OBJECT-TYPE
+    SYNTAX      Integer32(0..63)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+          "DSCP index of DSCP to DSCP map."
+    ::= { ibDscpToDscpMapEntry 1 }
+
+  ibDscpToDscpMapDscpValue   OBJECT-TYPE
+    SYNTAX      Integer32(0..63)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+          "DSCP value of DSCP to DSCP map."
+    ::= { ibDscpToDscpMapEntry 2 }
+
+  ibDscpToDscpMapReset    OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+       reset(1)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+          "This object is used to reset DSCP to DSCP map to default value.
+          Read operation is meaningless."
+    ::= { ibDscpToDscpMapEntry 3 }
+
+END

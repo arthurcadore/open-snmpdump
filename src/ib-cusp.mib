@@ -1,0 +1,205 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The IB-CUSP-MIB is a statistical MIB of CUSP module
+-- Reference:
+-- Version: V1.1
+-- History:
+-- V1.0 2020.07.20 The initial version, created by yizhigao.
+-- V1.1 2020-09-11 updated by yizhigao
+-- ============================================================================
+IB-CUSP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM  IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, Integer32
+        FROM SNMPv2-SMI
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB;
+
+-- ----------------------------------------------------------------------
+-- Node definitions
+-- ----------------------------------------------------------------------
+ibCusp MODULE-IDENTITY
+    LAST-UPDATED "202009111300Z"        -- Sep 11, 2020 at 13:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB contains information about the control-/user-plane separation trap"
+    REVISION "202009111300Z"
+    DESCRIPTION
+        "Modified the objects description information of ibCuspServerDisconnectReason,
+         ibCuspLocalIPaddressType, ibCuspRemoteIPaddressType,
+         ibCuspServerDisconnect and ibCuspClientDisconnect."
+    REVISION "202007201300Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { ibCommon 190 }
+
+-- ----------------------------------------------------------------------
+-- nodes defined
+-- ----------------------------------------------------------------------
+-- ----------------------------------------------------------------------
+-- ibCuspMibTrapOid Table
+-- ----------------------------------------------------------------------
+ibCuspMibTrap OBJECT IDENTIFIER ::= { ibCusp 1 }
+
+ibCuspMibTrapOid OBJECT IDENTIFIER ::= { ibCuspMibTrap 1 }
+
+ibCuspServerDisconnectReason OBJECT-TYPE
+    SYNTAX Integer32 (0..14)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Reason why this instance is disconnected from a controller
+             0: Connection became abnormal.
+             1: An SSL connection became abnormal.
+             2: BFD timed out.
+             3: Version negotiation failed.
+             4: Protocol disabled.
+             5: Connection became abnormal when messages were being sent.
+             6: Connection recovery failed.
+             7: Received invalid packets or incorrectly processed received packets.
+             8: Connection became abnormal when messages were being received.
+             9: VPN instance deleted.
+             10: A TCP connection became abnormal.
+             11: Heartbeat packets sending failed.
+             12: Heartbeat packets timed out.
+             13: Configuration changes.
+             14: Not enough memory."
+    ::= { ibCuspMibTrapOid 1 }
+
+ibCuspClientDisconnectReason OBJECT-TYPE
+    SYNTAX Integer32 (0..10)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Reason why this instance is disconnected from a controller
+             0: Connection became abnormal.
+             1: Configuration changes.
+             2: Heartbeat packets timed out.
+             3: Version negotiation failed.
+             4: Receiving Hello packets timed out.
+             5: A TCP connection became abnormal.
+             6: VPN instance deleted.
+             7: VRF service disabled.
+             8: Resource request failed.
+             9: BFD timed out.
+             10: Not enough memory."
+    ::= { ibCuspMibTrapOid 2 }
+
+ibCuspVpnInstanceName OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(0..31))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "VPN name for a CUSP connection."
+    ::= { ibCuspMibTrapOid 3 }
+
+ibCuspLocalIPaddressType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "IP addresses type of the CUSP connection local IP address."
+    ::= { ibCuspMibTrapOid 4 }
+
+ibCuspLocalIPaddress OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "CUSP connection local IP address.
+         The type of this address is determined by the value of
+         ibCuspLocalIPaddressType.
+        "
+    ::= { ibCuspMibTrapOid 5 }
+
+ibCuspRemoteIPaddressType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "IP addresses type of the CUSP connection remote IP address."
+    ::= { ibCuspMibTrapOid 6 }
+
+ibCuspRemoteIPaddress OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "CUSP connection remote IP address.
+         The type of this address is determined by the value of
+         ibCuspRemoteIPaddressType.
+        "
+    ::= { ibCuspMibTrapOid 7 }
+
+-- ----------------------------------------------------------------------
+-- ibCuspTraps Table
+-- ----------------------------------------------------------------------
+ibCuspTraps      OBJECT IDENTIFIER ::= { ibCuspMibTrap 2 }
+ibCuspTrapsPrefix      OBJECT IDENTIFIER ::= { ibCuspTraps 0 }
+
+ibCuspServerDisconnect NOTIFICATION-TYPE
+    OBJECTS {
+                ibCuspLocalIPaddressType,
+                ibCuspLocalIPaddress,
+                ibCuspRemoteIPaddressType,
+                ibCuspRemoteIPaddress,
+                ibCuspVpnInstanceName,
+                ibCuspServerDisconnectReason
+             }
+    STATUS current
+    DESCRIPTION
+        "This trap is generated when the controller is disconnected
+         from the agent. The disconnection reason is
+         ibCuspServerDisconnectReason."
+    ::= { ibCuspTrapsPrefix 1 }
+
+ibCuspServerConnect NOTIFICATION-TYPE
+    OBJECTS {
+                ibCuspLocalIPaddressType,
+                ibCuspLocalIPaddress,
+                ibCuspRemoteIPaddressType,
+                ibCuspRemoteIPaddress,
+                ibCuspVpnInstanceName
+             }
+    STATUS current
+    DESCRIPTION
+        "This trap is generated when the controller is connected
+         to the agent."
+    ::= { ibCuspTrapsPrefix 2 }
+
+ibCuspClientDisconnect NOTIFICATION-TYPE
+    OBJECTS {
+                ibCuspLocalIPaddressType,
+                ibCuspLocalIPaddress,
+                ibCuspRemoteIPaddressType,
+                ibCuspRemoteIPaddress,
+                ibCuspVpnInstanceName,
+                ibCuspClientDisconnectReason
+             }
+    STATUS current
+    DESCRIPTION
+        "This trap is generated when the agent is disconnected
+         from the controller. The disconnection reason is
+         ibCuspClientDisconnectReason."
+    ::= { ibCuspTrapsPrefix 3 }
+
+ibCuspClientConnect NOTIFICATION-TYPE
+    OBJECTS {
+                ibCuspLocalIPaddressType,
+                ibCuspLocalIPaddress,
+                ibCuspRemoteIPaddressType,
+                ibCuspRemoteIPaddress,
+                ibCuspVpnInstanceName
+             }
+    STATUS current
+    DESCRIPTION
+        "This trap is generated when the agent is connected
+         to the controller."
+    ::= { ibCuspTrapsPrefix 4 }
+END

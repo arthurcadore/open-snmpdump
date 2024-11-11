@@ -1,0 +1,295 @@
+-- =====================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:
+--      This MIB module is for the management of the Fibre Channel
+--      Trace Route functionality.
+-- Reference:
+-- Version: V1.0
+-- History:
+--      V1.0 Initial version created by liuyanchao 2013-02-27
+-- =====================================================================
+IB-FC-TRACE-ROUTE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, Unsigned32
+        FROM SNMPv2-SMI
+    RowStatus, TruthValue
+        FROM SNMPv2-TC
+    IbFcVsanIndex, IbFcAddressType, IbFcAddress, IbFcNameId,
+    IbFcStartOper
+        FROM IB-FC-TC-MIB
+    ibSan
+        FROM IB-VSAN-MIB;
+
+
+ibFcTraceRoute  MODULE-IDENTITY
+    LAST-UPDATED "201302270000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB module is for the management of the Fibre Channel
+         Trace Route functionality."
+    REVISION "201302270000Z"
+    DESCRIPTION
+        "Initial version of this MIB module."
+    ::= { ibSan 4 }
+
+ibFcTraceRouteObjects             OBJECT IDENTIFIER
+    ::= { ibFcTraceRoute 1 }
+ibFcTraceRouteConfigurations      OBJECT IDENTIFIER
+    ::= { ibFcTraceRouteObjects 1 }
+ibFcTraceRouteResults             OBJECT IDENTIFIER
+    ::= { ibFcTraceRouteObjects 2 }
+ibFcTraceRouteNotifications       OBJECT IDENTIFIER
+    ::= { ibFcTraceRouteObjects 3 }
+ibFcTraceRouteNotifyPrefix        OBJECT IDENTIFIER
+    ::= { ibFcTraceRouteNotifications 0 }
+
+-- Trace Route table.
+
+ibFcTraceRouteTable OBJECT-TYPE
+    SYNTAX        SEQUENCE OF IbFcTraceRouteEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "A table of trace route entries containing a group
+         of trace route requests that need to be executed
+         at the agent."
+    ::= { ibFcTraceRouteConfigurations 1 }
+
+ibFcTraceRouteEntry OBJECT-TYPE
+    SYNTAX        IbFcTraceRouteEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "A trace route request entry that needs to be executed
+         at the agent."
+    INDEX         { ibFcTraceRouteIndex }
+    ::= { ibFcTraceRouteTable 1 }
+
+
+IbFcTraceRouteEntry ::= SEQUENCE {
+    ibFcTraceRouteIndex              Unsigned32,
+    ibFcTraceRouteVsan               IbFcVsanIndex,
+    ibFcTraceRouteAddressType        IbFcAddressType,
+    ibFcTraceRouteAddress            IbFcAddress,
+    ibFcTraceRouteTimeout            Unsigned32,
+    ibFcTraceRouteAdminStatus        IbFcStartOper,
+    ibFcTraceRouteOperStatus         INTEGER,
+    ibFcTraceRouteAgeInterval        Unsigned32,
+    ibFcTraceRouteTrapOnCompletion   TruthValue,
+    ibFcTraceRouteRowStatus          RowStatus
+}
+
+ibFcTraceRouteIndex OBJECT-TYPE
+    SYNTAX        Unsigned32 (1..65535)
+    MAX-ACCESS    accessible-for-notify
+    STATUS        current
+    DESCRIPTION
+        "The index of the current trace route entry.  This object
+         uniquely identifies a trace route request entry in a
+         specified VSAN (Virtual Storage Area Network)."
+    ::= { ibFcTraceRouteEntry 1 }
+
+ibFcTraceRouteVsan OBJECT-TYPE
+    SYNTAX        IbFcVsanIndex
+    MAX-ACCESS    read-create
+    STATUS        current
+    DESCRIPTION
+        "The VSAN on which the trace route request will be
+         executed.  If the corresponding instance value of
+         ibFcTraceRouteOperStatus is 'inProgress', the
+         object cannot be modified."
+    ::= { ibFcTraceRouteEntry 2 }
+
+ibFcTraceRouteAddressType OBJECT-TYPE
+    SYNTAX        IbFcAddressType
+    MAX-ACCESS    read-create
+    STATUS        current
+    DESCRIPTION
+        "The type of the corresponding instance of
+         ibFcTraceRouteAddress object."
+    DEFVAL        { fcid }
+    ::= { ibFcTraceRouteEntry 3 }
+
+ibFcTraceRouteAddress OBJECT-TYPE
+    SYNTAX        IbFcAddress
+    MAX-ACCESS    read-create
+    STATUS        current
+    DESCRIPTION
+        "The address to which the route will be traced.
+         This object will contain an 8-octet WWN (World Wide Name),
+         if the value of the associated instance of
+         ibFcTraceRouteAddressType object is 'wwn'.
+         This object will contain a 3-octet Fibre Channel ID,
+         if the value of the associated instance of
+         ibFcTraceRouteAddressType object is 'fcid'."
+    ::= { ibFcTraceRouteEntry 4 }
+
+ibFcTraceRouteTimeout OBJECT-TYPE
+    SYNTAX        Unsigned32 (1..10)
+    UNITS         "seconds"
+    MAX-ACCESS    read-create
+    STATUS        current
+    DESCRIPTION
+        "The value of timeout for this trace route request.
+         If the corresponding instance value of
+         ibFcTraceRouteOperStatus object is 'inProgress',
+         this object cannot be modified."
+    DEFVAL        { 5 }
+    ::= { ibFcTraceRouteEntry 5 }
+
+ibFcTraceRouteAdminStatus OBJECT-TYPE
+    SYNTAX        IbFcStartOper
+    MAX-ACCESS    read-create
+    STATUS        current
+    DESCRIPTION
+        "The administrative status of each ibFcTraceRouteEntry.
+
+         The object has two values:
+         enable   -  Activate the entry.
+         disable  -  Deactivate the entry.
+
+         When the trace route entry is being executed, this object
+         cannot be modified.  If this object is being read, a value
+         of 'enable' will be returned.  When the execution finishes,
+         the value of this object will be set to 'disable'."
+    DEFVAL        { disable }
+    ::= { ibFcTraceRouteEntry 6 }
+
+ibFcTraceRouteOperStatus OBJECT-TYPE
+    SYNTAX        INTEGER {
+      inProgress(1),     -- trace route in progress
+      success(2),        -- trace route success
+      partialSuccess(3), -- trace route partial success
+      failure(4),        -- trace route failure
+      disabled(5)        -- trace route is disabled
+                  }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "This object indicates the operational status
+         of this ibFcTraceRouteEntry.
+
+         The value specifications are listed as follows:
+         inProgress     - Trace route is in progress.
+         success        - Trace route has succeeded.
+         partialSuccess - Trace route has partially succeeded.
+         failure        - Trace route has failed due to resource limitations.
+         disabled       - Trace route is disabled."
+    ::= { ibFcTraceRouteEntry 7 }
+
+ibFcTraceRouteAgeInterval OBJECT-TYPE
+    SYNTAX        Unsigned32 (500..900)
+    UNITS         "seconds"
+    MAX-ACCESS    read-create
+    STATUS        current
+    DESCRIPTION
+        "The interval time for an entry to age out
+         after a trace route test is completed."
+    DEFVAL        { 500 }
+    ::= { ibFcTraceRouteEntry 8 }
+
+ibFcTraceRouteTrapOnCompletion OBJECT-TYPE
+    SYNTAX        TruthValue
+    MAX-ACCESS    read-create
+    STATUS        current
+    DESCRIPTION
+        "This object indicates whether a ibFcTraceRouteCompletionNotify
+         notification should be generated when this trace route test
+         completes."
+    DEFVAL        { false }
+    ::= { ibFcTraceRouteEntry 9 }
+
+ibFcTraceRouteRowStatus OBJECT-TYPE
+    SYNTAX        RowStatus
+    MAX-ACCESS    read-create
+    STATUS        current
+    DESCRIPTION
+        "The status of this conceptual row."
+    ::= { ibFcTraceRouteEntry 10 }
+
+
+-- Trace Route Hops Table
+-- The ibFcTraceRouteHopsTable contains the hop-by-hop result
+-- of a trace route test performed for an entry in the
+-- ibFcTraceRouteTable.
+
+ibFcTraceRouteHopsTable OBJECT-TYPE
+    SYNTAX        SEQUENCE OF IbFcTraceRouteHopsEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "A table of trace route hop results.
+         This table indicates the hop-by-hop result of a trace route test
+         associated with an entry in the ibFcTraceRouteTable."
+    ::= { ibFcTraceRouteResults 1 }
+
+ibFcTraceRouteHopsEntry OBJECT-TYPE
+    SYNTAX        IbFcTraceRouteHopsEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "A trace route hop entry.
+
+         The first index member specifies the ibFcTraceRouteEntry
+         that an ibFcTraceRouteHopsEntry is associated with.  The
+         second index element identifies a hop in a trace route path.
+
+         In the case of a complete path being traced, entries
+         corresponding to an ibFcTraceRouteEntry are created
+         automatically in this table.
+
+         Each hop in the complete path will be listed in this table.
+
+         When an ibFcTraceRouteEntry is deleted or aged out, the
+         entries corresponding to the ibFcTraceRouteEntry in this
+         table are also deleted."
+    INDEX         { ibFcTraceRouteIndex, ibFcTraceRouteHopsIndex }
+    ::= { ibFcTraceRouteHopsTable 1 }
+
+IbFcTraceRouteHopsEntry ::= SEQUENCE {
+    ibFcTraceRouteHopsIndex           Unsigned32,
+    ibFcTraceRouteHopsAddr            IbFcNameId
+}
+
+ibFcTraceRouteHopsIndex OBJECT-TYPE
+    SYNTAX        Unsigned32 (1..65535)
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "This object indicates the hop index for a trace route hop.
+
+         Values for this object associated with the same
+         ibFcTraceRouteIndex MUST begin with 1 and
+         automatically increase by 1."
+    ::= { ibFcTraceRouteHopsEntry 1 }
+
+ibFcTraceRouteHopsAddr OBJECT-TYPE
+    SYNTAX        IbFcNameId
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "This object specifies the WWN of the device associated
+         with this hop."
+    ::= { ibFcTraceRouteHopsEntry 2 }
+
+-- Notifications
+
+ibFcTraceRouteCompletionNotify NOTIFICATION-TYPE
+    OBJECTS       { ibFcTraceRouteIndex,
+                    ibFcTraceRouteVsan,
+                    ibFcTraceRouteAddressType,
+                    ibFcTraceRouteAddress,
+                    ibFcTraceRouteOperStatus }
+    STATUS        current
+    DESCRIPTION
+        "When a trace route test is finished and the instance of
+         ibFcTraceRouteTrapOnCompletion associated with the test
+         is set to 'true', this notification occurred."
+    ::= { ibFcTraceRouteNotifyPrefix 1 }
+
+END

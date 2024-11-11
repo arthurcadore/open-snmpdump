@@ -1,0 +1,1926 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Private MIB File For LB
+-- Reference:
+-- Version: V1.7
+-- History:
+-- V1.0  2013-11 Initial Version created by y04448.
+-- V1.1  2014-04 updated by yuhongqiang.
+--       Change MAX-ACCESS from not-accessible to accessible-for-notify for the
+--       following MIB nodes:
+--         ibLBv2RSStatChassis, ibLBv2RSStatSlot, ibLBv2RSStatCpuid.
+--       Add the following MIB nodes:
+--         ibLBv2RSConnectionsLimit, ibLBv2RSConnectionsRateLimit,
+--         ibLBv2RSStatConnectionsRate.
+--       Add the following trap nodes:
+--         ibLBv2RSConnOverloadTrap, ibLBv2RSConnRecoveryTrap,
+--         ibLBv2RSConnsRateOverloadTrap, ibLBv2RSConnsRateRecoveryTrap.
+--       Change the description of ibLBv2VSConnsRateRecoveryTrap.
+-- V1.2  2016-11 modified description of ibLBv2VSActiveTrap, ibLBv2VSInactiveTrap,
+--         ibLBv2RSAvailableTrap, ibLBv2RSUnavailableTrap, ibLBv2SFActiveTrap,
+--         ibLBv2SFInactiveTrap, ibLBv2ActionInUseSFChangeTrap, ibLBv2VSInUseSFChangeTrap  by l08992.
+-- V1.3  2019-05 updated by m16825.
+--       Add the following MIB table:
+--         ibLBv2GlobalStatsTable
+--       Add the following MIB nodes:
+--         ibLBv2GlobalStatChassis,ibLBv2GlobalStatSlot,ibLBv2GlobalStatCpuid,
+--         ibLBv2GlobalStatTotalConnections, ibLBv2GlobalStatActiveConnections,ibLBv2GlobalStatConnectionsRate.
+-- V1.4  2021-11 updated by q08977
+--       Add the following MIB nodes:
+--         ibLBv2GlobalStatSSLActiveConn, ibLBv2GlobalStatSSLConnRate,
+--         ibLBv2VSSFCount, ibLBv2VSAddressIPv4, ibLBv2VSAddressIPv4MaskLen,
+--         ibLBv2VSAddressIPv6, ibLBv2VSAddressIPv6PrefixLen, ibLBv2VSPortNumber,
+--         ibLBv2VSStatThroughputIn, ibLBv2VSStatThroughputOut,
+--         ibLBv2VSStatSSLActiveConn, ibLBv2VSStatSSLConnRate,
+--         ibLBv2VSTotalCount, ibLBv2RSAddressIPv4, ibLBv2RSAddressIPv6,
+--         ibLBv2RSPortNumber, ibLBv2RSTotalCount, ibLBv2SFMemberCount,
+--         ibLBv2SFStatThroughputIn,ibLBv2SFStatThroughputOut,
+--         ibLBv2SFActiveMemberCount, ibLBv2SFTotalCount.
+-- V1.5 2021-12 updated by q08977
+--       Add the following MIB nodes:
+--         ibLBv2RSIndex, ibLBv2SFIndex, ibLBv2SFStatConnRate
+--       Add the following MIB table:
+--         ibLBv2SFMemberStatsTable
+-- V1.6 2022-8 updated by q08977
+--       Add the following MIB table:
+--         ibLBv2OverallStatsObjects, ibLBv2TrapObjects
+--       Add the following MIB nodes:
+--         ibLBv2RSProbeFailedTrap, ibLBv2RSProbeRecoveryTrap,
+--         ibLBv2SFMemberProbeFailedTrap, ibLBv2SFMemberProbeRecoveryTrap,
+--         ibLBv2LinkProbeFailedTrap, ibLBv2LinkProbeRecoveryTrap
+-- V1.7 2023-5 updated by q08977
+--       Add the following MIB table:
+--         ibLBv2SFMemberTable
+--       Add the following MIB nodes:
+--         ibLBv2RSState, ibLBv2SFMemberPortIndex,
+--         ibLBv2SFMemberSFName, ibLBv2SFMemberRSName,
+--         ibLBv2SFMemberPortNumber, ibLBv2SFMemberAddressIPv4,
+--         ibLBv2SFMemberAddressIPv6, ibLBv2SFMemberState,
+--         ibLBv2SFMemberAvailableTrap, ibLBv2SFMemberUnavailableTrap
+--       Modify the nodes of type InetAddress to type OCTET STRING
+-- =================================================================
+IB-LBV2-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    MODULE-IDENTITY, OBJECT-TYPE, Unsigned32, Counter64, NOTIFICATION-TYPE, Gauge32
+        FROM SNMPv2-SMI         -- [RFC2578]
+    RowStatus, DisplayString
+        FROM SNMPv2-TC          -- [RFC2578]
+    InetPortNumber
+        FROM INET-ADDRESS-MIB
+    CounterBasedGauge64
+        FROM HCNUM-TC;
+
+ibLBv2 MODULE-IDENTITY
+    LAST-UPDATED "202306010000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The private MIB file includes the LB information of
+         the device."
+    REVISION      "202306010000Z"
+    DESCRIPTION
+        "Add MIB nodes ibLBv2RSState, ibLBv2SFMemberPortIndex,
+         ibLBv2SFMemberSFName, ibLBv2SFMemberRSName,
+         ibLBv2SFMemberPortNumber, ibLBv2SFMemberAddressIPv4,
+         ibLBv2SFMemberAddressIPv6, ibLBv2SFMemberState,
+         ibLBv2SFMemberAvailableTrap, ibLBv2SFMemberUnavailableTrap.
+         Add MIB table ibLBv2SFMemberTable.
+         Modify the nodes of type InetAddress to type OCTET STRING."
+    REVISION      "202208220000Z"
+    DESCRIPTION
+        "Add MIB nodes ibLBv2RSProbeFailedTrap, ibLBv2RSProbeRecoveryTrap,
+         ibLBv2SFMemberProbeFailedTrap,ibLBv2SFMemberProbeRecoveryTrap,
+         ibLBv2LinkProbeFailedTrap, ibLBv2LinkProbeRecoveryTrap.
+         Add MIB table ibLBv2OverallStatsObjects, ibLBv2TrapObjects."
+    REVISION      "202112170000Z"
+    DESCRIPTION
+        "Add MIB nodes ibLBv2RSIndex, ibLBv2SFIndex, ibLBv2SFStatConnRate.
+         Add MIB table ibLBv2SFMemberStatsTable."
+    REVISION      "202111080000Z"
+    DESCRIPTION
+        "Add MIB nodes to ibLBv2GlobalStatsTable, ibLBv2VSTable,
+         ibLBv2VSStatsTable, ibLBv2RSTable and ibLBv2SFTable.
+         Add MIB nodes ibLBv2VSTotalCount, ibLBv2RSTotalCount and
+         ibLBv2SFTotalCount."
+    REVISION      "201905130000Z"
+    DESCRIPTION
+        "Add MIB table ibLBv2GlobalStatsTable."
+    REVISION      "201311010000Z"
+    DESCRIPTION
+        "Initial revision of this MIB module."
+    ::= { ibCommon 148 }
+
+ibLBv2GlobalObjects OBJECT IDENTIFIER ::= { ibLBv2 1 }
+
+ibLBv2TrapEnable OBJECT-TYPE
+    SYNTAX      INTEGER {
+         enabled     (1),
+         disabled    (2)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates whether the module of LB will generate
+         traps for events defined in this MIB.  'enabled'
+         results in SNMP traps; 'disabled', no traps are sent."
+    DEFVAL { enabled }
+    ::= { ibLBv2GlobalObjects 1 }
+
+ibLBv2GlobalStatsTable OBJECT-TYPE
+-- =================================================================
+--    LB Global Statistic Table
+-- =================================================================
+    SYNTAX SEQUENCE OF IbLBv2GlobalStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Global statistic table for LB."
+  ::= { ibLBv2GlobalObjects 2 }
+
+ibLBv2GlobalStatsEntry OBJECT-TYPE
+    SYNTAX      IbLBv2GlobalStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry contains the statistic information of LB."
+    INDEX {
+            ibLBv2GlobalStatChassis,
+            ibLBv2GlobalStatSlot,
+            ibLBv2GlobalStatCpuid
+          }
+    ::= { ibLBv2GlobalStatsTable 1 }
+
+IbLBv2GlobalStatsEntry  ::=
+    SEQUENCE{
+        ibLBv2GlobalStatChassis                  Unsigned32,
+        ibLBv2GlobalStatSlot                     Unsigned32,
+        ibLBv2GlobalStatCpuid                    Unsigned32,
+        ibLBv2GlobalStatTotalConnections         Counter64,
+        ibLBv2GlobalStatActiveConnections        Gauge32,
+        ibLBv2GlobalStatConnectionsRate          Gauge32,
+        ibLBv2GlobalStatSSLActiveConn            Gauge32,
+        ibLBv2GlobalStatSSLConnRate              Gauge32
+    }
+
+ibLBv2GlobalStatChassis OBJECT-TYPE
+    SYNTAX      Unsigned32(0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "ID of the device that holds the card."
+    ::= { ibLBv2GlobalStatsEntry 1 }
+
+ibLBv2GlobalStatSlot OBJECT-TYPE
+    SYNTAX      Unsigned32(0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Member ID of the card on device."
+    ::= { ibLBv2GlobalStatsEntry 2 }
+
+ibLBv2GlobalStatCpuid OBJECT-TYPE
+    SYNTAX      Unsigned32(0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "ID of the CPU on the card."
+    ::= { ibLBv2GlobalStatsEntry 3 }
+
+ibLBv2GlobalStatTotalConnections OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of connections of LB."
+    ::= { ibLBv2GlobalStatsEntry 4 }
+
+ibLBv2GlobalStatActiveConnections OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Active connections of LB."
+    ::= { ibLBv2GlobalStatsEntry 5}
+
+ibLBv2GlobalStatConnectionsRate OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "cps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Connection rate of LB."
+    ::= { ibLBv2GlobalStatsEntry 6 }
+
+ibLBv2GlobalStatSSLActiveConn OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Active SSL connections of LB."
+    ::= { ibLBv2GlobalStatsEntry 7}
+
+ibLBv2GlobalStatSSLConnRate OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "cps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "SSL connection rate of LB."
+    ::= { ibLBv2GlobalStatsEntry 8 }
+
+ibLBv2OverallStatsObjects OBJECT IDENTIFIER ::= { ibLBv2GlobalObjects 3 }
+
+ibLBv2OverallStatsActiveConn OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Active connections of LB for the entire device."
+    ::= { ibLBv2OverallStatsObjects 1 }
+
+ibLBv2OverallStatsConnRate OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "cps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Connection rate of LB for the entire device."
+    ::= { ibLBv2OverallStatsObjects 2 }
+
+ibLBv2ActionTables OBJECT IDENTIFIER ::= { ibLBv2 2 }
+-- =================================================================
+--    LB Action Table
+-- =================================================================
+ibLBv2ActionTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbLBv2ActionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Action table for LB."
+    ::= { ibLBv2ActionTables 1 }
+
+ibLBv2ActionEntry OBJECT-TYPE
+    SYNTAX      IbLBv2ActionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry contains the information of the action."
+    INDEX {
+            ibLBv2ActionName
+          }
+    ::= { ibLBv2ActionTable 1 }
+
+IbLBv2ActionEntry  ::=
+    SEQUENCE{
+        ibLBv2ActionName                     DisplayString,
+        ibLBv2ActionDefaultSF                DisplayString,
+        ibLBv2ActionBackupSF                 DisplayString,
+        ibLBv2ActionInUseSF                  DisplayString,
+        ibLBv2ActionRowStatus                RowStatus
+    }
+
+ibLBv2ActionName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..63))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of the action."
+    ::= { ibLBv2ActionEntry 1 }
+
+ibLBv2ActionDefaultSF OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..63))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Default server farm quoted by the action.  A zero length
+         string indicates no default server farm has been assigned."
+    ::= { ibLBv2ActionEntry 2 }
+
+ibLBv2ActionBackupSF OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..63))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Backup server farm quoted by the action.  A zero length
+         string indicates no backup server farm has been assigned."
+    ::= { ibLBv2ActionEntry 3 }
+
+ibLBv2ActionInUseSF OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Server farm in use quoted by the action."
+    ::= { ibLBv2ActionEntry 4 }
+
+ibLBv2ActionRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Status of this conceptual row.  When create an action, default
+         server farm and backup server farm are optional."
+    ::= { ibLBv2ActionEntry 5 }
+
+ibLBv2VSTables OBJECT IDENTIFIER ::= { ibLBv2 3 }
+-- =================================================================
+--    LB Virtual Server Table
+-- =================================================================
+ibLBv2VSTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbLBv2VSEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Virtual server table for LB."
+    ::= { ibLBv2VSTables 1 }
+
+ibLBv2VSEntry OBJECT-TYPE
+    SYNTAX      IbLBv2VSEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry contains the information of the virtual server."
+    INDEX {
+            ibLBv2VSName
+          }
+    ::= { ibLBv2VSTable 1 }
+
+IbLBv2VSEntry  ::=
+    SEQUENCE{
+        ibLBv2VSName                         DisplayString,
+        ibLBv2VSConnectionsLimit             Unsigned32,
+        ibLBv2VSConnectionsRateLimit         Unsigned32,
+        ibLBv2VSDefaultSF                    DisplayString,
+        ibLBv2VSBackupSF                     DisplayString,
+        ibLBv2VSInUseSF                      DisplayString,
+        ibLBv2VSRowStatus                    RowStatus,
+        ibLBv2VSSFCount                      Unsigned32,
+        ibLBv2VSAddressIPv4                  OCTET STRING,
+        ibLBv2VSAddressIPv4MaskLen           Unsigned32,
+        ibLBv2VSAddressIPv6                  OCTET STRING,
+        ibLBv2VSAddressIPv6PrefixLen         Unsigned32,
+        ibLBv2VSPortNumber                   InetPortNumber
+    }
+
+ibLBv2VSName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..63))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of the virtual server."
+    ::= { ibLBv2VSEntry 1 }
+
+ibLBv2VSConnectionsLimit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Max connections limit of the virtual server.  0 means there is
+         no limit."
+    DEFVAL { 0 }
+    ::= { ibLBv2VSEntry 2 }
+
+ibLBv2VSConnectionsRateLimit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Max connections rate limit of the virtual server.  0 means there is
+         no limit."
+    DEFVAL { 0 }
+    ::= { ibLBv2VSEntry 3 }
+
+ibLBv2VSDefaultSF OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..63))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Default server farm quoted by the virtual server.  A zero length
+         string indicates no default server farm has been assigned."
+    ::= { ibLBv2VSEntry 4 }
+
+ibLBv2VSBackupSF OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..63))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Backup server farm quoted by the virtual server.  A zero length
+         string indicates no backup server farm has been assigned."
+    ::= { ibLBv2VSEntry 5 }
+
+ibLBv2VSInUseSF OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Server farm in use quoted by the virtual server."
+    ::= { ibLBv2VSEntry 6 }
+
+ibLBv2VSRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Status of this conceptual row.  When create an virtual server,
+         default server farm and backup server farm are optional."
+    ::= { ibLBv2VSEntry 7 }
+
+ibLBv2VSSFCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of server farms associated with the virtual server."
+    ::= { ibLBv2VSEntry 8 }
+
+ibLBv2VSAddressIPv4  OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..4))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The IPv4 address of the virtual server.
+         Octets   Contents         Encoding
+          0-4     IPv4 address     network-byte order
+         A zero-length string value indicates that the address does not exist."
+    ::= { ibLBv2VSEntry 9 }
+
+ibLBv2VSAddressIPv4MaskLen  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The mask length for the virtual server IPv4 address."
+    ::= { ibLBv2VSEntry 10 }
+
+ibLBv2VSAddressIPv6  OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The IPv6 address of the virtual server.
+         Octets   Contents         Encoding
+          0-16    IPv6 address     network-byte order
+         A zero-length string value indicates that the address does not exist."
+    ::= { ibLBv2VSEntry 11 }
+
+ibLBv2VSAddressIPv6PrefixLen  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The prefix length for the virtual server IPv6 address."
+    ::= { ibLBv2VSEntry 12 }
+
+ibLBv2VSPortNumber  OBJECT-TYPE
+    SYNTAX      InetPortNumber
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port number of the virtual server."
+    ::= { ibLBv2VSEntry 13 }
+
+-- =================================================================
+--    LB Virtual Server Statistic Table
+-- =================================================================
+ibLBv2VSStatsTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbLBv2VSStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Virtual server statistic table for LB."
+    ::= { ibLBv2VSTables 2 }
+
+ibLBv2VSStatsEntry OBJECT-TYPE
+    SYNTAX      IbLBv2VSStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry contains the statistic information of the virtual server."
+    INDEX {
+            ibLBv2VSName,
+            ibLBv2VSStatChassis,
+            ibLBv2VSStatSlot,
+            ibLBv2VSStatCpuid
+          }
+    ::= { ibLBv2VSStatsTable 1 }
+
+IbLBv2VSStatsEntry  ::=
+    SEQUENCE{
+        ibLBv2VSStatChassis                  Unsigned32,
+        ibLBv2VSStatSlot                     Unsigned32,
+        ibLBv2VSStatCpuid                    Unsigned32,
+        ibLBv2VSStatTotalConnections         Counter64,
+        ibLBv2VSStatActiveConnections        Unsigned32,
+        ibLBv2VSStatClientSidePKTsIn         Counter64,
+        ibLBv2VSStatClientSidePKTsOut        Counter64,
+        ibLBv2VSStatDroppedPackets           Counter64,
+        ibLBv2VSStatClientSideBytesIn        Counter64,
+        ibLBv2VSStatClientSideBytesOut       Counter64,
+        ibLBv2VSStatReceivedRequests         Counter64,
+        ibLBv2VSStatSentResponses            Counter64,
+        ibLBv2VSStatConnectionsRate          Unsigned32,
+        ibLBv2VSStatThroughputIn             CounterBasedGauge64,
+        ibLBv2VSStatThroughputOut            CounterBasedGauge64,
+        ibLBv2VSStatSSLActiveConn            Unsigned32,
+        ibLBv2VSStatSSLConnRate              Unsigned32
+    }
+
+ibLBv2VSStatChassis OBJECT-TYPE
+    SYNTAX      Unsigned32(0..255)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "ID of the device that holds the card."
+    ::= { ibLBv2VSStatsEntry 1 }
+
+ibLBv2VSStatSlot OBJECT-TYPE
+    SYNTAX      Unsigned32(0..255)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Member ID of the card on device."
+    ::= { ibLBv2VSStatsEntry 2 }
+
+ibLBv2VSStatCpuid OBJECT-TYPE
+    SYNTAX      Unsigned32(0..255)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "ID of the CPU on the card."
+    ::= { ibLBv2VSStatsEntry 3 }
+
+ibLBv2VSStatTotalConnections OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of connections that the virtual server received."
+    ::= { ibLBv2VSStatsEntry 4 }
+
+ibLBv2VSStatActiveConnections OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Active connections that the virtual server received."
+    ::= { ibLBv2VSStatsEntry 5 }
+
+ibLBv2VSStatClientSidePKTsIn OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets that the virtual server received from client."
+    ::= { ibLBv2VSStatsEntry 6 }
+
+ibLBv2VSStatClientSidePKTsOut OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets that the virtual server sent to client."
+    ::= { ibLBv2VSStatsEntry 7 }
+
+ibLBv2VSStatDroppedPackets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets that the virtual server dropped."
+    ::= { ibLBv2VSStatsEntry 8 }
+
+ibLBv2VSStatClientSideBytesIn OBJECT-TYPE
+    SYNTAX      Counter64
+    UNITS       "byte"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of bytes that the virtual server received from client."
+    ::= { ibLBv2VSStatsEntry 9 }
+
+ibLBv2VSStatClientSideBytesOut OBJECT-TYPE
+    SYNTAX      Counter64
+    UNITS       "byte"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of bytes that the virtual server sent to client."
+    ::= { ibLBv2VSStatsEntry 10 }
+
+ibLBv2VSStatReceivedRequests OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of requests that the virtual server received from client."
+    ::= { ibLBv2VSStatsEntry 11 }
+
+ibLBv2VSStatSentResponses OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of responses that the virtual server sent to client."
+    ::= { ibLBv2VSStatsEntry 12 }
+
+ibLBv2VSStatConnectionsRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "cps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Connections rate of the virtual server."
+    ::= { ibLBv2VSStatsEntry 13 }
+
+ibLBv2VSStatThroughputIn OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    UNITS       "bps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Inbound packet throughput in bps."
+    ::= { ibLBv2VSStatsEntry 14 }
+
+ibLBv2VSStatThroughputOut OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    UNITS       "bps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Outbound packet throughput in bps."
+    ::= { ibLBv2VSStatsEntry 15 }
+
+ibLBv2VSStatSSLActiveConn OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Active SSL connections that the virtual server received."
+    ::= { ibLBv2VSStatsEntry 16 }
+
+ibLBv2VSStatSSLConnRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "cps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "SSL connection rate of the virtual server."
+    ::= { ibLBv2VSStatsEntry 17 }
+
+ibLBv2VSTotalCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of virtual servers."
+    ::= { ibLBv2VSTables 3 }
+
+ibLBv2RSTables OBJECT IDENTIFIER ::= { ibLBv2 4 }
+-- =================================================================
+--    LB Real Server Table
+-- =================================================================
+ibLBv2RSTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbLBv2RSEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Real server table for LB."
+    ::= { ibLBv2RSTables 1 }
+
+ibLBv2RSEntry OBJECT-TYPE
+    SYNTAX      IbLBv2RSEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry contains the information of the real server."
+    INDEX {
+            ibLBv2RSName
+          }
+    ::= { ibLBv2RSTable 1 }
+
+IbLBv2RSEntry  ::=
+    SEQUENCE{
+        ibLBv2RSName                         DisplayString,
+        ibLBv2RSRowStatus                    RowStatus,
+        ibLBv2RSConnectionsLimit             Unsigned32,
+        ibLBv2RSConnectionsRateLimit         Unsigned32,
+        ibLBv2RSAddressIPv4                  OCTET STRING,
+        ibLBv2RSAddressIPv6                  OCTET STRING,
+        ibLBv2RSPortNumber                   InetPortNumber,
+        ibLBv2RSIndex                        Unsigned32,
+        ibLBv2RSState                        INTEGER
+    }
+
+ibLBv2RSName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..63))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of the real server."
+    ::= { ibLBv2RSEntry 1 }
+
+ibLBv2RSRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Status of this conceptual row."
+    ::= { ibLBv2RSEntry 2 }
+
+ibLBv2RSConnectionsLimit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Max connections limit of the real server.  0 means there is
+         no limit."
+    DEFVAL { 0 }
+    ::= { ibLBv2RSEntry 3 }
+
+ibLBv2RSConnectionsRateLimit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Max connections rate limit of the real server.  0 means there is
+         no limit."
+    DEFVAL { 0 }
+    ::= { ibLBv2RSEntry 4 }
+
+ibLBv2RSAddressIPv4  OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..4))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The IPv4 address of the real server.
+         Octets   Contents         Encoding
+          0-4     IPv4 address     network-byte order
+         A zero-length string value indicates that the address does not exist."
+    ::= { ibLBv2RSEntry 5 }
+
+ibLBv2RSAddressIPv6  OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The IPv6 address of the real server.
+         Octets   Contents         Encoding
+          0-16    IPv6 address     network-byte order
+         A zero-length string value indicates that the address does not exist."
+    ::= { ibLBv2RSEntry 6 }
+
+ibLBv2RSPortNumber  OBJECT-TYPE
+    SYNTAX      InetPortNumber
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port number of the real server."
+    ::= { ibLBv2RSEntry 7 }
+
+ibLBv2RSIndex  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index of the real server."
+    ::= { ibLBv2RSEntry 8 }
+
+ibLBv2RSState  OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            inactive(1),
+            active(2),
+            slowShutdown(3),
+            shutdown(4),
+            probeFailed(5),
+            standby(6),
+            ramp(7),
+            busy(9),
+            unknown(10),
+            autoShutdown(11)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The state of the real server.
+         inactive        - initialization state;
+         active          - available state;
+         slowShutdown    - slow shutdown state;
+         shutdown        - shutdown state;
+         probeFailed     - probe failed state;
+         standby         - slow online standby state;
+         ramp            - slow online ramp state;
+         busy            - busy state;
+         unknown         - unknown state;
+         autoShutdown   - auto shutdown state."
+    ::= { ibLBv2RSEntry 9 }
+
+-- =================================================================
+--    LB Real Server Statistic Table
+-- =================================================================
+ibLBv2RSStatsTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbLBv2RSStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Real server statistic table for LB."
+    ::= { ibLBv2RSTables 2 }
+
+ibLBv2RSStatsEntry OBJECT-TYPE
+    SYNTAX      IbLBv2RSStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry contains the statistic information of the real server."
+    INDEX {
+            ibLBv2RSName,
+            ibLBv2RSStatChassis,
+            ibLBv2RSStatSlot,
+            ibLBv2RSStatCpuid
+          }
+    ::= { ibLBv2RSStatsTable 1 }
+
+IbLBv2RSStatsEntry  ::=
+    SEQUENCE{
+        ibLBv2RSStatChassis                  Unsigned32,
+        ibLBv2RSStatSlot                     Unsigned32,
+        ibLBv2RSStatCpuid                    Unsigned32,
+        ibLBv2RSStatTotalConnections         Counter64,
+        ibLBv2RSStatActiveConnections        Unsigned32,
+        ibLBv2RSStatServerSidePKTsIn         Counter64,
+        ibLBv2RSStatServerSidePKTsOut        Counter64,
+        ibLBv2RSStatDroppedPackets           Counter64,
+        ibLBv2RSStatServerSideBytesIn        Counter64,
+        ibLBv2RSStatServerSideBytesOut       Counter64,
+        ibLBv2RSStatReceivedRequests         Counter64,
+        ibLBv2RSStatSentResponses            Counter64,
+        ibLBv2RSStatConnectionsRate          Unsigned32
+    }
+
+ibLBv2RSStatChassis OBJECT-TYPE
+    SYNTAX      Unsigned32(0..255)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "ID of the device that holds the card."
+    ::= { ibLBv2RSStatsEntry 1 }
+
+ibLBv2RSStatSlot OBJECT-TYPE
+    SYNTAX      Unsigned32(0..255)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Member ID of the card on device."
+    ::= { ibLBv2RSStatsEntry 2 }
+
+ibLBv2RSStatCpuid OBJECT-TYPE
+    SYNTAX      Unsigned32(0..255)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "ID of the CPU on the card."
+    ::= { ibLBv2RSStatsEntry 3 }
+
+ibLBv2RSStatTotalConnections OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of connections that the real server received."
+    ::= { ibLBv2RSStatsEntry 4 }
+
+ibLBv2RSStatActiveConnections OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Active connections that the real server received."
+    ::= { ibLBv2RSStatsEntry 5 }
+
+ibLBv2RSStatServerSidePKTsIn OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets that the real server received from device."
+    ::= { ibLBv2RSStatsEntry 6 }
+
+ibLBv2RSStatServerSidePKTsOut OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets that the real server sent."
+    ::= { ibLBv2RSStatsEntry 7 }
+
+ibLBv2RSStatDroppedPackets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets that the real server dropped."
+    ::= { ibLBv2RSStatsEntry 8 }
+
+ibLBv2RSStatServerSideBytesIn OBJECT-TYPE
+    SYNTAX      Counter64
+    UNITS       "byte"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of bytes that the real server received from device."
+    ::= { ibLBv2RSStatsEntry 9 }
+
+ibLBv2RSStatServerSideBytesOut OBJECT-TYPE
+    SYNTAX      Counter64
+    UNITS       "byte"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of bytes that the real server sent."
+    ::= { ibLBv2RSStatsEntry 10 }
+
+ibLBv2RSStatReceivedRequests OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of requests that the real server received from device."
+    ::= { ibLBv2RSStatsEntry 11 }
+
+ibLBv2RSStatSentResponses OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of responses that the real server sent to device."
+    ::= { ibLBv2RSStatsEntry 12 }
+
+ibLBv2RSStatConnectionsRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "cps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Connections rate of the real server."
+    ::= { ibLBv2RSStatsEntry 13 }
+
+ibLBv2RSTotalCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of real servers."
+    ::= { ibLBv2RSTables 3 }
+
+ibLBv2SFTables OBJECT IDENTIFIER ::= { ibLBv2 5 }
+-- =================================================================
+--    LB Server Farm Table
+-- =================================================================
+ibLBv2SFTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbLBv2SFEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Server farm table for LB."
+    ::= { ibLBv2SFTables 1 }
+
+ibLBv2SFEntry OBJECT-TYPE
+    SYNTAX      IbLBv2SFEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry contains the information of the server farm."
+    INDEX {
+            ibLBv2SFName
+          }
+    ::= { ibLBv2SFTable 1 }
+
+IbLBv2SFEntry  ::=
+    SEQUENCE{
+        ibLBv2SFName                         DisplayString,
+        ibLBv2SFRowStatus                    RowStatus,
+        ibLBv2SFMemberCount                  Unsigned32,
+        ibLBv2SFActiveMemberCount            Unsigned32,
+        ibLBv2SFIndex                        Unsigned32
+    }
+
+ibLBv2SFName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..63))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of the server farm."
+    ::= { ibLBv2SFEntry 1 }
+
+ibLBv2SFRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Status of this conceptual row."
+    ::= { ibLBv2SFEntry 2 }
+
+ibLBv2SFMemberCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of members in the server farm."
+    ::= { ibLBv2SFEntry 3 }
+
+ibLBv2SFActiveMemberCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of active members in the server farm."
+    ::= { ibLBv2SFEntry 4 }
+
+ibLBv2SFIndex  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index of the server farm."
+    ::= { ibLBv2SFEntry 5 }
+
+-- =================================================================
+--    LB Server Farm Statistic Table
+-- =================================================================
+ibLBv2SFStatsTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbLBv2SFStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Server farm statistic for LB."
+    ::= { ibLBv2SFTables 2 }
+
+ibLBv2SFStatsEntry OBJECT-TYPE
+    SYNTAX      IbLBv2SFStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry contains the statistic information of the server farm."
+    INDEX {
+            ibLBv2SFName,
+            ibLBv2SFStatChassis,
+            ibLBv2SFStatSlot,
+            ibLBv2SFStatCpuid
+          }
+    ::= { ibLBv2SFStatsTable 1 }
+
+IbLBv2SFStatsEntry  ::=
+    SEQUENCE{
+        ibLBv2SFStatChassis                  Unsigned32,
+        ibLBv2SFStatSlot                     Unsigned32,
+        ibLBv2SFStatCpuid                    Unsigned32,
+        ibLBv2SFStatTotalConnections         Counter64,
+        ibLBv2SFStatActiveConnections        Unsigned32,
+        ibLBv2SFStatServerSidePKTsIn         Counter64,
+        ibLBv2SFStatServerSidePKTsOut        Counter64,
+        ibLBv2SFStatDroppedPackets           Counter64,
+        ibLBv2SFStatServerSideBytesIn        Counter64,
+        ibLBv2SFStatServerSideBytesOut       Counter64,
+        ibLBv2SFStatReceivedRequests         Counter64,
+        ibLBv2SFStatSentResponses            Counter64,
+        ibLBv2SFStatThroughputIn             CounterBasedGauge64,
+        ibLBv2SFStatThroughputOut            CounterBasedGauge64,
+        ibLBv2SFStatConnRate                 Gauge32
+    }
+
+ibLBv2SFStatChassis OBJECT-TYPE
+    SYNTAX      Unsigned32(0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "ID of the device that holds the card."
+    ::= { ibLBv2SFStatsEntry 1 }
+
+ibLBv2SFStatSlot OBJECT-TYPE
+    SYNTAX      Unsigned32(0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Member ID of the card on device."
+    ::= { ibLBv2SFStatsEntry 2 }
+
+ibLBv2SFStatCpuid OBJECT-TYPE
+    SYNTAX      Unsigned32(0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "ID of the CPU on the card."
+    ::= { ibLBv2SFStatsEntry 3 }
+
+ibLBv2SFStatTotalConnections OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of connections that the server farm received."
+    ::= { ibLBv2SFStatsEntry 4 }
+
+ibLBv2SFStatActiveConnections OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Active connections that the server farm received."
+    ::= { ibLBv2SFStatsEntry 5 }
+
+ibLBv2SFStatServerSidePKTsIn OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets that the server farm received from device."
+    ::= { ibLBv2SFStatsEntry 6 }
+
+ibLBv2SFStatServerSidePKTsOut OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets that the server farm sent."
+    ::= { ibLBv2SFStatsEntry 7 }
+
+ibLBv2SFStatDroppedPackets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets that the server farm dropped."
+    ::= { ibLBv2SFStatsEntry 8 }
+
+ibLBv2SFStatServerSideBytesIn OBJECT-TYPE
+    SYNTAX      Counter64
+    UNITS       "byte"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of bytes that the server farm received."
+    ::= { ibLBv2SFStatsEntry 9 }
+
+ibLBv2SFStatServerSideBytesOut OBJECT-TYPE
+    SYNTAX      Counter64
+    UNITS       "byte"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of bytes that the server farm sent."
+    ::= { ibLBv2SFStatsEntry 10 }
+
+ibLBv2SFStatReceivedRequests OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of requests that all real servers in the server farm
+         received from device."
+    ::= { ibLBv2SFStatsEntry 11 }
+
+ibLBv2SFStatSentResponses OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of responses that the server farm sent to device."
+    ::= { ibLBv2SFStatsEntry 12 }
+
+ibLBv2SFStatThroughputIn OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    UNITS       "bps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Inbound packet throughput in bps."
+    ::= { ibLBv2SFStatsEntry 13 }
+
+ibLBv2SFStatThroughputOut OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    UNITS       "bps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Outbound packet throughput in bps."
+    ::= { ibLBv2SFStatsEntry 14 }
+
+ibLBv2SFStatConnRate OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Connection rate of the server farm."
+    ::= { ibLBv2SFStatsEntry 15 }
+
+ibLBv2SFTotalCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of server farms."
+    ::= { ibLBv2SFTables 3 }
+
+-- =================================================================
+--    LB Server Farm Member Statistic Table
+-- =================================================================
+ibLBv2SFMemberStatsTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbLBv2SFMemberStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Server farm member statistics for LB."
+    ::= { ibLBv2SFTables 4 }
+
+ibLBv2SFMemberStatsEntry OBJECT-TYPE
+    SYNTAX      IbLBv2SFMemberStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry contains the statistics of the server farm
+         member."
+    INDEX {
+            ibLBv2SFIndex,
+            ibLBv2RSIndex,
+            ibLBv2SFMemberStatPortIndex,
+            ibLBv2SFMemberStatChassis,
+            ibLBv2SFMemberStatSlot,
+            ibLBv2SFMemberStatCpuid
+          }
+    ::= { ibLBv2SFMemberStatsTable 1 }
+
+IbLBv2SFMemberStatsEntry  ::=
+    SEQUENCE{
+        ibLBv2SFMemberStatPortIndex               InetPortNumber,
+        ibLBv2SFMemberStatChassis                 Unsigned32,
+        ibLBv2SFMemberStatSlot                    Unsigned32,
+        ibLBv2SFMemberStatCpuid                   Unsigned32,
+        ibLBv2SFMemberStatSFName                  DisplayString,
+        ibLBv2SFMemberStatRSName                  DisplayString,
+        ibLBv2SFMemberStatPortNumber              InetPortNumber,
+        ibLBv2SFMemberStatActiveConn              Gauge32,
+        ibLBv2SFMemberStatConnRate                Gauge32,
+        ibLBv2SFMemberStatThroughputIn            CounterBasedGauge64,
+        ibLBv2SFMemberStatThroughputOut           CounterBasedGauge64
+    }
+
+ibLBv2SFMemberStatPortIndex  OBJECT-TYPE
+    SYNTAX      InetPortNumber
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The port number of the server farm member."
+    ::= { ibLBv2SFMemberStatsEntry 1 }
+
+ibLBv2SFMemberStatChassis OBJECT-TYPE
+    SYNTAX      Unsigned32(0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "ID of the device that holds the card."
+    ::= { ibLBv2SFMemberStatsEntry 2 }
+
+ibLBv2SFMemberStatSlot OBJECT-TYPE
+    SYNTAX      Unsigned32(0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Member ID of the card on the device."
+    ::= { ibLBv2SFMemberStatsEntry 3 }
+
+ibLBv2SFMemberStatCpuid OBJECT-TYPE
+    SYNTAX      Unsigned32(0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "ID of the CPU on the card."
+    ::= { ibLBv2SFMemberStatsEntry 4 }
+
+ibLBv2SFMemberStatSFName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Server farm name of the server farm member."
+    ::= { ibLBv2SFMemberStatsEntry 5 }
+
+ibLBv2SFMemberStatRSName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Real server name of the server farm member."
+    ::= { ibLBv2SFMemberStatsEntry 6 }
+
+ibLBv2SFMemberStatPortNumber  OBJECT-TYPE
+    SYNTAX      InetPortNumber
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port number of the server farm member."
+    ::= { ibLBv2SFMemberStatsEntry 7 }
+
+ibLBv2SFMemberStatActiveConn OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Active connections that the server farm member received."
+    ::= { ibLBv2SFMemberStatsEntry 8 }
+
+ibLBv2SFMemberStatConnRate OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Connection rate of the server farm member."
+    ::= { ibLBv2SFMemberStatsEntry 9 }
+
+ibLBv2SFMemberStatThroughputIn OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    UNITS       "bps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Inbound packet throughput in bps."
+    ::= { ibLBv2SFMemberStatsEntry 10 }
+
+ibLBv2SFMemberStatThroughputOut OBJECT-TYPE
+    SYNTAX      CounterBasedGauge64
+    UNITS       "bps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Outbound packet throughput in bps."
+    ::= { ibLBv2SFMemberStatsEntry 11 }
+
+-- =================================================================
+--    LB Server Farm Member Table
+-- =================================================================
+ibLBv2SFMemberTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbLBv2SFMemberEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Server farm member table for LB."
+    ::= { ibLBv2SFTables 5 }
+
+ibLBv2SFMemberEntry OBJECT-TYPE
+    SYNTAX      IbLBv2SFMemberEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry contains the information of the server farm member."
+    INDEX {
+            ibLBv2SFIndex,
+            ibLBv2RSIndex,
+            ibLBv2SFMemberPortIndex
+          }
+    ::= { ibLBv2SFMemberTable 1 }
+
+IbLBv2SFMemberEntry  ::=
+    SEQUENCE{
+        ibLBv2SFMemberPortIndex              InetPortNumber,
+        ibLBv2SFMemberSFName                 DisplayString,
+        ibLBv2SFMemberRSName                 DisplayString,
+        ibLBv2SFMemberPortNumber             InetPortNumber,
+        ibLBv2SFMemberAddressIPv4            OCTET STRING,
+        ibLBv2SFMemberAddressIPv6            OCTET STRING,
+        ibLBv2SFMemberState                  INTEGER
+    }
+
+ibLBv2SFMemberPortIndex  OBJECT-TYPE
+    SYNTAX      InetPortNumber
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The port number of the server farm member."
+    ::= { ibLBv2SFMemberEntry 1 }
+
+ibLBv2SFMemberSFName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Server farm name of the server farm member."
+    ::= { ibLBv2SFMemberEntry 2 }
+
+ibLBv2SFMemberRSName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Real server name of the server farm member."
+    ::= { ibLBv2SFMemberEntry 3 }
+
+ibLBv2SFMemberPortNumber  OBJECT-TYPE
+    SYNTAX      InetPortNumber
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port number of the server farm member."
+    ::= { ibLBv2SFMemberEntry 4 }
+
+ibLBv2SFMemberAddressIPv4  OBJECT-TYPE
+    SYNTAX       OCTET STRING (SIZE (0..4))
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "The IPv4 address of the server farm member.
+         Octets   Contents         Encoding
+          0-4     IPv4 address     network-byte order
+         A zero-length string value indicates that the address does not exist."
+    ::= { ibLBv2SFMemberEntry 5 }
+
+ibLBv2SFMemberAddressIPv6  OBJECT-TYPE
+    SYNTAX       OCTET STRING (SIZE (0..16))
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "The IPv6 address of the server farm member.
+         Octets   Contents         Encoding
+          0-16    IPv6 address     network-byte order
+         A zero-length string value indicates that the address does not exist."
+    ::= { ibLBv2SFMemberEntry 6 }
+
+ibLBv2SFMemberState  OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            inactive(1),
+            active(2),
+            slowShutdown(3),
+            shutdown(4),
+            probeFailed(5),
+            standby(6),
+            ramp(7),
+            busy(9),
+            unknown(10),
+            autoShutdown(11),
+            needRecover(12)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The state of the server farm member.
+         inactive        - initialization state;
+         active          - available state;
+         slowShutdown    - slow shutdown state;
+         shutdown        - shutdown state;
+         probeFailed     - probe failed state;
+         standby         - slow online standby state;
+         ramp            - slow online ramp state;
+         busy            - busy state;
+         unknown         - unknown state;
+         autoShutdown    - auto shutdown state;
+         needRecover     - manual recovery required state."
+    ::= { ibLBv2SFMemberEntry 7 }
+
+-- =================================================================
+--    LB NOTIFICATION
+-- =================================================================
+ibLBv2Trap OBJECT IDENTIFIER ::= { ibLBv2 6 }
+
+ibLBv2TrapPrefix OBJECT IDENTIFIER ::= { ibLBv2Trap 0 }
+-- =================================================================
+--    Virtual Server Connections Overload Notification
+-- =================================================================
+ibLBv2VSConnOverloadTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2VSName,
+            ibLBv2VSConnectionsLimit,
+            ibLBv2VSStatChassis,
+            ibLBv2VSStatSlot,
+            ibLBv2VSStatCpuid,
+            ibLBv2VSStatActiveConnections
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2VSConnOverloadTrap notification is sent when
+         the number of active connections of the virtual server
+         has reached the upper limit. "
+    ::= { ibLBv2TrapPrefix 1 }
+
+-- =================================================================
+--    Virtual Server Connections Overload Recovery Notification
+-- =================================================================
+ibLBv2VSConnRecoveryTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2VSName,
+            ibLBv2VSConnectionsLimit,
+            ibLBv2VSStatChassis,
+            ibLBv2VSStatSlot,
+            ibLBv2VSStatCpuid,
+            ibLBv2VSStatActiveConnections
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2VSConnRecoveryTrap notification is sent when
+         the number of active connections of the virtual server
+         is less than the upper limit."
+    ::= { ibLBv2TrapPrefix 2 }
+-- =================================================================
+--    Virtual Server Connections Rate Overload Notification
+-- =================================================================
+ibLBv2VSConnsRateOverloadTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2VSName,
+            ibLBv2VSConnectionsRateLimit,
+            ibLBv2VSStatChassis,
+            ibLBv2VSStatSlot,
+            ibLBv2VSStatCpuid,
+            ibLBv2VSStatConnectionsRate
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2VSConnsRateOverloadTrap notification is sent
+         when the connection rate of the virtual server has
+         reached the upper limit."
+    ::= { ibLBv2TrapPrefix 3 }
+
+-- =================================================================
+--    Virtual Server Connections Rate Overload Recovery Notification
+-- =================================================================
+ibLBv2VSConnsRateRecoveryTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2VSName,
+            ibLBv2VSConnectionsRateLimit,
+            ibLBv2VSStatChassis,
+            ibLBv2VSStatSlot,
+            ibLBv2VSStatCpuid,
+            ibLBv2VSStatConnectionsRate
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2VSConnsRateRecoveryTrap notification is sent
+         when the connection rate of the virtual server is smaller than
+         the upper limit."
+    ::= { ibLBv2TrapPrefix 4 }
+
+-- =================================================================
+--    Virtual Server Active Notification
+-- =================================================================
+ibLBv2VSActiveTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2VSName
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2VSActiveTrap notification is sent when virtual
+         server status changes to active."
+    ::= { ibLBv2TrapPrefix 5 }
+
+-- =================================================================
+--    Virtual Server Inactive Notification
+-- =================================================================
+ibLBv2VSInactiveTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2VSName
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2VSInactiveTrap notification is sent when virtual
+         server status changes to inactive."
+    ::= { ibLBv2TrapPrefix 6 }
+
+-- =================================================================
+--    Real Server Available Notification
+-- =================================================================
+ibLBv2RSAvailableTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2RSName
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2RSAvailableTrap notification is sent when the status of
+         the real server changes to available."
+    ::= { ibLBv2TrapPrefix 7 }
+
+-- =================================================================
+--    Real Server Unavailable Notification
+-- =================================================================
+ibLBv2RSUnavailableTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2RSName
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2RSUnavailableTrap notification is sent when the status of
+         the real server changes to unavailable."
+    ::= { ibLBv2TrapPrefix 8 }
+
+-- =================================================================
+--    Server Farm Active Notification
+-- =================================================================
+ibLBv2SFActiveTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2SFName
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2SFActiveTrap notification is sent when the status of
+         the server farm changes to active."
+    ::= { ibLBv2TrapPrefix 9 }
+
+-- =================================================================
+--    Server Farm Inactive Notification
+-- =================================================================
+ibLBv2SFInactiveTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2SFName
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2SFInactiveTrap notification is sent when the status of
+         the server farm changes to inactive."
+    ::= { ibLBv2TrapPrefix 10 }
+
+-- =================================================================
+--    Server Farm In Use Of Action Changes Notification
+-- =================================================================
+ibLBv2ActionInUseSFChangeTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2ActionName,
+            ibLBv2ActionDefaultSF,
+            ibLBv2ActionBackupSF,
+            ibLBv2ActionInUseSF
+        }
+    STATUS      current
+    DESCRIPTION
+         "A ibLBv2ActionInUseSFChangeTrap notification is sent when the
+         server farm which is in use quoted by action changes."
+    ::= { ibLBv2TrapPrefix 11 }
+
+-- =================================================================
+--    Server Farm In Use Of Virtual Server Changes Notification
+-- =================================================================
+ibLBv2VSInUseSFChangeTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2VSName,
+            ibLBv2VSDefaultSF,
+            ibLBv2VSBackupSF,
+            ibLBv2VSInUseSF
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2VSInUseSFChangeTrap notification is sent when
+         the server farm which is in use quoted by virtual server
+         changes."
+    ::= { ibLBv2TrapPrefix 12 }
+
+-- =================================================================
+--    Real Server Connections Overload Notification
+-- =================================================================
+ibLBv2RSConnOverloadTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2RSName,
+            ibLBv2RSConnectionsLimit,
+            ibLBv2RSStatChassis,
+            ibLBv2RSStatSlot,
+            ibLBv2RSStatCpuid,
+            ibLBv2RSStatActiveConnections
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2RSConnOverloadTrap notification is sent when
+         the number of active connections of the real server
+         has reached the upper limit. "
+    ::= { ibLBv2TrapPrefix 13 }
+
+-- =================================================================
+--    Real Server Connections Overload Recovery Notification
+-- =================================================================
+ibLBv2RSConnRecoveryTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2RSName,
+            ibLBv2RSConnectionsLimit,
+            ibLBv2RSStatChassis,
+            ibLBv2RSStatSlot,
+            ibLBv2RSStatCpuid,
+            ibLBv2RSStatActiveConnections
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2RSConnRecoveryTrap notification is sent when
+         the number of active connections of the real server
+         is less than the upper limit."
+    ::= { ibLBv2TrapPrefix 14 }
+-- =================================================================
+--    Real Server Connections Rate Overload Notification
+-- =================================================================
+ibLBv2RSConnsRateOverloadTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2RSName,
+            ibLBv2RSConnectionsRateLimit,
+            ibLBv2RSStatChassis,
+            ibLBv2RSStatSlot,
+            ibLBv2RSStatCpuid,
+            ibLBv2RSStatConnectionsRate
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2RSConnsRateOverloadTrap notification is sent
+         when the connection rate of the real server has
+         reached the upper limit."
+    ::= { ibLBv2TrapPrefix 15 }
+
+-- =================================================================
+--    Real Server Connections Rate Overload Recovery Notification
+-- =================================================================
+ibLBv2RSConnsRateRecoveryTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2RSName,
+            ibLBv2RSConnectionsRateLimit,
+            ibLBv2RSStatChassis,
+            ibLBv2RSStatSlot,
+            ibLBv2RSStatCpuid,
+            ibLBv2RSStatConnectionsRate
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2RSConnsRateRecoveryTrap notification is sent
+         when the connection rate of the real server is smaller than
+         the upper limit."
+    ::= { ibLBv2TrapPrefix 16 }
+
+-- =================================================================
+--    Real Server Probe Failed Notification
+-- =================================================================
+ibLBv2RSProbeFailedTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2RSName,
+            ibLBv2TrapObjProbeName
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2RSProbeFailedTrap notification is sent when the
+         state of the probe associated with the real server changes
+         to failed."
+    ::= { ibLBv2TrapPrefix 17 }
+
+-- =================================================================
+--    Real Server Probe Recovery Notification
+-- =================================================================
+ibLBv2RSProbeRecoveryTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2RSName,
+            ibLBv2TrapObjProbeName
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2RSProbeRecoveryTrap notification is sent when the
+         state of the probe associated with the real server changes
+         from failed to succeeded."
+    ::= { ibLBv2TrapPrefix 18 }
+
+-- =================================================================
+--    Server Farm member Probe Failed Notification
+-- =================================================================
+ibLBv2SFMemberProbeFailedTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2SFName,
+            ibLBv2RSName,
+            ibLBv2TrapObjSFMemberPort,
+            ibLBv2TrapObjProbeName
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2SFMemberProbeFailedTrap notification is sent when the
+         state of the probe associated with the server farm member changes
+         to failed."
+    ::= { ibLBv2TrapPrefix 19 }
+
+-- =================================================================
+--    Server Farm member Probe Recovery Notification
+-- =================================================================
+ibLBv2SFMemberProbeRecoveryTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2SFName,
+            ibLBv2RSName,
+            ibLBv2TrapObjSFMemberPort,
+            ibLBv2TrapObjProbeName
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2SFMemberProbeRecoveryTrap notification is sent when the
+         state of the probe associated with the server farm member changes
+         from failed to succeeded."
+    ::= { ibLBv2TrapPrefix 20 }
+
+-- =================================================================
+--   Link Probe Failed Notification
+-- =================================================================
+ibLBv2LinkProbeFailedTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2TrapObjLinkName,
+            ibLBv2TrapObjProbeName
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2LinkProbeFailedTrap notification is sent when the
+         state of the probe associated with the link changes to failed."
+    ::= { ibLBv2TrapPrefix 21 }
+
+-- =================================================================
+--    Link Probe Recovery Notification
+-- =================================================================
+ibLBv2LinkProbeRecoveryTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2TrapObjLinkName,
+            ibLBv2TrapObjProbeName
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2LinkProbeRecoveryTrap notification is sent when the
+         state of the probe associated with the link changes from failed
+         to succeeded."
+    ::= { ibLBv2TrapPrefix 22 }
+
+-- =================================================================
+--    Server Farm Member Available Notification
+-- =================================================================
+ibLBv2SFMemberAvailableTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2SFName,
+            ibLBv2RSName,
+            ibLBv2TrapObjSFMemberPort,
+            ibLBv2SFMemberState
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2SFMemberAvailableTrap notification is sent when the
+         status of the server farm member changes to available."
+    ::= { ibLBv2TrapPrefix 23 }
+
+-- =================================================================
+--    Server Farm Member Unavailable Notification
+-- =================================================================
+ibLBv2SFMemberUnavailableTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLBv2SFName,
+            ibLBv2RSName,
+            ibLBv2TrapObjSFMemberPort,
+            ibLBv2SFMemberState
+        }
+    STATUS      current
+    DESCRIPTION
+        "A ibLBv2SFMemberUnavailableTrap notification is sent when the
+         status of the real server changes to unavailable."
+    ::= { ibLBv2TrapPrefix 24 }
+
+ibLBv2TrapObjects OBJECT IDENTIFIER ::= { ibLBv2Trap 1 }
+
+ibLBv2TrapObjLinkName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..63))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of the link."
+    ::= { ibLBv2TrapObjects 1 }
+
+ibLBv2TrapObjProbeName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..63))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of the probe."
+    ::= { ibLBv2TrapObjects 2 }
+
+ibLBv2TrapObjSFMemberPort OBJECT-TYPE
+    SYNTAX      InetPortNumber
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Port number of the server farm member."
+    ::= { ibLBv2TrapObjects 3 }
+
+END

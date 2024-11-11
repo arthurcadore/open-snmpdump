@@ -1,0 +1,122 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: IP Multicast MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2021-12-14 Created by Ma Xiaozhong
+-- ==================================================================
+--
+-- Variables and types be imported
+--
+-- ==================================================================
+IB-IPMCAST-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+
+    MODULE-IDENTITY,OBJECT-TYPE,NOTIFICATION-TYPE,Unsigned32
+        FROM SNMPv2-SMI
+
+    ibCommon
+        FROM IB-OID-MIB
+
+    InetAddressType
+        FROM INET-ADDRESS-MIB;
+
+ibIpMcast MODULE-IDENTITY
+    LAST-UPDATED "202112141400Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "IP Multicast Management MIB"
+    -- Revision history.
+    REVISION "202112141400Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 212 }
+
+--
+-- definition
+--
+ibIpMcastNotifications OBJECT IDENTIFIER ::= { ibIpMcast 0 }
+ibIpMcastObjects OBJECT IDENTIFIER ::= { ibIpMcast 1 }
+ibIpMcastTrapBindObjects OBJECT IDENTIFIER ::= { ibIpMcast 2 }
+
+
+--
+-- notification configuration
+--
+
+ibIpMcastEntryLimitType  OBJECT-TYPE
+    SYNTAX     INTEGER {
+                         starGroup(1),
+                         sourceGroup(2)
+    }
+    MAX-ACCESS accessible-for-notify
+    STATUS     current
+    DESCRIPTION
+        "This variable defines IP multicast entry limit type.
+        The star-group is (*, G) entry. The source-group is (S, G) entry."
+    ::= { ibIpMcastTrapBindObjects 1 }
+
+ibIpMcastAddressFamily  OBJECT-TYPE
+    SYNTAX     InetAddressType
+    MAX-ACCESS accessible-for-notify
+    STATUS     current
+    DESCRIPTION
+        "It is address family of IP multicast."
+    ::= { ibIpMcastTrapBindObjects 2 }
+
+ibIpMcastEntryLimitCount OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS     current
+    DESCRIPTION
+        "It is the IP multicast entry limit value."
+    ::= { ibIpMcastTrapBindObjects 3 }
+
+ibIpMcastEntryLimitReasonType OBJECT-TYPE
+    SYNTAX     INTEGER {
+                         entryDeleted(1),
+                         configurationChanged(2)
+        }
+    MAX-ACCESS accessible-for-notify
+    STATUS     current
+    DESCRIPTION
+        "Describe the reason for trap sending:
+        The 'entryDeleted' status indicates that the reason is table
+        entry deletion.
+        The 'configurationChanged' status indicates that the reason
+        is that the."
+    ::= { ibIpMcastTrapBindObjects 4 }
+
+--
+-- trap
+--
+ibIpMcastEntryExceed  NOTIFICATION-TYPE
+    OBJECTS { ibIpMcastEntryLimitType,
+              ibIpMcastAddressFamily,
+              ibIpMcastEntryLimitCount
+            }
+    STATUS    current
+    DESCRIPTION
+            "The ibMcastEntryExceed is generated when the IP multicast
+            entries
+            exceeded global entry limit of IP multicast routing-table."
+    ::= { ibIpMcastNotifications 1 }
+
+ibIpMcastEntryExceedClear  NOTIFICATION-TYPE
+    OBJECTS { ibIpMcastEntryLimitType,
+              ibIpMcastAddressFamily,
+              ibIpMcastEntryLimitCount,
+              ibIpMcastEntryLimitReasonType
+            }
+    STATUS    current
+    DESCRIPTION
+            "The ibMcastEntryExceedClear is generated when the IP multicast entries
+            fell below global entry limit of IP multicast routing-table."
+    ::= { ibIpMcastNotifications 2 }
+END

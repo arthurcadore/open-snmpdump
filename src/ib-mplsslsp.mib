@@ -1,0 +1,103 @@
+-- =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Multiprotocol Label Switching Static Lsp MIB
+-- Reference:
+-- Version: V1.1
+-- History:
+--   V1.0 2022-06-01 Initial version Created by Zhouwan
+--   V1.1 2023-03-14 Modified by Long lewen, Modified ibMplsExtNotifications
+-- =============================================================================
+IB-MPLSSLSP-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    ibCommon
+        FROM IB-OID-MIB
+    ;
+
+-- =============================================================================
+-- module identity part
+-- =============================================================================
+ibMplsSlsp MODULE-IDENTITY
+    LAST-UPDATED
+        "202303141400Z"   -- Mar 14, 2023 at 14:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Multiprotocol Label Switching Static Lsp MIB"
+    REVISION
+        "202303141400Z"   -- Mar 14, 2023 at 14:00 GMT
+    DESCRIPTION
+        "Modified ibMplsExtNotifications"
+    REVISION
+        "202206070920Z"   -- June 07, 2022 at 09:20 GMT
+    DESCRIPTION
+        "Initial version of this MIB."
+    ::= { ibCommon 230 }
+
+-- =============================================================================
+-- Top level components of this MIB module.
+-- =============================================================================
+ibMplsSlspNotifications OBJECT IDENTIFIER ::= { ibMplsSlsp 0 }
+
+ibMplsSlspObjects      OBJECT IDENTIFIER  ::= { ibMplsSlsp 1 }
+
+ibMplsSlspScalarGroup   OBJECT IDENTIFIER ::= { ibMplsSlspObjects 1 }
+
+ibMplsSlspBaseInfo    OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..127))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The base information of MPLS static LSP."
+    ::= { ibMplsSlspScalarGroup 1 }
+
+ibMplsSlspExtInfo    OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..127))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The external information of MPLS static LSP"
+    ::= { ibMplsSlspScalarGroup 2 }
+
+-- =============================================================================
+-- Notifications
+-- =============================================================================
+ibMplsSlspDown  NOTIFICATION-TYPE
+    OBJECTS {
+            ibMplsSlspBaseInfo,
+            ibMplsSlspExtInfo
+            }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the Static LSP changed to Down."
+    ::= { ibMplsSlspNotifications 1 }
+
+ibMplsSlspUp  NOTIFICATION-TYPE
+    OBJECTS {
+            ibMplsSlspBaseInfo,
+            ibMplsSlspExtInfo
+            }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the Static LSP changed to Up."
+    ::= { ibMplsSlspNotifications 2 }
+
+ibMplsSlspLabelDup  NOTIFICATION-TYPE
+    OBJECTS {
+            ibMplsSlspBaseInfo,
+            ibMplsSlspExtInfo
+            }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the Incoming label is duplicate."
+    ::= { ibMplsSlspNotifications 3 }
+
+-- =============================================================================
+-- End of notifications.
+-- =============================================================================
+
+END

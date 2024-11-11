@@ -1,0 +1,417 @@
+-- =====================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: CFD MIB
+-- Reference:
+-- Version: V1.3
+-- History:
+--   V1.0 Initial version, created by Wang Meng
+--   V1.1 2022-06-28 Updated by Zheng Jun
+--     Add ibCfdUnexpectedMDLevel, ibCfdMismerge, ibCfdLOC
+--     trap info
+--   V1.2 2022-07-18 Updated by Zheng Jun
+--     Add ibCfdUnexpectedMEP, ibCfdUnexpectedPeriod, ibCfdExceptionMACStatus,
+--     ibCfdRDI, ibCfdAisDefectAlarm, ibCfdAisDefectAlarmRecovery,
+--     trap info
+--   V1.3 2022-10-10 Updated by Zheng Jun
+--     Add ibCfdSlmStatisticClear trap info
+-- =====================================================================
+IB-CFD-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Integer32, Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI;
+
+ibCfd MODULE-IDENTITY
+    LAST-UPDATED "202210101139Z"    -- OCT 10, 2022 at 11:39 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Add ibCfdSlmStatisticClear trap info."
+    REVISION "202210101139Z"
+    DESCRIPTION
+        "Add ibCfdUnexpectedMEP, ibCfdUnexpectedPeriod,
+        ibCfdExceptionMACStatus and other trap info."
+    REVISION "202207181021Z"
+    DESCRIPTION
+        "Add ibCfdUnexpectedMDLevel, ibCfdMismerge and ibCfdLOC trap info."
+    REVISION "202206281928Z"
+    DESCRIPTION
+        "The Connectivity Fault Detection(CFD) extend MIB."
+    REVISION "202107191126Z"
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 207 }
+
+-- trap --
+ibCfdTrap      OBJECT IDENTIFIER ::= { ibCfd 1 }
+
+-- All trap definitions should be placed under this object.
+ibCfdTrapPrex OBJECT IDENTIFIER ::= { ibCfdTrap 0 }
+
+ibCfdTwowayDelay NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMepId,
+            ibCfdSrvId,
+            ibCfdTimeThreshold
+        }
+    STATUS       current
+    DESCRIPTION
+        "The result of two-way delay-measurement exceeded the threshold."
+ ::= { ibCfdTrapPrex 1 }
+
+ibCfdTwowayDelayRecovery NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMepId,
+            ibCfdSrvId,
+            ibCfdTimeThreshold
+        }
+    STATUS       current
+    DESCRIPTION
+        "The result of two-way delay-measurement is under the threshold."
+    ::= { ibCfdTrapPrex 2 }
+
+ibCfdSlmStatistic NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdFrameEnd,
+            ibCfdMepId,
+            ibCfdSrvId,
+            ibCfdStatisticThreshold
+        }
+     STATUS       current
+     DESCRIPTION
+         "The result of one-way LM is exceeded the threshold."
+     ::= { ibCfdTrapPrex 3 }
+
+ibCfdUnexpectedMDLevel NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMdIndex,
+            ibCfdMdName,
+            ibCfdMaIndex,
+            ibCfdMaName,
+            ibCfdMepId
+        }
+     STATUS       current
+     DESCRIPTION
+         "The MD level carried in a CCM sent by the RMEP
+          was different from that specified on the MEP."
+     ::= { ibCfdTrapPrex 4 }
+
+ibCfdMismerge NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMdIndex,
+            ibCfdMdName,
+            ibCfdMaIndex,
+            ibCfdMaName,
+            ibCfdMepId
+        }
+     STATUS       current
+     DESCRIPTION
+         "An MD or MA name carried in a CCM sent by the
+          RMEP was different from that specified on the MEP."
+     ::= { ibCfdTrapPrex 5 }
+
+ibCfdLoc NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMdIndex,
+            ibCfdMdName,
+            ibCfdMaIndex,
+            ibCfdMaName,
+            ibCfdMepId,
+            ibCfdRMepId
+        }
+     STATUS       current
+     DESCRIPTION
+         "The MEP received no CCM in an interval of 3.5
+          times the CCM sending interval."
+     ::= { ibCfdTrapPrex 6 }
+
+ibCfdUnexpectedMEP NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMdIndex,
+            ibCfdMdName,
+            ibCfdMaIndex,
+            ibCfdMaName,
+            ibCfdMepId
+        }
+     STATUS       current
+     DESCRIPTION
+         "The MEP received a CCM with unexpected MEP."
+     ::= { ibCfdTrapPrex 7 }
+
+ibCfdUnexpectedPeriod NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMdIndex,
+            ibCfdMdName,
+            ibCfdMaIndex,
+            ibCfdMaName,
+            ibCfdMepId,
+            ibCfdRMepId
+        }
+     STATUS       current
+     DESCRIPTION
+         "The MEP received a CCM with unexpected period."
+     ::= { ibCfdTrapPrex 8 }
+
+ibCfdExceptionMACStatus NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMdIndex,
+            ibCfdMdName,
+            ibCfdMaIndex,
+            ibCfdMaName,
+            ibCfdMepId,
+            ibCfdRMepId
+        }
+     STATUS       current
+     DESCRIPTION
+         "The MEP received a CCM with the Port Status TLV or
+         Interface Status TLV reporting an error status."
+     ::= { ibCfdTrapPrex 9 }
+
+ibCfdRDI NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMdIndex,
+            ibCfdMdName,
+            ibCfdMaIndex,
+            ibCfdMaName,
+            ibCfdMepId,
+            ibCfdRMepId
+        }
+     STATUS       current
+     DESCRIPTION
+         "The MEP received a CCM with RDI flag set."
+     ::= { ibCfdTrapPrex 10 }
+
+ibCfdAisDefectAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMdIndex,
+            ibCfdMdName,
+            ibCfdMaIndex,
+            ibCfdMaName,
+            ibCfdMepId
+        }
+     STATUS       current
+     DESCRIPTION
+         "MEP enters AIS defect condition."
+     ::= { ibCfdTrapPrex 11 }
+
+ibCfdAisDefectAlarmRecovery NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMdIndex,
+            ibCfdMdName,
+            ibCfdMaIndex,
+            ibCfdMaName,
+            ibCfdMepId
+        }
+     STATUS       current
+     DESCRIPTION
+         "MEP exits AIS defect condition."
+     ::= { ibCfdTrapPrex 12 }
+
+ibCfdUnexpectedMDLevelClear NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMdIndex,
+            ibCfdMdName,
+            ibCfdMaIndex,
+            ibCfdMaName,
+            ibCfdMepId
+        }
+     STATUS       current
+     DESCRIPTION
+         "MEP did not receive any CCM with
+         unexpected MD level before timeout."
+     ::= { ibCfdTrapPrex 13 }
+
+ibCfdMismergeClear NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMdIndex,
+            ibCfdMdName,
+            ibCfdMaIndex,
+            ibCfdMaName,
+            ibCfdMepId
+        }
+     STATUS       current
+     DESCRIPTION
+         "MEP did not receive any CCM with
+         unexpected MEG ID before timeout."
+     ::= { ibCfdTrapPrex 14 }
+
+ibCfdUnexpectedMEPClear NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMdIndex,
+            ibCfdMdName,
+            ibCfdMaIndex,
+            ibCfdMaName,
+            ibCfdMepId
+        }
+     STATUS       current
+     DESCRIPTION
+         "MEP did not receive any CCM
+         with unexpected MEP before timeout."
+     ::= { ibCfdTrapPrex 15 }
+
+ibCfdUnexpectedPeriodClear NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMdIndex,
+            ibCfdMdName,
+            ibCfdMaIndex,
+            ibCfdMaName,
+            ibCfdMepId,
+            ibCfdRMepId
+        }
+     STATUS       current
+     DESCRIPTION
+         "MEP did not receive any CCM with
+         unexpected period before timeout."
+     ::= { ibCfdTrapPrex 16 }
+
+ibCfdLOCClear NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMdIndex,
+            ibCfdMdName,
+            ibCfdMaIndex,
+            ibCfdMaName,
+            ibCfdMepId,
+            ibCfdRMepId
+        }
+     STATUS       current
+     DESCRIPTION
+         "MEP is reconnected with the remote MEP."
+     ::= { ibCfdTrapPrex 17 }
+
+ibCfdRDIClear NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMdIndex,
+            ibCfdMdName,
+            ibCfdMaIndex,
+            ibCfdMaName,
+            ibCfdMepId,
+            ibCfdRMepId
+        }
+     STATUS       current
+     DESCRIPTION
+         "MEP received a CCM with RDI flag cleared."
+     ::= { ibCfdTrapPrex 18 }
+
+ibCfdExceptionMACStatusClear NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdMdIndex,
+            ibCfdMdName,
+            ibCfdMaIndex,
+            ibCfdMaName,
+            ibCfdMepId,
+            ibCfdRMepId
+        }
+     STATUS       current
+     DESCRIPTION
+         "MEP received a CCM with the Port Status TLV or
+         Interface Status TLV reporting an error status cleared"
+     ::= { ibCfdTrapPrex 19 }
+
+ibCfdSlmStatisticClear NOTIFICATION-TYPE
+    OBJECTS
+        {   ibCfdFrameEnd,
+            ibCfdMepId,
+            ibCfdSrvId,
+            ibCfdStatisticThreshold
+        }
+     STATUS       current
+     DESCRIPTION
+         "The indexes in the one-way LM result fell blow the threshold."
+     ::= { ibCfdTrapPrex 20 }
+
+-- All objects used for TRAP only are defined here.
+ibCfdTrapOjbects OBJECT IDENTIFIER ::= { ibCfdTrap 1 }
+
+ibCfdMepId OBJECT-TYPE
+    SYNTAX  Integer32(1..8191)
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The MEP ID."
+    ::= { ibCfdTrapOjbects 1 }
+
+ibCfdSrvId OBJECT-TYPE
+    SYNTAX  Integer32(1..32767)
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The service instance ID."
+    ::= { ibCfdTrapOjbects 2 }
+
+ibCfdTimeThreshold OBJECT-TYPE
+    SYNTAX  Integer32
+    UNITS "microseconds"
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The delay time threshold."
+    ::= { ibCfdTrapOjbects 3 }
+
+ibCfdFrameEnd OBJECT-TYPE
+    SYNTAX  INTEGER {
+            nearEnd(1),
+            farEnd(2)
+     }
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The loose frame end of MEP.
+        nearEnd: loose frame on source MEP.
+        farEnd: loose frame on target MEP."
+    ::= { ibCfdTrapOjbects 4 }
+
+ibCfdStatisticThreshold OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..8))
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The packet frame threshold in percentage, in the range of 0 to 100.
+        It can contain a maximum of 8 digits, including the dot (.),
+        for example, 1.000001."
+    ::= { ibCfdTrapOjbects 5 }
+
+ibCfdMdIndex OBJECT-TYPE
+    SYNTAX      Unsigned32(1..4294967295)
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The index of the maintenance domain."
+    ::= { ibCfdTrapOjbects 6 }
+
+ibCfdMdName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(1..43))
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The maintenance domain name."
+    ::= { ibCfdTrapOjbects 7 }
+
+ibCfdMaIndex OBJECT-TYPE
+    SYNTAX      Unsigned32(1..4294967295)
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The index of the maintenance association."
+    ::= { ibCfdTrapOjbects 8 }
+
+ibCfdMaName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(1..45))
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The Maintenance association name."
+    ::= { ibCfdTrapOjbects 9 }
+
+ibCfdRMepId OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..8191)
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "Maintenance association end point identifier of a remote MEP."
+    ::= { ibCfdTrapOjbects 10 }
+END

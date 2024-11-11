@@ -1,0 +1,277 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: L3VPN (Layer 3 Virtual Private Network) MIB
+-- Reference:
+-- Version: V1.1
+-- History:
+--   V1.0 2022-06-02 Created by zhangyao
+--     Initial version
+--   V1.1 2023-04-11 Updated by meihaitao
+--     Add the ibL3vpnStatisticsTable
+-- =================================================================
+IB-L3VPN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, Unsigned32
+        FROM SNMPv2-SMI
+    CounterBasedGauge64
+        FROM HCNUM-TC
+    DisplayString, DateAndTime, TruthValue
+        FROM SNMPv2-TC
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibL3vpn MODULE-IDENTITY
+    LAST-UPDATED "202304101002Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB file provides information about L3VPN."
+    REVISION "202304101002Z"
+    DESCRIPTION
+        "Add the ibL3vpnStatisticsTable."
+
+    REVISION "202205311002Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 228 }
+
+ibL3vpnNotifications        OBJECT IDENTIFIER ::= { ibL3vpn 0 }
+ibL3vpnNotificationObjects  OBJECT IDENTIFIER ::= { ibL3vpn 1 }
+ibL3vpnStatMibObjects       OBJECT IDENTIFIER ::= { ibL3vpn 2 }
+
+ibL3vpnVrfName OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (0..31))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Name of the VRF (Virtual Routing and Forwarding)."
+    ::= { ibL3vpnNotificationObjects 1 }
+
+ibL3vpnIfName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (1..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Name of the interface associated with the VRF."
+    ::= { ibL3vpnNotificationObjects 2 }
+
+ibL3vpnVrfV6Up NOTIFICATION-TYPE
+    OBJECTS {
+        ibL3vpnVrfName,
+        ibL3vpnIfName
+    }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when:
+         a. No interface is associated with this VRF, and the first
+            (and only first) interface associated with it has its
+            IPv6 status change to up.
+         b. One interface is associated with this VRF, and the IPv6
+            status of this interface changes to up.
+         c. Multiple interfaces are associated with this VRF, and
+            the IPv6 status of all interfaces is down, and the first
+            of those interfaces has its IPv6 status change to up."
+    ::= { ibL3vpnNotifications 1 }
+
+ibL3vpnVrfV6Down NOTIFICATION-TYPE
+    OBJECTS {
+        ibL3vpnVrfName,
+        ibL3vpnIfName
+    }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when:
+         a. One interface is associated with this VRF, and the IPv6
+            status of this interface changes from up to down.
+         b. Multiple interfaces are associated with this VRF, and
+            the IPv6 status of all except one of these interfaces is
+            equal to up, and the IPv6 status of that interface
+            changes from up to down.
+         c. The last interface with IPv6 status equal to up is
+            disassociated from a VRF."
+    ::= { ibL3vpnNotifications 2 }
+
+
+-- The L3VPN Statistics Table
+--
+ibL3vpnStatisticsTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbL3vpnStatisticsEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table contains traffic statistics about a VRF."
+    ::= { ibL3vpnStatMibObjects 1 }
+
+ibL3vpnStatisticsEntry OBJECT-TYPE
+    SYNTAX IbL3vpnStatisticsEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Provides traffic statistics about a VRF."
+    INDEX { ibL3vpnStatVrfName }
+    ::= { ibL3vpnStatisticsTable 1 }
+
+IbL3vpnStatisticsEntry ::=
+    SEQUENCE {
+        ibL3vpnStatVrfName
+            DisplayString,
+        ibL3vpnStatEnable
+            TruthValue,
+        ibL3vpnStatVrfIndex
+            Unsigned32,
+        ibL3vpnStatInBytes
+            CounterBasedGauge64,
+        ibL3vpnStatOutBytes
+            CounterBasedGauge64,
+        ibL3vpnStatInPackets
+            CounterBasedGauge64,
+        ibL3vpnStatOutPackets
+            CounterBasedGauge64,
+        ibL3vpnStatInUnicastPackets
+            CounterBasedGauge64,
+        ibL3vpnStatOutUnicastPackets
+            CounterBasedGauge64,
+        ibL3vpnStatInMulticastPackets
+            CounterBasedGauge64,
+        ibL3vpnStatOutMulticastPackets
+            CounterBasedGauge64,
+        ibL3vpnStatInBroadcastPackets
+            CounterBasedGauge64,
+        ibL3vpnStatOutBroadcastPackets
+            CounterBasedGauge64,
+        ibL3vpnStatResetTime
+            DateAndTime,
+        ibL3vpnStatResetStatistic
+            INTEGER
+     }
+
+ibL3vpnStatVrfName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (1..31))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the name of a VRF."
+    ::= { ibL3vpnStatisticsEntry 1 }
+
+ibL3vpnStatEnable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "This object indicates the enable flag of the VRF's traffic statistics."
+    DEFVAL { false }
+    ::= { ibL3vpnStatisticsEntry 2 }
+
+ibL3vpnStatVrfIndex OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the VRF's index."
+    ::= { ibL3vpnStatisticsEntry 3 }
+
+ibL3vpnStatInBytes OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of bytes received."
+    ::= { ibL3vpnStatisticsEntry 4 }
+
+ibL3vpnStatOutBytes OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of bytes transmitted."
+    ::= { ibL3vpnStatisticsEntry 5 }
+
+ibL3vpnStatInPackets OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of packets received."
+    ::= { ibL3vpnStatisticsEntry 6 }
+
+ibL3vpnStatOutPackets OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of packets transmitted."
+    ::= { ibL3vpnStatisticsEntry 7 }
+
+ibL3vpnStatInUnicastPackets OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of unicast packets received."
+    ::= { ibL3vpnStatisticsEntry 8 }
+
+ibL3vpnStatOutUnicastPackets OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of unicast packets transmitted."
+    ::= { ibL3vpnStatisticsEntry 9 }
+
+ibL3vpnStatInMulticastPackets OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of multicast packets received."
+    ::= { ibL3vpnStatisticsEntry 10 }
+
+ibL3vpnStatOutMulticastPackets OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of multicast packets transmitted."
+    ::= { ibL3vpnStatisticsEntry 11 }
+
+ibL3vpnStatInBroadcastPackets OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of broadcast packets received."
+    ::= { ibL3vpnStatisticsEntry 12 }
+
+ibL3vpnStatOutBroadcastPackets OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The total number of broadcast packets transmitted."
+    ::= { ibL3vpnStatisticsEntry 13 }
+
+ibL3vpnStatResetTime OBJECT-TYPE
+    SYNTAX DateAndTime (SIZE (8))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Last time when the statistics were cleared."
+    ::= { ibL3vpnStatisticsEntry 14 }
+
+ibL3vpnStatResetStatistic OBJECT-TYPE
+    SYNTAX INTEGER
+    {
+        statistic(0),
+        resetStatistic(1)
+    }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Resets the VRF's traffic statistics."
+    ::= { ibL3vpnStatisticsEntry 15 }
+
+END

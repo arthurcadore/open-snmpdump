@@ -1,0 +1,1080 @@
+-- ==================================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: This file describes the MIB implementation of ndec
+-- Reference:
+-- Version: V1.6
+-- History:
+--  for V1.0
+--      Add MODULE-IDENTITY to mib
+--  V1.1 2004-9-9 lizhiyong
+--      add ibhipsNDECSAListTable,ibhikeSATable,ibhipsIKEPolicyTable,
+--      ibhipsStaticCryptomapTable,ibhipsTransformNameSetTable,ibhipsNDECLeaf,
+--      modify ibhipsNDECInfoTable,
+--  V1.2 2004-9-14 lizhiyong
+--      delete useless comments
+--      modify the SYNTAX type of ibhipsInPac,ibhipsOutPac,ibhipsInByte,ibhipsOutByte
+--      and ibhipsDropPac from Gauge to Counter32.
+--      delete the underscore character "_" which is note compliant with ASN.1
+--      modify the whole file with SMIv2.
+--  V1.3 2004-10-12 updated by gaolong
+--      Remove variable value range from table SEQUENCE definition.
+--  V1.4 2004-10-21 lizhiyong
+--      modify ibhipsStaticCryptomapMatchAddr range from 1..199 to 1..100000.
+--      update the description of ibhipsNDECBackup node
+--  V1.5 2004-11-26 updated by gaolong
+--      File description updated
+--  V1.6 2007-1-29 updated by liukan
+--      Add a new value ealgXNsa in ibhipsEncAlgorithm type.
+-- ===================================================================================
+IB-NDEC-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    IpAddress, Counter32, Gauge32, Integer32 ,Unsigned32 ,NOTIFICATION-TYPE,MODULE-IDENTITY,OBJECT-TYPE
+        FROM SNMPv2-SMI
+    DisplayString, TruthValue
+        FROM SNMPv2-TC
+    ibmlsr
+        FROM IB-OID-MIB;
+
+--  IB-NDEC-MIB definition
+
+
+        ibNDEC MODULE-IDENTITY
+            LAST-UPDATED "200409150000Z"        -- August 15, 2004  GMT
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION
+                "This MIB contains objects to manage the NDEC device.
+                "
+            REVISION "200409151052Z"        -- August 15, 2004 at 10:52 GMT
+            DESCRIPTION
+                "The initial version of this MIB module"
+            ::= { ibmlsr 2 }
+
+--transform         Set authentication/encryption method
+
+
+ibhipsNDECSAListTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbHipsNDECSAListEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The table containing the list of all
+        SA entries configured on NDEC by the operator."
+    ::= { ibNDEC 1 }
+
+ibhipsNDECSAListEntry OBJECT-TYPE
+    SYNTAX IbHipsNDECSAListEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry contains the attributes
+        associated with a single NDEC'S SA entry."
+    INDEX { ibhipsPeerIpAddr, ibhipsProtocol, ibhipsSPI  }
+    ::= { ibhipsNDECSAListTable 1 }
+
+IbHipsNDECSAListEntry ::= SEQUENCE {
+    ibhipsPeerIpAddr      IpAddress,
+    ibhipsProtocol        INTEGER,
+    ibhipsSPI             Gauge32,
+    ibhipsEncAlgorithm        INTEGER,
+    ibhipsAuthAlgorithm       INTEGER,
+    ibhipsLocalIpAddr         IpAddress,
+    ibhipsSaLifeKBytes        Gauge32,
+    ibhipsSaLifeSecond        Gauge32,
+    ibhipsByCard          TruthValue,
+    ibhipsNegotiateSaMode     INTEGER,
+    ibhipsExpBytes        Gauge32,
+    ibhipsSoftBytes       Gauge32,
+    ibhipsExpTimeout      Gauge32,
+    ibhipsSoftTimeout         Gauge32
+    }
+
+
+ibhipsPeerIpAddr OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The peer IP address of this SA entry.
+        "
+    ::= { ibhipsNDECSAListEntry 1 }
+
+ibhipsProtocol OBJECT-TYPE
+      SYNTAX INTEGER {
+          ipsecEsp(50),
+          ipsecAh(51)
+      }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The Protocol of this SA entry.
+        "
+    ::= { ibhipsNDECSAListEntry 2 }
+
+ibhipsSPI OBJECT-TYPE
+    SYNTAX Gauge32(256..4294967295)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The SPI of this SA entry.
+        "
+    ::= { ibhipsNDECSAListEntry 3 }
+
+ibhipsEncAlgorithm OBJECT-TYPE
+    SYNTAX INTEGER {
+        ealgNone(1),
+        ealgDescbc(2),
+        ealg3desCbc(3),
+        ealgXBlf(4),
+        ealgXCast(5),
+        ealgXSkipjack(6),
+        ealgXAes(7),
+        ealgXQc5(8),
+        ealgXNsa(9)
+    }
+
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The encrypt algorithm of this SA entry.
+        "
+    ::= { ibhipsNDECSAListEntry 4 }
+
+ibhipsAuthAlgorithm OBJECT-TYPE
+    SYNTAX INTEGER {
+        aalgNone(1),
+        aalgMd5Hmac(2),
+        aalgSha1Hmac(3),
+        aalgMd5Hmac96(4),
+        aalgSha1Hmac96(5),
+        aalgXRipeMd160Hmac96(6),
+        aalgXMd5(7),
+        aalgXSha1(8)
+       }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The authentication algorithm of this SA entry.
+        "
+    ::= { ibhipsNDECSAListEntry 5 }
+
+ibhipsLocalIpAddr OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The local IP address of this SA entry.
+        "
+    ::= { ibhipsNDECSAListEntry 6 }
+
+ibhipsSaLifeKBytes OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The lifetime of this SA entry in bytes.
+        "
+    ::= { ibhipsNDECSAListEntry 7 }
+
+ibhipsSaLifeSecond OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The lifetime of this SA entry in seconds.
+        "
+    ::= { ibhipsNDECSAListEntry 8 }
+
+ibhipsByCard OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The flag of this SA on NDEC or not.
+        "
+    ::= { ibhipsNDECSAListEntry 9 }
+
+
+ibhipsNegotiateSaMode OBJECT-TYPE
+    SYNTAX INTEGER {
+        none(1),
+        isakmp(2),
+        manual(3)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The type of key used by the IPSec Phase-2 Tunnel.
+        "
+    ::= { ibhipsNDECSAListEntry 10 }
+
+ibhipsExpBytes OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object specifies the lifetime in bytes
+        of the tunnels generated using this
+        policy specification."
+    ::= { ibhipsNDECSAListEntry 11 }
+
+ibhipsSoftBytes OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object specifies the lifetime in bytes
+        of the tunnels generated using this
+        policy specification."
+    ::= { ibhipsNDECSAListEntry 12 }
+
+ibhipsExpTimeout OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object specifies the lifetime in seconds
+        of the tunnels generated using this
+        policy specification."
+    ::= { ibhipsNDECSAListEntry 13 }
+
+ibhipsSoftTimeout OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object specifies the lifetime in seconds
+        of the tunnels generated using this
+        policy specification."
+    ::= { ibhipsNDECSAListEntry 14 }
+
+
+ ibhikeSATable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbHikeSAEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The table containing IKE SA entities
+        configured on NDEC by the operator.
+        "
+
+    ::= { ibNDEC 2 }
+
+ibhikeSAEntry OBJECT-TYPE
+    SYNTAX IbHikeSAEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry contains the attributes
+        associated with a single IKE SA entity."
+    INDEX { ibhikeConnId }
+    ::= { ibhikeSATable 1 }
+
+IbHikeSAEntry ::= SEQUENCE {
+    ibhikeConnId  Integer32,
+    ibhikePeerIpAddr  IpAddress,
+    ibhikeFlag        DisplayString,
+    ibhikePhase       INTEGER,
+    ibhikeDoi         INTEGER,
+    ibhikeClearSA     TruthValue
+     }
+
+ibhikeConnId OBJECT-TYPE
+    SYNTAX Integer32(0..65535)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The identifier of IKE SA connection."
+    ::= { ibhikeSAEntry 1 }
+
+ibhikePeerIpAddr OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The peer IP address of this IKE SA.
+        "
+    ::= { ibhikeSAEntry 2 }
+
+ibhikeFlag OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The status of this IKE SA.
+        "
+    ::= { ibhikeSAEntry 3 }
+
+ibhikePhase OBJECT-TYPE
+    SYNTAX INTEGER{
+        unkown(1),
+        phase1(2),
+        phase2(3)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The phase of this IKE SA.
+        "
+    ::= { ibhikeSAEntry 4 }
+
+ibhikeDoi OBJECT-TYPE
+   SYNTAX INTEGER{
+        unkown(1),
+        ipsec(2)
+       }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The domain of this IKE SA
+        "
+    ::= { ibhikeSAEntry 5 }
+
+ibhikeClearSA OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Clear this IKE SA or not.
+        "
+    ::= { ibhikeSAEntry 6 }
+
+
+ibhipsIKEPolicyTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbHipsIKEPolicyEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "List of all ISAKMP policy entries."
+    ::= { ibNDEC 3 }
+
+ibhipsIKEPolicyEntry OBJECT-TYPE
+    SYNTAX IbHipsIKEPolicyEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry includes the properties of a ISAKMP Policy entry."
+    INDEX { ibhipsIsakmpPolPriority }
+    ::= { ibhipsIKEPolicyTable 1 }
+
+IbHipsIKEPolicyEntry ::= SEQUENCE {
+    ibhipsIsakmpPolPriority   Integer32,
+    ibhipsIsakmpPolEncr       INTEGER,
+    ibhipsIsakmpPolHash       INTEGER,
+    ibhipsIsakmpPolAuth       INTEGER,
+    ibhipsIsakmpPolGroup      INTEGER,
+    ibhipsIsakmpPolLifetime   Gauge32
+    }
+
+ibhipsIsakmpPolPriority OBJECT-TYPE
+    SYNTAX Integer32(0..65535)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "ISAKMP Policy entry's priority."
+    ::= { ibhipsIKEPolicyEntry 1 }
+
+ibhipsIsakmpPolEncr OBJECT-TYPE
+    SYNTAX INTEGER {
+        ikeEncryptNone(1),
+        ikeEncryptDesCbc(2),
+        ikeEncryptIdeaCbc(3),
+        ikeEncryptBlowfishcbc(4),
+        ikeEncryptRc5R16B64cbc(5),
+        ikeEncrypt3DesCbc(6),
+        ikeEncryptCastCbc(7)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The specified encryption transform. It is used by
+        Internet Key Exchange(IKE) tunnels to protect the ISAKMP
+        PDUs."
+    ::= { ibhipsIKEPolicyEntry 2 }
+
+ibhipsIsakmpPolHash OBJECT-TYPE
+    SYNTAX INTEGER {
+        ikeHashNone(1),
+        ikeHashMd5(2),
+        ikeHashSha(3),
+        ikeHashTiger(4)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The specified hash transform. It is used by
+        Internet Key Exchange(IKE) tunnels to protect the ISAKMP
+        PDUs."
+    ::= { ibhipsIKEPolicyEntry 3 }
+
+ibhipsIsakmpPolAuth OBJECT-TYPE
+    SYNTAX INTEGER {
+        ikeAuthPreNone(1),
+        ikeAuthPreShared(2) ,
+        ikeAuthDss(3),
+        ikeAuthRsaSig(4),
+        ikeAuthRsaEnc(5),
+        ikeAuthRsaEncRev(6)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The specified peer authentication method.
+        The local entity would authenticate the peer using
+        the method specified by this object when this policy
+        entity is selected to negotiate with a peer."
+    ::= { ibhipsIKEPolicyEntry 4 }
+
+ibhipsIsakmpPolGroup OBJECT-TYPE
+    SYNTAX INTEGER {
+        none(1),
+        dhGroup1(2),
+        dhGroup2(3)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object is used to specify the Oakley group
+        which is used for Diffie Hellman exchange in the
+        Main Mode.
+        The local entity selects the group specified by
+        this object to perform Diffie Hellman exchange with
+        the peer when this policy item is chosen to negotiate
+        the Main Mode with an IKE peer."
+    ::= { ibhipsIKEPolicyEntry 5 }
+
+ibhipsIsakmpPolLifetime OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the lifetime of the IKE tunnels in seconds."
+    ::= { ibhipsIKEPolicyEntry 6 }
+
+
+ibhipsStaticCryptomapTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbHipsStaticCryptomapEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The table includes the list of the member cryptomaps
+        of the cryptomap sets which are set on the specific entity."
+    ::= { ibNDEC 4 }
+
+ibhipsStaticCryptomapEntry OBJECT-TYPE
+    SYNTAX IbHipsStaticCryptomapEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry contains  properites of a single static cryptomap entry.
+        The members of dynamic cryptomap sets, which may be linked with the
+        parent static cryptomap set, are not included in this table."
+    INDEX { ibhipsStaticCryptomapName,ibhipsStaticCryptomapSN }
+    ::= { ibhipsStaticCryptomapTable 1 }
+
+IbHipsStaticCryptomapEntry ::= SEQUENCE {
+    ibhipsStaticCryptomapName         DisplayString,
+    ibhipsStaticCryptomapSN       Integer32,
+    ibhipsStaticCryptomapNegMode      INTEGER,
+    ibhipsStaticCryptomapMatchAddr    INTEGER,
+    ibhipsStaticCryptomapPeerIpAddr   IpAddress,
+    ibhipsStaticCryptomapTransforName     DisplayString,
+    ibhipsStaticCryptomapLifetime     Gauge32,
+    ibhipsStaticCryptomapLifesize     Gauge32,
+    ibhipsStaticCryptomapLocalIpAddr  IpAddress,
+    ibhipsIfNameUsed              DisplayString,
+    ibhipsInAHSPI             Gauge32,
+    ibhipsInESPSPI            Gauge32,
+    ibhipsOutAHSPI            Gauge32,
+    ibhipsOutESPSPI           Gauge32,
+    ibhipsInAhHexKeyString        DisplayString,
+    ibhipsInEspCipherHexKeyString     DisplayString,
+    ibhipsInEspAuthenHexKeyString     DisplayString,
+    ibhipsInAhStringKeyString         DisplayString,
+    ibhipsInEspStringKeyString        DisplayString,
+    ibhipsOutAhHexKeyString       DisplayString,
+    ibhipsOutEspCipherHexKeyString    DisplayString,
+    ibhipsOutEspAuthenHexKeyString    DisplayString,
+    ibhipsOutAhStringKeyString        DisplayString,
+    ibhipsOutEspStringKeyString       DisplayString
+    }
+
+
+
+ibhipsStaticCryptomapName OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The name of the cryptomap entry in the
+        cryptomap set. This is the first index
+        component of this table."
+    ::= { ibhipsStaticCryptomapEntry 1 }
+
+ibhipsStaticCryptomapSN OBJECT-TYPE
+    SYNTAX Integer32(0..65535)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The sequence number of the cryptomap entry in the
+        cryptomap set. This is the second index component
+        of this table."
+    ::= { ibhipsStaticCryptomapEntry 2 }
+
+ibhipsStaticCryptomapNegMode OBJECT-TYPE
+    SYNTAX INTEGER {
+            none(1),
+            isakmp(2),
+            manual(3)
+           }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Type of the cryptomap entry. This object may be an ISAKMP
+        cryptomap or manual."
+    ::= { ibhipsStaticCryptomapEntry 3 }
+
+ibhipsStaticCryptomapMatchAddr OBJECT-TYPE
+    SYNTAX INTEGER(1..100000)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The access list number entered by the operatoir
+        while creating this cryptomap. "
+    ::= { ibhipsStaticCryptomapEntry 4 }
+
+ibhipsStaticCryptomapPeerIpAddr OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The IP address of the current peer. Traffic protected by
+        this cryptomap is protected by a tunnel terminating
+        at the device whose IP address is the value of this object."
+    ::= { ibhipsStaticCryptomapEntry 5 }
+
+ibhipsStaticCryptomapTransforName OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The transform associated with this cryptomap entry."
+    ::= { ibhipsStaticCryptomapEntry 6 }
+
+ibhipsStaticCryptomapLifetime OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the lifetime of the IPSec SA which is
+        created using this IPSec policy entry."
+    ::= { ibhipsStaticCryptomapEntry 7 }
+
+ibhipsStaticCryptomapLifesize OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object identifies the lifesize of the IPSec SAs
+        generated using this IPSec policy entry.
+        Lifesize means maximum traffic in bytes that may be carried.
+        "
+    ::= { ibhipsStaticCryptomapEntry 8 }
+
+ibhipsStaticCryptomapLocalIpAddr OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The value of this object is the local IP address of the
+        IPSec SAs generated using this IPSec policy entry.
+        "
+    ::= { ibhipsStaticCryptomapEntry 9 }
+
+
+   ibhipsIfNameUsed OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the name of the
+        interface which uses this IPSec policy entry.
+        "
+    ::= { ibhipsStaticCryptomapEntry 10 }
+
+
+ibhipsInAHSPI OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the inbound AH SPI
+        IPSec SAs generated using this IPSec policy entry."
+    ::= { ibhipsStaticCryptomapEntry 11 }
+
+ibhipsInESPSPI OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the inbound ESP SPI
+        IPSec SAs generated using this IPSec policy entry.
+       "
+    ::= { ibhipsStaticCryptomapEntry 12 }
+
+ibhipsOutAHSPI OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the outbound AH SPI
+        IPSec SAs generated using this IPSec policy entry.
+       "
+    ::= { ibhipsStaticCryptomapEntry 13 }
+
+ibhipsOutESPSPI OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the outbound ESP SPI
+        IPSec SAs generated using this IPSec policy entry.
+       "
+    ::= { ibhipsStaticCryptomapEntry 14 }
+
+ibhipsInAhHexKeyString OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the inbound AH authentication key
+        IPSec SAs generated using this IPSec policy entry.
+        The AH authentication key is in hex.
+       "
+    ::= { ibhipsStaticCryptomapEntry 15 }
+
+ ibhipsInEspCipherHexKeyString OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the inbound ESP authentication key
+       IPSec SAs generated using this IPSec policy entry.
+       The ESP authentication key is hex.
+       "
+    ::= { ibhipsStaticCryptomapEntry 16 }
+
+ ibhipsInEspAuthenHexKeyString OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the inbound ESP authentication key
+        IPSec SAs generated using this IPSec policy entry.
+        The ESP authentication key is hex.
+       "
+    ::= { ibhipsStaticCryptomapEntry 17 }
+
+
+ ibhipsInAhStringKeyString OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the inbound ESP authentication key
+        IPSec SAs generated using this IPSec policy entry.
+        The key is in string.
+       "
+    ::= { ibhipsStaticCryptomapEntry 18 }
+ ibhipsInEspStringKeyString OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the inbound ESP authentication key
+        IPSec SAs generated using this IPSec policy entry.
+        The key is in string.
+       "
+    ::= { ibhipsStaticCryptomapEntry 19 }
+ ibhipsOutAhHexKeyString OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the outbound AH authentication key
+        IPSec SAs generated using this IPSec policy entry.
+        The key is in hex.
+       "
+    ::= { ibhipsStaticCryptomapEntry 20 }
+ ibhipsOutEspCipherHexKeyString OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the outbound ESP authentication key
+        IPSec SAs generated using this IPSec policy entry.
+        The key is in hex.
+       "
+    ::= { ibhipsStaticCryptomapEntry 21 }
+ ibhipsOutEspAuthenHexKeyString OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the outbound ESP authentication key
+        IPSec SAs generated using this IPSec policy entry.
+        The key is in hex.
+       "
+    ::= { ibhipsStaticCryptomapEntry 22 }
+ ibhipsOutAhStringKeyString OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the outbound AH authentication key
+        IPSec SAs generated using this IPSec policy entry.
+        The key is in string.
+       "
+    ::= { ibhipsStaticCryptomapEntry 23 }
+
+  ibhipsOutEspStringKeyString OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the outbound ESP authentication key
+        IPSec SAs generated using this IPSec policy entry.
+        The key is in string.
+       "
+    ::= { ibhipsStaticCryptomapEntry 24 }
+
+
+ibhipsTransformNameSetTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbHipsTransformNameSetEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Transform set table."
+    ::= { ibNDEC 5 }
+
+ibhipsTransformNameSetEntry OBJECT-TYPE
+    SYNTAX IbHipsTransformNameSetEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry refers to properties of a transform."
+    INDEX { ibhipsTransformName }
+    ::= { ibhipsTransformNameSetTable 1 }
+
+IbHipsTransformNameSetEntry ::= SEQUENCE {
+    ibhipsTransformName       DisplayString,
+    ibhipsTransformMode       INTEGER,
+    ibhipsTransformProtocol   INTEGER,
+    ibhipsAH          INTEGER,
+    ibhipsEespEn          INTEGER,
+    ibhipsEspAu           INTEGER,
+    ibhipsIsCardTransform     TruthValue
+    }
+
+
+ibhipsTransformName OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Name of the transform entry."
+    ::= { ibhipsTransformNameSetEntry 1 }
+
+ibhipsTransformMode OBJECT-TYPE
+    SYNTAX INTEGER {
+        tunnel(1),
+        transport(2)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Mode of the transform entry."
+    ::= { ibhipsTransformNameSetEntry 2 }
+
+ibhipsTransformProtocol OBJECT-TYPE
+    SYNTAX INTEGER {
+                    ipsecNone(1),
+                    ipsecAhNew(2),
+                    ipsecAhEspNew(3),
+                    ipsecAhEspOld(4),
+                    ipsecAhOld(5),
+                    ipsecEspNew(6),
+                    ipsecEspAhNew(7),
+                    ipsecEspAhOld(8),
+                    ipsecEspOld(9)
+                    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Transform protocol."
+    ::= { ibhipsTransformNameSetEntry 3 }
+
+ibhipsAH OBJECT-TYPE
+    SYNTAX INTEGER {
+        aalgNone(1),
+        aalgMd5Hmac(2),
+        aalgSha1Hmac(3),
+        aalgMd5Hmac96(4),
+        aalgSha1Hmac96(5),
+        aalgXRipeMd160Hmac96(6),
+        aalgXMd5(7),
+        aalgXSha1(8)
+       }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Algorithm of AH protocol."
+    ::= { ibhipsTransformNameSetEntry 4 }
+
+
+ibhipsEespEn OBJECT-TYPE
+    SYNTAX INTEGER {
+        ealgNone(1),
+        ealgDescbc(2),
+        ealg3desCbc(3),
+        ealgXBlf(4),
+        ealgXCast(5),
+        ealgXSkipjack(6),
+        ealgXAes(7),
+        ealgXQc5(8)
+    }
+
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Encryption algorithm of ESP protocol."
+    ::= { ibhipsTransformNameSetEntry 5 }
+
+ibhipsEspAu OBJECT-TYPE
+    SYNTAX INTEGER {
+        aalgNone(1),
+        aalgMd5Hmac(2),
+        aalgSha1Hmac(3),
+        aalgMd5Hmac96(4),
+        aalgSha1Hmac96(5),
+        aalgXRipeMd160Hmac96(6),
+        aalgXMd5(7),
+        aalgXSha1(8)
+       }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Authentication algorithm of ESP protocol."
+    ::= { ibhipsTransformNameSetEntry 6 }
+
+
+ibhipsIsCardTransform OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates the flag of the NDEC is used for
+        IPSec SAs generated using this IPSec policy entry.
+       "
+    ::= { ibhipsTransformNameSetEntry 7 }
+
+
+ibhipsNDECInfoTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbHipsNDECInfoEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Table of NDEC set."
+    ::= { ibNDEC 6 }
+
+ibhipsNDECInfoEntry OBJECT-TYPE
+    SYNTAX IbHipsNDECInfoEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Properties of each NDEC.
+        "
+    INDEX { ibhipsCardSlot }
+    ::= { ibhipsNDECInfoTable 1 }
+
+IbHipsNDECInfoEntry ::= SEQUENCE {
+    ibhipsCardSlot        INTEGER,
+    ibhipsInPac           Counter32,
+    ibhipsOutPac          Counter32,
+    ibhipsInByte          Counter32,
+    ibhipsOutByte         Counter32,
+    ibhipsDropPac         Counter32,
+    ibhipsCardStatus          INTEGER,
+    ibhipsCardHardVer         DisplayString,
+    ibhipsCardSoftVer         DisplayString,
+    ibhipsCardCPLDVer         DisplayString,
+    ibhipsCardOperate         INTEGER,
+    ibhipsDropPacInUnitTime   Gauge32
+    }
+
+
+ibhipsCardSlot OBJECT-TYPE
+    SYNTAX INTEGER(0..7)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Slot number of NDEC ."
+    ::= { ibhipsNDECInfoEntry 1 }
+
+ibhipsInPac OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Total packets of the NDEC recieved."
+    ::= { ibhipsNDECInfoEntry 2 }
+
+ibhipsOutPac OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Total packets of the NDEC sent."
+    ::= { ibhipsNDECInfoEntry 3 }
+
+ibhipsInByte OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Total bytes of the NDEC sent."
+    ::= { ibhipsNDECInfoEntry 4 }
+
+ibhipsOutByte OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Total bytes of the NDEC sent."
+    ::= { ibhipsNDECInfoEntry 5 }
+
+ibhipsDropPac OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Total packets of the NDEC dropped ."
+    ::= { ibhipsNDECInfoEntry 6 }
+
+ibhipsCardStatus OBJECT-TYPE
+    SYNTAX INTEGER{
+        ecStateInvalid(1),  -- status exeception
+        ecStateReady(2),    -- status normal
+        ecStateResetting(3) ,   -- card is reseting
+        ecStateProgramUpdating(4),   --card is loading
+        ecStateDisable(5)         -- card is forbidden
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "State of the NDEC."
+    ::= { ibhipsNDECInfoEntry 7 }
+
+ibhipsCardHardVer OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Hardware version of the NDEC."
+    ::= { ibhipsNDECInfoEntry 8 }
+
+ibhipsCardSoftVer OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Software version of the NDEC."
+    ::= { ibhipsNDECInfoEntry 9 }
+
+ibhipsCardCPLDVer OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "CPLD version of the NDEC."
+    ::= { ibhipsNDECInfoEntry 10 }
+
+ibhipsCardOperate OBJECT-TYPE
+    SYNTAX INTEGER {
+        cardClearStatic(1),
+        cardReset(2),
+        cardSynTime(3),
+        cardSysLogOn(4),
+        cardSysLogOff(5),
+        cardSysLogClear(6)
+    }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+         "The version of the NDEC's CPLD.
+         cardClearStatic(1): clear the statistics of the card
+         cardReset(2): rest the card
+         cardSynTime(3): synchoronize the clock of the card
+         cardSysLogOn(4):turn on the log of the card
+         cardSysLogOff(5):turn off the log of the card
+         cardSysLogClear(6):clear the log of the card"
+    ::= { ibhipsNDECInfoEntry 11 }
+
+ibhipsDropPacInUnitTime OBJECT-TYPE
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+         "Dropped packets in unit interval."
+    ::= { ibhipsNDECInfoEntry 12 }
+
+
+ibhipsNDECLeaf OBJECT IDENTIFIER ::= { ibNDEC 7 }
+
+ibhipsNDECConnections OBJECT-TYPE
+    SYNTAX INTEGER
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Total connections of the system at this time."
+    ::= { ibhipsNDECLeaf 1 }
+
+ibhipsNDECBackup OBJECT-TYPE
+    SYNTAX INTEGER
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The flag that NDEC using backup. The value 1 represents using backup
+        The value 0 represents not using backup"
+    ::= { ibhipsNDECLeaf 2 }
+
+
+ibhipsTraps OBJECT IDENTIFIER ::= { ibNDEC 8 }
+
+ibhipsNDECNormalResetTrap NOTIFICATION-TYPE
+     OBJECTS { ibhipsCardSlot,ibhipsCardHardVer,
+     ibhipsCardSoftVer,ibhipsCardCPLDVer }
+     STATUS  current
+     DESCRIPTION
+          "This trap is generated when the NDEC card is reset."
+    ::= { ibhipsTraps 1 }
+
+ibhipsNDECStateChangeTrap NOTIFICATION-TYPE
+     OBJECTS { ibhipsCardSlot,ibhipsCardStatus       }
+     STATUS  current
+     DESCRIPTION
+         "This trap is generated when the NDEC card's state changes."
+    ::= { ibhipsTraps 2 }
+
+ibhipsNDECFlowTrap NOTIFICATION-TYPE
+     OBJECTS { ibhipsCardSlot,ibhipsDropPacInUnitTime }
+     STATUS  current
+     DESCRIPTION
+         "This trap is generated when a NDEC card is overloaded."
+    ::= { ibhipsTraps 3 }
+
+END

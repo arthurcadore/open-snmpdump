@@ -1,0 +1,1790 @@
+-- =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:
+--   The file defines a MIB to provide 802.11 MAC information such
+--   as station statistic and notification events.
+-- Reference:
+-- Version: V3.0
+-- History:
+--   V1.0 created by shiyang (Richard)
+--     Initial version 2006-05-10
+--   V1.1 2007-04-27 modified by shiyang(Richard)
+--        The data type of object ibDot11StationRxFrameBytes,
+--        ibDot11StationTxFrameBytes and ibDot11StationDropFrameBytes
+--        was changed from counter32 to counter64.
+--   V1.2 2007-06-21 modified by Vikas K
+--        Added 4 new Station Traps and also new objects for the traps.
+--   V1.3 2007-12-21 modified by wanghao (Kumar)
+--        Added ibDot11StationRxSNR, ibDot11StationTxRate,
+--        ibDot11StationRxRate to ibDot11StationAssociateTable.
+--        Added ibDot11StationSessionDuration to ibDot11StationDeAssocTrap
+--        Added ibDot11StationSessionDuration to ibDot11StationTrapVarObjects.
+--        Added ibDot11StationVendorName and ibDot11StationRadioMode to
+--        IbDot11StationAssociateEntry.
+--   V1.4 2008-02-25 modified by wanghao (Kumar)
+--        Add ibDot11StationRoamingTrap and add ibDot11StationRxNoise to
+--        ibDot11StationAssociateTable.
+--   V1.5 2008-08-01 modified by Wang Lu
+--        Change description of ibDot11StationMAC, ibDot11CurrWlanID and
+--        ibDot11StationAid.
+--        Change SYNTAX of ibDot11StationSessionStartTime
+--        Change OBJECTS of ibDot11StationAuthorFailTrap,
+--        ibDot11StationAssocFailTrap, ibDot11StationDeAssocTrap and
+--        ibDot11StationAuthorSuccTrap
+--   V1.6 2008-11-07 modified by Wang Lu and Li Yugang
+--        Add ibDot11StationRxRetryPkts, ibDot11StationTxRetryPkts,
+--        ibDot11StationRxRetryBytes and ibDot11StationTxRetryBytes
+--        to ibDot11StationStatisTable.
+--        Add new variable bindings ibDot11StationAPName and
+--        ibDot11StationBSSID to ibDot11StationAuthorSuccTrap and
+--        ibDot11StationDeAssocTrap.
+--        Add new notification ibDot11StationDisconnectTrap.
+--        Add ibDot11StationThroughput to ibDot11StationStatisTable.
+--   V1.7 2009-05-07 modified by Wang Shaojie
+--        Add ibDot11StationMACAddress to ibDot11StationAssociateTable
+--   V1.8 2009-04-14 modified by Heziqi
+--        Add new node ibDot11StationSuccessTxCnt, ibDot11StationRxFragCnt
+--        and ibDot11StationSuccessTxDataCnt for ibDot11StationStatisTable.
+--        Add new node ibDot11StationTxSpeed, ibDot11StationRxSpeed
+--        and ibDot11StationWmmMode for ibDot11StationAssociateTable.
+--        Add new node ibDot11StationRxDataFrameCnt,
+--        ibDot11StationTxDataFrameCnt, ibDot11StationRxDataFrameBytes
+--        ibDot11StationTxDataFrameBytes for ibDot11StationAssociateTable.
+--   V1.9 2009-08-07 modified by Wang Shaojie
+--        Modify description of ibDot11StationTxSpeed, ibDot11StationRxSpeed
+--   V2.0 2010-02-23 Add new node ibDot11StaRxErrDataFrameCnt and
+--        ibDot11StaTxRetryDataFrameCnt to ibDot11StationStatisTable.
+--        Add new node ibDot11StationUpTimeTicks, ibDot11StationSecIEStatus
+--        to ibDot11StationAssociateTable.
+--        Add ibDot11StationAuthMode to ibDot11StationTrapVarObjects.
+--        2010-08-07 modified by Wang Shaojie
+--        Add ibDot11StationACIPv6Add to ibDot11StationTrapVarObjects.
+--        2010-09-02 modified by Yin junjie
+--        Modify ibDot11StationDisconnectTrap.
+--   V2.1 2011-08-10 modified by limingjin
+--        Add ibDot11StationRadioMode2 to ibDot11StationAssociateTable
+--   V2.2 2011-09-28 modified by zhanghu
+--        Add ibDot11StaTxDataRatePkts, ibDot11StaRxDataRatePkts,
+--        ibDot11StaTxSignalStrengthPkts to ibDot11StationStatisTable
+--        2012-02-08 modified by d07436
+--        Add ibDot11StationAssTime to  ibDot11StationAssociateEntry
+--        Add ibDot11UserDisconnectTrap to ibDot11StationTraps
+--        Add ibDot11UserName to ibDot11StationTrapVarObjects
+--   V2.3 2012-05-16 modified by lihonghao
+--        Add ibDot11StationUserAuthType to ibDot11StationAssociateTable
+--        2012-08-13 modified by wangminghui
+--        Add new node   ibDot11StationTrapAPMacAddress to ibDot11StationTrapVarObjects
+--        Add new object ibDot11StationTrapAPMacAddress to ibDot11StationAuthorFailTrap
+--        Add new object ibDot11StationTrapAPMacAddress to ibDot11StationAssocFailTrap
+--        modified by niujian
+--        Add ibDot11StationRfPingTest to ibDot11StationAssociateTable.
+--        Add ibDot11StationRfPingTable.
+--   V2.4 2013-04-10 modified by huashuyuan
+--        Add ibDot11StationMaxRate to ibDot11StationAssociateTable
+--   V2.5 2013-08-21 modified by zhangsiyu
+--        Add ibDot11CurrAntennaID to ibDot11StationAPRelationTable
+--   V2.6 2014-02-13 modified by xiaomin
+--        Add ibDot11StationPowerSaveModeCM, ibDot11StationAuthenModeCM,
+--        ibDot11StationAKMModeCM, ibDot11StationSecurityCiphersCM
+--        and ibDot11StationSecIEStatusCM to ibDot11StationAssociateTable
+--   V2.7 2014-05-08 modified by yubo
+--        Add ibDot11StaInternetRxFrameBytes,ibDot11StaInternetTxFrameBytes,
+--        ibDot11StaLocalRxFrameBytes,ibDot11StaLocalTxFrameBytes to
+--        ibDot11StationStatisTable.
+--   V2.8 2014-11-19 modified by yubo
+--        Add ibDot11StationIPv6Address to ibDot11StationAssociateTable
+--   V2.9 2015-04-13 modified by limingjin
+--        Add ibDot11StaAntennaChgTrap to ibDot11StationTraps
+--        Add new node   ibDot11StationTrapOldAntennaID to ibDot11StationTrapVarObjects
+--        Add new node   ibDot11StationTrapNewAntennaID to ibDot11StationTrapVarObjects
+--   V3.0 2016-3-11 modified by xiaomin
+--        Add ibDot11StationAssociateAPMACAddressCM to ibDot11StationAssociateTable
+--        2017-2-24 modified by jiaohaina
+--        Add ibDot11StationAuditTrap to ibDot11StationTraps
+--        Add new node    ibDot11StationTrapAPIPAddress to ibDot11StationTrapVarObjects
+--        Add new node    ibDot11StationTrapStartTime to ibDot11StationTrapVarObjects
+--        Add new node    ibDot11StationAuditTrapOpType to ibDot11StationTrapVarObjects
+--        Add new node    ibDot11StationTrapStaIPAddress to ibDot11StationTrapVarObjects
+--        Add new node    ibDot11StationTrapRadioID to ibDot11StationTrapVarObjects
+--        Add new node    ibDot11StationTrapRadioMode to ibDot11StationTrapVarObjects
+--        Add new node    ibDot11StationTrapWlanID to ibDot11StationTrapVarObjects
+--        Add new node    ibDot11StationTrapSSIDName ibDot11StationTrapVarObjects
+--        Add new node    ibDot11StationTrapVlan to ibDot11StationTrapVarObjects
+--        Add new node    ibDot11StationTrapChannel to ibDot11StationTrapVarObjects
+--        Add new node    ibDot11StationTrapRSSI to ibDot11StationTrapVarObjects
+--        Add new node    ibDot11StationTrapRxFrameKbit to ibDot11StationTrapVarObjects
+--        Add new node    ibDot11StationTrapTxFrameKbit to ibDot11StationTrapVarObjects
+--        Add new node    ibDot11StationTrapVlan to ibDot11StationTrapVarObjects
+--        Add new node    ibDot11StationTrapChannel to ibDot11StationTrapVarObjects
+--        2017-10-09 modified by jiaohaina
+--        Add ibDot11StationDeviceType,ibDot11StationTxRateCM,ibDot11StationRxRateCM to
+--        ibDot11StationAssociateTable
+--        Add ibDot11StationBSSID to ibDot11StationAssocFailTrap
+-- =============================================================================
+IB-DOT11-STATION-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        MacAddress, DateAndTime, TruthValue
+    FROM SNMPv2-TC
+        MODULE-IDENTITY,
+        OBJECT-TYPE,
+        NOTIFICATION-TYPE,
+        Integer32,
+        Unsigned32,
+        Counter32,
+        Counter64,
+        IpAddress,
+        TimeTicks
+    FROM SNMPv2-SMI
+        ibDot11,
+        IbDot11RadioType,
+        IbDot11ObjectIDType,
+        IbDot11ChannelScopeType,
+        IbDot11SSIDStringType,
+        IbDot11AuthenType,
+        IbDot11AKMType,
+        IbDot11CipherType,
+        IbDot11RadioScopeType,
+        IbDot11SSIDEncryptModeType,
+        IbDot11AssocFailType,
+        IbDot11AuthorFailType,
+        IbDot11SecIEStatusType,
+        IbDot11RadioType2
+    FROM IB-DOT11-REF-MIB;
+
+ibDot11STATION MODULE-IDENTITY
+    LAST-UPDATED "201710091800Z"        -- Oct 09, 2017 at 18:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB defines the configuration and statistic information of
+        stations.
+
+        GLOSSARY
+
+        IEEE 802.11
+        Standard to encourage interoperability among
+        wireless networking equipment.
+
+        Access point (AP)
+        Transmitter/receiver (transceiver) device
+        that commonly connects and transports data
+        between a wireless network and a wired network.
+
+        Access control (AC)
+        To control and manage multi-APs, it will bridge
+        wireless and wired network.
+
+        Control And Provisioning of Wireless Access Points Protocol
+        The short name of protocol is CAPWAP.  AC will control
+        and manage AP by CAPWAP tunnel protocol defined by IETF.
+        Also, a data tunnel will be set up between AC and AP.
+
+        BSS
+        IEEE 802.11 Basic Service Set (Radio Cell).  The
+        BSS of an AP comprises of the stations directly
+        associated with the AP.
+
+        station (Client Station)
+        A wireless device in a wireless network
+        associated with an access point.
+
+        MIC
+        Message Integrity Check.  A MIC can, optionally,
+        be added to WEP-encrypted 802.11 frames.
+
+        SSID
+        Radio Service Set ID.  It is used for identification
+        during association.
+
+        STA  (WSTA)
+        A non-AP 802.11 wireless station.
+
+        WEP
+        Wired Equivalent Privacy.  'WEP' is generally used
+        to refer to 802.11 encryption.
+
+        RSSI
+        It is the received signal strength indication.
+        It suggests the quality of received signal.
+
+        RTS
+        Request to Send, it is used to gain control of the medium
+        for the transmission of 'large' frames, in which 'large'
+        is defined by the RTS threshold in the network card driver.
+
+        CTS
+        Clear to Send, it is used to answer RTS frames.
+
+        AKM
+        The authentication and key management method defined by
+        802.11i, and which includes 802.1x and pre-shared key."
+  REVISION "201710091800Z"        -- Oct 09, 2017 at 18:00 GMT
+    DESCRIPTION
+         "Modified to add new nodes."
+  REVISION "201702241800Z"        -- Feb 24, 2017 at 18:00 GMT
+    DESCRIPTION
+        "Add ibDot11StationAuditTrap to ibDot11StationTraps
+         Add new node     ibDot11StationTrapAPIPAddress to ibDot11StationTrapVarObjects
+         Add new node     ibDot11StationTrapStartTime to ibDot11StationTrapVarObjects
+         Add new node     ibDot11StationAuditTrapOpType to ibDot11StationTrapVarObjects
+         Add new node     ibDot11StationTrapStaIPAddress to ibDot11StationTrapVarObjects
+         Add new node     ibDot11StationTrapRadioID to ibDot11StationTrapVarObjects
+         Add new node     ibDot11StationTrapRadioMode to ibDot11StationTrapVarObjects
+         Add new node     ibDot11StationTrapWlanID to ibDot11StationTrapVarObjects
+         Add new node     ibDot11StationTrapSSIDName ibDot11StationTrapVarObjects
+         Add new node     ibDot11StationTrapVlan to ibDot11StationTrapVarObjects
+         Add new node     ibDot11StationTrapChannel to ibDot11StationTrapVarObjects
+         Add new node     ibDot11StationTrapRSSI to ibDot11StationTrapVarObjects
+         Add new node     ibDot11StationTrapRxFrameKbit to ibDot11StationTrapVarObjects
+         Add new node     ibDot11StationTrapTxFrameKbit to ibDot11StationTrapVarObjects
+         Add new node     ibDot11StationTrapVlan to ibDot11StationTrapVarObjects
+         Add new node     ibDot11StationTrapChannel to ibDot11StationTrapVarObjects"
+    REVISION "201603111800Z"        -- Mar 11, 2016 at 18:00 GMT
+    DESCRIPTION
+        "Modified to add new nodes."
+    REVISION "201504131800Z"        -- Apr 13, 2015 at 18:00 GMT
+    DESCRIPTION
+        "Add ibDot11StaAntennaChgTrap to ibDot11StationTraps
+         Add new node ibDot11StationTrapOldAntennaID to ibDot11StationTrapVarObjects
+         Add new node ibDot11StationTrapNewAntennaID to ibDot11StationTrapVarObjects"
+    REVISION "201009021800Z"        -- Sep 2, 2010 at 18:00 GMT
+    DESCRIPTION
+        "Modify ibDot11StationDisconnectTrap."
+    REVISION "201002231800Z"        -- Feb 23, 2010 at 18:00 GMT
+    DESCRIPTION
+        "Add new node ibDot11StationUpTimeTicks, ibDot11StationSecIEStatus
+         to ibDot11StationAssociateTable."
+    REVISION "200912011800Z"        -- Aug 07, 2009 at 18:00 GMT
+    DESCRIPTION
+        "Add new node ibDot11StaRxErrDataFrameCnt and ibDot11StaTxRetryDataFrameCnt
+         to ibDot11StationStatisTable"
+    REVISION "200908071800Z"        -- Aug 07, 2009 at 18:00 GMT
+    DESCRIPTION
+        "Modify description of ibDot11StationTxSpeed, ibDot11StationRxSpeed"
+    REVISION "200907291800Z"        -- Jul 29, 2009 at 18:00 GMT
+    DESCRIPTION
+        "Modified to add new nodes."
+    REVISION "200905072000Z"        -- May 7, 2009 at 20:00 GMT
+    DESCRIPTION
+        "Modified to add new nodes."
+    REVISION "200811071730Z"        -- Nov 07, 2008 at 17:30 GMT
+    DESCRIPTION
+        "Modified to add new nodes."
+    REVISION "200802251800Z"        -- Feb 25, 2008 at 18:00 GMT
+    DESCRIPTION
+        "Modified to add new trap and add ibDot11StationRxNoise to ibDot11StationAssociateTable."
+    REVISION "200712211800Z"        -- Dec 21, 2007 at 18:00 GMT
+    DESCRIPTION
+        "Modified to add new nodes."
+    REVISION "200706212000Z"        -- Jun 21, 2007 at 20:00 GMT
+    DESCRIPTION
+        "Changes made for new requirements."
+    REVISION "200704272000Z"        -- Apr 27, 2007 at 20:00 GMT
+    DESCRIPTION
+        "Modified to fix some issue."
+    REVISION "200605101600Z"        -- May 10, 2006 at 19:00 GMT
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibDot11 3 }
+
+-- *****************************************************************************
+-- *  Major sections
+-- *****************************************************************************
+--  Station Management Group
+--  DEFINED AS "The group to provide the basic information for station,
+--  for example, associated station, performance data and so on."
+
+ibDot11StationMtGroup OBJECT IDENTIFIER     ::= { ibDot11STATION 1 }
+--  Station Management Group has the following children:
+--  ibDot11StationAssociateTable            ::= { ibDot11APMtGroup 1 }
+--  ibDot11StationAPRelationTable           ::= { ibDot11APMtGroup 2 }
+--  ibDot11StationStatisTable               ::= { ibDot11APMtGroup 3 }
+--  ibDot11StationRfPingTable               ::= { ibDot11APMtGroup 4 }
+
+--  MAC Event Notification
+--  DEFINED AS "The group to provide station notification information"
+ibDot11StationNotifyGroup OBJECT IDENTIFIER ::= { ibDot11STATION 2 }
+
+-- *****************************************************************************
+-- *  ibDot11StaAssociateTable Definition
+-- *****************************************************************************
+ibDot11StationAssociateTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDot11StationAssociateEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains the information of stations which are
+        associating with the wireless network (current AC)."
+    ::= { ibDot11StationMtGroup 1 }
+
+ibDot11StationAssociateEntry OBJECT-TYPE
+    SYNTAX      IbDot11StationAssociateEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry contains association information of each station."
+    INDEX
+        {
+            ibDot11StationMAC
+        }
+    ::= { ibDot11StationAssociateTable 1 }
+
+IbDot11StationAssociateEntry ::= SEQUENCE
+    {
+        ibDot11StationMAC                MacAddress,
+        ibDot11StationIPAddress          IpAddress,
+        ibDot11StationUserName           OCTET STRING,
+        ibDot11StationTxRateSet          OCTET STRING,
+        ibDot11StationUpTime             Unsigned32,
+        ibDot11StationSignalStrength     Integer32,
+        ibDot11StationRSSI               Integer32,
+        ibDot11StationChannel            IbDot11ChannelScopeType,
+        ibDot11StationPowerSaveMode      INTEGER,
+        ibDot11StationAid                Integer32,
+        ibDot11StationVlanId             Integer32,
+        ibDot11StationSSIDName           IbDot11SSIDStringType,
+        ibDot11StationAuthenMode         IbDot11AuthenType,
+        ibDot11StationAKMMode            IbDot11AKMType,
+        ibDot11StationSecurityCiphers    IbDot11CipherType,
+        ibDot11StationSSIDEncryptMode    IbDot11SSIDEncryptModeType,
+        ibDot11StationRxSNR              Integer32,
+        ibDot11StationTxRate             Integer32,
+        ibDot11StationRxRate             Integer32,
+        ibDot11StationVendorName         OCTET STRING,
+        ibDot11StationRadioMode          IbDot11RadioType,
+        ibDot11StationRxNoise            Integer32,
+        ibDot11StationMACAddress         MacAddress,
+        ibDot11StationTxSpeed            Integer32,
+        ibDot11StationRxSpeed            Integer32,
+        ibDot11StationWmmMode            INTEGER,
+        ibDot11StationSecIEStatus        IbDot11SecIEStatusType,
+        ibDot11StationUpTimeTicks        TimeTicks,
+        ibDot11StationRadioMode2         IbDot11RadioType2,
+        ibDot11StationAssTime            DateAndTime,
+        ibDot11StationUserAuthType       INTEGER,
+        ibDot11StationRfPingTest         TruthValue,
+        ibDot11StationMaxRate            Integer32,
+        ibDot11StationPowerSaveModeCM    INTEGER,
+        ibDot11StationAuthenModeCM       INTEGER,
+        ibDot11StationAKMModeCM          INTEGER,
+        ibDot11StationSecurityCiphersCM  INTEGER,
+        ibDot11StationSecIEStatusCM      INTEGER,
+        ibDot11StationIPv6Address        OCTET STRING,
+        ibDot11StationAssociateAPMACAddressCM   MacAddress,
+        ibDot11StationDeviceType         OCTET STRING,
+        ibDot11StationTxRateCM           OCTET STRING,
+        ibDot11StationRxRateCM           OCTET STRING
+    }
+
+ibDot11StationMAC OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Represents the unique MAC Address of station."
+    ::= { ibDot11StationAssociateEntry 1 }
+
+ibDot11StationIPAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the IP address of the station."
+    ::= { ibDot11StationAssociateEntry 2 }
+
+ibDot11StationUserName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the user name of the station."
+    ::= { ibDot11StationAssociateEntry 3 }
+
+ibDot11StationTxRateSet OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    UNITS       "Mbps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the current transmit data rates for this station.
+        Each byte will represent one rate.  If the MSB(Most significant bit)
+        is set, then this rate is a mandantory rate.  Otherwise,
+        it is optional."
+    ::= { ibDot11StationAssociateEntry 4 }
+
+ibDot11StationUpTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "second"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The time in seconds, how long this station has been associated
+        with this device."
+    ::= { ibDot11StationAssociateEntry 5 }
+
+ibDot11StationSignalStrength OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "dBm"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents a device-dependent measure of the signal strength
+        of latest packet received from this station."
+    ::= { ibDot11StationAssociateEntry 6 }
+
+ibDot11StationRSSI OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents a device-dependent measure of the RSSI.
+        It is the received signal strength indication.
+        The maximum value is defined by chip set vendors"
+    ::= { ibDot11StationAssociateEntry 7 }
+
+ibDot11StationChannel OBJECT-TYPE
+    SYNTAX      IbDot11ChannelScopeType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents current radio channel used by station."
+    ::= { ibDot11StationAssociateEntry 8 }
+
+ibDot11StationPowerSaveMode OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            active(1),
+            powersave(2)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the power management mode of this station.
+        The following values are supported:
+        active    - This station is not in power-save
+        mode and it is actively sending or
+        receiving data.
+        powersave - This station is in power-save mode and
+        it wakes up after sometime to check for
+        buffer data."
+    DEFVAL      { active }
+    ::= { ibDot11StationAssociateEntry 9 }
+
+ibDot11StationAid OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the association identification number of station."
+    ::= { ibDot11StationAssociateEntry 10 }
+
+ibDot11StationVlanId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents Vlan ID to which the station is associated."
+    ::= { ibDot11StationAssociateEntry 11 }
+
+ibDot11StationSSIDName OBJECT-TYPE
+    SYNTAX      IbDot11SSIDStringType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the ESS name."
+    ::= { ibDot11StationAssociateEntry 12 }
+
+ibDot11StationAuthenMode OBJECT-TYPE
+    SYNTAX      IbDot11AuthenType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the Authentication mode defined by 802.11."
+    ::= { ibDot11StationAssociateEntry 13 }
+
+ibDot11StationAKMMode OBJECT-TYPE
+    SYNTAX      IbDot11AKMType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the key management mode defined by 802.11i."
+    ::= { ibDot11StationAssociateEntry 14 }
+
+ibDot11StationSecurityCiphers OBJECT-TYPE
+    SYNTAX      IbDot11CipherType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the frame encryption cipher type used by
+        station."
+    ::= { ibDot11StationAssociateEntry 15 }
+
+ibDot11StationSSIDEncryptMode OBJECT-TYPE
+    SYNTAX      IbDot11SSIDEncryptModeType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the encryption mode for this ESS."
+    DEFVAL      { cipher }
+    ::= { ibDot11StationAssociateEntry 16 }
+
+ibDot11StationRxSNR OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "One Percent"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the signal and noise strength ratio of frame reception."
+    ::= { ibDot11StationAssociateEntry 17 }
+
+ibDot11StationTxRate OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "Mbps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the transmission rate of frame."
+    ::= { ibDot11StationAssociateEntry 18 }
+
+ibDot11StationRxRate OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "Mbps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the reception rate of frame."
+    ::= { ibDot11StationAssociateEntry 19 }
+
+ibDot11StationVendorName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the vendor name of the station."
+    ::= { ibDot11StationAssociateEntry 20 }
+
+ibDot11StationRadioMode OBJECT-TYPE
+    SYNTAX      IbDot11RadioType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents which radio type supported by the station.
+        The WLAN system support the following possible radio types.
+        dot11a(1),
+        dot11b(2),
+        dot11g(4),
+        dot11n(8),
+        dot11gn(16),
+        dot11an(32),
+        dot11ac(64),
+        dot11gac(128)
+        For a station,it could support only one radio type at
+        the same time."
+    ::= { ibDot11StationAssociateEntry 21 }
+
+ibDot11StationRxNoise OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the received noise of the station."
+    ::= { ibDot11StationAssociateEntry 22 }
+
+
+ibDot11StationMACAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents MAC Address of station."
+    ::= { ibDot11StationAssociateEntry 23 }
+
+ibDot11StationTxSpeed OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "byte/s"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the bytes of transmitted data frames to the
+        station per second in sample interval."
+    ::= { ibDot11StationAssociateEntry 24 }
+
+ibDot11StationRxSpeed OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "byte/s"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the bytes of received data frames from the
+        station per second in sample interval."
+    ::= { ibDot11StationAssociateEntry 25 }
+
+ibDot11StationWmmMode  OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            wmm(1),
+            nonwmm(2)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the QoS mode of station.
+        The following values are supported:
+        wmm    - This QoS function is supported by this station.
+        nonwmm - This QoS function is not supported by this station."
+    ::= { ibDot11StationAssociateEntry 26 }
+
+ibDot11StationSecIEStatus OBJECT-TYPE
+    SYNTAX      IbDot11SecIEStatusType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the security Information element for this station."
+    ::= { ibDot11StationAssociateEntry 27 }
+
+ibDot11StationUpTimeTicks OBJECT-TYPE
+    SYNTAX      TimeTicks
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents how long this station has been associated
+         with this device."
+    ::= { ibDot11StationAssociateEntry 28 }
+
+ibDot11StationRadioMode2 OBJECT-TYPE
+    SYNTAX      IbDot11RadioType2
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents which radio type supported by the station.
+        The WLAN system support the following possible radio types.
+        dot11a(1),
+        dot11b(2),
+        dot11g(4),
+        dot11an(8),
+        dot11gn(16),
+        dot11ac(32),
+        dot11gac(64)
+        For a station,it could support only one radio type at
+        the same time."
+    ::= { ibDot11StationAssociateEntry 29 }
+
+ibDot11StationAssTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the time at which the station connected."
+    ::= { ibDot11StationAssociateEntry 30 }
+
+ibDot11StationUserAuthType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            portalAuth(1),
+            authFree(2),
+            associateAuth(3),
+            macAuth(4)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the type of user authentication with this station.
+        portalAuth    - The authentication lunched by portal pop-up program
+        which is need input username and passward,exclude MAC authentication.
+        authFree      - There is no need others authentiaction,user will
+        surf internet after association.
+        associateAuth - Include WEP PSK 802.1X authentication.
+        macAuth       - MAC Authentication apply with access device,
+        a Remote Authentication Dial-In User Service (RADIUS) server or
+        message netgate to realize fast authentication."
+    ::= { ibDot11StationAssociateEntry 31 }
+
+ibDot11StationRfPingTest OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object is used to start rfping test of the station.
+         It will return false for get operation."
+    ::= { ibDot11StationAssociateEntry 32 }
+
+ibDot11StationMaxRate OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "Mbps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the max negotiation rate of the station."
+    ::= { ibDot11StationAssociateEntry 33 }
+
+ibDot11StationPowerSaveModeCM OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            active(0),
+            powersave(1)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the power management mode of the client.
+        The following values are supported:
+        active    - This client is not in power-save
+        mode and it is actively sending or receiving data.
+        powersave - This client is in power-save mode and
+        it wakes up after some time to check for buffer data."
+    DEFVAL      { active }
+    ::= { ibDot11StationAssociateEntry 34 }
+
+ibDot11StationAuthenModeCM OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            opensystem(0),
+            sharedkey(1)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the authentication mode defined by 802.11.
+        The following values are supported:
+        opensystem   - Do not authenticate.
+        sharedkey    - System will use challenge message to
+        authenticate the client."
+    ::= { ibDot11StationAssociateEntry 35 }
+
+ibDot11StationAKMModeCM OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            none(0),
+            psk(1),
+            radius(2),
+            wlanex(3)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the key management mode defined by 802.11i.
+        The following values are supported:
+        none         - no key management mode configured,
+        psk          - pre-shared key authentication,
+        radius       - 802.1x authentication,
+        wlanex       - wlanex."
+    ::= { ibDot11StationAssociateEntry 36 }
+
+ibDot11StationSecurityCiphersCM OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            none(0),
+            wep40(1),
+            wep104(2),
+            tkip(3),
+            aesccmp(4),
+            wpisms4(5)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the frame encryption cipher type used by
+        station.
+        The following values are supported:
+        none     - clear text or no cipher method is configure,
+        wep40    - 40-bit WEP key,
+        wep104   - 104-bit WEP key,
+        tkip     - WPA Temporal Key encryption,
+        aesccmp  - WPA AES CCMP encryption,
+        wpisms4  - ext encryption."
+    ::= { ibDot11StationAssociateEntry 37 }
+
+ibDot11StationSecIEStatusCM OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            none(0),
+            wpa(1),
+            wpa2(2),
+            wlanex(3)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the security Information element for this station.
+        The following values are supported:
+        none    - both wpa and wpa2 are disabled,
+        wpa     - only enable wpa,
+        wpa2    - only enable wpa2,
+        wlanex  - only enable wlanex."
+    ::= { ibDot11StationAssociateEntry 38 }
+
+ibDot11StationIPv6Address OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the IPv6 address of the station."
+    ::= { ibDot11StationAssociateEntry 39 }
+
+ibDot11StationAssociateAPMACAddressCM OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents MAC address of the AP to be associated."
+    ::= { ibDot11StationAssociateEntry 40 }
+
+ibDot11StationDeviceType OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the device type of stations to be associated."
+    ::= { ibDot11StationAssociateEntry 41 }
+
+ibDot11StationTxRateCM OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the transmit rate of frames."
+    ::= { ibDot11StationAssociateEntry 42 }
+
+ibDot11StationRxRateCM OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the receive rate of frames."
+    ::= { ibDot11StationAssociateEntry 43 }
+
+-- *****************************************************************************
+-- *  End of ibDot11StaAssociateTable Definition
+-- *****************************************************************************
+
+-- *****************************************************************************
+-- *  ibDot11StationAPRelationTable Definition
+-- *****************************************************************************
+ibDot11StationAPRelationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDot11StationAPRelationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains relation-ship between station, AP, Radio
+        and WLANID, and the detailed information of station is kept in
+        the ibDot11StaAssociateTable table."
+    ::= { ibDot11StationMtGroup 2 }
+
+ibDot11StationAPRelationEntry OBJECT-TYPE
+    SYNTAX      IbDot11StationAPRelationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry contains relation-ship information
+        with AP, Radio and WLANID of each station."
+    INDEX
+        {
+            ibDot11StationMAC
+        }
+    ::= { ibDot11StationAPRelationTable 1 }
+
+IbDot11StationAPRelationEntry ::= SEQUENCE
+    {
+        ibDot11CurrAPID       IbDot11ObjectIDType,
+        ibDot11CurrRadioID    IbDot11RadioScopeType,
+        ibDot11CurrWlanID     Integer32,
+        ibDot11CurrAntennaID  Integer32
+    }
+
+ibDot11CurrAPID OBJECT-TYPE
+    SYNTAX      IbDot11ObjectIDType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "To uniquely identify each AP, and relation-ship
+        between ibDot11CurrAPID and AP device will be static."
+    ::= { ibDot11StationAPRelationEntry 1 }
+
+ibDot11CurrRadioID OBJECT-TYPE
+    SYNTAX      IbDot11RadioScopeType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents each radio."
+    ::= { ibDot11StationAPRelationEntry 2 }
+
+ibDot11CurrWlanID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents WLAN ID of the BSS the station associated to."
+    ::= { ibDot11StationAPRelationEntry 3 }
+
+ibDot11CurrAntennaID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents Antenna ID of the station associated to."
+    ::= { ibDot11StationAPRelationEntry 4 }
+-- *****************************************************************************
+-- *  End of ibDot11StationAPRelationTable Definition
+-- *****************************************************************************
+
+-- *****************************************************************************
+-- *  ibDot11StationStatisTable Definition
+-- *****************************************************************************
+ibDot11StationStatisTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDot11StationStatisEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains statistics and status of all
+        stations in the ibDot11StaAssociateTable."
+    ::= { ibDot11StationMtGroup 3 }
+
+ibDot11StationStatisEntry OBJECT-TYPE
+    SYNTAX      IbDot11StationStatisEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This entry contains statistics and status for each station."
+    INDEX
+        {
+            ibDot11StationMAC
+        }
+    ::= { ibDot11StationStatisTable 1 }
+
+IbDot11StationStatisEntry ::= SEQUENCE
+    {
+        ibDot11StationRxFrameCnt        Counter32,
+        ibDot11StationTxFrameCnt        Counter32,
+        ibDot11StationDropFrameCnt      Counter32,
+        ibDot11StationRxFrameBytes      Counter64,
+        ibDot11StationTxFrameBytes      Counter64,
+        ibDot11StationDropFrameBytes    Counter64,
+        ibDot11StationRxRetryPkts       Counter32,
+        ibDot11StationTxRetryPkts       Counter32,
+        ibDot11StationRxRetryBytes      Counter64,
+        ibDot11StationTxRetryBytes      Counter64,
+        ibDot11StationThroughput        Counter64,
+        ibDot11StationSuccessTxCnt      Counter32,
+        ibDot11StationSuccessTxDataCnt  Counter32,
+        ibDot11StationRxDataFrameCnt    Counter32,
+        ibDot11StationTxDataFrameCnt    Counter32,
+        ibDot11StationRxDataFrameBytes  Counter64,
+        ibDot11StationTxDataFrameBytes  Counter64,
+        ibDot11StationRxFragCnt         Counter32,
+        ibDot11StaRxErrDataFrameCnt     Counter64,
+        ibDot11StaTxRetryDataFrameCnt   Counter64,
+        ibDot11StaTxDataRatePkts        OCTET STRING,
+        ibDot11StaRxDataRatePkts        OCTET STRING,
+        ibDot11StaTxSignalStrengthPkts  OCTET STRING,
+        ibDot11StaInternetRxFrameBytes  Counter64,
+        ibDot11StaInternetTxFrameBytes  Counter64,
+        ibDot11StaLocalRxFrameBytes     Counter64,
+        ibDot11StaLocalTxFrameBytes     Counter64
+    }
+
+ibDot11StationRxFrameCnt OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the count of frames that are received by AP from station."
+    ::= { ibDot11StationStatisEntry 1 }
+
+ibDot11StationTxFrameCnt OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the count of frames that are sent to station from AP."
+    ::= { ibDot11StationStatisEntry 2 }
+
+ibDot11StationDropFrameCnt OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the count of frames that are dropped."
+    ::= { ibDot11StationStatisEntry 3 }
+
+ibDot11StationRxFrameBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    UNITS       "bytes"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the count of bytes that are received by AP from station."
+    ::= { ibDot11StationStatisEntry 4 }
+
+ibDot11StationTxFrameBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    UNITS       "bytes"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the count of bytes that are sent to station from AP."
+    ::= { ibDot11StationStatisEntry 5 }
+
+ibDot11StationDropFrameBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    UNITS       "bytes"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents how many bytes are dropped."
+    ::= { ibDot11StationStatisEntry 6 }
+
+ibDot11StationRxRetryPkts OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the count of frames that are retransmitted to AP from station."
+    ::= { ibDot11StationStatisEntry 7 }
+
+ibDot11StationTxRetryPkts OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the count of frames that are retransmitted to station from AP."
+    ::= { ibDot11StationStatisEntry 8 }
+
+ibDot11StationRxRetryBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the count of bytes that are retransmitted to AP from station."
+    ::= { ibDot11StationStatisEntry 9 }
+
+ibDot11StationTxRetryBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the count of bytes that are retransmitted to station from AP."
+    ::= { ibDot11StationStatisEntry 10 }
+
+ibDot11StationThroughput OBJECT-TYPE
+    SYNTAX      Counter64
+    UNITS       "bytes"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents how many payload bytes of data frame are sent and received
+         by station."
+    ::= { ibDot11StationStatisEntry 11 }
+
+ibDot11StationSuccessTxCnt OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents how many frames have been successfully sent to station."
+    ::= { ibDot11StationStatisEntry 12 }
+
+ibDot11StationSuccessTxDataCnt  OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents how many data frames have been successfully sent to
+        station."
+    ::= { ibDot11StationStatisEntry 13 }
+
+ibDot11StationRxDataFrameCnt OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents how many data frames have been received from station."
+    ::= { ibDot11StationStatisEntry 14 }
+
+ibDot11StationTxDataFrameCnt OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents how many data frames have been sent to station."
+    ::= { ibDot11StationStatisEntry 15 }
+
+ibDot11StationRxDataFrameBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents how many bytes of data frames have been received
+        from station."
+    ::= { ibDot11StationStatisEntry 16 }
+
+ibDot11StationTxDataFrameBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents how many bytes of data frames have been sent to
+        station."
+    ::= { ibDot11StationStatisEntry 17 }
+
+ibDot11StationRxFragCnt  OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the number of fragmented data frames that received
+         from station."
+    ::= { ibDot11StationStatisEntry 18 }
+
+ibDot11StaRxErrDataFrameCnt  OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "Represents the count of error data frames that are received by AP
+                 from station."
+    ::= { ibDot11StationStatisEntry 19 }
+
+ibDot11StaTxRetryDataFrameCnt  OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "Represents the count of data frames that are retransmitted to station
+                 from AP."
+    ::= { ibDot11StationStatisEntry 20 }
+ibDot11StaTxDataRatePkts  OBJECT-TYPE
+        SYNTAX      OCTET STRING
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "Represents how many data frames of each rate have been received
+                from station."
+    ::= { ibDot11StationStatisEntry 21 }
+
+ibDot11StaRxDataRatePkts  OBJECT-TYPE
+        SYNTAX      OCTET STRING
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "Represents how many data frames of each rate have been sent to
+                station."
+    ::= { ibDot11StationStatisEntry 22 }
+
+ibDot11StaTxSignalStrengthPkts  OBJECT-TYPE
+        SYNTAX      OCTET STRING
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+                "Represents how many data frames of different signal strength have been
+                 received from station."
+    ::= { ibDot11StationStatisEntry 23 }
+
+ibDot11StaInternetRxFrameBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Internet traffic bytes received from station."
+    ::= { ibDot11StationStatisEntry 24 }
+
+ibDot11StaInternetTxFrameBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Internet traffic bytes sent to station."
+    ::= { ibDot11StationStatisEntry 25 }
+
+ibDot11StaLocalRxFrameBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Local traffic bytes received from station."
+    ::= { ibDot11StationStatisEntry 26 }
+
+ibDot11StaLocalTxFrameBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Local traffic bytes sent to station."
+    ::= { ibDot11StationStatisEntry 27 }
+-- *****************************************************************************
+-- *  End of ibDot11StationStatisTable Definition
+-- *****************************************************************************
+
+-- *****************************************************************************
+-- *  ibDot11StationRfPingTable Definition
+-- *****************************************************************************
+ibDot11StationRfPingTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDot11StationRfPingEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains statistics of all
+        stations in the ibDot11StationRfPingTable."
+    ::= { ibDot11StationMtGroup 4 }
+
+ibDot11StationRfPingEntry OBJECT-TYPE
+    SYNTAX      IbDot11StationRfPingEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This entry contains statistics for each station's RfPing results."
+    INDEX
+        {
+            ibDot11StationMAC,
+            ibDot11StationRfPingIndex
+        }
+    ::= { ibDot11StationRfPingTable 1 }
+IbDot11StationRfPingEntry ::= SEQUENCE
+    {
+        ibDot11StationRfPingIndex       Integer32,
+        ibDot11StationRfPingRate        OCTET STRING,
+        ibDot11StationRfPingTxCnt       Integer32,
+        ibDot11StationRfPingRxCnt       Integer32,
+        ibDot11StationRfPingRssi        Integer32,
+        ibDot11StationRfPingRetries     Integer32,
+        ibDot11StationRfPingRtt         Integer32
+    }
+
+ibDot11StationRfPingIndex OBJECT-TYPE
+    SYNTAX      Integer32(0..214783647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Represents the rate index for the station."
+    ::= { ibDot11StationRfPingEntry 1 }
+
+ibDot11StationRfPingRate OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    UNITS       "Mbps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the rate at which the radio interface sends wireless ping frames."
+    ::= { ibDot11StationRfPingEntry 2 }
+
+ibDot11StationRfPingTxCnt OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the number of wireless ping frames that the radio interface sent."
+    ::= { ibDot11StationRfPingEntry 3 }
+
+ibDot11StationRfPingRxCnt OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the number of wireless ping frames that
+         the radio interface received from the client."
+    ::= { ibDot11StationRfPingEntry 4 }
+
+ibDot11StationRfPingRssi OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the client signal strength detected by the AP."
+    ::= { ibDot11StationRfPingEntry 5 }
+
+ibDot11StationRfPingRetries OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Represents the total number of retransmitted ping frames."
+    ::= { ibDot11StationRfPingEntry 6 }
+
+ibDot11StationRfPingRtt OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "ms"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Round-trip time (RTT) from the time when the radio interface send a
+         ping packet to the time when it receives a response from the client."
+    ::= { ibDot11StationRfPingEntry 7 }
+-- *****************************************************************************
+-- *  End of ibDot11StationRfPingTable Definition
+-- *****************************************************************************
+
+-- *****************************************************************************
+-- *     Notifications OF ibDot11StationNotifyGroup
+-- *****************************************************************************
+-- 802.11 MAC Notification
+
+ibDot11StationTraps OBJECT IDENTIFIER    ::= { ibDot11StationNotifyGroup 0 }
+
+ibDot11StationMICErrorTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDot11CurrAPID,
+            ibDot11CurrRadioID,
+            ibDot11StationTrapBSSID,
+            ibDot11StationSSIDName,
+            ibDot11StationTrapStaMAC
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is to indicate the occurrence of a MIC
+        failure in a certain station."
+    ::= { ibDot11StationTraps 1 }
+
+ibDot11StationAuthenErrorTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDot11CurrAPID,
+            ibDot11CurrRadioID,
+            ibDot11StationTrapBSSID,
+            ibDot11StationSSIDName,
+            ibDot11StationTrapStaMAC,
+            ibDot11StationAuthenMode,
+            ibDot11StationAKMMode
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is to indicate which station happened
+        authentication failure."
+    ::= { ibDot11StationTraps 2 }
+
+ibDot11StationAuthorFailTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDot11StationUserName,
+            ibDot11StationTrapStaMAC,
+            ibDot11CurrRadioID,
+            ibDot11StationSSIDName,
+            ibDot11StationAuthorFailCause,
+            ibDot11StationFailCauseDesc,
+            ibDot11CurrAPID,
+            ibDot11StationBSSID,
+            ibDot11StationAuthMode,
+            ibDot11StationTrapAPMacAddress
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent if a station authorization fails."
+    ::= { ibDot11StationTraps 3 }
+
+ibDot11StationAssocFailTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDot11StationTrapStaMAC,
+            ibDot11CurrRadioID,
+            ibDot11StationSSIDName,
+            ibDot11StationAssocFailCause,
+            ibDot11StationFailCauseDesc,
+            ibDot11CurrAPID,
+            ibDot11StationTrapAPMacAddress,
+            ibDot11StationBSSID
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent if a station association fails."
+    ::= { ibDot11StationTraps 4 }
+
+ibDot11StationDeAssocTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDot11StationUserName,
+            ibDot11StationTrapStaMAC,
+            ibDot11StationVlanId,
+            ibDot11CurrRadioID,
+            ibDot11StationSSIDName,
+            ibDot11StationSessionDuration,
+            ibDot11CurrAPID,
+            ibDot11StationAPName,
+            ibDot11StationBSSID
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent if a station de-association occurred."
+    ::= { ibDot11StationTraps 5 }
+
+ibDot11StationAuthorSuccTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDot11StationUserName,
+            ibDot11StationTrapStaMAC,
+            ibDot11StationVlanId,
+            ibDot11StationSessionStartTime,
+            ibDot11CurrRadioID,
+            ibDot11StationSSIDName,
+            ibDot11CurrAPID,
+            ibDot11StationAPName,
+            ibDot11StationBSSID
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent when a station is authorized successfully."
+    ::= { ibDot11StationTraps 6 }
+
+ibDot11StationRoamingTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDot11CurrAPID,
+            ibDot11StationUserName,
+            ibDot11StationTrapStaMAC,
+            ibDot11StationVlanId,
+            ibDot11StationRoamingTime,
+            ibDot11CurrRadioID,
+            ibDot11StationSSIDName,
+            ibDot11StationACIPAddress,
+            ibDot11StationACIPv6Add
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent when a station roamed successfully."
+    ::= { ibDot11StationTraps 7 }
+
+ibDot11StationDisconnectTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDot11StationAPName,
+            ibDot11StationBSSID,
+            ibDot11StationSSIDName,
+            ibDot11StationSessionDuration,
+            ibDot11StationVlanId,
+            ibDot11CurrAPID,
+            ibDot11CurrRadioID,
+            ibDot11StaDisconnectReason,
+            ibDot11StationTrapStaMAC
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is sent when station disconnects with AP."
+    ::= { ibDot11StationTraps 8 }
+
+ibDot11UserDisconnectTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDot11StationAPName,
+            ibDot11StationTrapStaMAC,
+            ibDot11UserName
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is sent when user disconnects with AP."
+    ::= { ibDot11StationTraps 9 }
+
+ibDot11StaAntennaChgTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDot11CurrAPID,
+            ibDot11CurrRadioID,
+            ibDot11StationTrapBSSID,
+            ibDot11StationSSIDName,
+            ibDot11StationTrapStaMAC,
+            ibDot11StationTrapOldAntennaID,
+            ibDot11StationTrapNewAntennaID
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is to indicate the station has connected to a new antenna."
+    ::= { ibDot11StationTraps 10 }
+
+ibDot11StationAuditTrap NOTIFICATION-TYPE
+    OBJECTS
+      {
+          ibDot11StationAuditTrapOpType,
+          ibDot11StationTrapStaMAC,
+          ibDot11StationTrapStaIPAddress,
+          ibDot11StationTrapAPMacAddress,
+          ibDot11StationTrapAPIPAddress,
+          ibDot11StationTrapRadioID,
+          ibDot11StationTrapRadioMode,
+          ibDot11StationTrapWlanID,
+          ibDot11StationTrapSSIDName,
+          ibDot11StationTrapVlan,
+          ibDot11StationTrapChannel,
+          ibDot11StationTrapRSSI,
+          ibDot11StationTrapStartTime,
+          ibDot11StationSessionDuration,
+          ibDot11StationTrapRxFrameKbit,
+          ibDot11StationTrapTxFrameKbit
+      }
+    STATUS      current
+    DESCRIPTION
+      "This notification is to indicate the station event."
+  ::= { ibDot11StationTraps 11 }
+
+-- 802.11 station Notify variable object
+
+        ibDot11StationTrapVarObjects OBJECT IDENTIFIER
+    ::= { ibDot11StationNotifyGroup 1 }
+
+ibDot11StationTrapBSSID OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents on which BSSID of AP the event happened."
+    ::= { ibDot11StationTrapVarObjects 1 }
+
+ibDot11StationTrapStaMAC OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the MAC address of station which happened message
+        integrity check (MIC) errors."
+    ::= { ibDot11StationTrapVarObjects 2 }
+
+ibDot11StationSessionStartTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the time at which the station connected."
+    ::= { ibDot11StationTrapVarObjects 3 }
+
+ibDot11StationAssocFailCause OBJECT-TYPE
+    SYNTAX      IbDot11AssocFailType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the cause of the station association failure."
+    ::= { ibDot11StationTrapVarObjects 4 }
+
+ibDot11StationAuthorFailCause OBJECT-TYPE
+    SYNTAX      IbDot11AuthorFailType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the cause of the station authorization failure."
+    ::= { ibDot11StationTrapVarObjects 5 }
+
+ibDot11StationFailCauseDesc OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the failure description of the station."
+    ::= { ibDot11StationTrapVarObjects 6 }
+
+ibDot11StationSessionDuration OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "second"
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the duration of the station sesssion."
+    ::= { ibDot11StationTrapVarObjects 7 }
+
+ibDot11StationRoamingTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "second"
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the time at which the station roamed."
+    ::= { ibDot11StationTrapVarObjects 8 }
+
+ibDot11StationACIPAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "For roam-in station, it represents the ip address of home AC.
+         For roam-out station, it represents the ip address of foreign AC."
+    ::= { ibDot11StationTrapVarObjects 9 }
+
+ibDot11StationAPName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of the AP which the station connects to."
+    ::= { ibDot11StationTrapVarObjects 10 }
+
+ibDot11StationBSSID OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "BSSID which the station connects to."
+    ::= { ibDot11StationTrapVarObjects 11 }
+
+ibDot11StaDisconnectReason OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Reason why the station disconnects with the AP."
+    ::= { ibDot11StationTrapVarObjects 12 }
+
+ibDot11StationAuthMode OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        opensystem(1),
+        sharedkey(2)
+    }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents station's authentication mode."
+    ::= { ibDot11StationTrapVarObjects 13 }
+
+ibDot11StationACIPv6Add OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "For roam-in station, it represents the IPv6 address of home AC.
+         For roam-out station, it represents the IPv6 address of foreign AC."
+    ::= { ibDot11StationTrapVarObjects 14 }
+
+ibDot11UserName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the user name."
+    ::= { ibDot11StationTrapVarObjects 15 }
+
+ibDot11StationTrapAPMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the MAC address of an AP."
+    ::= { ibDot11StationTrapVarObjects 16 }
+
+ibDot11StationTrapOldAntennaID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the ID of the old antenna to which the station is associated."
+    ::= { ibDot11StationTrapVarObjects 17 }
+
+ibDot11StationTrapNewAntennaID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the ID of the new antenna to which the station is associated."
+    ::= { ibDot11StationTrapVarObjects 18 }
+
+ibDot11StationTrapAPIPAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the IP address of an AP."
+    ::= { ibDot11StationTrapVarObjects 19 }
+
+ibDot11StationTrapStartTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "second"
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the time at which the device started to connect to a station."
+    ::= { ibDot11StationTrapVarObjects 20 }
+
+ibDot11StationAuditTrapOpType OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the station operation type."
+    ::= { ibDot11StationTrapVarObjects 21 }
+
+ibDot11StationTrapStaIPAddress  OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the IP address of the station."
+    ::= { ibDot11StationTrapVarObjects 22 }
+
+ibDot11StationTrapRadioID OBJECT-TYPE
+    SYNTAX      IbDot11RadioScopeType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents each radio."
+    ::= { ibDot11StationTrapVarObjects 23 }
+
+ibDot11StationTrapRadioMode OBJECT-TYPE
+    SYNTAX      IbDot11RadioType2
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the radio type supported by the station."
+    ::= { ibDot11StationTrapVarObjects 24 }
+
+ibDot11StationTrapWlanID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the WLAN ID of the BSS to which the station is associated."
+    ::= { ibDot11StationTrapVarObjects 25 }
+
+ibDot11StationTrapSSIDName OBJECT-TYPE
+    SYNTAX      IbDot11SSIDStringType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the ESS name."
+    ::= { ibDot11StationTrapVarObjects 26 }
+
+ibDot11StationTrapVlan OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the VLAN ID with which the station is associated."
+    ::= { ibDot11StationTrapVarObjects 27 }
+
+ibDot11StationTrapChannel OBJECT-TYPE
+    SYNTAX      IbDot11ChannelScopeType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the current radio channel used by the station."
+    ::= { ibDot11StationTrapVarObjects 28 }
+
+ibDot11StationTrapRSSI OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents a device-dependent measure of the RSSI.
+        It is the received signal strength indication.
+        The maximum value is defined by chip set vendors"
+    ::= { ibDot11StationTrapVarObjects 29 }
+
+ibDot11StationTrapRxFrameKbit OBJECT-TYPE
+    SYNTAX      Counter64
+    UNITS       "kbit"
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents how many bits of data frames have been received
+        from the station."
+    ::= { ibDot11StationTrapVarObjects 30 }
+
+ibDot11StationTrapTxFrameKbit OBJECT-TYPE
+    SYNTAX      Counter64
+    UNITS       "kbit"
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents how many bits of data frames have been sent to
+        the station."
+    ::= { ibDot11StationTrapVarObjects 31 }
+-- *****************************************************************************
+-- *     End OF NotifyGroup
+-- *****************************************************************************
+END

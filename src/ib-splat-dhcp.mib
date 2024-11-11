@@ -1,0 +1,215 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: DHCP MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+--(1) Created by Zhang Shilin, 2001.6.29
+--(2) Revised by Qi Zhenglin, 2002.01.08
+-- ==================================================================
+
+-- ==================================================================
+--
+-- Varibles and types be imported
+--
+-- ==================================================================
+
+IB-LswDHCP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+
+    RowStatus, MacAddress
+        FROM SNMPv2-TC
+
+    MODULE-IDENTITY,OBJECT-TYPE, IpAddress
+        FROM SNMPv2-SMI
+
+    iblswCommon
+        FROM IB-OID-MIB;
+
+-- ==================================================================
+--
+-- ======================= definition begin =========================
+--
+-- ==================================================================
+ibLswDhcpMib MODULE-IDENTITY
+            LAST-UPDATED "200106290000Z"
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION
+            ""
+            REVISION "200106290000Z"
+            DESCRIPTION
+            ""
+            ::= { iblswCommon  8 }
+
+    ibLswDhcpMibObject OBJECT IDENTIFIER ::= {  ibLswDhcpMib 1  }
+
+    ibDhcpGroupTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF IbDhcpGroupEntry
+        MAX-ACCESS not-accessible
+        STATUS   current
+        DESCRIPTION "A table containing the information of dhcp group "
+        ::= { ibLswDhcpMibObject 1 }
+
+
+     ibDhcpGroupEntry OBJECT-TYPE
+        SYNTAX  IbDhcpGroupEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "A table entry containing the information of dhcp group "
+        INDEX   { ibDhcpGroupID }
+        ::= { ibDhcpGroupTable 1 }
+
+    IbDhcpGroupEntry    ::=
+    SEQUENCE {
+        ibDhcpGroupID           INTEGER ,
+        ibIpDhcpServerAddress1  IpAddress ,
+        ibIpDhcpServerAddress2  IpAddress ,
+        ibDhcpRowStatus         RowStatus
+        }
+
+    ibDhcpGroupID OBJECT-TYPE
+        SYNTAX  INTEGER  (0..19)
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION " DHCP group identifier "
+        ::= { ibDhcpGroupEntry 1 }
+
+    ibIpDhcpServerAddress1 OBJECT-TYPE
+        SYNTAX  IpAddress
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION " The first IP address of DHCP server group "
+        ::= { ibDhcpGroupEntry 2 }
+
+    ibIpDhcpServerAddress2 OBJECT-TYPE
+        SYNTAX  IpAddress
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION " The second IP address of DHCP server group "
+        ::= { ibDhcpGroupEntry 3 }
+
+    ibDhcpRowStatus OBJECT-TYPE
+        SYNTAX  RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION " Operation status of this table entry     "
+        ::= { ibDhcpGroupEntry 4 }
+
+    ibDhcpSecurityTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF IbDhcpSecurityEntry
+        MAX-ACCESS not-accessible
+        STATUS   current
+        DESCRIPTION "A table containing the information of dhcp security "
+        ::= { ibLswDhcpMibObject 2 }
+
+
+     ibDhcpSecurityEntry OBJECT-TYPE
+        SYNTAX  IbDhcpSecurityEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "A table containing the information of dhcp security "
+        INDEX   { ibDhcpClientIpAddress }
+        ::= { ibDhcpSecurityTable 1 }
+
+    IbDhcpSecurityEntry    ::=
+    SEQUENCE {
+        ibDhcpClientIpAddress   IpAddress ,
+        ibDhcpClientMacAddress  MacAddress,
+        ibDhcpClientProperty    INTEGER ,
+        ibDhcpClientRowStatus   RowStatus
+        }
+
+    ibDhcpClientIpAddress OBJECT-TYPE
+        SYNTAX  IpAddress
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " DHCP client's net ip address "
+        ::= { ibDhcpSecurityEntry 1 }
+
+    ibDhcpClientMacAddress OBJECT-TYPE
+        SYNTAX  MacAddress
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION " DHCP client's mac address     "
+        ::= { ibDhcpSecurityEntry 2 }
+
+    ibDhcpClientProperty OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+            static(1),
+            dynamic(2)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION " Property of client address     "
+        ::= { ibDhcpSecurityEntry 3 }
+
+    ibDhcpClientRowStatus OBJECT-TYPE
+        SYNTAX  RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION " status of this table's entry.     "
+        ::= { ibDhcpSecurityEntry 4 }
+
+
+    ibDhcpToL3IfTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF IbDhcpToL3IfEntry
+        MAX-ACCESS not-accessible
+        STATUS   current
+        DESCRIPTION "A table configuring dhcp for layer 3 interface"
+        ::= { ibLswDhcpMibObject 3 }
+
+
+    ibDhcpToL3IfEntry OBJECT-TYPE
+        SYNTAX  IbDhcpToL3IfEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "A table configuring dhcp for layer 3 interface "
+        INDEX   { ibDhcpToL3VlanIfIndex }
+        ::= { ibDhcpToL3IfTable 1 }
+
+    IbDhcpToL3IfEntry    ::=
+    SEQUENCE {
+        ibDhcpToL3VlanIfIndex  INTEGER ,
+        ibDhcpToL3GroupId      INTEGER,
+        ibDhcpToL3AddressCheck INTEGER ,
+        ibDhcpToL3RowStatus    RowStatus
+        }
+
+    ibDhcpToL3VlanIfIndex OBJECT-TYPE
+        SYNTAX  INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION " vlan virtual interface index "
+        ::= { ibDhcpToL3IfEntry 1 }
+
+    ibDhcpToL3GroupId OBJECT-TYPE
+        SYNTAX  INTEGER  (0..19)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION " DHCP group id for this vlan virtual interface"
+        ::= { ibDhcpToL3IfEntry 2 }
+
+    ibDhcpToL3AddressCheck OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+            enabled(1),
+            disabled(2)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION " If dhcp security check enabled for this vlan virtual interface "
+        ::= { ibDhcpToL3IfEntry 3 }
+
+    ibDhcpToL3RowStatus OBJECT-TYPE
+        SYNTAX  RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION " status of this table's entry.     "
+        ::= { ibDhcpToL3IfEntry 4 }
+END

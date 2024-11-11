@@ -1,0 +1,1199 @@
+-- ************************************************************************
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: WAPI extension mib
+-- Reference:
+-- Version: V1.5
+-- History:
+--   V1.0 created by zhanglianglun
+--     Initial version 2007-5-20
+--   V1.1 2009-06-04 modified by caizibin
+--        Add ibwapiCertificateInstalled, ibwapiConfigTable,
+--        ibwapiUserwithInvalidCertificate,
+--        ibwapiStationReplayAttack, ibwapiTamperAttack,
+--        ibwapiLowSafeLevelAttack, ibwapiAddressRedirectionAttack,
+--        ibwapiTrapInfoMacAddr, ibwapiTrapInfoAPId,
+--        ibwapiTrapInfoRadioId, ibwapiTrapInfoBSSId
+--   V1.2 2010-03-06 modified by xuyonggang
+--        Add ibwapiConfigExtTable
+--   V1.3 2010-11-23 modified by xuyonggang
+--        Add ibwapiCfgExtASIPAddressType
+--        Add ibwapiCfgExtASIPAddress
+--        Add ibwapiCfgExtASName
+--        Add ibwapiCfgExtCertDomain
+--        Add ibwapiCfgExtCertInstalled
+--   V1.4 2013-01-10 modified by xuyonggang
+--        Add ibwapiTrapInfoAPMacAddr
+--   V1.5 2018-05-07 modified by muzhuqing
+--        Add node ibwapiConfigVersion to ibwapiConfigExtTable.
+--        Add node ibwapiControlledAuthControl to ibwapiConfigExtTable.
+--        Add node ibwapiControlledPortControl to ibwapiConfigExtTable.
+--        Add node ibwapiOptionImplemented to ibwapiConfigExtTable.
+--        Add node ibwapiPreauthImplemented to ibwapiConfigExtTable.
+--        Add node ibwapiEnabled to ibwapiConfigExtTable.
+--        Add node ibwapiPreauthEnabled to ibwapiConfigExtTable.
+--        Add node ibwapiCfgUniKeysSupported to ibwapiConfigExtTable.
+--        Add node ibwapiCfgUniRekeyMethod to ibwapiConfigExtTable.
+--        Add node ibwapiCfgUniRekeyTime to ibwapiConfigExtTable.
+--        Add node ibwapiCfgUniRekeyPackets to ibwapiConfigExtTable.
+--        Add node ibwapiCfgMultiCipher to ibwapiConfigExtTable.
+--        Add node ibwapiCfgMultiRekeyMethod to ibwapiConfigExtTable.
+--        Add node ibwapiCfgMultiRekeyTime to ibwapiConfigExtTable.
+--        Add node ibwapiCfgMultiRekeyPackets to ibwapiConfigExtTable.
+--        Add node ibwapiCfgMultiRekeyStrict to ibwapiConfigExtTable.
+--        Add node ibwapiCfgPSKValue to ibwapiConfigExtTable.
+--        Add node ibwapiCfgPSKPassPhrase to ibwapiConfigExtTable.
+--        Add node ibwapiCfgCertUpdateCount to ibwapiConfigExtTable.
+--        Add node ibwapiCfgMultiUpdateCount to ibwapiConfigExtTable.
+--        Add node ibwapiCfgUniUpdateCount to ibwapiConfigExtTable.
+--        Add node ibwapiCfgMultiCipherSize to ibwapiConfigExtTable.
+--        Add node ibwapiCfgBKLifetime to ibwapiConfigExtTable.
+--        Add node ibwapiCfgBKReauthThreshold to ibwapiConfigExtTable.
+--        Add node ibwapiCfgSATimeout to ibwapiConfigExtTable.
+--        Add node ibwapiAuthenSuiteSelected to ibwapiConfigExtTable.
+--        Add node ibwapiUniCipherSelected to ibwapiConfigExtTable.
+--        Add node ibwapiMultiCipherSelected to ibwapiConfigExtTable.
+--        Add node ibwapiBKIDUsed to ibwapiConfigExtTable.
+--        Add node ibwapiAuthenSuiteRequested to ibwapiConfigExtTable.
+--        Add node ibwapiUniCipherRequested to ibwapiConfigExtTable.
+--        Add node ibwapiMultiCipherRequested to ibwapiConfigExtTable.
+--        Add table ibwapiStatsTable.
+-- ************************************************************************
+IB-WAPI-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        Counter32, Integer32, Unsigned32,
+        MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE
+            FROM SNMPv2-SMI
+        TruthValue, MacAddress
+            FROM SNMPv2-TC
+        ifIndex, ifDescr
+            FROM IF-MIB
+        InetAddressType, InetAddress
+            FROM INET-ADDRESS-MIB
+        ibCommon
+            FROM IB-OID-MIB;
+
+    ibwapiMIB MODULE-IDENTITY
+        LAST-UPDATED "201012011757Z"
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+            "IB-WAPI-MIB is an extension of MIB in WAPI
+            protocol.  This MIB contains objects to
+            manage configuration and monitor running state
+            for WAPI feature."
+        REVISION "201012011757Z"
+        DESCRIPTION
+            "Add node ibwapiConfigVersion to ibwapiConfigExtTable.
+            Add node ibwapiControlledAuthControl to ibwapiConfigExtTable.
+            Add node ibwapiControlledPortControl to ibwapiConfigExtTable.
+            Add node ibwapiOptionImplemented to ibwapiConfigExtTable.
+            Add node ibwapiPreauthImplemented to ibwapiConfigExtTable.
+            Add node ibwapiEnabled to ibwapiConfigExtTable.
+            Add node ibwapiPreauthEnabled to ibwapiConfigExtTable.
+            Add node ibwapiCfgUniKeysSupported to ibwapiConfigExtTable.
+            Add node ibwapiCfgUniRekeyMethod to ibwapiConfigExtTable.
+            Add node ibwapiCfgUniRekeyTime to ibwapiConfigExtTable.
+            Add node ibwapiCfgUniRekeyPackets to ibwapiConfigExtTable.
+            Add node ibwapiCfgMultiCipher to ibwapiConfigExtTable.
+            Add node ibwapiCfgMultiRekeyMethod to ibwapiConfigExtTable.
+            Add node ibwapiCfgMultiRekeyTime to ibwapiConfigExtTable.
+            Add node ibwapiCfgMultiRekeyPackets to ibwapiConfigExtTable.
+            Add node ibwapiCfgMultiRekeyStrict to ibwapiConfigExtTable.
+            Add node ibwapiCfgPSKValue to ibwapiConfigExtTable.
+            Add node ibwapiCfgPSKPassPhrase to ibwapiConfigExtTable.
+            Add node ibwapiCfgCertUpdateCount to ibwapiConfigExtTable.
+            Add node ibwapiCfgMultiUpdateCount to ibwapiConfigExtTable.
+            Add node ibwapiCfgUniUpdateCount to ibwapiConfigExtTable.
+            Add node ibwapiCfgMultiCipherSize to ibwapiConfigExtTable.
+            Add node ibwapiCfgBKLifetime to ibwapiConfigExtTable.
+            Add node ibwapiCfgBKReauthThreshold to ibwapiConfigExtTable.
+            Add node ibwapiCfgSATimeout to ibwapiConfigExtTable.
+            Add node ibwapiAuthenSuiteSelected to ibwapiConfigExtTable.
+            Add node ibwapiUniCipherSelected to ibwapiConfigExtTable.
+            Add node ibwapiMultiCipherSelected to ibwapiConfigExtTable.
+            Add node ibwapiBKIDUsed to ibwapiConfigExtTable.
+            Add node ibwapiAuthenSuiteRequested to ibwapiConfigExtTable.
+            Add node ibwapiUniCipherRequested to ibwapiConfigExtTable.
+            Add node ibwapiMultiCipherRequested to ibwapiConfigExtTable.
+            Add table ibwapiStatsTable."
+        ::= { ibCommon 77 }
+
+    ibwapiMIBObjects OBJECT IDENTIFIER ::= { ibwapiMIB 1 }
+    ibwapiMIBStatsObjects OBJECT IDENTIFIER ::= { ibwapiMIB 2 }
+    ibwapiMIBTableObjects OBJECT IDENTIFIER ::= { ibwapiMIB 3 }
+    ibwapiTrap OBJECT IDENTIFIER ::= { ibwapiMIB 4 }
+
+-- ************************************************************************
+-- * ibwapiModeEnabled OBJECT
+-- ************************************************************************
+    ibwapiModeEnabled OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "When this object is set to TRUE, it shall indicate that WAPI
+            is enabled.  Otherwise, it shall indicate that WAPI is disabled."
+        ::= { ibwapiMIBObjects 1 }
+
+-- ************************************************************************
+-- * ibwapiASIPAddress OBJECT
+-- ************************************************************************
+    ibwapiASIPAddressType OBJECT-TYPE
+        SYNTAX  InetAddressType
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object is used to set global IP addresses
+            type (IPv4 or IPv6) of AS."
+        DEFVAL { ipv4 }
+        ::= { ibwapiMIBObjects 2 }
+
+    ibwapiASIPAddress OBJECT-TYPE
+        SYNTAX InetAddress
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object is used to set the global IP address of AS."
+        ::= { ibwapiMIBObjects 3 }
+
+-- ************************************************************************
+-- * ibwapiCertificateInstalled OBJECT
+-- ************************************************************************
+    ibwapiCertificateInstalled OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object indicates whether the entity has installed
+            certificate.  When the value is TRUE, it shall indicate that
+            the entity has installed certificate.  Otherwise, it shall
+            indicate that the entity hasn't installed certificate."
+        ::= { ibwapiMIBObjects 4 }
+
+-- ************************************************************************
+-- * 9 statistics OBJECTS
+-- ************************************************************************
+    ibwapiStatsWAISignatureErrors OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when the received packet of
+            WAI signature is wrong."
+        ::= { ibwapiMIBStatsObjects 1 }
+
+    ibwapiStatsWAIHMACErrors OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when the received packet of
+            WAI message authentication key checking error occurs."
+        ::= { ibwapiMIBStatsObjects 2 }
+
+    ibwapiStatsWAIAuthRsltFailures OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when the WAI authentication result is
+            unsuccessful."
+        ::= { ibwapiMIBStatsObjects 3 }
+
+    ibwapiStatsWAIDiscardCounters OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when the received packet of WAI are
+            discarded."
+        ::= { ibwapiMIBStatsObjects 4 }
+
+    ibwapiStatsWAITimeoutCounters OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when the packet of WAI overtime are
+            detected."
+        ::= { ibwapiMIBStatsObjects 5 }
+
+    ibwapiStatsWAIFormatErrors OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when the WAI packet of WAI format
+            error is detected."
+        ::= { ibwapiMIBStatsObjects 6 }
+
+    ibwapiStatsWAICtfHskFailures OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when the WAI certificate authenticates
+            unsuccessfully."
+        ::= { ibwapiMIBStatsObjects 7 }
+
+    ibwapiStatsWAIUniHskFailures OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when the WAI unicast cipher key
+            negotiates unsuccessfully."
+        ::= { ibwapiMIBStatsObjects 8 }
+
+    ibwapiStatsWAIMulHskFailures OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when the WAI multicast cipher key
+            announces unsuccessfully."
+        ::= { ibwapiMIBStatsObjects 9 }
+
+-- ************************************************************************
+-- * ibwapiConfigTable Table
+-- ************************************************************************
+    ibwapiConfigTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbwapiConfigEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The table containing WAPI configuration objects."
+        ::= { ibwapiMIBTableObjects 1 }
+
+    ibwapiConfigEntry OBJECT-TYPE
+        SYNTAX IbwapiConfigEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry in the ibwapiConfigTable."
+        INDEX { ifIndex }
+        ::= { ibwapiConfigTable 1 }
+
+    IbwapiConfigEntry ::= SEQUENCE
+        {
+            ibwapiConfigASIPAddressType InetAddressType,
+            ibwapiConfigASIPAddress InetAddress,
+            ibwapiConfigAuthMethod INTEGER,
+            ibwapiConfigAuthMode INTEGER,
+            ibwapiConfigISPDomain OCTET STRING,
+            ibwapiConfigCertificateDomain OCTET STRING,
+            ibwapiConfigASName OCTET STRING,
+            ibwapiConfigBKRekeyEnabled TruthValue
+        }
+
+    ibwapiConfigASIPAddressType OBJECT-TYPE
+        SYNTAX InetAddressType
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object is used to set IP addresses type of AS."
+        ::= { ibwapiConfigEntry 1 }
+
+    ibwapiConfigASIPAddress OBJECT-TYPE
+        SYNTAX InetAddress
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object is used to set the IP address of AS."
+        ::= { ibwapiConfigEntry 2 }
+
+    ibwapiConfigAuthMethod OBJECT-TYPE
+        SYNTAX INTEGER {
+            certificate(1),
+            psk(2),
+            certificatePsk(3)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object selects a mechanism for WAPI authentication.
+            The default is certificate."
+        DEFVAL { certificate }
+        ::= { ibwapiConfigEntry 3 }
+
+    ibwapiConfigAuthMode OBJECT-TYPE
+        SYNTAX INTEGER {
+            standard(1),
+            radiusExtension(2)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object selects a mechanism for WAPI authentication.
+            When the value is standard, it shall indicate that the entity
+            acts based on the official definition. Otherwise, it shall
+            indicate that the entity finishes authentication by means of RADIUS.
+            The default is standard."
+        DEFVAL { standard }
+        ::= { ibwapiConfigEntry 4 }
+
+    ibwapiConfigISPDomain OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(0..24))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The ISP domain name."
+        ::= { ibwapiConfigEntry 5 }
+
+    ibwapiConfigCertificateDomain OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(1..15))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The PKI domain name."
+        ::= { ibwapiConfigEntry 6 }
+
+    ibwapiConfigASName OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(1..15))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The name of AS."
+        ::= { ibwapiConfigEntry 7 }
+
+    ibwapiConfigBKRekeyEnabled OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object indicates whether the BK rekey function is
+            supported. When the value is TRUE, it shall indicate that
+            the BK rekey function is supported. Otherwise, it shall
+            indicate that the BK rekey function is not supported."
+        ::= { ibwapiConfigEntry 8 }
+
+-- *************************************************************************
+-- * ibwapiConfigExtTable Table
+-- *************************************************************************
+
+    ibwapiConfigExtTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbwapiConfigExtEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The table containing WAPI configuration objects for SSID."
+        ::= { ibwapiMIBTableObjects 2 }
+
+    ibwapiConfigExtEntry OBJECT-TYPE
+        SYNTAX IbwapiConfigExtEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An extend entry in the ibwapiConfigExtTable."
+        INDEX { ibwapiConfigServicePolicyID }
+        ::= { ibwapiConfigExtTable 1 }
+
+    IbwapiConfigExtEntry ::= SEQUENCE
+    {
+        ibwapiConfigServicePolicyID Integer32,
+        ibwapiConfigUnicastCipherEnabled TruthValue,
+        ibwapiConfigUnicastCipherSize Unsigned32,
+        ibwapiConfigAuthenticationSuiteEnabled TruthValue,
+        ibwapiConfigAuthenticationSuite  OCTET STRING,
+        ibwapiCfgExtASIPAddressType InetAddressType,
+        ibwapiCfgExtASIPAddress InetAddress,
+        ibwapiCfgExtASName OCTET STRING,
+        ibwapiCfgExtCertDomain OCTET STRING,
+        ibwapiCfgExtCertInstalled TruthValue,
+        ibwapiConfigVersion Integer32,
+        ibwapiControlledAuthControl TruthValue,
+        ibwapiControlledPortControl Integer32,
+        ibwapiOptionImplemented TruthValue,
+        ibwapiPreauthImplemented TruthValue,
+        ibwapiEnabled TruthValue,
+        ibwapiPreauthEnabled TruthValue,
+        ibwapiCfgUniKeysSupported Unsigned32,
+        ibwapiCfgUniRekeyMethod INTEGER,
+        ibwapiCfgUniRekeyTime Unsigned32,
+        ibwapiCfgUniRekeyPackets Unsigned32,
+        ibwapiCfgMultiCipher OCTET STRING,
+        ibwapiCfgMultiRekeyMethod INTEGER,
+        ibwapiCfgMultiRekeyTime Unsigned32,
+        ibwapiCfgMultiRekeyPackets Unsigned32,
+        ibwapiCfgMultiRekeyStrict TruthValue,
+        ibwapiCfgPSKValue OCTET STRING,
+        ibwapiCfgPSKPassPhrase OCTET STRING,
+        ibwapiCfgCertUpdateCount Unsigned32,
+        ibwapiCfgMultiUpdateCount Unsigned32,
+        ibwapiCfgUniUpdateCount Unsigned32,
+        ibwapiCfgMultiCipherSize Unsigned32,
+        ibwapiCfgBKLifetime Unsigned32,
+        ibwapiCfgBKReauthThreshold Unsigned32,
+        ibwapiCfgSATimeout Unsigned32,
+        ibwapiAuthenSuiteSelected OCTET STRING,
+        ibwapiUniCipherSelected OCTET STRING,
+        ibwapiMultiCipherSelected OCTET STRING,
+        ibwapiBKIDUsed OCTET STRING,
+        ibwapiAuthenSuiteRequested OCTET STRING,
+        ibwapiUniCipherRequested OCTET STRING,
+        ibwapiMultiCipherRequested OCTET STRING
+    }
+
+    ibwapiConfigServicePolicyID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Represents the ID of each service policy."
+    ::= { ibwapiConfigExtEntry 1 }
+
+   ibwapiConfigUnicastCipherEnabled OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object enables or disables the unicast cipher."
+        ::= { ibwapiConfigExtEntry 2 }
+
+   ibwapiConfigUnicastCipherSize OBJECT-TYPE
+        SYNTAX Unsigned32 (0..4294967295)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object indicates the length in bits of the unicast cipher
+            key.  This should be 256 for SMS4, first 128 bits for encrypting,
+            last 128 bits for integrity checking."
+        ::= { ibwapiConfigExtEntry 3 }
+
+    ibwapiConfigAuthenticationSuiteEnabled OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This variable indicates the corresponding AKM suite is enabled
+            or disabled."
+        ::= { ibwapiConfigExtEntry 4 }
+
+    ibwapiConfigAuthenticationSuite OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(4))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The selector of an AKM suite.  It consists of an OUI (the first 3
+            octets) and a cipher suite identifier (the last octet)."
+        ::= { ibwapiConfigExtEntry 5 }
+
+    ibwapiCfgExtASIPAddressType OBJECT-TYPE
+        SYNTAX InetAddressType
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object is used to set IP addresses type of AS."
+        ::= { ibwapiConfigExtEntry 6 }
+
+    ibwapiCfgExtASIPAddress OBJECT-TYPE
+        SYNTAX InetAddress
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object is used to set the IP address of AS."
+        ::= { ibwapiConfigExtEntry 7 }
+
+    ibwapiCfgExtASName OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(1..15))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object is used to set the name of AS."
+        ::= { ibwapiConfigExtEntry 8 }
+
+    ibwapiCfgExtCertDomain OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(1..15))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object is used to set the PKI domain name."
+        ::= { ibwapiConfigExtEntry 9 }
+
+    ibwapiCfgExtCertInstalled OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object indicates whether the entity has installed
+            certificate.  When the value is TRUE, it shall indicate that
+            the SSID has installed certificate. Otherwise, it shall
+            indicate that the SSID hasn't installed certificate."
+        ::= { ibwapiConfigExtEntry 10 }
+
+    ibwapiConfigVersion OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The highest WAPI version this entity supports."
+        ::= { ibwapiConfigExtEntry 11 }
+
+    ibwapiControlledAuthControl OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object indicates whether the entity is enabled with
+            authentication. When the value is FALSE, it shall indicate that
+            authentication is not enabled on this entity, and the status of
+            the controlled port is 'authenticated'. When the value is TRUE,
+            it shall indicate that authentication is enabled, and the status
+            of controlled port is decided by
+            ibwapiControlledPortControl."
+        ::= { ibwapiConfigExtEntry 12 }
+
+    ibwapiControlledPortControl OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object indicates the controlling type of the entity's port.
+            This object is available when
+            ibwapiControlledAuthControl is TRUE. When the value is
+            zero, it means 'automatic', and the status of the controlled port
+            is decided by authentication result. When the value is one,
+            it means 'forcibly unauthenticated', and the status of the
+            controlled port is 'unauthenticated'."
+        ::= { ibwapiConfigExtEntry 13 }
+
+    ibwapiOptionImplemented OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object indicates whether the entity supports WAPI. When the
+            value is TRUE, it shall indicate that the entity supports WAPI.
+            Otherwise, it shall indicate that the entity does not support WAPI."
+        ::= { ibwapiConfigExtEntry 14 }
+
+    ibwapiPreauthImplemented OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object indicates whether the entity supports WAPI
+            preauthentication. This object can't be set to TRUE, unless
+            ibwapiOptionImplemented is TRUE."
+        ::= { ibwapiConfigExtEntry 15 }
+
+    ibwapiEnabled OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "When this object is set to TRUE, it shall indicate that WAPI is
+            enabled on this entity. The entity will advertise the WAPI
+            information element in its beacon and probe response frames."
+        ::= { ibwapiConfigExtEntry 16 }
+
+    ibwapiPreauthEnabled OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "When this object is set to TRUE, it shall indicate that WAPI
+            preauthentication is enabled on this entity. Otherwise, it shall
+            indicate that WAPI preauthentication is disabled on this entity.
+            This object requires that ibWAPIEnabled also be set to
+            TRUE."
+        ::= { ibwapiConfigExtEntry 17 }
+
+    ibwapiCfgUniKeysSupported OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object indicates how many unicast keys the entity supports
+            for WAPI."
+        ::= { ibwapiConfigExtEntry 18 }
+
+    ibwapiCfgUniRekeyMethod OBJECT-TYPE
+        SYNTAX INTEGER {
+            disabled(1),
+            timeBased(2),
+            packetBased(3),
+            timepacketBased(4)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object selects a mechanism for rekeying the WAPI USK. The
+            default is time-based, once per day. Rekeying the USK is only
+            applicable to an entity acting as an AE or ASUE."
+        DEFVAL { timeBased }
+        ::= { ibwapiConfigExtEntry 19 }
+
+    ibwapiCfgUniRekeyTime OBJECT-TYPE
+        SYNTAX Unsigned32 (1..4294967295)
+        UNITS "seconds"
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Time in seconds after which the WAPI USK shall be refreshed.
+            The timer shall start at the moment the USK was set using the
+            MLME-SETWPIKEYS request primitive."
+        DEFVAL { 86400 }
+        ::= { ibwapiConfigExtEntry 20 }
+
+    ibwapiCfgUniRekeyPackets OBJECT-TYPE
+        SYNTAX Unsigned32 (1..4294967295)
+        UNITS "1000 packets"
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "A packet count (a multiple of 1000) after which the WAPI USK
+            shall be refreshed. The packet counter shall start at the moment
+            the USK was set using the MLME-SETKEYS request primitive and it
+            shall count all packets encrypted using the current USK."
+        ::= { ibwapiConfigExtEntry 21 }
+
+    ibwapiCfgMultiCipher OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(4))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object indicates the multicast cipher suite selector the
+            entity must use. The multicast cipher suite in the WAPI
+            information element shall take its value from this variable.
+            It contains an OUI (the first 3 octets) and a cipher suite
+            identifier (the last octet)."
+        ::= { ibwapiConfigExtEntry 22 }
+
+    ibwapiCfgMultiRekeyMethod OBJECT-TYPE
+        SYNTAX INTEGER {
+            disabled(1),
+            timeBased(2),
+            packetBased(3),
+            timepacketBased(4)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object selects a mechanism for rekeying the WAPI MSK. The
+            default is time-based, once per day. Rekeying the MSK is only
+            applicable to an entity acting as an AE or ASUE."
+        DEFVAL { timeBased }
+        ::= { ibwapiConfigExtEntry 23 }
+
+    ibwapiCfgMultiRekeyTime OBJECT-TYPE
+        SYNTAX Unsigned32 (1..4294967295)
+        UNITS "seconds"
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Time in seconds after which the WAPI MSK shall be refreshed.
+            The timer shall start at the moment the MSK was set using the
+            MLME-SETWPIKEYS request primitive."
+        DEFVAL { 86400 }
+        ::= { ibwapiConfigExtEntry 24 }
+
+    ibwapiCfgMultiRekeyPackets OBJECT-TYPE
+        SYNTAX Unsigned32 (1..4294967295)
+        UNITS "1000 packets"
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "A packet count (a multiple of 1000) after which the WAPI MSK
+            shall be refreshed. The packet counter shall start at the moment
+            the MSK was set using the MLME-SETKEYS request primitive and it
+            shall count all packets encrypted using the current MSK."
+        ::= { ibwapiConfigExtEntry 25 }
+
+    ibwapiCfgMultiRekeyStrict OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "This object indicates that the MSK shall be refreshed whenever an
+            STA leaves the BSS that has the MSK."
+        ::= { ibwapiConfigExtEntry 26 }
+
+    ibwapiCfgPSKValue OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(2..32))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The PSK value when WAPI in PSK mode is the selected AKM suite.
+            In that case, the BK will obtain its value from this object.
+            This object is logically write-only. Reading this variable shall
+            return unsuccessful status or null or zero."
+        ::= { ibwapiConfigExtEntry 27 }
+
+    ibwapiCfgPSKPassPhrase OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(1..16))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The PSK value when WAPI in PSK mode is the selected AKM suite,
+            which is configured by ibwapiCfgPSKValue.
+            An alternative method of setting the PSK is to
+            use the password-to-key algorithm.
+            This variable provides a means to enter a pass-phrase.
+            When this object is written, the WAPI entity shall
+            use the password-to-key algorithm to derive a preshared key
+            and populate ibwapiCfgPSKValue with this key.
+            This object is logically write-only. Reading this variable shall
+            return unsuccessful status or null or zero."
+        ::= { ibwapiConfigExtEntry 28 }
+
+    ibwapiCfgCertUpdateCount OBJECT-TYPE
+        SYNTAX Unsigned32 (1..4294967295)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The number of times message in the WAPI certificate
+            authentication handshake will be retried per certificate
+            authentication handshake attempt."
+        DEFVAL { 3 }
+        ::= { ibwapiConfigExtEntry 29 }
+
+    ibwapiCfgMultiUpdateCount OBJECT-TYPE
+        SYNTAX Unsigned32 (1..4294967295)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The number of times message in the WAPI multicast key handshake
+            will be retried per MSK handshake attempt."
+        DEFVAL { 3 }
+        ::= { ibwapiConfigExtEntry 30 }
+
+    ibwapiCfgUniUpdateCount OBJECT-TYPE
+        SYNTAX Unsigned32 (1..4294967295)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The number of times message in the WAPI unicast key handshake
+            will be retried per 3-way handshake attempt."
+        DEFVAL { 3 }
+        ::= { ibwapiConfigExtEntry 31 }
+
+    ibwapiCfgMultiCipherSize OBJECT-TYPE
+        SYNTAX Unsigned32 (0..4294967295)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object indicates the length in bits of the multicast cipher
+            key. This should be 256 for SMS4, where the first 128 bits are
+            for encryption, and the last 128 bits for integrity check."
+        ::= { ibwapiConfigExtEntry 32 }
+
+    ibwapiCfgBKLifetime OBJECT-TYPE
+        SYNTAX Unsigned32 (1..4294967295)
+        UNITS "seconds"
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The maximum lifetime of a BK in the BK cache."
+        DEFVAL { 43200 }
+        ::= { ibwapiConfigExtEntry 33 }
+
+    ibwapiCfgBKReauthThreshold OBJECT-TYPE
+        SYNTAX Unsigned32 (1..100)
+        UNITS "percentage"
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The percentage of the BK lifetime that should expire before a
+            reauthentication occurs."
+        DEFVAL { 70 }
+        ::= { ibwapiConfigExtEntry 34 }
+
+    ibwapiCfgSATimeout OBJECT-TYPE
+        SYNTAX Unsigned32 (1..4294967295)
+        UNITS "seconds"
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The maximum time a security association shall take to set up."
+        DEFVAL { 60 }
+        ::= { ibwapiConfigExtEntry 35 }
+
+    ibwapiAuthenSuiteSelected OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(4))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The selector of the last negotiated AKM suite."
+        ::= { ibwapiConfigExtEntry 36 }
+
+    ibwapiUniCipherSelected OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(4))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The selector of the last negotiated unicast cipher."
+        ::= { ibwapiConfigExtEntry 37 }
+
+    ibwapiMultiCipherSelected OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(4))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The selector of the last negotiated multicast cipher."
+        ::= { ibwapiConfigExtEntry 38 }
+
+    ibwapiBKIDUsed OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(16))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The selector of the last BKID used in the last unicast
+            cipher key handshake."
+        ::= { ibwapiConfigExtEntry 39 }
+
+    ibwapiAuthenSuiteRequested OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(4))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The selector of the last requested AKM suite."
+        ::= { ibwapiConfigExtEntry 40 }
+
+    ibwapiUniCipherRequested OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(4))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The selector of the last requested unicast cipher."
+        ::= { ibwapiConfigExtEntry 41 }
+
+    ibwapiMultiCipherRequested OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(4))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The selector of the last requested multicast cipher."
+        ::= { ibwapiConfigExtEntry 42 }
+
+    ibwapiStatsTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbwapiStatsEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This table maintains per-STA statistics in a WAPI. The entry
+            with ibwapiStatsSTAAddress set to FF-FF-FF-FF-FF-FF
+            shall contain statistics for broadcast/multicast traffic."
+        ::= { ibwapiMIBTableObjects 3 }
+
+    ibwapiStatsEntry OBJECT-TYPE
+        SYNTAX IbwapiStatsEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry in the ibwapiStatsTable."
+        INDEX { ibwapiStationMAC }
+        ::= { ibwapiStatsTable 1 }
+
+    IbwapiStatsEntry ::=
+        SEQUENCE {
+            ibwapiStationMAC MacAddress,
+            ibwapiStatsSTAAddress MacAddress,
+            ibwapiStatsVersion Unsigned32,
+            ibwapiStatsCtrlPortStatus TruthValue,
+            ibwapiStatsSelectedUniCipher OCTET STRING,
+            ibwapiStatsWPIReplayCnt Counter32,
+            ibwapiStatsWPIDecryptErr Counter32,
+            ibwapiStatsWPIMICErr Counter32,
+            ibwapiStatsWAISignatureErr Counter32,
+            ibwapiStatsWAIHMACErr Counter32,
+            ibwapiStatsWAIAuthenFail Counter32,
+            ibwapiStatsWAIDiscardCnt Counter32,
+            ibwapiStatsWAITimeoutCnt Counter32,
+            ibwapiStatsWAIFormatErr Counter32,
+            ibwapiStatsWAICertFail Counter32,
+            ibwapiStatsWAIUniFail Counter32,
+            ibwapiStatsWAIMultiFail Counter32
+        }
+
+    ibwapiStationMAC OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Represents the unique MAC Address of station."
+    ::= { ibwapiStatsEntry 1 }
+
+    ibwapiStatsSTAAddress OBJECT-TYPE
+        SYNTAX MacAddress
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The MAC address of the STA to which the statistics in this
+            conceptual row belong."
+        ::= { ibwapiStatsEntry 2 }
+
+    ibwapiStatsVersion OBJECT-TYPE
+        SYNTAX Unsigned32 (1..4294967295)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The WAPI version with which the STA is associated."
+        ::= { ibwapiStatsEntry 3 }
+
+    ibwapiStatsCtrlPortStatus OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object indicates the status of the authentication
+            entity's controlled port. When the value is TRUE, it means
+            'authenticated'. Otherwise, it means 'unauthenticated'."
+        ::= { ibwapiStatsEntry 4 }
+
+    ibwapiStatsSelectedUniCipher OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE(4))
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The unicast cipher suite selector used during association."
+        ::= { ibwapiStatsEntry 5 }
+
+    ibwapiStatsWPIReplayCnt OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The number of WPI MPDUs discarded by the replay mechanism."
+        ::= { ibwapiStatsEntry 6 }
+
+    ibwapiStatsWPIDecryptErr OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The number of WPI MPDUs discarded because of unavailable cipher
+            key during WPI-SMS4 decryption."
+        ::= { ibwapiStatsEntry 7 }
+
+    ibwapiStatsWPIMICErr OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The number of WPI MPDUs discarded because of MIC checking
+            failure during WPI-SMS4 decryption."
+        ::= { ibwapiStatsEntry 8 }
+
+    ibwapiStatsWAISignatureErr OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when the received WAI packets' signature
+            is wrong."
+        ::= { ibwapiStatsEntry 9 }
+
+    ibwapiStatsWAIHMACErr OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when message authentication key
+            checking error occurs on the received WAI packets."
+        ::= { ibwapiStatsEntry 10 }
+
+    ibwapiStatsWAIAuthenFail OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when the WAI authentication result
+            is unsuccessful."
+        ::= { ibwapiStatsEntry 11 }
+
+    ibwapiStatsWAIDiscardCnt OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when the received WAI packet is
+            discarded."
+        ::= { ibwapiStatsEntry 12 }
+
+    ibwapiStatsWAITimeoutCnt OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when a WAI packet timeout is
+            detected."
+        ::= { ibwapiStatsEntry 13 }
+
+    ibwapiStatsWAIFormatErr OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when WAI packet format error occurs"
+        ::= { ibwapiStatsEntry 14 }
+
+    ibwapiStatsWAICertFail OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when WAI certificate authentication
+            fails."
+        ::= { ibwapiStatsEntry 15 }
+
+    ibwapiStatsWAIUniFail OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when WAI unicast cipher key
+            negotiation succeeds."
+        ::= { ibwapiStatsEntry 16 }
+
+    ibwapiStatsWAIMultiFail OBJECT-TYPE
+        SYNTAX Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This counter increases when the WAI multicast cipher key
+            announcement failure occurs."
+        ::= { ibwapiStatsEntry 17 }
+
+-- ************************************************************************
+-- * trap OBJECT
+-- ************************************************************************
+    ibwapiTrapPrefix OBJECT IDENTIFIER ::= { ibwapiTrap 0 }
+    ibwapiUserwithInvalidCertificate NOTIFICATION-TYPE
+        OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibwapiTrapInfoMacAddr,
+            ibwapiTrapInfoAPId,
+            ibwapiTrapInfoRadioId,
+            ibwapiTrapInfoBSSId,
+            ibwapiTrapInfoAPMacAddr
+        }
+        STATUS current
+        DESCRIPTION
+            "This trap is sent when a user intrudes upon network with invalid
+            certificate."
+        ::= { ibwapiTrapPrefix 1 }
+
+    ibwapiStationReplayAttack NOTIFICATION-TYPE
+        OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibwapiTrapInfoMacAddr,
+            ibwapiTrapInfoAPId,
+            ibwapiTrapInfoRadioId,
+            ibwapiTrapInfoBSSId,
+            ibwapiTrapInfoAPMacAddr
+        }
+        STATUS current
+        DESCRIPTION
+            "This trap is sent when an attacker records and replays network
+            transactions."
+        ::= { ibwapiTrapPrefix 2 }
+
+    ibwapiTamperAttack NOTIFICATION-TYPE
+        OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibwapiTrapInfoMacAddr,
+            ibwapiTrapInfoAPId,
+            ibwapiTrapInfoRadioId,
+            ibwapiTrapInfoBSSId,
+            ibwapiTrapInfoAPMacAddr
+        }
+        STATUS current
+        DESCRIPTION
+            "This trap is sent when an attacker monitors network traffic and
+            maliciously changes data in transit(for example, an attacker may
+            modify the contents of a WAI message)."
+        ::= { ibwapiTrapPrefix 3 }
+
+    ibwapiLowSafeLevelAttack NOTIFICATION-TYPE
+        OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibwapiTrapInfoMacAddr,
+            ibwapiTrapInfoAPId,
+            ibwapiTrapInfoRadioId,
+            ibwapiTrapInfoBSSId,
+            ibwapiTrapInfoAPMacAddr
+        }
+        STATUS current
+        DESCRIPTION
+            "This trap is sent when a station associates AP(Access Point),
+            creates packet of Unicast Key Negotiation Response with wrong
+            WIE(WAPI Information Element) of ASUE(Authentication Supplicant
+            Entity)."
+        ::= { ibwapiTrapPrefix 4 }
+
+    ibwapiAddressRedirectionAttack NOTIFICATION-TYPE
+        OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibwapiTrapInfoMacAddr,
+            ibwapiTrapInfoAPId,
+            ibwapiTrapInfoRadioId,
+            ibwapiTrapInfoBSSId,
+            ibwapiTrapInfoAPMacAddr
+        }
+        STATUS current
+        DESCRIPTION
+            "This trap is sent when an attacker maliciously changes destination
+            MAC address of WPI(WLAN Privacy Infrastructure) frame."
+        ::= { ibwapiTrapPrefix 5 }
+
+-- ************************************************************************
+-- * The following objects are used for binding informations when sending traps.
+-- ************************************************************************
+
+ibwapiTrapInfo OBJECT IDENTIFIER ::= { ibwapiTrap 1 }
+
+ibwapiTrapInfoMacAddr OBJECT-TYPE
+        SYNTAX MacAddress
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The MAC address of the WAPI user."
+        ::= { ibwapiTrapInfo 1 }
+
+ibwapiTrapInfoAPId OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "To uniquely identify each AP."
+        ::= { ibwapiTrapInfo 2 }
+
+ibwapiTrapInfoRadioId OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "Represents each radio."
+        ::= { ibwapiTrapInfo 3 }
+
+ibwapiTrapInfoBSSId OBJECT-TYPE
+        SYNTAX MacAddress
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "As MAC Address format, it is to identify BSS."
+        ::= { ibwapiTrapInfo 4 }
+
+ibwapiTrapInfoAPMacAddr OBJECT-TYPE
+        SYNTAX MacAddress
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "As MAC Address format, it is to identify AP"
+        ::= { ibwapiTrapInfo 5 }
+END

@@ -1,0 +1,832 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: policy-based routing(PBR) MIB File
+-- Reference:
+-- Version: V1.3
+-- History:
+--      V1.0 created by Hou Yefei
+--        initial version 2010-12-10
+--      V1.1 2012-7-21 modified by Hou Yefei
+--         Add ibPBRLocalPolicy
+--         Add ibPBRMibPolicyNodeTable, ibPBRMibIfPolicyTable,
+--             ibPBRMibMatchAclTable, ibPBRMibMatchAclTable,
+--             ibPBRMibApplyNexthopTablel,
+--             ibPBRMibApplyDefaultNexthopTable
+--           2012-8-13 modified by Hou Yefei
+--         Modify ibPBRNexthopTrapEnabled
+--         Add ibPBRIPv6NexthopTrapEnabled
+--      V1.2 2022-6-27 modified by Li Ke
+--         Add ibPBRMibMinPktLen, ibPBRMibMaxPktLen,
+--             ibPBRMibQosId, ibPBRMibQosIdMode,
+--             ibPBRMibVxlanId, ibPBRMibDescription, ibPBRMibApplyContinue,
+--             ibPBRMibApplyFailDropNextHop, ibPBRMibApplyIpDf,
+--             ibPBRMibApplyLoadShareNextHop, ibPBRMibApplyLoadShareOutIf,
+--             ibPBRMibApplyLSDefaultNextHop, ibPBRMibApplyLSDefaultOutIf,
+--             ibPBRMibApplyStatisticsValue
+--         Add ibPBRMibIfPolicyShareMode
+--         Add ibPBRMibAclGroupName, ibPBRMibAclGroupVersion
+--         Add ibPBRMibApplyNexthopInboundVpn, ibPBRMibApplyNexthopWeight,
+--             ibPBRMibApplyNexthopPathId, ibPBRMibApplyNexthopPathIndex
+--         Add ibPBRMibApplyDefNexthopInbVpn, ibPBRMibApplyDefNexthopPathId,
+--             ibPBRMibApplyDefNexthopPathInd
+--      V1.3 2023-1-5 modified by Li Ke
+--         Modify ibPBRMibApplyNexthopTrackId,
+--             ibPBRMibApplyDefaultNexthopTrackId
+-- =================================================================
+IB-PBR-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, Integer32
+        FROM SNMPv2-SMI
+    TruthValue, DisplayString, RowStatus
+        FROM SNMPv2-TC
+    ifIndex
+        FROM IF-MIB
+    InetAddress, InetAddressType
+        FROM INET-ADDRESS-MIB;
+
+ibPBR MODULE-IDENTITY
+    LAST-UPDATED
+        "202301051023Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB contains objects to manage the configuration and information
+        of PBR.  It routes IP packets by user defined policy
+        other than normal destination address based routing.
+        "
+    REVISION
+        "202301051023Z"
+    DESCRIPTION
+        "Modify ibPBRMibApplyNexthopTrackId and
+             ibPBRMibApplyDefaultNexthopTrackId."
+    REVISION
+        "202206271115Z"
+    DESCRIPTION
+        "Add ibPBRMibMinPktLen, ibPBRMibMaxPktLen,
+             ibPBRMibQosId, ibPBRMibQosIdMode,
+             ibPBRMibVxlanId, ibPBRMibDescription, ibPBRMibApplyContinue,
+             ibPBRMibApplyFailDropNextHop, ibPBRMibApplyIpDf,
+             ibPBRMibApplyLoadShareNextHop, ibPBRMibApplyLoadShareOutIf,
+             ibPBRMibApplyLSDefaultNextHop, ibPBRMibApplyLSDefaultOutIf,
+             ibPBRMibApplyStatisticsValue
+         Add ibPBRMibIfPolicyShareMode
+         Add ibPBRMibAclGroupName, ibPBRMibAclGroupVersion
+         Add ibPBRMibApplyNexthopInboundVpn, ibPBRMibApplyNexthopWeight,
+             ibPBRMibApplyNexthopPathId, ibPBRMibApplyNexthopPathIndex
+         Add ibPBRMibApplyDefNexthopInbVpn, ibPBRMibApplyDefNexthopPathId,
+             ibPBRMibApplyDefNexthopPathInd."
+    REVISION
+        "201012101558Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 113 }
+
+-- Objects define
+ibPBRObjects OBJECT IDENTIFIER ::= { ibPBR 1 }
+
+ibPBRGlobal OBJECT IDENTIFIER ::= { ibPBRObjects 1 }
+
+ibPBRNexthopTrapEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The value is a global setting only for IPv4 PBR.  If the
+         value is set to 'false', the feature is disabled."
+    DEFVAL { true }
+    ::= { ibPBRGlobal 1 }
+
+ibPBRLocalPolicy OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..19))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The value is a global setting.  An existing policy name setting enables
+        local PBR for IPv4 packets initiated by the device.
+        Only one policy can be applied locally.
+        An empty name setting disables the feature.
+        "
+    ::= { ibPBRGlobal 2 }
+
+ibPBRIPv6NexthopTrapEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The value is a global setting only for IPv6 PBR.  If the
+         value is set to 'false', the feature is disabled."
+    DEFVAL { true }
+    ::= { ibPBRGlobal 3 }
+
+-- PBR trap table
+ibPBRMibTrap OBJECT IDENTIFIER ::= { ibPBRObjects 2 }
+
+ibPBRTrapObjects OBJECT IDENTIFIER  ::= { ibPBRMibTrap 1 }
+
+ibPBRNexthopAddrType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Indicating address type of ibPBRNexthopAddr, which can be IPv4
+        or IPv6."
+    ::= { ibPBRTrapObjects 1 }
+
+ibPBRNexthopAddr OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved next hop IP address of trap information."
+    ::= { ibPBRTrapObjects 2 }
+
+ibPBRTraps OBJECT IDENTIFIER  ::= { ibPBRMibTrap 2 }
+
+ibPBRTrapsPrefix OBJECT IDENTIFIER  ::= { ibPBRTraps 0 }
+
+ibPBRNexthopFailedTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPBRNexthopAddrType,
+        ibPBRNexthopAddr
+    }
+    STATUS      current
+    DESCRIPTION
+        "When the next hop of PBR apply clause became
+        unreachable according to routing information, trap is generated
+        and is sent to the remote monitoring device."
+    ::= { ibPBRTrapsPrefix 1 }
+
+-- PBR policy node table
+ibPBRTables OBJECT IDENTIFIER ::= { ibPBR 2 }
+
+ibPBRMibPolicyNodeTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPBRMibPolicyNodeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "A table for PBR nodes.
+                "
+    ::= { ibPBRTables 1 }
+
+ibPBRMibPolicyNodeEntry  OBJECT-TYPE
+    SYNTAX      IbPBRMibPolicyNodeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "An entry for PBR nodes.
+                "
+    INDEX
+    {
+            ibPBRMibPolicyNodeAddrType,
+            ibPBRMibPolicyName,
+            ibPBRMibPolicyNodeId
+    }
+    ::= { ibPBRMibPolicyNodeTable 1 }
+
+IbPBRMibPolicyNodeEntry ::=
+    SEQUENCE
+    {
+            ibPBRMibPolicyNodeAddrType           InetAddressType,
+            ibPBRMibPolicyName                   DisplayString,
+            ibPBRMibPolicyNodeId                 Integer32,
+            ibPBRMibPolicyNodeMode               TruthValue,
+            ibPBRMibPolicyNodeRowStatus          RowStatus,
+            ibPBRMibMinPktLen                    Integer32,
+            ibPBRMibMaxPktLen                    Integer32,
+            ibPBRMibQosId                        Integer32,
+            ibPBRMibQosIdMode                    INTEGER,
+            ibPBRMibVxlanId                      Integer32,
+            ibPBRMibDescription                  DisplayString,
+            ibPBRMibApplyContinue                TruthValue,
+            ibPBRMibApplyFailDropNextHop         TruthValue,
+            ibPBRMibApplyIpDf                    Integer32,
+            ibPBRMibApplyLoadShareNextHop        TruthValue,
+            ibPBRMibApplyLoadShareOutIf          TruthValue,
+            ibPBRMibApplyLSDefaultNextHop        TruthValue,
+            ibPBRMibApplyLSDefaultOutIf          TruthValue,
+            ibPBRMibApplyStatisticsValue         TruthValue
+    }
+
+ibPBRMibPolicyNodeAddrType    OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Address type of policy node, which can be IPv4 or IPv6, Dual-stack."
+    ::= { ibPBRMibPolicyNodeEntry 1 }
+
+ibPBRMibPolicyName    OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (1..19))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Policy name of PBR node."
+    ::= { ibPBRMibPolicyNodeEntry 2 }
+
+ibPBRMibPolicyNodeId   OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Sequence identifier of PBR node."
+    ::= { ibPBRMibPolicyNodeEntry 3 }
+
+ibPBRMibPolicyNodeMode   OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Mode of PBR node.  If the mode of a node is marked as true,
+                the packets that meet the matching rules are processed by
+                action rules in the node.  If the mode of a node is marked as
+                false, the packets that meet the matching rules are
+                sent back to the normal forwarding path."
+    DEFVAL { true }
+    ::= { ibPBRMibPolicyNodeEntry 4 }
+
+ibPBRMibPolicyNodeRowStatus   OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+            "Operation status of this table entry.
+            Three actions are used: active,
+            createAndGo, and destroy.
+            "
+    ::= { ibPBRMibPolicyNodeEntry 5 }
+
+ibPBRMibMinPktLen    OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Specifies the minimum IP packet length in the range of 1 and 65535.
+                 Value 0 indicates that this rule is not set."
+    ::= { ibPBRMibPolicyNodeEntry 6 }
+
+ibPBRMibMaxPktLen    OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Specifies the maximum IP packet length in the range of 1 and 65535.
+                 The maximum length must be no less than the minimum length.
+                 The maximum and the minimum lengths must be both configured.
+                 Value 0 indicates that this rule is not set."
+    ::= { ibPBRMibPolicyNodeEntry 7 }
+
+ibPBRMibQosId    OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Specifies a local Quality of Service(QoS) ID in the range of 1 and 4095.
+                 Value 0 indicates that this rule is not set."
+    ::= { ibPBRMibPolicyNodeEntry 8 }
+
+ibPBRMibQosIdMode    OBJECT-TYPE
+    SYNTAX INTEGER
+    {
+        invalid(1),
+        normal(2),
+        qppb(3)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "The mode of the QoS Local ID.
+                 The default value is normal."
+    ::= { ibPBRMibPolicyNodeEntry 9 }
+
+ibPBRMibVxlanId    OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Specifies a VXLAN ID in the range of 0 to 16777215.
+                 Value -1 indicates that this rule is not set."
+    ::= { ibPBRMibPolicyNodeEntry 10 }
+
+ibPBRMibDescription    OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..127))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "A description for a policy node."
+    ::= { ibPBRMibPolicyNodeEntry 11 }
+
+ibPBRMibApplyContinue    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Use apply continue to compare packets
+                 with the next policy node upon failure on the current node.
+                 Value FALSE indicates that this action is not set."
+    ::= { ibPBRMibPolicyNodeEntry 12 }
+
+ibPBRMibApplyFailDropNextHop    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Configure the policy node to drop matching packets when
+                 the next hop is invalid.  If no next hops are specified
+                 on the policy node, this command drops all packets that
+                 match the node. Value FALSE indicates that this action is not set."
+    ::= { ibPBRMibPolicyNodeEntry 13 }
+
+ibPBRMibApplyIpDf    OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Sets the Don't Fragment(DF) bit in the IP header of
+                 matching packets. The value can be 0 or 1.
+                 Value -1 indicates that this action is not set."
+    ::= { ibPBRMibPolicyNodeEntry 14 }
+
+ibPBRMibApplyLoadShareNextHop    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Enables load sharing among multiple next hops.
+                 Value FALSE indicates that this action is not set."
+    ::= { ibPBRMibPolicyNodeEntry 15 }
+
+ibPBRMibApplyLoadShareOutIf    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Enables load sharing among multiple output interfaces.
+                 Value FALSE indicates that this action is not set."
+    ::= { ibPBRMibPolicyNodeEntry 16 }
+
+ibPBRMibApplyLSDefaultNextHop    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Enables load sharing among multiple default next hops.
+                 Value FALSE indicates that this action is not set."
+    ::= { ibPBRMibPolicyNodeEntry 17 }
+
+ibPBRMibApplyLSDefaultOutIf    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Enables load sharing among multiple default output interfaces.
+                 Value FALSE indicates that this action is not set."
+    ::= { ibPBRMibPolicyNodeEntry 18 }
+
+ibPBRMibApplyStatisticsValue    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Use apply statistics to enable match counting on a policy node.
+                 Value FALSE indicates that this action is not set."
+    ::= { ibPBRMibPolicyNodeEntry 19 }
+
+-- PBR local policy
+
+
+-- PBR interface policy relation table
+
+ibPBRMibIfPolicyTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPBRMibIfPolicyEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "A table for interfaces being applied with PBR
+                 nodes with the same policy name.
+                "
+    ::= { ibPBRTables 2 }
+
+ibPBRMibIfPolicyEntry  OBJECT-TYPE
+    SYNTAX      IbPBRMibIfPolicyEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "An entry for reference relation between interface and policy
+                nodes."
+    INDEX
+    {
+            ibPBRMibPolicyAddressType,
+            ifIndex
+    }
+    ::= { ibPBRMibIfPolicyTable 1 }
+
+IbPBRMibIfPolicyEntry ::=
+    SEQUENCE
+    {
+            ibPBRMibPolicyAddressType   InetAddressType,
+            ibPBRMibAppliedPolicyName   DisplayString,
+            ibPBRMibIfPolicyRowStatus   RowStatus,
+            ibPBRMibIfPolicyShareMode   TruthValue
+    }
+
+ibPBRMibPolicyAddressType    OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION  "Address type of policy node, which can be
+                 IPv4 or IPv6, Dual-stack."
+    ::= { ibPBRMibIfPolicyEntry 1 }
+
+ibPBRMibAppliedPolicyName    OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (1..19))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Policy name of PBR nodes."
+    ::= { ibPBRMibIfPolicyEntry 2 }
+
+ibPBRMibIfPolicyRowStatus  OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+            "Operation status of this table entry.
+            Three actions are used: active,
+            createAndGo, and destroy.
+            "
+    ::= { ibPBRMibIfPolicyEntry 3 }
+
+ibPBRMibIfPolicyShareMode    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Applies the policy in resource sharing mode.
+                 In this mode, all interfaces on an interface card
+                 with the same policy applied share one hardware resource."
+    DEFVAL { false }
+    ::= { ibPBRMibIfPolicyEntry 4 }
+
+-- PBR policy node acl rule table
+
+ibPBRMibMatchAclTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPBRMibMatchAclEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "A table for ACLs being used by a policy node.  Only one ACL
+                 can be used within a node at most.
+                "
+    ::= { ibPBRTables 3 }
+
+ibPBRMibMatchAclEntry  OBJECT-TYPE
+    SYNTAX      IbPBRMibMatchAclEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "An entry for policy node that uses an ACL group as its
+                if-match rule."
+    INDEX
+    {
+            ibPBRMibPolicyNodeAddrType,
+            ibPBRMibPolicyName,
+            ibPBRMibPolicyNodeId
+    }
+    ::= { ibPBRMibMatchAclTable 1 }
+
+IbPBRMibMatchAclEntry ::=
+    SEQUENCE
+    {
+            ibPBRMibAclGroupId   Integer32,
+            ibPBRMibAclGroupName OCTET STRING,
+            ibPBRMibAclGroupVersion   INTEGER
+    }
+
+ibPBRMibAclGroupId    OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Index of number-acl group.
+                 Setting -1 indicates closing this rule.
+                 When ACLName is configured with a valid value,
+                 value -1 will be returned for ACLNumber.
+                "
+    ::= { ibPBRMibMatchAclEntry 1 }
+
+ibPBRMibAclGroupName   OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (0..63))
+    MAX-ACCESS  read-write
+    STATUS  current
+    DESCRIPTION "ACL match criterion by name. The ACL name must start with
+                 letter a to z or A to Z.  The ACL name cannot be all in
+                 any combination of upper-case and lower-case letters.
+                 To delete an ACL match criterion, you must configure the value
+                 for ACLNumber as -1."
+    ::= { ibPBRMibMatchAclEntry 2 }
+
+ibPBRMibAclGroupVersion    OBJECT-TYPE
+    SYNTAX INTEGER
+    {
+        invalid(1),
+        ipv4(2),
+        ipv6(3),
+        userdefined(4)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "The type of the ACL.
+                 The ibPBRMibAclGroupVersion can only be configured
+                 when the policy node type is Dual-stack, and cannot be empty."
+    ::= { ibPBRMibMatchAclEntry 3 }
+
+-- PBR policy node apply precedence action table
+
+ibPBRMibApplyPrecedenceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPBRMibApplyPrecedenceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "A table for precedence values being used by a policy node.
+                 Only one precedence value can be used within a node at most.
+                "
+    ::= { ibPBRTables 4 }
+
+ibPBRMibApplyPrecedenceEntry  OBJECT-TYPE
+    SYNTAX      IbPBRMibApplyPrecedenceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "An entry for policy node with an action
+                 to set IP precedence for matching packets.
+                "
+    INDEX
+    {
+            ibPBRMibPolicyNodeAddrType,
+            ibPBRMibPolicyName,
+            ibPBRMibPolicyNodeId
+    }
+    ::= { ibPBRMibApplyPrecedenceTable 1 }
+
+IbPBRMibApplyPrecedenceEntry ::=
+    SEQUENCE
+    {
+            ibPBRMibApplyPrecedenceValue Integer32
+    }
+
+ibPBRMibApplyPrecedenceValue    OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Value of precedence being applied on IP header.
+                   <0-7>           Value of precedence
+                   routine         Specify routine precedence(0)
+                   priority        Specify priority precedence(1)
+                   immediate       Specify immediate precedence(2)
+                   flash           Specify flash precedence(3)
+                   flash-override  Specify flash-override precedence(4)
+                   critical        Specify critical precedence(5)
+                   internet        Specify internetwork control precedence(6)
+                   network         Specify network control precedence(7)
+                 Setting -1 indicates closing this action.
+                "
+    ::= { ibPBRMibApplyPrecedenceEntry 1 }
+
+-- PBR policy node apply next hop action table
+
+ibPBRMibApplyNexthopTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPBRMibApplyNexthopEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "A table for next hop actions being used by a policy node.
+                "
+    ::= { ibPBRTables 5 }
+
+ibPBRMibApplyNexthopEntry  OBJECT-TYPE
+    SYNTAX      IbPBRMibApplyNexthopEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "An entry for policy node with an action
+                 to set next hop for matching packets.
+                "
+    INDEX
+    {
+            ibPBRMibPolicyNodeAddrType,
+            ibPBRMibPolicyName,
+            ibPBRMibPolicyNodeId,
+            ibPBRMibApplyNexthopIndex
+    }
+    ::= { ibPBRMibApplyNexthopTable 1 }
+
+IbPBRMibApplyNexthopEntry ::=
+    SEQUENCE
+    {
+            ibPBRMibApplyNexthopIndex       Integer32,
+            ibPBRMibApplyNexthopVpnName     DisplayString,
+            ibPBRMibApplyNexthopAddressType InetAddressType,
+            ibPBRMibApplyNexthopAddress     InetAddress,
+            ibPBRMibApplyNexthopTrackId     Integer32,
+            ibPBRMibApplyNexthopDirect      TruthValue,
+            ibPBRMibApplyNexthopRowStatus   RowStatus,
+            ibPBRMibApplyNexthopInboundVpn  TruthValue,
+            ibPBRMibApplyNexthopWeight      Integer32,
+            ibPBRMibApplyNexthopPathId      Integer32,
+            ibPBRMibApplyNexthopPathIndex   Integer32
+    }
+
+ibPBRMibApplyNexthopIndex    OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Index of next hop for the apply next hop action."
+    ::= { ibPBRMibApplyNexthopEntry 1 }
+
+ibPBRMibApplyNexthopVpnName    OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..31))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Name of VPN instance where apply next hop action is used."
+    ::= { ibPBRMibApplyNexthopEntry 2 }
+
+ibPBRMibApplyNexthopAddressType     OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Address type of ibPBRMibApplyNexthopAddress,
+                 which can be IPv4 or IPv6."
+    ::= { ibPBRMibApplyNexthopEntry 3 }
+
+ibPBRMibApplyNexthopAddress     OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Next hop IP address of apply next hop action."
+    ::= { ibPBRMibApplyNexthopEntry 4 }
+
+ibPBRMibApplyNexthopTrackId     OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Identifier of track object related with next hop.
+                 Specifies a track entry by its number in the range of 1 to 1024.
+                 Setting 0 indicates closing this function.
+                "
+    ::= { ibPBRMibApplyNexthopEntry 5 }
+
+ibPBRMibApplyNexthopDirect        OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Direct route attribute of next hop
+                according to route information."
+    DEFVAL { false }
+    ::= { ibPBRMibApplyNexthopEntry 6 }
+
+
+ibPBRMibApplyNexthopRowStatus  OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+            "Operation status of this table entry.
+            Three actions are used: active,
+            createAndGo, and destroy.
+            "
+    ::= { ibPBRMibApplyNexthopEntry 7 }
+
+ibPBRMibApplyNexthopInboundVpn        OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Specifies the VPN instance where the inbound interface belongs.
+                 If the value is set to TRUE, the VPN instance name will be ignored."
+    DEFVAL { false }
+    ::= { ibPBRMibApplyNexthopEntry 8 }
+
+ibPBRMibApplyNexthopWeight     OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Specifies a load sharing weight in the range of 1 and 100 for the next hop."
+    DEFVAL { 10 }
+    ::= { ibPBRMibApplyNexthopEntry 9 }
+
+ibPBRMibApplyNexthopPathId     OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Specifies a service chain by its path ID in the range of 1 and 16777215."
+    ::= { ibPBRMibApplyNexthopEntry 10 }
+
+ibPBRMibApplyNexthopPathIndex     OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Specifies a node in the service chain as
+                 a next hop by its index in the range of 1 and 255."
+    ::= { ibPBRMibApplyNexthopEntry 11 }
+
+-- PBR policy node apply default next hop action table
+
+ibPBRMibApplyDefaultNexthopTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPBRMibApplyDefaultNexthopEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "A table for default next hop actions being used by a policy
+                node."
+    ::= { ibPBRTables 6 }
+
+ibPBRMibApplyDefaultNexthopEntry  OBJECT-TYPE
+    SYNTAX      IbPBRMibApplyDefaultNexthopEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "An entry for policy node with an action
+                 to set default next hop for matching packets.
+                "
+    INDEX
+    {
+            ibPBRMibPolicyNodeAddrType,
+            ibPBRMibPolicyName,
+            ibPBRMibPolicyNodeId,
+            ibPBRMibApplyDefaultNexthopIndex
+    }
+    ::= { ibPBRMibApplyDefaultNexthopTable 1 }
+
+IbPBRMibApplyDefaultNexthopEntry ::=
+    SEQUENCE
+    {
+            ibPBRMibApplyDefaultNexthopIndex       Integer32,
+            ibPBRMibApplyDefaultNexthopVpnName     DisplayString,
+            ibPBRMibApplyDefaultNexthopAddressType InetAddressType,
+            ibPBRMibApplyDefaultNexthopAddress     InetAddress,
+            ibPBRMibApplyDefaultNexthopTrackId     Integer32,
+            ibPBRMibApplyDefaultNexthopDirect      TruthValue,
+            ibPBRMibApplyDefaultNexthopRowStatus   RowStatus,
+            ibPBRMibApplyDefNexthopInbVpn          TruthValue,
+            ibPBRMibApplyDefNexthopPathId          Integer32,
+            ibPBRMibApplyDefNexthopPathInd         Integer32
+    }
+
+ibPBRMibApplyDefaultNexthopIndex    OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Index of default next hop for the apply
+                default next hop action."
+    ::= { ibPBRMibApplyDefaultNexthopEntry 1 }
+
+ibPBRMibApplyDefaultNexthopVpnName    OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..31))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Name of VPN instance where apply default next hop action
+                 is used."
+    ::= { ibPBRMibApplyDefaultNexthopEntry 2 }
+
+ibPBRMibApplyDefaultNexthopAddressType     OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Address type of ibPBRMibApplyDefaultNexthopAddress,
+                 which can be IPv4 or IPv6."
+    ::= { ibPBRMibApplyDefaultNexthopEntry 3 }
+
+ibPBRMibApplyDefaultNexthopAddress     OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Next hop IP address of apply default next hop action."
+    ::= { ibPBRMibApplyDefaultNexthopEntry 4 }
+
+ibPBRMibApplyDefaultNexthopTrackId     OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Identifier of track object related with default next hop.
+                 Specifies a track entry by its number in the range of 1 to 1024.
+                 Setting 0 indicates closing this function."
+    ::= { ibPBRMibApplyDefaultNexthopEntry 5 }
+
+ibPBRMibApplyDefaultNexthopDirect        OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Direct route attribute of apply default next hop
+                address according to route information."
+    DEFVAL { false }
+    ::= { ibPBRMibApplyDefaultNexthopEntry 6 }
+
+ibPBRMibApplyDefaultNexthopRowStatus  OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+            "Operation status of this table entry.
+            Three actions are used: active,
+            createAndGo, and destroy.
+            "
+    ::= { ibPBRMibApplyDefaultNexthopEntry 7 }
+
+ibPBRMibApplyDefNexthopInbVpn        OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Specifies the VPN instance where the inbound interface belongs.
+                If the value is set to TRUE, the VPN instance name will be ignored."
+    DEFVAL { false }
+    ::= { ibPBRMibApplyDefaultNexthopEntry 8 }
+
+ibPBRMibApplyDefNexthopPathId     OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Specifies a service chain by its path ID in the range of 1 and 16777215."
+    ::= { ibPBRMibApplyDefaultNexthopEntry 9 }
+
+ibPBRMibApplyDefNexthopPathInd     OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION "Specifies a node in the service chain as
+                 a default next hop by its index in the range of 1 and 255."
+    ::= { ibPBRMibApplyDefaultNexthopEntry 10 }
+
+END

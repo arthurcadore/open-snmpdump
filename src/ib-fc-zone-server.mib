@@ -1,0 +1,1552 @@
+-- =====================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:
+--    This MIB module is intended for management of Fibre Channel Zoning
+--    Servers, including both Basic Zoning Management and Enhanced Zoning
+--    Management.
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 Initial version created by qiaoxinghua 2013-12-25
+-- =====================================================================
+IB-FC-ZONE-SERVER-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    IbFcNameId
+        FROM IB-FC-TC-MIB
+    ibSan, ibVsanIndex
+        FROM IB-VSAN-MIB
+    ifIndex, ifDescr
+        FROM IF-MIB
+    Unsigned32, Counter64, OBJECT-TYPE, MODULE-IDENTITY,
+    NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    RowStatus, TruthValue, TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    t11ZsActiveZoneIndex, t11ZsActiveZoneMemberIndex
+        FROM T11-FC-ZONE-SERVER-MIB;
+
+ibFcZoneServer MODULE-IDENTITY
+    LAST-UPDATED "201312251507Z"        -- December 25, 2013 at 15:07 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB module is intended for management of FC(Fibre Channel)
+         Zoning entities, including Basic Zoning Management and Enhanced
+         Zoning Management."
+    REVISION "201312251507Z"
+    DESCRIPTION
+        "Initial version of this MIB module."
+    ::= { ibSan 9 }
+
+--
+-- Textual conventions
+--
+IbFcZsGenName ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT "255a"
+    STATUS       current
+    DESCRIPTION
+        "Represents the general names for a Zone Set, Zone or Zone
+         alias object.
+
+         Each octet in this string is an ASCII code for an English
+         letter, digit, or special character such as the dollar sign ($),
+         minus sign (-), caret (^), or underscores (_).
+
+         This string must contain at least one character and must start
+         with an English letter."
+    SYNTAX OCTET STRING (SIZE (1..255))
+
+IbFcZsGenNameOrZero ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT "255a"
+    STATUS       current
+    DESCRIPTION
+        "Represents the general names for a Zone Set, Zone or Zone
+         alias object.
+
+         Each octet in this string is an ASCII code for an English
+         letter, digit, or special character such as the dollar sign ($),
+         minus sign (-), caret (^), or underscores (_).
+
+         This string must start with an English letter."
+    SYNTAX OCTET STRING (SIZE (0..255))
+
+IbFcZsZoneMemberType ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "Represents the addressing mechanism by
+         which a member is identified:
+
+        'fcid'            - FC ID of N_Port.
+        'fwwn'            - WWN(World Wide Name) of F_Port.
+        'pwwn'            - WWN(World Wide Name) of N_Port.
+        'aliasName'       - Zone alias name.
+        "
+    SYNTAX INTEGER
+    {
+    fcid(1),
+    fwwn(2),
+    pwwn(3),
+    aliasName(4)
+    }
+
+--
+-- Node definitions
+--
+ibFcZoneMibObjects OBJECT IDENTIFIER ::= { ibFcZoneServer 1 }
+
+ibFcZsConfiguration OBJECT IDENTIFIER ::= { ibFcZoneMibObjects 1 }
+
+-- Zone Server Table
+ibFcZsServerTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcZsServerEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table that contains information about the Zone Servers
+         in each VSAN and provides the capability to perform
+         operations on their Zone Server databases."
+    ::= { ibFcZsConfiguration 1 }
+
+ibFcZsServerEntry OBJECT-TYPE
+    SYNTAX IbFcZsServerEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry contains information specific to a Zone
+         Server for a particular VSAN."
+    INDEX { ibVsanIndex }
+    ::= { ibFcZsServerTable 1 }
+
+
+IbFcZsServerEntry ::=
+    SEQUENCE {
+        ibFcZsZoneModeCfg
+            INTEGER,
+        ibFcZsHardZoneEnable
+            TruthValue,
+        ibFcZsDistributeRule
+            INTEGER,
+        ibFcZsDefaultZoneSetting
+            INTEGER,
+        ibFcZsMergeControlSetting
+            INTEGER,
+        ibFcZsServerLastResult
+            INTEGER
+     }
+
+ibFcZsZoneModeCfg OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        basic(1),
+        enhanced(2)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The operational mode of the Zone Server.
+
+         Setting this object to 'enhanced' is a request to
+         set the operational mode of the Zone Server to
+         Enhanced mode.  This is possible only if all
+         switches in the Fibre Channel Fabric are capable
+         of working in Enhanced mode.
+
+         Setting this object to 'basic' is a request to set
+         the operational mode of the Zone Server to Basic
+         mode."
+    ::= { ibFcZsServerEntry 1 }
+
+ibFcZsHardZoneEnable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "This object indicates whether this switch, no matter
+         in Basic or Enhanced mode, enforces Hard Zoning in
+         this VSAN."
+    ::= { ibFcZsServerEntry 2 }
+
+ibFcZsDistributeRule OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        activeOnly(2),
+        full(3)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "This object specifies whether a complete distribution
+         (or merge) will be applied when an activation(or merge)
+         happened in Basic mode.
+
+         If this object is set to 'full', both the Active
+         Zone Set and Zone Set Database will be distributed
+         (or merged) when an activation operation(or merge) is
+         performed.
+
+         If this object is set to 'activeOnly', only the
+         Active Zone Set will be distributed(or merged) when
+         an activation operation(or merge) is performed.
+
+         The value 'none' is meaningless and can be used only
+         in Enhanced mode."
+    ::= { ibFcZsServerEntry 3 }
+
+ibFcZsDefaultZoneSetting OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        deny(1),
+        permit(2)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "This object controls the Zoning flag that governs the
+         behavior of the Default Zone in this VSAN.
+
+         If this object is set to 'permit', the members of the
+         Default Zone in this VSAN can communicate with each
+         other.
+
+         If this object is set to 'deny', the members of the
+         Default Zone in this VSAN cannot communicate with each
+         other."
+    ::= { ibFcZsServerEntry 4 }
+
+ibFcZsMergeControlSetting OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        allow(2),
+        restrict(3)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "This object controls the Enhanced Zoning flag that
+         indicates the Merge Control Setting for this VSAN.
+         It is meaningful only in Enhanced mode:
+
+         'none'     - This value is meaningless and only can be
+                      used in Basic mode.
+         'allow'    - A switch may join the Fabric only if
+                      its Zoning Database is able to merge
+                      with the Fabric's Zoning Database.
+         'restrict' - A switch may join the Fabric only if
+                      its Zoning Database is equal to the
+                      Fabric's Zoning Database."
+    ::= { ibFcZsServerEntry 5 }
+
+ibFcZsServerLastResult OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        success(2),
+        busy(3),
+        noSupportInFabric(4),
+        noSupportInBasic(5),
+        noSupportInEnhanced(6),
+        activeZoneSetTooBig(7),
+        otherFault(8)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Current operational status of the latest configuration
+         in this VSAN:
+
+         'none'                - No corresponding operation has been performed
+                                 yet.
+         'success'             - The configuration was performed successfully.
+         'busy'                - The configuration was performed unsuccessfully,
+                                 because the system is busy with another zoning
+                                 operation.
+         'noSupportInFabric'   - The configuration was performed unsuccessfully,
+                                 because one or more switches in this Fabric
+                                 don't support Enhanced zoning.
+         'noSupportInBasic'    - The configuration was performed unsuccessfully,
+                                 because it is not supported in Basic mode.
+         'noSupportInEnhanced' - The configuration was performed unsuccessfully,
+                                 because it is not supported in Enhanced mode.
+         'activeZoneSetTooBig' - The configuration was performed unsuccessfully,
+                                 because the Active Zone Set is too large to be
+                                 supported.
+         'otherFault'          - The configuration was performed unsuccessfully
+                                 for other reasons."
+    ::= { ibFcZsServerEntry 6 }
+
+-- Zoneset Table
+ibFcZsZonesetTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcZsZonesetEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table that contains information about each Zone
+         Set in the Zone Set Database of the Zone Servers
+         in a specified VSAN."
+    ::= { ibFcZsConfiguration 2 }
+
+ibFcZsZonesetEntry OBJECT-TYPE
+    SYNTAX IbFcZsZonesetEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry contains the information of a Zone Set configured
+         in a specified VSAN."
+    INDEX { ibVsanIndex, ibFcZsZonesetIndex }
+    ::= { ibFcZsZonesetTable 1 }
+
+
+IbFcZsZonesetEntry ::=
+    SEQUENCE {
+        ibFcZsZonesetIndex
+            Unsigned32,
+        ibFcZsZonesetName
+            IbFcZsGenName,
+        ibFcZsZonesetRowStatus
+            RowStatus
+     }
+
+ibFcZsZonesetIndex OBJECT-TYPE
+    SYNTAX Unsigned32(1..4294967295)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The index of a Zone Set, which uniquely identifies a Zone Set in
+         the Zone Set Database on local switch."
+    ::= { ibFcZsZonesetEntry 1 }
+
+ibFcZsZonesetName OBJECT-TYPE
+    SYNTAX IbFcZsGenName
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The name of this Zone Set, which should be unique
+         within a VSAN.
+         The Zone Set can be renamed by setting this object
+         to a new value."
+    ::= { ibFcZsZonesetEntry 2 }
+
+ibFcZsZonesetRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The status of this conceptual row."
+    ::= { ibFcZsZonesetEntry 3 }
+
+-- Zone Table
+ibFcZsZoneTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcZsZoneEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table contains information about all the Zones
+        in the Zone Set Database of the Zone Servers in each VSAN."
+    ::= { ibFcZsConfiguration 3 }
+
+ibFcZsZoneEntry OBJECT-TYPE
+    SYNTAX IbFcZsZoneEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry contains information about a Zone
+         in the Zone Set Database in a specified VSAN."
+    INDEX { ibVsanIndex, ibFcZsZoneIndex }
+    ::= { ibFcZsZoneTable 1 }
+
+
+IbFcZsZoneEntry ::=
+    SEQUENCE {
+        ibFcZsZoneIndex
+            Unsigned32,
+        ibFcZsZoneName
+            IbFcZsGenName,
+        ibFcZsZonePairwiseEnable
+            TruthValue,
+        ibFcZsZoneRowStatus
+            RowStatus
+     }
+
+ibFcZsZoneIndex OBJECT-TYPE
+    SYNTAX Unsigned32(1..4294967295)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An index value that uniquely identifies this
+         Zone in the Zone Set Database on local switch."
+    ::= { ibFcZsZoneEntry 1 }
+
+ibFcZsZoneName OBJECT-TYPE
+    SYNTAX IbFcZsGenName
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The name of this Zone, which should be unique
+         within a VSAN.
+
+         The Zone can be renamed by setting this object
+         to a new value."
+    ::= { ibFcZsZoneEntry 2 }
+
+ibFcZsZonePairwiseEnable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "This object specifies whether Pairwise Zoning is enabled in this
+         Zone.
+
+         When Pairwise Zoning is enabled in a Zone, the behaviors of members
+         in this Zone will be controlled through their roles.  The members
+         with the same role ('initiator' or 'target') can't communicate with
+         each other, but those with different roles or with the same role
+         'both' can communicate with each other.
+
+         When Pairwise Zoning is disabled in a Zone, the behaviors of members
+         in this Zone will not be affected by their roles."
+    DEFVAL { false }
+    ::= { ibFcZsZoneEntry 3 }
+
+ibFcZsZoneRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The status of this conceptual row."
+    ::= { ibFcZsZoneEntry 4 }
+
+-- Set Zone Table
+ibFcZsSetZoneTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcZsSetZoneEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table specifies which Zone belongs to which Zone
+         Set in the Zone Set Database of the Zone Servers."
+    ::= { ibFcZsConfiguration 4 }
+
+ibFcZsSetZoneEntry OBJECT-TYPE
+    SYNTAX IbFcZsSetZoneEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry specifies that a particular Zone is one of the Zones
+         that form a particular Zone Set in the Zone Set database of a
+         specified VSAN.
+
+         When a row in this table exists, it references one row in
+         the ibFcZsZonesetTable and one row in the ibFcZsZoneTable.
+         The agent must ensure that both such rows when referenced by an
+         active row in this table, do exist and have a status of
+         'active'."
+    INDEX { ibVsanIndex,
+            ibFcZsZonesetIndex,
+            ibFcZsZoneIndex }
+    ::= { ibFcZsSetZoneTable 1 }
+
+
+IbFcZsSetZoneEntry ::=
+    SEQUENCE {
+        ibFcZsSetZoneRowStatus
+            RowStatus
+     }
+
+ibFcZsSetZoneRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The status of this conceptual row."
+    ::= { ibFcZsSetZoneEntry 1 }
+
+-- Zone alias Table
+ibFcZsZoneAliasTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcZsZoneAliasEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table contains information about the Zone aliases
+         in the Zone Set Database of the Zone Server in each
+         VSAN."
+    ::= { ibFcZsConfiguration 5 }
+
+ibFcZsZoneAliasEntry OBJECT-TYPE
+    SYNTAX IbFcZsZoneAliasEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry contains information about a Zone alias in
+         the Zone Set Database of a particular VSAN."
+    INDEX { ibVsanIndex, ibFcZsZoneAliasIndex }
+    ::= { ibFcZsZoneAliasTable 1 }
+
+
+IbFcZsZoneAliasEntry ::=
+    SEQUENCE {
+        ibFcZsZoneAliasIndex
+            Unsigned32,
+        ibFcZsZoneAliasName
+            IbFcZsGenName,
+        ibFcZsZoneAliasRowStatus
+            RowStatus
+     }
+
+ibFcZsZoneAliasIndex OBJECT-TYPE
+    SYNTAX Unsigned32(1..4294967295)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An index value that uniquely identifies this Zone
+         alias within the Zone Set Database."
+    ::= { ibFcZsZoneAliasEntry 1 }
+
+ibFcZsZoneAliasName OBJECT-TYPE
+    SYNTAX IbFcZsGenName
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The name of this Zone alias, which should be unique
+         within a VSAN.
+
+         The Zone alias can be renamed by setting this object
+         to a new value."
+    ::= { ibFcZsZoneAliasEntry 2 }
+
+ibFcZsZoneAliasRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The status of this conceptual row."
+    ::= { ibFcZsZoneAliasEntry 3 }
+
+-- Zone Member Table
+ibFcZsZoneMemberTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcZsZoneMemberEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table contains all members of a Zone/Zone alias
+         and information about those members in the Zone Set
+         Database of the Zone Server in each VSAN."
+    ::= { ibFcZsConfiguration 6 }
+
+ibFcZsZoneMemberEntry OBJECT-TYPE
+    SYNTAX IbFcZsZoneMemberEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry represents the relationship between a
+         member and (one of) its 'parent(s)', i.e., a Zone
+         or Zone alias the member belongs, within
+         a particular VSAN."
+    INDEX { ibVsanIndex,
+            ibFcZsZoneMemberParentType,
+            ibFcZsZoneMemberParentIndex,
+            ibFcZsZoneMemberIndex }
+    ::= { ibFcZsZoneMemberTable 1 }
+
+
+IbFcZsZoneMemberEntry ::=
+    SEQUENCE {
+        ibFcZsZoneMemberParentType
+            INTEGER,
+        ibFcZsZoneMemberParentIndex
+            Unsigned32,
+        ibFcZsZoneMemberIndex
+            Unsigned32,
+        ibFcZsZoneMemberFormat
+            IbFcZsZoneMemberType,
+        ibFcZsZoneMemberIdentifier
+            OCTET STRING,
+        ibFcZsZoneMemberPairwiseRole
+            INTEGER,
+        ibFcZsZoneMemberRowStatus
+            RowStatus
+     }
+
+ibFcZsZoneMemberParentType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        zone(1),
+        alias(2)
+        }
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This object determines whether this member belongs
+         to a Zone or Zone alias."
+    ::= { ibFcZsZoneMemberEntry 1 }
+
+ibFcZsZoneMemberParentIndex OBJECT-TYPE
+    SYNTAX Unsigned32(1..4294967295)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This object contains the index value of the Zone or
+         Zone alias to which this member belongs.
+
+         If the value of the corresponding instance of
+         ibFcZsZoneMemberParentType is 'zone', this object
+         will contain the value of the ibFcZsZoneIndex object of
+         the Zone to which this member belongs.
+
+         If the value of the corresponding instance of
+         ibFcZsZoneMemberParentType is 'alias', this object
+         will contain the value of the ibFcZsAliasIndex object
+         of the Zone alias to which this member belongs."
+    ::= { ibFcZsZoneMemberEntry 2 }
+
+ibFcZsZoneMemberIndex OBJECT-TYPE
+    SYNTAX Unsigned32(1..4294967295)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An index value that uniquely identifies this Zone
+         member among all Zone members in the Zone or Zone
+         alias they belongs to."
+    ::= { ibFcZsZoneMemberEntry 3 }
+
+ibFcZsZoneMemberFormat OBJECT-TYPE
+    SYNTAX IbFcZsZoneMemberType
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "This object identifies the format of the
+         Zone/Zone alias member's identifier that is contained
+         in ibFcZsZoneMemberIdentifier.
+
+         This object cannot be modified while the value of the
+         ibFcZsZoneMemberRowStatus object is 'active'."
+    ::= { ibFcZsZoneMemberEntry 4 }
+
+ibFcZsZoneMemberIdentifier OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1..255))
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "This object contains the Member Identifier of the
+         Zone or Zone alias.  The interpretation of this object
+         depends on the value of the corresponding instance
+         of ibFcZsZoneMemberFormat:
+
+         - if ibFcZsZoneMemberFormat is 'fcid', this object
+           contains the 3-octet N_Port FC ID.
+
+         - if ibFcZsZoneMemberFormat is 'fwwn', this object
+           contains an 8-octet F_Port WWN.
+
+         - if ibFcZsZoneMemberFormat is 'pwwn', this object
+           contains an 8-octet N_Port WWN.
+
+         - if ibFcZsZoneMemberFormat is 'aliasName', this
+           object contains the value of ibFcZsZoneAliasName
+           for some Zone alias in the same Zone Set Database.
+
+         This object cannot be modified while the value of the
+         ibFcZsZoneMemberRowStatus object is 'active'."
+    ::= { ibFcZsZoneMemberEntry 5 }
+
+ibFcZsZoneMemberPairwiseRole OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        both(2),
+        initiator(3),
+        target(4)
+        }
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "This object identifies the Pairwise role of the Zone/Zone alias
+         member.
+
+         If ibFcZsZoneMemberFormat is 'aliasName', the value of this
+         object can only be 'none'.
+         If ibFcZsZoneMemberFormat is not 'aliasName', the value of
+         this object can't be 'none', and the default value is 'both'
+         (including both 'initiator' and 'target' role).
+
+         This object can be modified while the value of the
+         ibFcZsZoneMemberRowStatus object is 'active'.
+
+         The Pairwise role of a port member takes effect only when the
+         ibFcZsZonePairwiseEnable of the Zone to which the port member
+         belongs is set to 'true'."
+    ::= { ibFcZsZoneMemberEntry 6 }
+
+ibFcZsZoneMemberRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The status of this conceptual row."
+    ::= { ibFcZsZoneMemberEntry 7 }
+
+ibFcZsOperation OBJECT IDENTIFIER ::= { ibFcZoneMibObjects 2 }
+
+ibFcZsActivateTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcZsActivateEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table provides a mechanism to allow a Zone Set
+         to be activated."
+    ::= { ibFcZsOperation 1 }
+
+ibFcZsActivateEntry OBJECT-TYPE
+    SYNTAX IbFcZsActivateEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An entry contains information of the activation about
+         a Zone Set."
+    INDEX { ibVsanIndex }
+    ::= { ibFcZsActivateTable 1 }
+
+
+IbFcZsActivateEntry ::=
+    SEQUENCE {
+        ibFcZsActivate
+            IbFcZsGenNameOrZero,
+        ibFcZsDeactivate
+            INTEGER,
+        ibFcZsActivateResult
+            INTEGER,
+        ibFcZsActivateFailReason
+            INTEGER
+     }
+
+ibFcZsActivate OBJECT-TYPE
+    SYNTAX IbFcZsGenNameOrZero
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Name of the Zone Set that needs to be activated.  The value of this
+         object when read is always zero-length."
+    ::= { ibFcZsActivateEntry 1 }
+
+ibFcZsDeactivate OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        noOper(1),
+        deactivate(2)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "A request to deactivate the currently active Zone Set.  The value of
+         this object when read is always 'noOper'.
+
+        'noOper'      - Specifies no operation.
+        'deactivate'  - Specifies the deactivate operation."
+    ::= { ibFcZsActivateEntry 2 }
+
+ibFcZsActivateResult OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        inProgress(2),
+        activateSuccess(3),
+        activateFailure(4),
+        deactivateSuccess(5),
+        deactivateFailure(6)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "As a result of the most recent activation/deactivation.
+
+        'none'               - No activation/deactivation invoked since the
+                               last restart of the management system.
+        'inProcess'          - Activation/deactivation is still in progress.
+        'activateSuccess'    - Activation completed successfully.
+        'activateFailure'    - Activation failed due to some reason.
+        'deactivateSuccess'  - Deactivation completed successfully.
+        'deactivateFailure'  - Deactivation failed due to some reason."
+    ::= { ibFcZsActivateEntry 3 }
+
+ibFcZsActivateFailReason OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        busy(2),
+        activeZoneSetTooBig(3),
+        noZoneSet(4),
+        noMember(5)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The reason for the most recent failure of a Zone Set activation or
+         deactivation.
+
+         'none'                 - No activation/deactivation invoked or the
+                                  result of activation/deactivation is success.
+         'busy'                 - The management system is busy in some other
+                                  process.
+         'activeZoneSetTooBig'  - The Active Zone Set size in packet reached
+                                  the maximum limit in Basic mode.
+         'noZoneSet'            - No specified Zone Set found.
+         'noMember'             - No port member found in the specified
+                                  Zone Set."
+    ::= { ibFcZsActivateEntry 4 }
+
+ibFcZsDistributeTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcZsDistributeEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table provides an operational object to trigger a distribution
+         for each existing VSAN."
+    ::= { ibFcZsOperation 2 }
+
+ibFcZsDistributeEntry OBJECT-TYPE
+    SYNTAX IbFcZsDistributeEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This entry provides an operational object to trigger a distribution
+         for a specified VSAN."
+    INDEX { ibVsanIndex }
+    ::= { ibFcZsDistributeTable 1 }
+
+
+IbFcZsDistributeEntry ::=
+    SEQUENCE {
+        ibFcZsDistribute
+            INTEGER,
+        ibFcZsDistributeLastResult
+            INTEGER,
+        ibFcZsDistributeReasonCode
+            Unsigned32,
+        ibFcZsDistributeExplainCode
+            Unsigned32
+     }
+
+ibFcZsDistribute OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        noOper(1),
+        distribute(2)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Specifies the operation of triggering a distribution in this VSAN.
+
+         'noOper'      - Specifies no operation.
+         'distribute'  - Specifies the distribute operation."
+    ::= { ibFcZsDistributeEntry 1 }
+
+ibFcZsDistributeLastResult OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        success(2),
+        inProgress(3),
+        rejectFailure(4),
+        otherFault(5)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Specifies the result of triggering a distribution for VSAN.
+
+        'none'          - No distribution invoked via the corresponding
+                          instance of distribution.
+        'success'       - Distribution completed successfully.
+        'inProgress'    - Distribution is still in progress.
+        'rejectFailure' - Distribution failed due to an SW_RJT.
+        'otherFault'    - Distribution/commit failed for some other reason."
+    ::= { ibFcZsDistributeEntry 2 }
+
+ibFcZsDistributeReasonCode OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The reason code in the SW_RJT packet received in the most recent
+         distribution.
+
+         This object is meaningful only when the value of
+         ibFcZsDistributeLastResult is 'rejectFailure'."
+    ::= { ibFcZsDistributeEntry 3 }
+
+ibFcZsDistributeExplainCode OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object contains the corresponding reason code explanation for
+         ibFcZsDistributeReasonCode, and is meaningful only when the value
+         of ibFcZsDistributeLastResult is 'rejectFailure'."
+    ::= { ibFcZsDistributeEntry 4 }
+
+ibFcZsClearDatabaseTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcZsClearDatabaseEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table provides an operational object to clear
+         the local Zone Set Database for each existing VSAN."
+    ::= { ibFcZsOperation 3 }
+
+ibFcZsClearDatabaseEntry OBJECT-TYPE
+    SYNTAX IbFcZsClearDatabaseEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An entry provides an operational object to clear
+         the local Zone Set Database for a specified VSAN."
+    INDEX { ibVsanIndex }
+    ::= { ibFcZsClearDatabaseTable 1 }
+
+
+IbFcZsClearDatabaseEntry ::=
+    SEQUENCE {
+        ibFcZsClearDatabase
+            INTEGER
+     }
+
+ibFcZsClearDatabase OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        noOper(1),
+        clearDb(2)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Specify the operation of clearing local Zone Set Database in this VSAN.
+
+         'noOper'    - Specifies no operation.
+         'clearDb'   - Specifies clear operation."
+    ::= { ibFcZsClearDatabaseEntry 1 }
+
+ibFcZsClearPktStatsTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcZsClearPktStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table provides an operational object to clear
+         the statistics on packets for each existing VSAN."
+    ::= { ibFcZsOperation 4 }
+
+ibFcZsClearPktStatsEntry OBJECT-TYPE
+    SYNTAX IbFcZsClearPktStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An entry provides an operational object to clear
+         the statistics on packets for a specified VSAN."
+    INDEX { ibVsanIndex }
+    ::= { ibFcZsClearPktStatsTable 1 }
+
+
+IbFcZsClearPktStatsEntry ::=
+    SEQUENCE {
+        ibFcZsClearPktStats
+            INTEGER
+     }
+
+ibFcZsClearPktStats OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        noOper(1),
+        clearStats(2)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Specify the operation of clearing the statistics on
+        packets in this VSAN.
+
+         'noOper'       - Specifies no operation.
+         'clearStats'   - Specifies the clear operation."
+    ::= { ibFcZsClearPktStatsEntry 1 }
+
+ibFcZsClearAllPktStats OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        noOper(1),
+        clearStats(2)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "An operational object to clear the statistics on
+        packets for all existing VSANs.
+
+         'noOper'         - Specifies no operation.
+         'clearStats'     - Specifies the clear operation."
+    ::= { ibFcZsOperation 5 }
+
+
+ibFcZsInformation OBJECT IDENTIFIER ::= { ibFcZoneMibObjects 3 }
+
+ibFcZsActiveZoneTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcZsActiveZoneEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table contains information about Active Zone
+         in each existing VSAN."
+    ::= { ibFcZsInformation 1 }
+
+ibFcZsActiveZoneEntry OBJECT-TYPE
+    SYNTAX IbFcZsActiveZoneEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An entry contains information about Active Zone
+         in a specified VSAN."
+    INDEX {  ibVsanIndex,
+             t11ZsActiveZoneIndex}
+    ::= { ibFcZsActiveZoneTable 1 }
+
+
+IbFcZsActiveZoneEntry ::=
+    SEQUENCE {
+        ibFcZsActiveZonePairwiseEnable
+            TruthValue
+     }
+
+ibFcZsActiveZonePairwiseEnable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Indicates whether Pairwise Zoning of an Active Zone is enabled."
+    ::= { ibFcZsActiveZoneEntry 1 }
+
+
+ibFcZsActiveMemberTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcZsActiveMemberEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table contains information about Active Zone members
+         in each existing VSAN."
+    ::= { ibFcZsInformation 2 }
+
+ibFcZsActiveMemberEntry OBJECT-TYPE
+    SYNTAX IbFcZsActiveMemberEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An entry contains information about Active Zone members
+         in a specified VSAN."
+    INDEX {  ibVsanIndex,
+             t11ZsActiveZoneIndex,
+             t11ZsActiveZoneMemberIndex  }
+    ::= { ibFcZsActiveMemberTable 1 }
+
+
+IbFcZsActiveMemberEntry ::=
+    SEQUENCE {
+        ibFcZsActiveMemberPairwiseRole
+            INTEGER
+     }
+
+ibFcZsActiveMemberPairwiseRole OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        both(1),
+        initiator(2),
+        target(3)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Indicates which role the Active Zone member is playing."
+    ::= { ibFcZsActiveMemberEntry 1 }
+
+
+ibFcZsServerStatusTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcZsServerStatusEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table contains the configuration and running state of
+         each existing VSAN."
+    ::= { ibFcZsInformation 3 }
+
+ibFcZsServerStatusEntry OBJECT-TYPE
+    SYNTAX IbFcZsServerStatusEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An entry contains the configuration and running state of
+         a specified VSAN."
+    INDEX { ibVsanIndex }
+    ::= { ibFcZsServerStatusTable 1 }
+
+
+IbFcZsServerStatusEntry ::=
+    SEQUENCE {
+        ibFcZsServerStatus
+            INTEGER,
+        ibFcZsHardZoneStatus
+            INTEGER,
+        ibFcZsAliasCount
+            Unsigned32,
+        ibFcZsZoneCount
+            Unsigned32,
+        ibFcZsZonesetCount
+            Unsigned32
+     }
+
+ibFcZsServerStatus OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        free(1),
+        distribute(2),
+        merge(3)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The current status of Zone Server.
+
+        'free'        - The Zone Server is now free.
+        'distribute'  - The Zone Server is now busy distributing.
+        'merge'       - The Zone Server is now busy merging."
+    ::= { ibFcZsServerStatusEntry 1 }
+
+ibFcZsHardZoneStatus OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        enable(1),
+        adminDisable(2),
+        noResourceDisable(3)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The current status of Hard Zone Server.
+
+        'enable'            - Hard Zone Server is enabled.
+        'adminDisable'      - Hard Zone Server is disabled administratively.
+        'noResourceDisable' - Hard Zone Server is disabled due to lack of
+                              hardware resource."
+    ::= { ibFcZsServerStatusEntry 2 }
+
+ibFcZsAliasCount OBJECT-TYPE
+    SYNTAX Unsigned32(0..4294967295)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of Zone aliases that exist in the specified VSAN."
+    ::= { ibFcZsServerStatusEntry 3 }
+
+ibFcZsZoneCount OBJECT-TYPE
+    SYNTAX Unsigned32(0..4294967295)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of Zones that exist in the specified VSAN."
+    ::= { ibFcZsServerStatusEntry 4 }
+
+ibFcZsZonesetCount OBJECT-TYPE
+    SYNTAX Unsigned32(0..4294967295)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of Zone Sets that exist in the specified VSAN."
+    ::= { ibFcZsServerStatusEntry 5 }
+
+ibFcZsPktStatsTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcZsPktStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Packet statistic table of Zone Servers."
+    ::= { ibFcZsInformation 4 }
+
+ibFcZsPktStatsEntry OBJECT-TYPE
+    SYNTAX IbFcZsPktStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An entry contains the statistics on packets of
+        Zone Servers."
+    INDEX { ibVsanIndex }
+    ::= { ibFcZsPktStatsTable 1 }
+
+
+IbFcZsPktStatsEntry ::=
+    SEQUENCE {
+        ibFcZsPktInMergeReqCount
+            Counter64,
+        ibFcZsPktOutMergeReqCount
+            Counter64,
+        ibFcZsPktInMergeAccCount
+            Counter64,
+        ibFcZsPktOutMergeAccCount
+            Counter64,
+        ibFcZsPktInMergeRjtCount
+            Counter64,
+        ibFcZsPktOutMergeRjtCount
+            Counter64,
+        ibFcZsPktInChangeReqCount
+            Counter64,
+        ibFcZsPktOutChangeReqCount
+            Counter64,
+        ibFcZsPktInChangeAccCount
+            Counter64,
+        ibFcZsPktOutChangeAccCount
+            Counter64,
+        ibFcZsPktInChangeRjtCount
+            Counter64,
+        ibFcZsPktOutChangeRjtCount
+            Counter64
+     }
+
+ibFcZsPktInMergeReqCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of Merge Request Frames received by local Zone
+         Server from other Zone Servers."
+    ::= { ibFcZsPktStatsEntry 1 }
+
+ibFcZsPktOutMergeReqCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of Merge Request Frames sent by local Zone Server
+         to other Zone Servers."
+    ::= { ibFcZsPktStatsEntry 2 }
+
+ibFcZsPktInMergeAccCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of Merge Accept Frames received by local Zone
+         Server from other Zone Servers."
+    ::= { ibFcZsPktStatsEntry 3 }
+
+ibFcZsPktOutMergeAccCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of Merge Accept Frames sent by local Zone Server
+         to other Zone Servers."
+    ::= { ibFcZsPktStatsEntry 4 }
+
+ibFcZsPktInMergeRjtCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of Merge Reject Frames received by local Zone
+         Server from other Zone Servers."
+    ::= { ibFcZsPktStatsEntry 5 }
+
+ibFcZsPktOutMergeRjtCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of Merge Reject Frames sent by local Zone Server
+         to other Zone Servers."
+    ::= { ibFcZsPktStatsEntry 6 }
+
+ibFcZsPktInChangeReqCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of change requests received by local Zone
+         Server from other Zone Servers."
+    ::= { ibFcZsPktStatsEntry 7 }
+
+ibFcZsPktOutChangeReqCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of change requests sent by local Zone Server
+         to other Zone Servers."
+    ::= { ibFcZsPktStatsEntry 8 }
+
+ibFcZsPktInChangeAccCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of Accept messages received from other Zone Servers
+         in response to change request sent by local Zone Server."
+    ::= { ibFcZsPktStatsEntry 9 }
+
+ibFcZsPktOutChangeAccCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of Accept messages sent to other Zone Servers
+         in response to change request received by local Zone Server."
+    ::= { ibFcZsPktStatsEntry 10 }
+
+ibFcZsPktInChangeRjtCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of Reject messages received from other Zone Servers
+         in response to change request sent by local Zone Server."
+    ::= { ibFcZsPktStatsEntry 11 }
+
+ibFcZsPktOutChangeRjtCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of Reject messages sent to other Zone Servers
+         in response to change request received by local Zone Server."
+    ::= { ibFcZsPktStatsEntry 12 }
+
+
+ibFcZsNextFreeIndexInfo OBJECT IDENTIFIER ::= { ibFcZsInformation 5 }
+
+ibFcZsZonesetNextFreeIndex OBJECT-TYPE
+    SYNTAX Unsigned32(1..4294967295)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Specifies the latest available index of ibFcZsZonesetIndex that
+         can be used to identify a new Zone Set."
+    ::= { ibFcZsNextFreeIndexInfo 1 }
+
+ibFcZsZoneNextFreeIndex OBJECT-TYPE
+    SYNTAX Unsigned32(1..4294967295)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Specifies the latest available index of ibFcZsZoneIndex that
+         can be used to identify a new Zone."
+    ::= { ibFcZsNextFreeIndexInfo 2 }
+
+ibFcZsZoneAliasNextFreeIndex OBJECT-TYPE
+    SYNTAX Unsigned32(1..4294967295)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Specifies the latest available index of ibFcZsZoneAliasIndex that
+         can be used to identify a new Zone alias."
+    ::= { ibFcZsNextFreeIndexInfo 3 }
+
+ibFcZsZoneMemberNextFreeIndexTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcZsZoneMemberNextFreeIndexEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table contains the information of the latest available index that
+         can be used to identify a new member in each Zone or Zone alias."
+    ::= { ibFcZsNextFreeIndexInfo 4 }
+
+ibFcZsZoneMemberNextFreeIndexEntry OBJECT-TYPE
+    SYNTAX IbFcZsZoneMemberNextFreeIndexEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An entry contains the information of the latest available index that
+         can be used to identify a new member in a Zone or Zone alias."
+    INDEX { ibFcZsZoneMemberParentType,
+            ibFcZsZoneMemberParentIndex }
+    ::= { ibFcZsZoneMemberNextFreeIndexTable 1 }
+
+IbFcZsZoneMemberNextFreeIndexEntry ::=
+    SEQUENCE {
+              ibFcZsZoneMemberNextFreeIndex
+              Unsigned32
+             }
+
+ibFcZsZoneMemberNextFreeIndex OBJECT-TYPE
+    SYNTAX Unsigned32(1..4294967295)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Specifies the latest available index of ibFcZsZoneMemberIndex that
+         can be used to identify a new member in a Zone or Zone alias."
+    ::= { ibFcZsZoneMemberNextFreeIndexEntry 1 }
+
+
+ibFcZsNotification OBJECT IDENTIFIER ::= { ibFcZoneMibObjects 4 }
+
+ibFcZsNotificationPrefix OBJECT IDENTIFIER ::= { ibFcZsNotification 0 }
+
+ibFcZsDefaultZoneChangedNotify NOTIFICATION-TYPE
+    OBJECTS { ibVsanIndex,
+              ibFcZsLocalSwitchWWN,
+              ibFcZsDefaultZoneSetting }
+    STATUS current
+    DESCRIPTION
+        "A ibFcZsDefaultZoneChangedNotify notification is sent when
+         the Default Zone setting of a specified VSAN is changed."
+    ::= { ibFcZsNotificationPrefix 1 }
+
+ibFcZsHardZoneChangedNotify NOTIFICATION-TYPE
+    OBJECTS { ibVsanIndex,
+              ibFcZsLocalSwitchWWN,
+              ibFcZsHardZoneStatus }
+    STATUS current
+    DESCRIPTION
+        "A ibFcZsHardZoneChangedNotify notification is sent when
+         the hard Zone configuration of a specified VSAN is changed."
+    ::= { ibFcZsNotificationPrefix 2 }
+
+ibFcZsMergeFailedNotify NOTIFICATION-TYPE
+    OBJECTS { ifIndex,
+              ifDescr,
+              ibVsanIndex,
+              ibFcZsLocalSwitchWWN,
+              ibFcZsPeerSwitchWWN,
+              ibFcZsMergeFailCause
+            }
+    STATUS current
+    DESCRIPTION
+        "A ibFcZsMergeFailedNotify notification is sent when a Zone merge
+         failure occurs."
+    ::= { ibFcZsNotificationPrefix 3 }
+
+ibFcZsMergeSucceededNotify NOTIFICATION-TYPE
+    OBJECTS { ifIndex,
+              ifDescr,
+              ibVsanIndex,
+              ibFcZsLocalSwitchWWN,
+              ibFcZsPeerSwitchWWN
+            }
+    STATUS current
+    DESCRIPTION
+        "A ibFcZsMergeSucceededNotify notification is sent when a successful
+         Zone merge occurs."
+    ::= { ibFcZsNotificationPrefix 4 }
+
+ibFcZsActivationCompletedNotify NOTIFICATION-TYPE
+    OBJECTS { ibVsanIndex,
+              ibFcZsLocalSwitchWWN,
+              ibFcZsActivateResult
+            }
+    STATUS current
+    DESCRIPTION
+        "A ibFcZsActivationCompletedNotify notification is sent whenever a
+         activation/deactivation is completed."
+    ::= { ibFcZsNotificationPrefix 5 }
+
+ibFcZsNotificationSwitch OBJECT IDENTIFIER ::= { ibFcZsNotification 1 }
+
+ibFcZsDefaultZoneChangedEnable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether the module will generate
+         traps for Default Zone setting change events."
+    ::= { ibFcZsNotificationSwitch 1 }
+
+ibFcZsHardZoneChangedEnable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether the module will generate
+         traps for hard Zone change events."
+    ::= { ibFcZsNotificationSwitch 2 }
+
+ibFcZsMergeFailedEnable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether the module will generate
+         traps for Zone merge failure events."
+    ::= { ibFcZsNotificationSwitch 3 }
+
+ibFcZsMergeSucceededEnable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether the module will generate
+         traps for Zone merge success events."
+    ::= { ibFcZsNotificationSwitch 4 }
+
+ibFcZsActivationCompletedEnable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether the module will generate
+         traps for activation/deactivation-completed events."
+    ::= { ibFcZsNotificationSwitch 5 }
+
+ibFcZsObjsForNotification OBJECT IDENTIFIER ::= { ibFcZsNotification 2 }
+
+ibFcZsLocalSwitchWWN OBJECT-TYPE
+    SYNTAX IbFcNameId
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "This object indicates the WWN of the local switch."
+    ::= { ibFcZsObjsForNotification 1 }
+
+ibFcZsPeerSwitchWWN OBJECT-TYPE
+    SYNTAX IbFcNameId
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "This object indicates the WWN of the peer switch."
+    ::= { ibFcZsObjsForNotification 2 }
+
+ibFcZsMergeFailCause OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        zoneModeInconsistent(1),
+        zonePolicyNotEqual(2),
+        hardZoneInconsistent(3),
+        dataNotEqualInRestrict(4),
+        activeZoneSetMergeFailed(5),
+        zoneMergeDataTooBig(6),
+        zoningObjectNumberTooBig(7),
+        zoneDbMergeFaildInBasic(8),
+        zoneDbMergeFaildInEnhanced(9),
+        other(10)
+        }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Indicates the reason of a Zone merge failure.
+
+         'zoneModeInconsistent'        - The zone mode is inconsistent.
+         'zonePolicyNotEqual'          - Zone Merge-Control setting or
+                                         Default-Zone doesn't match.
+         'hardZoneInconsistent'        - The Hard Zone Attribute is
+                                         inconsistent.
+         'dataNotEqualInRestrict'      - The Merge-Control setting is
+                                         Restrict and the peer zoning
+                                         database is not equal.
+         'activeZoneSetMergeFailed'    - The Active Zone Set merge failed.
+         'zoneMergeDataTooBig'         - The merged packet was
+                                         too large.
+         'zoningObjectNumberTooBig'    - The number of zoning objects exceeded
+                                         the limit.
+         'zoneDbMergeFaildInBasic'     - The database merge failed in Basic
+                                         mode.
+         'zoneDbMergeFaildInEnhanced'  - The database merge failed in Enhanced
+                                         mode.
+         'other'                       - Unknown reason."
+    ::= { ibFcZsObjsForNotification 3 }
+
+END

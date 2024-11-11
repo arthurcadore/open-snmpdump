@@ -1,0 +1,1537 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:  DHCPv6 mib for server and relay
+-- Reference:
+-- Version: V1.4
+-- History:
+-- V1.0 2018-11-16 Initial version Created by l08263
+-- V1.1 Add ibDhcp6Server2PoolGroupTable, ibDhcp6Server2PoolGroupExtTable,
+--      ibDhcp6Server2PoolGroupStatTable
+--      by lvlei, 2019.12.12
+-- V1.2 Add ibDhcp6Server2PoolIPTotalNum, ibDhcp6Server2PoolIPExpiredNum,
+--      ibDhcp6Server2PoolIPDynamicUsedNum, ibDhcp6Server2PoolIPStaticUsedNum,
+--      ibDhcp6Server2PoolIPConflictNum, ibDhcp6Server2PoolIPExcludeNum,
+--      ibDhcp6Server2PoolIPReserveNum, ibDhcp6Server2PoolIPUsge,
+--      ibDhcp6Server2PoolPdTotalNum, ibDhcp6Server2PoolPdExpiredNum,
+--      ibDhcp6Server2PoolPdDynamicUsedNum, ibDhcp6Server2PoolPdStaticUsedNum,
+--      ibDhcp6Server2PoolPdConflictNum, ibDhcp6Server2PoolPdExcludeNum,
+--      ibDhcp6Server2PoolPdReserveNum, ibDhcp6Server2PooPdUsage,
+--      ibDhcp6Server2PoolGpIPReserveNum , ibDhcp6Server2PoolGpPdReserveNum,
+--      ibDhcp6Server2NetUsageOverflow , ibDhcp6Server2NetUsageOverflowRecov,
+--      ibDhcp6Server2AddrNetExhaust , ibDhcp6Server2AddrNetExhaustRecov,
+--      ibDhcp6Server2PdNetUsageOverflow , ibDhcp6Server2PdNetUsageOverflowRecov,
+--      ibDhcp6Server2NetPdExhaust , ibDhcp6Server2PdNetExhaustRecov
+--      by jiangzhijie 2021-02-08
+-- V1.3 Add
+--      ibDhcp6Server2PoolType, ibDhcp6Server2PoolNetwork
+--      ibDhcp6Server2PoolNetworkMask, ibDhcp6Server2PoolNetworkPdNum
+--      ibDhcp6Server2PoolNetPreTime, ibDhcp6Server2PoolNetValTime
+--      ibDhcp6Server2PoolNetExport, ibDhcp6Server2PoolNetPrefer
+--      ibDhcp6Server2PoolNetTag, ibDhcp6Server2PoolSubPdAddr
+--      ibDhcp6Server2PoolSubPdLength, ibDhcp6Server2PoolNaStartAddr
+--      ibDhcp6Server2PoolNaEndAddr, ibDhcp6Server2PoolNaPreTime
+--      ibDhcp6Server2PoolNaValTime, ibDhcp6Server2PoolTaStartAddr
+--      ibDhcp6Server2PoolTaEndAddr, ibDhcp6Server2PoolTaPreTime
+--      ibDhcp6Server2PoolTaValTime, ibDhcp6Server2PoolPrefixPool
+--      ibDhcp6Server2PoolPdValTime, ibDhcp6Server2PoolPdPreTime
+--      ibDhcp6Server2PoolPdExport, ibDhcp6Server2PoolPdPreference
+--      ibDhcp6Server2PoolPdTag, ibDhcp6Server2PoolDomainName
+--      ibDhcp6Server2PoolGatewayIp, ibDhcp6Server2PoolDNSIp
+--      ibDhcp6Server2PoolExpireIpEnbl, ibDhcp6Server2PoolExpireIpMode
+--      ibDhcp6Server2PoolExpireIpLim, ibDhcp6Server2PoolExpireIpTime
+--      ibDhcp6Server2PoolExpirePdEnbl, ibDhcp6Server2PoolExpirePdMode
+--      ibDhcp6Server2PoolExpirePdLim, ibDhcp6Server2PoolExpirePdTime
+--      ibDhcp6Server2PrefixPoolTable
+--      by wugang 2021-04-30
+-- V1.4 Add ibDhcp6Server2OnlineFailReason,
+--      ibDhcp6Svr2AllocIpFailed,ibDhcp6Svr2AllocPdFailed
+--      ibDhcp6Server2ServerDown,ibDhcp6Svr2GpAddrExhaust
+--      ibDhcp6Svr2GpAddrExhaustRecov,ibDhcp6Server2DevOdapFull
+--      ibDhcp6Server2DevOdapPdFull,ibDhcp6Server2OdapApplyFail
+--      ibDhcp6Server2OdapApplyPdFail,ibDhcp6Server2OdapReleaseFail
+--      ibDhcp6Server2OdapReleasePdFail,ibDhcpSvr2GpUsageOverflow
+--      ibDhcp6Svr2GpUsageOverflowRecov
+--      by wangchao 2021-09-15
+-- =================================================================
+IB-DHCP6-MIB DEFINITIONS ::= BEGIN
+
+-- =============================================================================
+-- Imported variables and types
+-- =============================================================================
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    TruthValue, RowStatus
+        FROM SNMPv2-TC
+    OBJECT-TYPE, MODULE-IDENTITY, Integer32,
+    Counter64, Unsigned32, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    InetAddressIPv6
+        FROM INET-ADDRESS-MIB;
+
+-- =============================================================================
+-- Module identity
+-- =============================================================================
+ibDhcp6 MODULE-IDENTITY
+    LAST-UPDATED "202109150000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "DHCPv6 MIB."
+    REVISION
+        "202109150000Z"
+    DESCRIPTION
+        "Modified to add new nodes."
+    REVISION
+        "202104300000Z"
+    DESCRIPTION
+        "Modified to add new nodes."
+    REVISION
+        "202102080000Z"
+    DESCRIPTION
+        "Modified to add new nodes."
+    REVISION
+        "201912120000Z"
+    DESCRIPTION
+        "Modified to add new nodes."
+    REVISION
+        "201811160000Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { ibCommon 179 }
+
+-- =============================================================================
+-- DHCPV6 server table definition.
+-- =============================================================================
+    ibDhcp6Server2Tables OBJECT IDENTIFIER ::= { ibDhcp6 1 }
+
+-- =================================================================
+-- 1st Table of ibDhcp6Server2Tables: ibDhcp6Server2PoolTable
+-- =================================================================
+ibDhcp6Server2PoolTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcp6Server2PoolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for creating DHCPv6 address pools."
+    ::= { ibDhcp6Server2Tables 1 }
+
+ibDhcp6Server2PoolEntry OBJECT-TYPE
+    SYNTAX      IbDhcp6Server2PoolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing objects for creating or
+        deleting a DHCPv6 address pool."
+    INDEX { ibDhcp6Server2PoolIndex }
+    ::= { ibDhcp6Server2PoolTable 1 }
+
+IbDhcp6Server2PoolEntry ::=
+    SEQUENCE
+        {
+            ibDhcp6Server2PoolIndex           Unsigned32,
+            ibDhcp6Server2PoolName            OCTET STRING,
+            ibDhcp6Server2PoolRowStatus       RowStatus,
+            ibDhcp6Server2PoolVpnName         OCTET STRING,
+            ibDhcp6Server2PoolType            INTEGER,
+            ibDhcp6Server2PoolNetwork         InetAddressIPv6,
+            ibDhcp6Server2PoolNetworkMask     Integer32,
+            ibDhcp6Server2PoolNetworkPdNum    Integer32,
+            ibDhcp6Server2PoolSubPdAddr       InetAddressIPv6,
+            ibDhcp6Server2PoolSubPdLength     Integer32,
+            ibDhcp6Server2PoolNetPreTime      Unsigned32,
+            ibDhcp6Server2PoolNetValTime      Unsigned32,
+            ibDhcp6Server2PoolNetExport       TruthValue,
+            ibDhcp6Server2PoolNetPrefer       Unsigned32,
+            ibDhcp6Server2PoolNetTag          Unsigned32,
+            ibDhcp6Server2PoolNaStartAddr     InetAddressIPv6,
+            ibDhcp6Server2PoolNaEndAddr       InetAddressIPv6,
+            ibDhcp6Server2PoolNaPreTime       Unsigned32,
+            ibDhcp6Server2PoolNaValTime       Unsigned32,
+            ibDhcp6Server2PoolTaStartAddr     InetAddressIPv6,
+            ibDhcp6Server2PoolTaEndAddr       InetAddressIPv6,
+            ibDhcp6Server2PoolTaPreTime       Unsigned32,
+            ibDhcp6Server2PoolTaValTime       Unsigned32,
+            ibDhcp6Server2PoolPrefixPool      Integer32,
+            ibDhcp6Server2PoolPdPreTime       Unsigned32,
+            ibDhcp6Server2PoolPdValTime       Unsigned32,
+            ibDhcp6Server2PoolPdExport        TruthValue,
+            ibDhcp6Server2PoolPdPreference    Unsigned32,
+            ibDhcp6Server2PoolPdTag           Unsigned32,
+            ibDhcp6Server2PoolDomainName      OCTET STRING,
+            ibDhcp6Server2PoolGatewayIp       OCTET STRING,
+            ibDhcp6Server2PoolDNSIp           OCTET STRING,
+            ibDhcp6Server2PoolExpireIpEnbl    TruthValue,
+            ibDhcp6Server2PoolExpireIpMode    INTEGER,
+            ibDhcp6Server2PoolExpireIpLim     Unsigned32,
+            ibDhcp6Server2PoolExpireIpTime    Unsigned32,
+            ibDhcp6Server2PoolExpirePdEnbl    TruthValue,
+            ibDhcp6Server2PoolExpirePdMode    INTEGER,
+            ibDhcp6Server2PoolExpirePdLim     Unsigned32,
+            ibDhcp6Server2PoolExpirePdTime    Unsigned32
+        }
+
+ibDhcp6Server2PoolIndex OBJECT-TYPE
+    SYNTAX      Unsigned32(1..4294967295)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "DHCPv6 server pool index."
+    ::= { ibDhcp6Server2PoolEntry 1 }
+
+ibDhcp6Server2PoolName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..63))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "DHCPv6 pool name.
+         Once this object is created, the value of this object cannot
+         be modified."
+    ::= { ibDhcp6Server2PoolEntry 2 }
+
+ibDhcp6Server2PoolRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active,
+         createAndGo, destroy."
+    ::= { ibDhcp6Server2PoolEntry 3 }
+
+ibDhcp6Server2PoolVpnName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..31))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Use vpn-instance to apply an IPv6 address pool to a VPN instance."
+    ::= { ibDhcp6Server2PoolEntry 4 }
+
+ibDhcp6Server2PoolType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+             normal(0),
+             basLocal(6),
+             basRemote(7),
+             odap(9)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Value that indicates the type of pool."
+    ::= { ibDhcp6Server2PoolEntry 5 }
+
+ibDhcp6Server2PoolNetwork OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Address of the IPv6 network in the address pool."
+    ::= { ibDhcp6Server2PoolEntry 6 }
+
+ibDhcp6Server2PoolNetworkMask OBJECT-TYPE
+    SYNTAX      Integer32(0..128)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Mask length for the IPv6 network."
+    ::= { ibDhcp6Server2PoolEntry 7 }
+
+ibDhcp6Server2PoolNetworkPdNum OBJECT-TYPE
+    SYNTAX      Integer32(0..1024)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Prefix ID of the IPv6 network address."
+    ::= { ibDhcp6Server2PoolEntry 8 }
+
+ibDhcp6Server2PoolSubPdAddr OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "IPv6 sub-prefix in the pool."
+    ::= { ibDhcp6Server2PoolEntry 9 }
+
+ibDhcp6Server2PoolSubPdLength OBJECT-TYPE
+    SYNTAX      Integer32(0..128)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Length of the IPv6 sub-prefix in the pool."
+    ::= { ibDhcp6Server2PoolEntry 10 }
+
+ibDhcp6Server2PoolNetPreTime OBJECT-TYPE
+    SYNTAX      Unsigned32(0|60..4294967295)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The preferred lifetime for IPv6 addresses allocated
+        from the network ibDhcp6Server2PoolNetValTime must
+        be set not smaller than the value of this object."
+    ::= { ibDhcp6Server2PoolEntry 11 }
+
+ibDhcp6Server2PoolNetValTime OBJECT-TYPE
+    SYNTAX      Unsigned32(0|60..4294967295)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The Valid life time of IPv6 addresses allocated from the network."
+    ::= { ibDhcp6Server2PoolEntry 12 }
+
+ibDhcp6Server2PoolNetExport OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Label for the Routes of IPv6 address blocks in the pool."
+    ::= { ibDhcp6Server2PoolEntry 13 }
+
+ibDhcp6Server2PoolNetPrefer OBJECT-TYPE
+    SYNTAX      Unsigned32(1..255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The priority for routes of IPv6 address blocks in the pool."
+    ::= { ibDhcp6Server2PoolEntry 14 }
+
+ibDhcp6Server2PoolNetTag OBJECT-TYPE
+    SYNTAX      Unsigned32(0..4294967295)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The tag for routes of IPv6 address blocks in the pool."
+    ::= { ibDhcp6Server2PoolEntry 15 }
+
+ibDhcp6Server2PoolNaStartAddr OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Start IP of an address range in the DHCPV6 pool.
+         If the value of this object is set to 0::0,
+         ibDhcp6Server2PoolNAEndAddr is set with 0::0 automatically.
+         In other case ibDhcp6Server2PoolNAEndAddr must be set with
+         an IPV6 address not smaller than the value of this object."
+    ::= { ibDhcp6Server2PoolEntry 16 }
+
+ibDhcp6Server2PoolNaEndAddr OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "End IPV6 of an address range in the DHCPV6 pool,
+         This object ought to be set together with
+         ibDhcp6Server2PoolNaStartAddr."
+    ::= { ibDhcp6Server2PoolEntry 17 }
+
+ibDhcp6Server2PoolNaPreTime OBJECT-TYPE
+    SYNTAX      Unsigned32(0|60..4294967295)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Preferred lifetime for IPv6 addresses dynamically allocated
+        from the address range in the pool ibDhcp6Server2PoolNAValTime
+        must be set NOT smaller than the value of this object."
+    ::= { ibDhcp6Server2PoolEntry 18 }
+
+ibDhcp6Server2PoolNaValTime OBJECT-TYPE
+    SYNTAX      Unsigned32(0|60..4294967295)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Valid lifetime for IPv6 addresses dynamically allocated
+        from the address range in the pool."
+    ::= { ibDhcp6Server2PoolEntry 19 }
+
+ibDhcp6Server2PoolTaStartAddr OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Start IPv6 address of the temporary IPv6 address range for
+        dynamic allocation in the pool."
+    ::= { ibDhcp6Server2PoolEntry 20 }
+
+ibDhcp6Server2PoolTaEndAddr OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "End IPv6 address of the temporary IPv6 address range for
+        dynamic allocation in the pool."
+    ::= { ibDhcp6Server2PoolEntry 21 }
+
+ibDhcp6Server2PoolTaPreTime OBJECT-TYPE
+    SYNTAX      Unsigned32(0|60..4294967295)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Preferred lifetime for IPv6 addresses dynamically allocated
+        from the temporary address range ibDhcp6Server2PoolTAValTime
+        must be set not smaller than the value of this object."
+    ::= { ibDhcp6Server2PoolEntry 22 }
+
+ibDhcp6Server2PoolTaValTime OBJECT-TYPE
+    SYNTAX      Unsigned32(0|60..4294967295)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Valid lifetime for IPv6 addresses dynamically allocated from
+        the temporary address range."
+    ::= { ibDhcp6Server2PoolEntry 23 }
+
+ibDhcp6Server2PoolPrefixPool OBJECT-TYPE
+    SYNTAX      Integer32(0..128)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Prefix pool index applied to the IPv6 address pool."
+    ::= { ibDhcp6Server2PoolEntry 24 }
+
+ibDhcp6Server2PoolPdPreTime OBJECT-TYPE
+    SYNTAX      Unsigned32(0|60..4294967295)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Preferred lifetime for the assigned prefix in the DHCPv6 address pool.
+        ibDhcp6Server2PoolPdValTime must be set not smaller than the
+        value of this object."
+    ::= { ibDhcp6Server2PoolEntry 25 }
+
+ibDhcp6Server2PoolPdValTime OBJECT-TYPE
+    SYNTAX      Unsigned32(0|60..4294967295)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Valid lifetime for the assigned prefix in the DHCPv6 address pool."
+    ::= { ibDhcp6Server2PoolEntry 26 }
+
+ibDhcp6Server2PoolPdExport OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Label of the prefix routes issued by the DHCPv6 address pool."
+    ::= { ibDhcp6Server2PoolEntry 27 }
+
+ibDhcp6Server2PoolPdPreference OBJECT-TYPE
+    SYNTAX      Unsigned32(1..255)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Priority for the routes of prefix ranges in the pool."
+    ::= { ibDhcp6Server2PoolEntry 28 }
+
+ibDhcp6Server2PoolPdTag OBJECT-TYPE
+    SYNTAX      Unsigned32(0..4294967295)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The tag value for the routes of prefix ranges in the pool."
+    ::= { ibDhcp6Server2PoolEntry 29 }
+
+
+ibDhcp6Server2PoolDomainName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..50))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Domain name assigned to the client by the DHCPv6 address pool."
+    ::= { ibDhcp6Server2PoolEntry 30 }
+
+ibDhcp6Server2PoolGatewayIp OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..367))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "IPv6 gateway address of the pool."
+    ::= { ibDhcp6Server2PoolEntry 31 }
+
+ibDhcp6Server2PoolDNSIp OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..367))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "DNS server address assigned to the client in the DHCPv6 address pool."
+    ::= { ibDhcp6Server2PoolEntry 32 }
+
+ibDhcp6Server2PoolExpireIpEnbl OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Controlling the status of IPv6 address reservation."
+    ::= { ibDhcp6Server2PoolEntry 33 }
+
+ibDhcp6Server2PoolExpireIpMode OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            cid(0),
+            mac(1)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "IPv6 address reservation mode in the pool."
+    ::= { ibDhcp6Server2PoolEntry 34 }
+
+ibDhcp6Server2PoolExpireIpLim OBJECT-TYPE
+    SYNTAX      Unsigned32(1..256000)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of IPv6 addresses that can be reserved in the pool."
+    ::= { ibDhcp6Server2PoolEntry 35 }
+
+ibDhcp6Server2PoolExpireIpTime OBJECT-TYPE
+    SYNTAX      Unsigned32(60..4294967295)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Reservation time for expired IPv6 addresses in the pool."
+    ::= { ibDhcp6Server2PoolEntry 36 }
+
+ibDhcp6Server2PoolExpirePdEnbl OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Controlling the status of IPv6 prefix reservation.."
+    ::= { ibDhcp6Server2PoolEntry 37 }
+
+ibDhcp6Server2PoolExpirePdMode OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            cid(0),
+            mac(1)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "IPv6 prefix reservation mode in the prefix pool."
+    ::= { ibDhcp6Server2PoolEntry 38 }
+
+
+ibDhcp6Server2PoolExpirePdLim OBJECT-TYPE
+    SYNTAX      Unsigned32(1..256000)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of IPv6 prefixes that can be reserved in the prefix pool."
+    ::= { ibDhcp6Server2PoolEntry 39 }
+
+ibDhcp6Server2PoolExpirePdTime OBJECT-TYPE
+    SYNTAX      Unsigned32(60..4294967295)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Reservation time for expired IPv6 prerfixes in the prefix pool."
+    ::= { ibDhcp6Server2PoolEntry 40 }
+
+-- =================================================================
+-- 2th Table of ibDhcp6Server2Tables: ibDhcp6Server2PoolStatTable
+-- =================================================================
+ibDhcp6Server2PoolStatTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbDhcp6Server2PoolStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The statistics of each DHCPv6 address pool."
+    ::= { ibDhcp6Server2Tables 2 }
+
+ibDhcp6Server2PoolStatEntry OBJECT-TYPE
+    SYNTAX      IbDhcp6Server2PoolStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing the statistics of each DHCPv6 address pool."
+    INDEX { ibDhcp6Server2PoolIndex }
+    ::= { ibDhcp6Server2PoolStatTable 1 }
+
+IbDhcp6Server2PoolStatEntry ::=
+    SEQUENCE
+        {
+            ibDhcp6Server2PoolIPIdleNum          Unsigned32,
+            ibDhcp6Server2PoolIPUsedNum          Unsigned32,
+            ibDhcp6Server2PoolPrefixIdleNum      Unsigned32,
+            ibDhcp6Server2PoolPrefixUsedNum      Unsigned32,
+            ibDhcp6Server2PoolIPTotalNum         OCTET STRING,
+            ibDhcp6Server2PoolIPExpiredNum       Unsigned32,
+            ibDhcp6Server2PoolIPDynamicUsedNum   Unsigned32,
+            ibDhcp6Server2PoolIPStaticUsedNum    Unsigned32,
+            ibDhcp6Server2PoolIPConflictNum      Counter64,
+            ibDhcp6Server2PoolIPExcludeNum       Unsigned32,
+            ibDhcp6Server2PoolIPReserveNum       Counter64,
+            ibDhcp6Server2PoolIPUsage             Unsigned32,
+            ibDhcp6Server2PoolPdTotalNum         OCTET STRING,
+            ibDhcp6Server2PoolPdExpiredNum       Unsigned32,
+            ibDhcp6Server2PoolPdDynamicUsedNum   Unsigned32,
+            ibDhcp6Server2PoolPdStaticUsedNum    Unsigned32,
+            ibDhcp6Server2PoolPdConflictNum      Unsigned32,
+            ibDhcp6Server2PoolPdExcludeNum       Unsigned32,
+            ibDhcp6Server2PoolPdReserveNum       Counter64,
+            ibDhcp6Server2PoolPdUsage            Unsigned32
+        }
+
+ibDhcp6Server2PoolIPIdleNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of idle IPv6 addresses in the
+         DHCPv6 address pool."
+    ::= { ibDhcp6Server2PoolStatEntry 1 }
+
+ibDhcp6Server2PoolIPUsedNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of used IPv6 addresses in the
+         DHCPv6 address pool."
+    ::= { ibDhcp6Server2PoolStatEntry 2 }
+
+ibDhcp6Server2PoolPrefixIdleNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of idle IPv6 prefixes in the
+         DHCPv6 address pool."
+    ::= { ibDhcp6Server2PoolStatEntry 3 }
+
+ibDhcp6Server2PoolPrefixUsedNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of used IPv6 prefixes in the
+         DHCPv6 address pool."
+    ::= { ibDhcp6Server2PoolStatEntry 4 }
+
+ibDhcp6Server2PoolIPTotalNum OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..50))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of addresses in the
+         DHCPv6 pool."
+    ::= { ibDhcp6Server2PoolStatEntry 5 }
+
+ibDhcp6Server2PoolIPExpiredNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of expired addresses in
+         the DHCPv6 pool."
+    ::= { ibDhcp6Server2PoolStatEntry 6 }
+
+ibDhcp6Server2PoolIPDynamicUsedNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of dynamic addresses bindings in
+         the DHCPv6 pool."
+    ::= { ibDhcp6Server2PoolStatEntry 7 }
+
+ibDhcp6Server2PoolIPStaticUsedNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of static address bindings in
+         the DHCPv6 pool."
+    ::= { ibDhcp6Server2PoolStatEntry 8 }
+
+ibDhcp6Server2PoolIPConflictNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of conflict addresses in
+         the DHCPv6 pool."
+    ::= { ibDhcp6Server2PoolStatEntry 9 }
+
+ibDhcp6Server2PoolIPExcludeNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of IPv6 addresses excluded from DHCP allocation in
+         the DHCPv6 pool."
+    ::= { ibDhcp6Server2PoolStatEntry 10 }
+
+ibDhcp6Server2PoolIPReserveNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of reserved addresses in
+         the DHCPv6 pool."
+    ::= { ibDhcp6Server2PoolStatEntry 11 }
+
+ibDhcp6Server2PoolIPUsage OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The percentage of IPv6 address in use
+         in the DHCPv6 pool."
+    ::= { ibDhcp6Server2PoolStatEntry 12 }
+
+ibDhcp6Server2PoolPdTotalNum OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..50))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of IPv6 prefixes in the
+         DHCPv6 pool."
+    ::= { ibDhcp6Server2PoolStatEntry 13 }
+
+ibDhcp6Server2PoolPdExpiredNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of expired prefixes in the
+         DHCPv6 pool."
+    ::= { ibDhcp6Server2PoolStatEntry 14 }
+
+ibDhcp6Server2PoolPdDynamicUsedNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of dynamic prefix bindings in the
+         DHCPv6 pool."
+    ::= { ibDhcp6Server2PoolStatEntry 15 }
+
+ibDhcp6Server2PoolPdStaticUsedNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of static prefix bindings in the
+         DHCPv6 pool."
+    ::= { ibDhcp6Server2PoolStatEntry 16 }
+
+ibDhcp6Server2PoolPdConflictNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of conflicting prefixes in the
+         DHCPv6 pool."
+    ::= { ibDhcp6Server2PoolStatEntry 17 }
+
+ibDhcp6Server2PoolPdExcludeNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of exclude prefixes excluded from DHCP
+         allocation in the DHCPv6 pool."
+    ::= { ibDhcp6Server2PoolStatEntry 18 }
+
+ibDhcp6Server2PoolPdReserveNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of reserved prefixes in the
+         DHCPv6 pool."
+    ::= { ibDhcp6Server2PoolStatEntry 19 }
+
+ibDhcp6Server2PoolPdUsage OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The percentage of IPv6 prefixes in use
+         in the DHCPv6 pool."
+    ::= { ibDhcp6Server2PoolStatEntry 20 }
+
+-- =============================================================================
+-- 3th Table of ibDhcp6Server2Tables: ibDhcp6Server2PoolGpTable
+-- =============================================================================
+ibDhcp6Server2PoolGpTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbDhcp6Server2PoolGpEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table containing DHCPv6 server pool group configurations."
+    ::= { ibDhcp6Server2Tables 3 }
+
+ibDhcp6Server2PoolGpEntry OBJECT-TYPE
+    SYNTAX      IbDhcp6Server2PoolGpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing a DHCPv6 server pool group."
+    INDEX { ibDhcp6Server2PoolGpName }
+    ::= { ibDhcp6Server2PoolGpTable 1 }
+
+IbDhcp6Server2PoolGpEntry ::=
+    SEQUENCE
+        {
+            ibDhcp6Server2PoolGpName              OCTET STRING,
+            ibDhcp6Server2PoolGpVpnName           OCTET STRING,
+            ibDhcp6Server2PoolGpIncUndo           TruthValue,
+            ibDhcp6Server2PoolGpRowSta            RowStatus
+        }
+
+ibDhcp6Server2PoolGpName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "DHCPv6 server pool group name."
+    ::= { ibDhcp6Server2PoolGpEntry 1 }
+
+ibDhcp6Server2PoolGpVpnName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..31))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Name of the VPN instance to which the pool group belongs."
+    ::= { ibDhcp6Server2PoolGpEntry 2 }
+
+ibDhcp6Server2PoolGpIncUndo OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set this object is set to 'true' to remove all pools from the pool group."
+    DEFVAL { false }
+    ::= { ibDhcp6Server2PoolGpEntry 3 }
+
+ibDhcp6Server2PoolGpRowSta OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry.  Two actions are used: createAndGo
+        and destroy."
+    ::= { ibDhcp6Server2PoolGpEntry 4 }
+
+-- =============================================================================
+-- 4th Table of ibDhcp6Server2Tables: ibDhcp6Server2PoolGpExtTable
+-- =============================================================================
+ibDhcp6Server2PoolGpExtTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbDhcp6Server2PoolGpExtEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+         "A table containing the names of the pools in each DHCPv6 server pool group."
+    ::= { ibDhcp6Server2Tables 4 }
+
+ibDhcp6Server2PoolGpExtEntry OBJECT-TYPE
+    SYNTAX      IbDhcp6Server2PoolGpExtEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry that contains the names of the pools in a
+         DHCPv6 server pool group."
+    INDEX
+        {
+            ibDhcp6Server2PoolGpName,
+            ibDhcp6Server2PoolIndex
+        }
+    ::= { ibDhcp6Server2PoolGpExtTable 1 }
+
+IbDhcp6Server2PoolGpExtEntry ::=
+    SEQUENCE
+        {
+            ibDhcp6Server2PoolGpIncPoolNm                OCTET STRING,
+            ibDhcp6Server2PoolGpExtRowSta                   RowStatus
+        }
+
+ibDhcp6Server2PoolGpIncPoolNm OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Name of a DHCPv6 server pool in the DHCPv6 server pool group."
+    ::= { ibDhcp6Server2PoolGpExtEntry 1 }
+
+ibDhcp6Server2PoolGpExtRowSta OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry.  Two actions are used: createAndGo and destroy."
+    ::= { ibDhcp6Server2PoolGpExtEntry 2 }
+
+-- =============================================================================
+-- 5th Table of ibDhcp6Server2Tables: ibDhcp6Server2PoolGpStatTable
+-- =============================================================================
+ibDhcp6Server2PoolGpStatTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbDhcp6Server2PoolGpStatEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table containing DHCPv6 server pool group statistics."
+    ::= { ibDhcp6Server2Tables 5 }
+
+ibDhcp6Server2PoolGpStatEntry OBJECT-TYPE
+    SYNTAX      IbDhcp6Server2PoolGpStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing statistics for a DHCPv6 server pool group."
+    INDEX { ibDhcp6Server2PoolGpName }
+    ::= { ibDhcp6Server2PoolGpStatTable 1 }
+
+IbDhcp6Server2PoolGpStatEntry ::=
+    SEQUENCE
+        {
+            ibDhcp6Server2PoolGpPoolNum                  Unsigned32,
+            ibDhcp6Server2PoolGpBndDomNum                Unsigned32,
+            ibDhcp6Server2PoolGpIPUsage                  Unsigned32,
+            ibDhcp6Server2PoolGpIPTotaNum                Unsigned32,
+            ibDhcp6Server2PoolGpIPUsedNum                Unsigned32,
+            ibDhcp6Server2PoolGpIPIdleNum                Unsigned32,
+            ibDhcp6Server2PoolGpIPExcNum                 Unsigned32,
+            ibDhcp6Server2PoolGpIPConfNum                Unsigned32,
+            ibDhcp6Server2PoolGpPDUsage                  Unsigned32,
+            ibDhcp6Server2PoolGpPDTotaNum                Unsigned32,
+            ibDhcp6Server2PoolGpPDUsedNum                Unsigned32,
+            ibDhcp6Server2PoolGpPDIdleNum                Unsigned32,
+            ibDhcp6Server2PoolGpPDExcNum                 Unsigned32,
+            ibDhcp6Server2PoolGpPDConfNum                Unsigned32,
+            ibDhcp6Server2PoolGpIPReserveNum             Counter64,
+            ibDhcp6Server2PoolGpPdReserveNum             Counter64
+        }
+
+ibDhcp6Server2PoolGpPoolNum OBJECT-TYPE
+    SYNTAX      Unsigned32(0..1024)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of pools in DHCPv6 server pool group."
+    ::= { ibDhcp6Server2PoolGpStatEntry 1 }
+
+ibDhcp6Server2PoolGpBndDomNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of domain names bound to the DHCPv6 server pool group."
+    ::= { ibDhcp6Server2PoolGpStatEntry 2 }
+
+ibDhcp6Server2PoolGpIPUsage OBJECT-TYPE
+    SYNTAX      Unsigned32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The percentage of IP addresses in use
+         in the DHCPv6 server pool group."
+    ::= { ibDhcp6Server2PoolGpStatEntry 3 }
+
+ibDhcp6Server2PoolGpIPTotaNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of addresses in the
+         DHCPv6 pool group."
+    ::= { ibDhcp6Server2PoolGpStatEntry 4 }
+
+ibDhcp6Server2PoolGpIPUsedNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of assigned addresses in the
+         DHCPv6 pool group."
+    ::= { ibDhcp6Server2PoolGpStatEntry 5 }
+
+ibDhcp6Server2PoolGpIPIdleNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of idle addresses in the
+         DHCPv6 pool group."
+    ::= { ibDhcp6Server2PoolGpStatEntry 6 }
+
+ibDhcp6Server2PoolGpIPExcNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of IPv6 addresses excluded addresses
+         from DHCP allocation in the DHCPv6 pool group."
+    ::= { ibDhcp6Server2PoolGpStatEntry 7 }
+
+ibDhcp6Server2PoolGpIPConfNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of conflict addresses in the
+         DHCPv6 pool group."
+    ::= { ibDhcp6Server2PoolGpStatEntry 8 }
+
+ibDhcp6Server2PoolGpPDUsage OBJECT-TYPE
+    SYNTAX      Unsigned32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The percentage of prefixes in use
+         in the DHCPv6 server pool group."
+    ::= { ibDhcp6Server2PoolGpStatEntry 9 }
+
+ibDhcp6Server2PoolGpPDTotaNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of prefixes in the
+         DHCPv6 pool group."
+    ::= { ibDhcp6Server2PoolGpStatEntry 10 }
+
+ibDhcp6Server2PoolGpPDUsedNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of assigned prefixes in the
+         DHCPv6 pool group."
+    ::= { ibDhcp6Server2PoolGpStatEntry 11 }
+
+ibDhcp6Server2PoolGpPDIdleNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of idle prefixes in the
+         DHCPv6 pool group."
+    ::= { ibDhcp6Server2PoolGpStatEntry 12 }
+
+ibDhcp6Server2PoolGpPDExcNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of prefixes excluded prefixes
+         from DHCPv6 allocation DHCPv6 pool group."
+    ::= { ibDhcp6Server2PoolGpStatEntry 13 }
+
+ibDhcp6Server2PoolGpPDConfNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of conflict prefixes in the
+         DHCPv6 pool group."
+    ::= { ibDhcp6Server2PoolGpStatEntry 14 }
+
+ibDhcp6Server2PoolGpIPReserveNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of reserved addresses in the
+         DHCPv6 pool group."
+    ::= { ibDhcp6Server2PoolGpStatEntry 15 }
+
+ibDhcp6Server2PoolGpPdReserveNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of reserved prefixes in the
+         DHCPv6 pool group."
+    ::= { ibDhcp6Server2PoolGpStatEntry 16 }
+
+-- =============================================================================
+-- 6th Table of ibDhcp6Server2Tables: ibDhcp6Server2PrefixPoolTable
+-- =============================================================================
+ibDhcp6Server2PrefixPoolTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbDhcp6Server2PrefixPoolEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table for creating DHCPv6 prefix pools.."
+    ::= { ibDhcp6Server2Tables 6 }
+
+ibDhcp6Server2PrefixPoolEntry OBJECT-TYPE
+    SYNTAX      IbDhcp6Server2PrefixPoolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing objects for creating or
+        deleting a DHCPv6 prefix pool."
+    INDEX
+    {
+        ibDhcp6Server2PdVPNInstance,
+        ibDhcp6Server2PdNumber
+    }
+    ::= { ibDhcp6Server2PrefixPoolTable 1 }
+
+IbDhcp6Server2PrefixPoolEntry ::=
+    SEQUENCE
+        {
+            ibDhcp6Server2PdVPNInstance         OCTET STRING,
+            ibDhcp6Server2PdNumber              Integer32,
+            ibDhcp6Server2PdPrefixAddr          OCTET STRING,
+            ibDhcp6Server2PdPrefixLen           Integer32,
+            ibDhcp6Server2PdPrefixNumber        Integer32,
+            ibDhcp6Server2PdPrefixAssLen        Integer32,
+            ibDhcp6Server2PdRowStatus           RowStatus
+        }
+
+ibDhcp6Server2PdVPNInstance OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..31))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "VPN instance to which the DHCPv6 prefix pool applies."
+    ::= { ibDhcp6Server2PrefixPoolEntry 1 }
+
+ibDhcp6Server2PdNumber OBJECT-TYPE
+    SYNTAX      Integer32(1..128)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Prefix pool index."
+    ::= { ibDhcp6Server2PrefixPoolEntry 2 }
+
+ibDhcp6Server2PdPrefixAddr OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(16))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Prefix specified for the prefix pool."
+    ::= { ibDhcp6Server2PrefixPoolEntry 3 }
+
+ibDhcp6Server2PdPrefixLen OBJECT-TYPE
+    SYNTAX      Integer32(0..128)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Prefix length of the prefix in the prefix pool."
+    ::= { ibDhcp6Server2PrefixPoolEntry 4 }
+
+
+ibDhcp6Server2PdPrefixNumber OBJECT-TYPE
+    SYNTAX      Integer32(0..1024)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "ID of the prefix in the prefix pool."
+    ::= { ibDhcp6Server2PrefixPoolEntry 5 }
+
+ibDhcp6Server2PdPrefixAssLen OBJECT-TYPE
+    SYNTAX      Integer32(1..128)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Assigned length of the prefix in the prefix pool."
+    ::= { ibDhcp6Server2PrefixPoolEntry 6 }
+
+ibDhcp6Server2PdRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "RowStatus.  Three actions are used: active,
+         createAndGo, destroy."
+    ::= { ibDhcp6Server2PrefixPoolEntry 7 }
+
+-- =============================================================================
+-- DHCPv6 server trap objects definition.
+-- =============================================================================
+ibDhcp6Server2Traps OBJECT IDENTIFIER ::= { ibDhcp6 2 }
+
+ibDhcp6Server2TrapNotify OBJECT IDENTIFIER ::= { ibDhcp6Server2Traps 0 }
+
+ibDhcp6Server2AddrExhaust NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolIndex,
+        ibDhcp6Server2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when IPv6 addresses are exhausted
+         in the DHCPv6 address pool."
+    ::= { ibDhcp6Server2TrapNotify 1 }
+
+ibDhcp6Server2AddrExhaustRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolIndex,
+        ibDhcp6Server2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the DHCPv6 address pool recovers from
+         IPv6 address exhaustion."
+    ::= { ibDhcp6Server2TrapNotify 2 }
+
+ibDhcp6Server2IpUsageOverflow NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolIndex,
+        ibDhcp6Server2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the IPv6 address usage of DHCPv6
+         address pool is above the threshold."
+    ::= { ibDhcp6Server2TrapNotify 3 }
+
+ibDhcp6Server2IpUsageOverflowRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolIndex,
+        ibDhcp6Server2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the IPv6 address usage of DHCPv6
+         address pool drops down to 90% of the threshold."
+    ::= { ibDhcp6Server2TrapNotify 4 }
+
+ibDhcp6Server2PdExhaust NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolIndex,
+        ibDhcp6Server2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when IPv6 prefixes are exhausted
+         in the DHCPv6 address pool."
+    ::= { ibDhcp6Server2TrapNotify 5 }
+
+ibDhcp6Server2PdExhaustRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolIndex,
+        ibDhcp6Server2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the DHCPv6 prefixes pool recovers from
+         IPv6 address exhaustion."
+    ::= { ibDhcp6Server2TrapNotify 6 }
+
+ibDhcp6Server2PdUsageOverflow NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolIndex,
+        ibDhcp6Server2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the IPv6 prefixes usage of DHCPv6
+         address pool is above the threshold."
+    ::= { ibDhcp6Server2TrapNotify 7 }
+
+ibDhcp6Server2PdUsageOverflowRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolIndex,
+        ibDhcp6Server2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the IPv6 prefixes usage of DHCPv6
+         address pool drops down to 90% of the threshold."
+    ::= { ibDhcp6Server2TrapNotify 8 }
+
+ibDhcp6Server2IpNetUsageOverflow NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolIndex,
+        ibDhcp6Server2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the IPv6 address usage in the DHCPv6
+         address pool has reached or exceeded the threshold."
+    ::= { ibDhcp6Server2TrapNotify 9 }
+
+ibDhcp6Server2IpNetUsageOverflowRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolIndex,
+        ibDhcp6Server2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the IPv6 address usage in the DHCPv6
+         address pool has dropped to or below 90% of the threshold."
+    ::= { ibDhcp6Server2TrapNotify 10 }
+
+ibDhcp6Server2IpNetExhaust NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolIndex,
+        ibDhcp6Server2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when all addresses
+         in the DHCPv6 address pool are exhausted."
+    ::= { ibDhcp6Server2TrapNotify 11 }
+
+ibDhcp6Server2IpNetExhaustRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolIndex,
+        ibDhcp6Server2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the DHCPv6 address pool has recovered
+         from IPv6 address exhaustion."
+    ::= { ibDhcp6Server2TrapNotify 12 }
+
+ibDhcp6Server2PdNetUsageOverflow NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolIndex,
+        ibDhcp6Server2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the IPv6 address usage of DHCPv6
+         address pool has reached or exceeded the threshold."
+    ::= { ibDhcp6Server2TrapNotify 13 }
+
+ibDhcp6Server2PdNetUsageOverflowRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolIndex,
+        ibDhcp6Server2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the prefix usage in the DHCPv6
+         address pool has dropped to or below 90% of the threshold."
+    ::= { ibDhcp6Server2TrapNotify 14 }
+
+ibDhcp6Server2PdNetExhaust NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolIndex,
+        ibDhcp6Server2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when all prefixes
+         in the DHCPv6 address pool are exhausted."
+    ::= { ibDhcp6Server2TrapNotify 15 }
+
+ibDhcp6Server2PdNetExhaustRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolIndex,
+        ibDhcp6Server2PoolName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the IPv6 prefix pool recovers from
+         prefix exhaustion."
+    ::= { ibDhcp6Server2TrapNotify 16 }
+
+ibDhcp6Server2GpIpNetExhaust NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolGpName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when all addresses
+         in the DHCPv6 address pool group are exhausted."
+    ::= { ibDhcp6Server2TrapNotify 17 }
+
+ibDhcp6Server2GpIpNetExhaustRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolGpName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the DHCPv6 address pool group has recovered
+         from IPv6 address exhaustion."
+    ::= { ibDhcp6Server2TrapNotify 18 }
+
+ibDhcp6Server2GpPdNetExhaust NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolGpName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when all prefixes
+         in the DHCPv6 address pool group are exhausted."
+    ::= { ibDhcp6Server2TrapNotify 19 }
+
+ibDhcp6Server2GpPdNetExhaustRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolGpName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the IPv6 prefix pool group recovers from
+         prefix exhaustion."
+    ::= { ibDhcp6Server2TrapNotify 20 }
+
+ibDhcp6Svr2AllocIpFailed NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2OnlineFailReason
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when DHCPv6 servers fail to alloc address."
+    ::= { ibDhcp6Server2TrapNotify 21}
+
+ibDhcp6Svr2AllocPdFailed NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2OnlineFailReason
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when DHCPv6 servers fail to alloc prefix."
+    ::= { ibDhcp6Server2TrapNotify 22 }
+
+ibDhcp6Server2ServerDown NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2OnlineFailReason
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the DHCPv6 servers fail to alloc address."
+    ::= { ibDhcp6Server2TrapNotify 23 }
+
+ibDhcp6Svr2GpAddrExhaust NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolGpName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when all IPv6 addresses
+         in the DHCPv6 pool group are exhausted."
+    ::= { ibDhcp6Server2TrapNotify 24 }
+
+ibDhcp6Svr2GpAddrExhaustRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolGpName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the DHCPv6 pool group recovers from
+         IP address exhaustion."
+    ::= { ibDhcp6Server2TrapNotify 25 }
+
+ibDhcp6Server2DevOdapFull NOTIFICATION-TYPE
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when all ODAP
+        address pools on vBRAS device are full."
+    ::= { ibDhcp6Server2TrapNotify 26 }
+
+ibDhcp6Server2DevOdapPdFull NOTIFICATION-TYPE
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when all ODAP
+        address pools on vBRAS device are full."
+    ::= { ibDhcp6Server2TrapNotify 27 }
+
+ibDhcp6Server2OdapApplyFail NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2OnlineFailReason
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when DHCPv6 servers fail to apply for subnet."
+    ::= { ibDhcp6Server2TrapNotify 28 }
+
+ibDhcp6Server2OdapReleaseFail NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2OnlineFailReason
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when DHCPv6 servers fail to release subnet."
+    ::= { ibDhcp6Server2TrapNotify 29 }
+
+ibDhcp6Server2OdapApplyPdFail NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2OnlineFailReason
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when DHCPv6 servers fail to apply for prefix."
+    ::= { ibDhcp6Server2TrapNotify 30 }
+
+ibDhcp6Server2OdapReleasePdFail NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2OnlineFailReason
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when DHCPv6 servers fail to release prefix."
+    ::= { ibDhcp6Server2TrapNotify 31 }
+
+ibDhcp6Svr2GpUsageOverflow NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolGpName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the usage of DHCPv6
+         server pool group has reached or exceeded the threshold.
+         The IP address usage data is polled every 5 minutes."
+    ::= { ibDhcp6Server2TrapNotify 32 }
+
+ibDhcp6Svr2GpUsageOverflowRecov NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibDhcp6Server2PoolGpName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the DHCPv6 pool group recovers from
+         IP address exhaustion."
+    ::= { ibDhcp6Server2TrapNotify 33 }
+
+-- =============================================================================
+-- DHCP6 server scalar objects definition.
+-- =============================================================================
+ibDhcp6Server2ScalarObjects     OBJECT IDENTIFIER ::= { ibDhcp6 3 }
+
+-- =============================================================================
+-- ibDhcp6Server2ScalarObjects: ibDhcp6Server2StatGroup
+-- =============================================================================
+ibDhcp6Server2StatGroup OBJECT IDENTIFIER ::= { ibDhcp6Server2ScalarObjects 1 }
+
+ibDhcp6Server2OnlineFailReason OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..511))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The reason why DHCP server fail to alloc address."
+    ::= { ibDhcp6Server2StatGroup 1 }
+END

@@ -1,0 +1,262 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: ncm mib
+-- Reference:
+-- Version: V1.1
+-- History:
+--  V1.0 Created by lisheng
+--      Initial version 2021-02-02
+--  V1.1 2021-07-07 Modified by zhangfeng
+--      add ibNcmTrapFeatureName to ibNcmNotificationVarBindings.
+--      add ibNcmCUConfigFailed  to ibNcmCUConnTrapPrefix.
+-- =================================================================
+IB-NCM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE,
+    Integer32
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibNcm MODULE-IDENTITY
+    LAST-UPDATED "202107070000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB module is used for Netconf Client Management."
+    REVISION    "202107070000Z"
+    DESCRIPTION
+        "add ibNcmTrapFeatureName to ibNcmNotificationVarBindings.
+         add ibNcmCUConfigFailed  to ibNcmCUConnTrapPrefix."
+    REVISION    "202102020000Z"
+    DESCRIPTION    "The initial version."
+    ::= { ibCommon 201 }
+
+ibNcmTable OBJECT IDENTIFIER ::= { ibNcm 1 }
+
+ibNcmConnectionTable OBJECT-TYPE
+    SYNTAX        SEQUENCE OF IbNcmConnectionEntry
+    MAX-ACCESS    not-accessible
+    STATUS        current
+    DESCRIPTION
+        "This table contains NCM session information."
+    ::= { ibNcmTable 1 }
+
+ibNcmConnectionEntry OBJECT-TYPE
+    SYNTAX      IbNcmConnectionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry of the ibNcmConnectionTable."
+    INDEX    {
+                 ibNcmUpId,
+                 ibNcmSessionId
+             }
+    ::= { ibNcmConnectionTable 1 }
+
+IbNcmConnectionEntry ::= SEQUENCE
+    {
+        ibNcmUpId                   Integer32,
+        ibNcmSessionId              Integer32,
+        ibNcmConnName               DisplayString,
+        ibNcmConnUserName           DisplayString,
+        ibNcmConnSrcIpAddressType   InetAddressType,
+        ibNcmConnSrcIpAddress       InetAddress,
+        ibNcmConnDestIpAddressType  InetAddressType,
+        ibNcmConnDestIpAddress      InetAddress,
+        ibNcmConnVrf                DisplayString,
+        ibNcmConnPort               Integer32,
+        ibNcmSessionState           INTEGER
+    }
+
+ibNcmUpId   OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The first index of ibNcmConnectionTable, UP
+        id of Connection."
+    ::= { ibNcmConnectionEntry 1 }
+
+ibNcmSessionId   OBJECT-TYPE
+    SYNTAX      Integer32(1..32)
+    MAX-ACCESS  not-accessible
+    STATUS       current
+    DESCRIPTION
+        "The second index of ibNcmConnectionTable, Connect
+        session id of ibNcmConnectionTable."
+    ::= { ibNcmConnectionEntry 2 }
+
+ibNcmConnName   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE(1..63))
+    MAX-ACCESS  read-only
+    STATUS       current
+    DESCRIPTION
+        "Connection name of ibNcmConnectionTable."
+    ::= { ibNcmConnectionEntry 3 }
+
+ibNcmConnUserName   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE(1..80))
+    MAX-ACCESS  read-only
+    STATUS       current
+    DESCRIPTION
+        "Connection user name of ibNcmConnectionTable."
+    ::= { ibNcmConnectionEntry 4 }
+
+ibNcmConnSrcIpAddressType    OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-only
+    STATUS       current
+    DESCRIPTION
+        "Connection ip address of ibNcmConnectionTable."
+    ::= { ibNcmConnectionEntry 5 }
+
+ibNcmConnSrcIpAddress    OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-only
+    STATUS       current
+    DESCRIPTION
+        "Connection ip address of ibNcmConnectionTable."
+    ::= { ibNcmConnectionEntry 6 }
+
+ibNcmConnDestIpAddressType    OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-only
+    STATUS       current
+    DESCRIPTION
+        "Connection ip address of ibNcmConnectionTable."
+    ::= { ibNcmConnectionEntry 7 }
+
+ibNcmConnDestIpAddress    OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-only
+    STATUS       current
+    DESCRIPTION
+        "Connection ip address of ibNcmConnectionTable."
+    ::= { ibNcmConnectionEntry 8 }
+
+ibNcmConnVrf      OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE(1..31))
+    MAX-ACCESS  read-only
+    STATUS       current
+    DESCRIPTION
+        "Connection vrf of ibNcmConnectionTable."
+    ::= { ibNcmConnectionEntry 9 }
+
+ibNcmConnPort      OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  read-only
+    STATUS       current
+    DESCRIPTION
+        "Connect port of ibNcmConnectionTable."
+    ::= { ibNcmConnectionEntry 10 }
+
+ibNcmSessionState   OBJECT-TYPE
+    SYNTAX              INTEGER
+    {
+        initialed              (1),
+        connected              (2)
+    }
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "Connect session state of ibNcmConnectionTable."
+    ::= { ibNcmConnectionEntry 11 }
+
+-- ==================================================================
+--
+-- NCM trap object
+--
+-- ==================================================================
+ibNcmObjects OBJECT IDENTIFIER ::= { ibNcm 2 }
+
+ibNcmNotificationVarBindings OBJECT IDENTIFIER
+    ::= { ibNcmObjects 1 }
+
+ibNcmTrapUpId OBJECT-TYPE
+    SYNTAX       Integer32(1..2147483647)
+    MAX-ACCESS   accessible-for-notify
+    STATUS   current
+    DESCRIPTION
+    "UP id of Connection."
+    ::= { ibNcmNotificationVarBindings 1 }
+
+ibNcmTrapConnIpAndPort OBJECT-TYPE
+    SYNTAX       DisplayString (SIZE(1..31))
+    MAX-ACCESS   accessible-for-notify
+    STATUS   current
+    DESCRIPTION
+    "The IP and Port.  For example 127.0.0.1:830."
+    ::= { ibNcmNotificationVarBindings 2 }
+
+ibNcmTrapConnUserName OBJECT-TYPE
+    SYNTAX       DisplayString (SIZE(1..80))
+    MAX-ACCESS   accessible-for-notify
+    STATUS   current
+    DESCRIPTION
+    "The connection user name."
+    ::= { ibNcmNotificationVarBindings 3 }
+
+ibNcmTrapConnFailedReason OBJECT-TYPE
+    SYNTAX       DisplayString (SIZE(1..63))
+    MAX-ACCESS   accessible-for-notify
+    STATUS   current
+    DESCRIPTION
+    "The Connection Fail Reason."
+    ::= { ibNcmNotificationVarBindings 4 }
+
+ibNcmTrapFeatureName OBJECT-TYPE
+    SYNTAX       DisplayString (SIZE(1..63))
+    MAX-ACCESS   accessible-for-notify
+    STATUS   current
+    DESCRIPTION
+    "The name of module that sent the configuration request."
+    ::= { ibNcmNotificationVarBindings 5 }
+
+ibNcmTrap OBJECT IDENTIFIER ::= { ibNcm 3 }
+ibNcmCUConnTrapPrefix OBJECT IDENTIFIER ::= { ibNcmTrap 0 }
+
+ibNcmCUConnDisconnected NOTIFICATION-TYPE
+    OBJECTS { ibNcmTrapUpId, ibNcmTrapConnIpAndPort, ibNcmTrapConnUserName, ibNcmTrapConnFailedReason }
+    STATUS  current
+    DESCRIPTION
+        "The NETCONF connection with a peer device was torn down."
+::= { ibNcmCUConnTrapPrefix 1 }
+
+ibNcmCUConnReconnected NOTIFICATION-TYPE
+    OBJECTS { ibNcmTrapUpId, ibNcmTrapConnIpAndPort, ibNcmTrapConnUserName }
+    STATUS  current
+    DESCRIPTION
+        "The NETCONF connection with a peer device is resumed."
+::= { ibNcmCUConnTrapPrefix 2 }
+
+ibNcmCUConnectFailed NOTIFICATION-TYPE
+    OBJECTS { ibNcmTrapUpId, ibNcmTrapConnIpAndPort, ibNcmTrapConnUserName, ibNcmTrapConnFailedReason }
+    STATUS  current
+    DESCRIPTION
+        "Failed to establish a NETCONF connection with a peer device."
+::= { ibNcmCUConnTrapPrefix 3}
+
+ibNcmCUConnectSuccess NOTIFICATION-TYPE
+    OBJECTS { ibNcmTrapUpId, ibNcmTrapConnIpAndPort, ibNcmTrapConnUserName }
+    STATUS  current
+    DESCRIPTION
+        "Successed in establishing a NETCONF connection with a peer device."
+::= { ibNcmCUConnTrapPrefix 4 }
+
+ibNcmCUConfigFailed NOTIFICATION-TYPE
+    OBJECTS { ibNcmTrapUpId, ibNcmTrapConnIpAndPort, ibNcmTrapConnUserName, ibNcmTrapFeatureName }
+    STATUS  current
+    DESCRIPTION
+        "Failed to deliver configurations to a peer device."
+::= { ibNcmCUConnTrapPrefix 5 }
+
+END

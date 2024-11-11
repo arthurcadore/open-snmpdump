@@ -1,0 +1,247 @@
+--  =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The MIB is designed to configure the Enhanced Media Delivery Index.
+-- Reference:
+-- Version: V1.1
+-- History:
+-- V1.0 2022-09-01, Du Wei, Initial version
+-- V1.1 2022-12-01, Du Wei,
+--     Added nodes ibEmdiFlowSrcIPType,ibEmdiFlowSrcIP, ibEmdiFlowDstIPType,
+--      ibEmdiFlowDstIP, ibEmdiFlowSrcPort, ibEmdiFlowDstPort, ibEmdiFlowProtocol,
+--      ibEmdiFlowVlanID and ibEmdiFlowVxlanID for ibEmdiFlowConflict trap.
+--     Added nodes ibEmdiChassisID and ibEmdiSlotID for ibEmdiInstanceExceed trap.
+-- =================================================================
+IB-EMDI-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB
+    Integer32, Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI;
+
+ibEmdi MODULE-IDENTITY
+    LAST-UPDATED "202212010000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The private MIB file includes the network quality information of the
+        device. It is to configure the Enhanced Media Delivery Index."
+    REVISION "202212010000Z"
+    DESCRIPTION
+        "Added nodes ibEmdiFlowSrcIPType, ibEmdiFlowSrcIP, ibEmdiFlowDstIPType,
+         ibEmdiFlowDstIP, ibEmdiFlowSrcPort, ibEmdiFlowDstPort, ibEmdiFlowProtocol,
+         ibEmdiFlowVlanID, and ibEmdiFlowVxlanID for ibEmdiFlowConflict trap.
+         Added nodes ibEmdiChassisID and ibEmdiSlotID for ibEmdiInstanceExceed trap."
+    REVISION "202209010000Z"
+    DESCRIPTION
+        "Initial revision of this MIB module."
+    ::= { ibCommon 251 }
+--
+-- Node definitions
+--
+ibEmdiNotifications OBJECT IDENTIFIER ::= { ibEmdi 1 }
+ibEmdiNotification OBJECT IDENTIFIER ::= { ibEmdiNotifications 0 }
+
+ibEmdiIndicatorOverThres NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibEmdiInstanceID,
+        ibEmdiIndicatorType,
+        ibEmdiIndicatorValue,
+        ibEmdiIndicatorThreshold,
+        ibEmdiSuppressTimes
+    }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the monitored indicator reaches the alarm threshold
+        successively."
+    ::= { ibEmdiNotification 1 }
+
+ibEmdiIndicatorOverThresResume NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibEmdiInstanceID,
+        ibEmdiIndicatorType,
+        ibEmdiIndicatorValue,
+        ibEmdiIndicatorThreshold,
+        ibEmdiSuppressTimes
+    }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the monitored indicator drops below the alarm threshold
+        successively."
+    ::= { ibEmdiNotification 2 }
+
+ibEmdiFlowConflict NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibEmdiInstanceID,
+        ibEmdiFlowSrcIPType,
+        ibEmdiFlowSrcIP,
+        ibEmdiFlowDstIPType,
+        ibEmdiFlowDstIP,
+        ibEmdiFlowSrcPort,
+        ibEmdiFlowDstPort,
+        ibEmdiFlowProtocol,
+        ibEmdiFlowVlanID,
+        ibEmdiFlowVxlanID
+    }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the flow bound to a dynamic instance conflicts with the flow in the existing instance."
+    ::= { ibEmdiNotification 3 }
+
+ibEmdiInstanceExceed NOTIFICATION-TYPE
+    OBJECTS { ibEmdiChassisID, ibEmdiSlotID }
+    STATUS current
+    DESCRIPTION
+        "Maximum number of running instances already reached."
+    ::= { ibEmdiNotification 4 }
+
+ibEmdiNotificationObjects OBJECT IDENTIFIER ::= { ibEmdiNotifications 1 }
+
+ibEmdiInstanceID OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "eMDI instance ID."
+    ::= { ibEmdiNotificationObjects 1 }
+
+ibEmdiIndicatorType OBJECT-TYPE
+    SYNTAX INTEGER
+    {
+        rtplr(1),
+        rtpser(2),
+        uplr(3),
+        dplr(4)
+    }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Monitored indicator type."
+    ::= { ibEmdiNotificationObjects 2 }
+
+ibEmdiIndicatorValue OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Monitored indicator value."
+    ::= { ibEmdiNotificationObjects 3 }
+
+ibEmdiIndicatorThreshold OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Alarm threshold for the monitored indicator."
+    ::= { ibEmdiNotificationObjects 4 }
+
+ibEmdiSuppressTimes OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Number of consecutive alarms to be suppressed before alarming."
+    ::= { ibEmdiNotificationObjects 5 }
+
+ibEmdiFlowSrcIPType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Source IP address type of the flow."
+    ::= { ibEmdiNotificationObjects 6 }
+
+ibEmdiFlowSrcIP OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Source IP address of the flow."
+    ::= { ibEmdiNotificationObjects 7 }
+
+ibEmdiFlowDstIPType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Destination IP address type of the flow."
+    ::= { ibEmdiNotificationObjects 8 }
+
+ibEmdiFlowDstIP OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Destination IP address of the flow."
+    ::= { ibEmdiNotificationObjects 9 }
+
+ibEmdiFlowSrcPort OBJECT-TYPE
+    SYNTAX Integer32 (1..65535)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Source port of the flow."
+    ::= { ibEmdiNotificationObjects 10 }
+
+ibEmdiFlowDstPort OBJECT-TYPE
+    SYNTAX Integer32 (1..65535)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Destination port of the flow."
+    ::= { ibEmdiNotificationObjects 11 }
+
+ibEmdiFlowProtocol OBJECT-TYPE
+    SYNTAX INTEGER
+    {
+        tcp(1),
+        udp(2)
+    }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Transport layer protocol of the flow."
+    ::= { ibEmdiNotificationObjects 12 }
+
+ibEmdiFlowVlanID OBJECT-TYPE
+    SYNTAX Integer32 (1..4094)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "VLAN ID."
+    ::= { ibEmdiNotificationObjects 13 }
+
+ibEmdiFlowVxlanID OBJECT-TYPE
+    SYNTAX Integer32 (0..16777215)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "VXLAN ID."
+    ::= { ibEmdiNotificationObjects 14 }
+
+ibEmdiChassisID OBJECT-TYPE
+    SYNTAX Integer32 (0..65535)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Chassis ID. If the value is 65535, the device is not a stacked device ."
+    ::= { ibEmdiNotificationObjects 15 }
+
+
+ibEmdiSlotID OBJECT-TYPE
+    SYNTAX Integer32 (0..65535)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Slot number."
+    ::= { ibEmdiNotificationObjects 16 }
+
+END

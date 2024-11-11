@@ -1,0 +1,475 @@
+-- ==========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The purpose of this MIB file is to provide the object definition
+--              of the SNMP (Simple Network Management Protocol) extended
+--              information.
+-- Reference:
+-- Version: V1.9
+-- History:
+-- V1.0 2009-04-07  Initial version, created by Lisong
+-- V1.1 2010-03-12  Added ibSnmpExtReadCommunitySingle and
+--                  ibSnmpExtWriteCommunitySingle by SongHao
+-- V1.2 2011-08-11  Added ibSnmpCommunityExTable by duyanbing
+-- V1.3 2013-04-08  Changed MAX-ACCESS of ibSnmpCommunityExName by duyanbing
+-- V1.4 2013-05-16  Added ibSnmpExtMaxContextNum and
+--                  ibSnmpExtContextTable by gaoyanping
+-- V1.5 2014-08-12  Added ibSnmpExtCommunityIPv6AclNum and ibSnmpExtVersion,
+--                  modified description of ibSnmpExtCommunityAclNum by SongHao.
+--      2015-01-20  Added ibSnmpExtTrapSource and ibSnmpExtInformSource by gaoyanping.
+-- V1.6 2016-04-13  Added ibSnmpExtPrivProtocols by gaoyanping.
+--      2016-08-08  Modify ibSnmpExtCommunityAclNum, ibSnmpExtCommunityIPv6AclNum
+--                  of the range by zhangbaohong
+-- V1.7 2019-04-16  Added ibSnmpExtAclNum, ibSnmpExtIPv6AclNum by zhangzichao.
+-- V1.8 2022-04-19  Added ibSnmpExtTrapObjects, ibSnmpExtRemoteIpAddressType, ibSnmpExtRemoteIpAddress by Zhangjiatong.
+-- V1.9 2022-10-28  Added ibSnmpExtTargetAddress, ibSnmpExtFallingThreshold, ibSnmpExtRisingThreshold,
+--                  ibSnmpExtTargetHostDel, ibSnmpExtLockThreshold, ibSnmpExtLockThresholdResume by Jiangyongjin.
+-- ==========================================================================
+IB-SNMP-EXT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        TruthValue, RowStatus
+    FROM SNMPv2-TC
+        OBJECT-TYPE, MODULE-IDENTITY, Integer32, OBJECT-IDENTITY, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI
+        SnmpAdminString, SnmpSecurityModel
+    FROM SNMP-FRAMEWORK-MIB
+        ibCommon
+    FROM IB-OID-MIB
+        InetAddressType, InetAddress
+    FROM INET-ADDRESS-MIB;
+
+ibSnmpExt MODULE-IDENTITY
+    LAST-UPDATED "202210280000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB file is to provide the object definition of the SNMP extended
+        information."
+    REVISION "202210280000Z"
+    DESCRIPTION
+        "Added ibSnmpExtTargetAddress, ibSnmpExtFallingThreshold, ibSnmpExtRisingThreshold,
+         ibSnmpExtTargetHostDel, ibSnmpExtLockThreshold, ibSnmpExtLockThresholdResume."
+    REVISION "202204190000Z"
+    DESCRIPTION
+        "Added ibSnmpExtTrapObjects, ibSnmpExtRemoteIpAddressType, ibSnmpExtRemoteIpAddress."
+    REVISION "201904160000Z"
+    DESCRIPTION
+        "Added ibSnmpExtAclNum, ibSnmpExtAclName, ibSnmpExtIPv6AclNum, ibSnmpExtIPv6AclName."
+    REVISION "201608080000Z"
+    DESCRIPTION
+        "Modify ibSnmpExtCommunityAclNum, ibSnmpExtCommunityIPv6AclNum of the range"
+    REVISION "201604130200Z"
+    DESCRIPTION
+        "Added ibSnmpExtPrivProtocols."
+    REVISION "201501200900Z"
+    DESCRIPTION
+        "Added ibSnmpExtTrapSource and ibSnmpExtInformSource."
+    REVISION "201408120303Z"
+    DESCRIPTION
+        "Added ibSnmpExtCommunityIPv6AclNum and ibSnmpExtVersion,
+        modified description of ibSnmpExtCommunityAclNum."
+    REVISION "201305160000Z"
+    DESCRIPTION
+        "Added ibSnmpExtMaxContextNum and ibSnmpExtContextTable."
+    REVISION "201304080000Z"
+    DESCRIPTION
+        "Changed MAX-ACCESS of ibSnmpCommunityExName."
+    REVISION "201108110000Z"
+    DESCRIPTION
+        "Added ibSnmpCommunityExTable."
+    REVISION "201003120000Z"
+    DESCRIPTION
+        "Added ibSnmpExtReadCommunitySingle and ibSnmpExtWriteCommunitySingle."
+    REVISION "200904071700Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 104 }
+--
+-- Object definitions
+--
+ibSnmpExtScalarObjects OBJECT IDENTIFIER ::= { ibSnmpExt 1 }
+
+ibSnmpExtTables        OBJECT IDENTIFIER ::= { ibSnmpExt 2 }
+
+ibSnmpExtNotifications OBJECT IDENTIFIER ::= { ibSnmpExt 3 }
+
+ibSnmpExtPrivProtocols OBJECT IDENTIFIER ::= { ibSnmpExt 4 }
+
+ibSnmpExtTrapObjects   OBJECT IDENTIFIER ::= { ibSnmpExt 5 }
+
+--
+-- Scalar Objects
+--
+    ibSnmpExtSnmpChannel OBJECT-TYPE
+        SYNTAX          Integer32(1..65535)
+        MAX-ACCESS      read-write
+        STATUS current
+        DESCRIPTION
+            "The channel number used by SNMP."
+        DEFVAL { 161 }
+        ::= { ibSnmpExtScalarObjects 1 }
+
+    ibSnmpExtReadCommunitySingle OBJECT-TYPE
+        SYNTAX          SnmpAdminString (SIZE(1..32))
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The first read community."
+        ::= { ibSnmpExtScalarObjects 2 }
+
+    ibSnmpExtWriteCommunitySingle OBJECT-TYPE
+        SYNTAX          SnmpAdminString (SIZE(1..32))
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The first write community."
+        ::= { ibSnmpExtScalarObjects 3 }
+
+    ibSnmpExtMaxContextNum OBJECT-TYPE
+        SYNTAX          Integer32(1..65535)
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The maximum number of contexts."
+        ::= { ibSnmpExtScalarObjects 4 }
+
+    ibSnmpExtVersion OBJECT-TYPE
+        SYNTAX          BITS {snmpV1(0), snmpV2c(1), snmpV3(2)}
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The valid version of SNMP agent."
+        ::= { ibSnmpExtScalarObjects 5 }
+
+    ibSnmpExtTrapSource OBJECT-TYPE
+        SYNTAX          SnmpAdminString (SIZE(0..255))
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The specified interface, the SNMP agent used the
+                        primary IP address of which as the source IP address
+                        in all its traps."
+        ::= { ibSnmpExtScalarObjects 6 }
+
+    ibSnmpExtInformSource OBJECT-TYPE
+        SYNTAX          SnmpAdminString (SIZE(0..255))
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The specified interface, the SNMP agent used the
+                        primary IP address of which as the source IP address
+                        in all its informs."
+        ::= { ibSnmpExtScalarObjects 7 }
+    ibSnmpExtAclNum OBJECT-TYPE
+        SYNTAX          Integer32 (0 | 2000..3999)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The number of global ACL.  It mutually exclusive with ibSnmpExtAclName."
+        ::= { ibSnmpExtScalarObjects 8 }
+    ibSnmpExtAclName OBJECT-TYPE
+        SYNTAX          OCTET STRING(SIZE(0..63))
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The name of global ACL.  It mutually exclusive with ibSnmpExtAclNum."
+        ::= { ibSnmpExtScalarObjects 9 }
+    ibSnmpExtIPv6AclNum OBJECT-TYPE
+        SYNTAX          Integer32 (0 | 2000..3999)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The number of global IPv6 ACL.
+                         It mutually exclusive with ibSnmpExtIPv6AclName."
+        ::= { ibSnmpExtScalarObjects 10 }
+    ibSnmpExtIPv6AclName OBJECT-TYPE
+        SYNTAX          OCTET STRING(SIZE(0..63))
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The name of global IPv6 ACL.  It mutually exclusive with ibSnmpExtIPv6AclNum."
+        ::= { ibSnmpExtScalarObjects 11 }
+    ibSnmpExtTargetAddress OBJECT-TYPE
+        SYNTAX          SnmpAdminString (SIZE(1..255))
+        MAX-ACCESS      accessible-for-notify
+        STATUS          current
+        DESCRIPTION
+             "Trap target host address.
+              The content of this object will be converted to an IP address
+              while it is a host name.
+              Example: traphost.1.1.1.1.public
+                       informhost.1.1.1.1.public
+                       traphost.2001::1.public
+                       informhost.2001::1.public"
+        ::= { ibSnmpExtScalarObjects 12 }
+    ibSnmpExtFallingThreshold  OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS      accessible-for-notify
+        STATUS          current
+        DESCRIPTION     "Lower threshold of SNMPv3 user blacklist."
+        ::= { ibSnmpExtScalarObjects 13 }
+    ibSnmpExtRisingThreshold  OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS      accessible-for-notify
+        STATUS          current
+        DESCRIPTION     "Upper limit of SNMPv3 user blacklist threshold."
+        ::= { ibSnmpExtScalarObjects 14 }
+--
+-- Table Objects
+--
+    ibSnmpExtCommunityTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbSnmpExtCommunityEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Modify the extended properties of SNMP community or
+                         user."
+        ::= { ibSnmpExtTables 1 }
+
+    ibSnmpExtCommunityEntry OBJECT-TYPE
+        SYNTAX          IbSnmpExtCommunityEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "The entry of ibSnmpExtCommunityTable."
+        INDEX {
+                ibSnmpExtCommunitySecurityLevel,
+                ibSnmpExtCommunitySecurityName
+              }
+        ::= { ibSnmpExtCommunityTable 1 }
+
+    IbSnmpExtCommunityEntry ::= SEQUENCE {
+        ibSnmpExtCommunitySecurityLevel   SnmpSecurityModel,
+        ibSnmpExtCommunitySecurityName    SnmpAdminString,
+        ibSnmpExtCommunityName            OCTET STRING,
+        ibSnmpExtCommunityAclNum          Integer32,
+        ibSnmpExtCommunityIPv6AclNum      Integer32
+    }
+
+    ibSnmpExtCommunitySecurityLevel OBJECT-TYPE
+        SYNTAX          SnmpSecurityModel
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "The security model of the specified community or user.
+                         This object may not take the 'any' (0) value."
+        ::= { ibSnmpExtCommunityEntry 1 }
+
+    ibSnmpExtCommunitySecurityName OBJECT-TYPE
+        SYNTAX          SnmpAdminString (SIZE(1..32))
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "The security name of the specified community or user."
+        ::= { ibSnmpExtCommunityEntry 2 }
+
+    ibSnmpExtCommunityName OBJECT-TYPE
+        SYNTAX          OCTET STRING(SIZE(1..32))
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The name of the group to which the security name belongs."
+        ::= { ibSnmpExtCommunityEntry 3 }
+
+    ibSnmpExtCommunityAclNum OBJECT-TYPE
+        SYNTAX          Integer32 (0 | 2000..3999)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The specified IPv4 ACL (Access Control List) number
+                        used by the community or the user.
+                        Basic ACL type: 2000..2999
+                        Advanced ACL type: 3000..3999
+                        "
+        DEFVAL          { 0 }
+        ::= { ibSnmpExtCommunityEntry 4 }
+
+    ibSnmpExtCommunityIPv6AclNum OBJECT-TYPE
+        SYNTAX          Integer32 (0 | 2000..3999)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The specified IPv6 Access Control List (ACL) number
+                        used by the community or the user.
+                        Basic ACL type: 2000..2999
+                        Advanced ACL type: 3000..3999
+                        "
+        DEFVAL          { 0 }
+        ::= { ibSnmpExtCommunityEntry 5 }
+
+    ibSnmpCommunityExTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbSnmpCommunityExEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Modify the extended properties of SNMP community."
+        ::= { ibSnmpExtTables 2 }
+
+    ibSnmpCommunityExEntry OBJECT-TYPE
+        SYNTAX          IbSnmpCommunityExEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "The entry of ibSnmpCommunityExTable."
+        INDEX {
+                 ibSnmpCommunityExName
+              }
+        ::= { ibSnmpCommunityExTable 1 }
+
+    IbSnmpCommunityExEntry ::= SEQUENCE {
+        ibSnmpCommunityExName
+            OCTET STRING,
+        ibSnmpCommunityExWrite
+            TruthValue,
+        ibSnmpCommunityExViewName
+            OCTET STRING,
+        ibSnmpCommunityExAclNum
+            Integer32,
+        ibSnmpCommunityExRowStatus
+            RowStatus
+    }
+
+    ibSnmpCommunityExName OBJECT-TYPE
+        SYNTAX          OCTET STRING(SIZE(1..32))
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The specified community name."
+        ::= { ibSnmpCommunityExEntry 1 }
+
+    ibSnmpCommunityExWrite OBJECT-TYPE
+        SYNTAX          TruthValue
+        MAX-ACCESS      read-create
+        STATUS          current
+        DESCRIPTION
+        "Represents the community can write or not.
+        'true' : the community can write.
+        'false': the community can read only."
+        DEFVAL      { false }
+        ::= { ibSnmpCommunityExEntry 2 }
+
+    ibSnmpCommunityExViewName OBJECT-TYPE
+        SYNTAX          OCTET STRING(SIZE(1..32))
+        MAX-ACCESS      read-create
+        STATUS          current
+        DESCRIPTION     "A family of view subtrees that the Community can operate."
+        ::= { ibSnmpCommunityExEntry 3 }
+
+    ibSnmpCommunityExAclNum OBJECT-TYPE
+        SYNTAX          Integer32 (0|2000..2999)
+        MAX-ACCESS      read-create
+        STATUS          current
+        DESCRIPTION     "The specified ACL (Access Control List) number used by the community."
+        DEFVAL          {0}
+        ::= { ibSnmpCommunityExEntry 4 }
+
+    ibSnmpCommunityExRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS      read-create
+        STATUS          current
+        DESCRIPTION     "The status of this table entry."
+        ::= { ibSnmpCommunityExEntry 5 }
+
+    ibSnmpExtContextTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbSnmpExtContextEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Modify the extended properties of SNMP context."
+        ::= { ibSnmpExtTables 3 }
+
+    ibSnmpExtContextEntry OBJECT-TYPE
+        SYNTAX          IbSnmpExtContextEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "The entry of ibSnmpExtContextTable."
+        INDEX {
+                ibSnmpExtContextName
+              }
+        ::= { ibSnmpExtContextTable 1 }
+
+    IbSnmpExtContextEntry ::= SEQUENCE {
+        ibSnmpExtContextName
+            SnmpAdminString,
+        ibSnmpExtContextRowStatus
+            RowStatus
+     }
+
+    ibSnmpExtContextName OBJECT-TYPE
+        SYNTAX          SnmpAdminString (SIZE(1..32))
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "The specified context name."
+        ::= { ibSnmpExtContextEntry 1 }
+
+    ibSnmpExtContextRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS      read-create
+        STATUS          current
+        DESCRIPTION     "The status of this table entry."
+        ::= { ibSnmpExtContextEntry 2 }
+
+--
+-- Notification Objects
+--
+
+ibSnmpExtNotificationsPrex OBJECT IDENTIFIER ::= { ibSnmpExtNotifications 0 }
+
+    ibSnmpExtTargetHostDel NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSnmpExtTargetAddress
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the target host is deleted."
+    ::= { ibSnmpExtNotificationsPrex 1 }
+
+    ibSnmpExtLockThreshold NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSnmpExtRisingThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of users
+         joining the SNMPv3 user blacklist exceeds the upper threshold
+         (40% of the maximum number of users blacklist is supported)."
+    ::= { ibSnmpExtNotificationsPrex 2 }
+
+    ibSnmpExtLockThresholdResume  NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSnmpExtFallingThreshold
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the number of users joining
+         the SNMPv3 user blacklist recovers below the low threshold
+         (10% of the maximum number of users blacklist is supported)."
+    ::= { ibSnmpExtNotificationsPrex 3 }
+
+--
+-- PrivProtocols
+--
+    ibSnmpExtAESCfb192PrivProtocol OBJECT-IDENTITY
+    STATUS        current
+    DESCRIPTION  "The CFB192-AES-192 privacy protocol."
+    REFERENCE    "- Specification for the ADVANCED ENCRYPTION
+                    STANDARD .
+
+                  - Use 192 bit key size AES.
+                 "
+    ::= { ibSnmpExtPrivProtocols 1 }
+
+    ibSnmpExtAESCfb256PrivProtocol OBJECT-IDENTITY
+    STATUS        current
+    DESCRIPTION  "The CFB256-AES-256 privacy protocol."
+    REFERENCE    "- Specification for the ADVANCED ENCRYPTION
+                    STANDARD.
+
+                  - Use 256 bit key size AES.
+                 "
+    ::= { ibSnmpExtPrivProtocols 2 }
+--
+-- Trap Objects
+--
+    ibSnmpExtRemoteIpAddressType OBJECT-TYPE
+        SYNTAX          InetAddressType
+        MAX-ACCESS      accessible-for-notify
+        STATUS          current
+        DESCRIPTION
+            "Remote device IP address type is IPv4/IPv6."
+    ::= { ibSnmpExtTrapObjects 1 }
+
+    ibSnmpExtRemoteIpAddress OBJECT-TYPE
+        SYNTAX          InetAddress
+        MAX-ACCESS      accessible-for-notify
+        STATUS          current
+        DESCRIPTION
+            "Remote device IPv4/IPv6 address."
+    ::= { ibSnmpExtTrapObjects 2 }
+
+END

@@ -1,0 +1,77 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: telnet mib
+-- Reference:
+-- Version: V1.0
+-- History:
+--  V1.0 Created by zhangfeng
+--      2022-08-24 Initial version
+-- =================================================================
+IB-TELNET-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, Unsigned32
+        FROM SNMPv2-SMI;
+
+ibTelnet MODULE-IDENTITY
+    LAST-UPDATED "202208240000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB module is used for telnet."
+    REVISION    "202208240000Z"
+    DESCRIPTION    "The initial version."
+    ::= { ibCommon 249 }
+
+ibTelnets OBJECT IDENTIFIER ::= { ibTelnet 1 }
+-- ==================================================================
+--
+-- TELNETS trap parameters
+--
+-- ==================================================================
+ibTelnetsObjForTrap OBJECT IDENTIFIER ::= { ibTelnets 1 }
+
+ibTelnetsLoginFailedTimes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Users login failed times."
+    ::= { ibTelnetsObjForTrap 1 }
+
+ibTelnetsLoginFailedStatPeriod OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "minutes"
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Users login failed statistic period."
+    ::= { ibTelnetsObjForTrap 2 }
+
+-- ==================================================================
+--
+-- TELNETS traps
+--
+-- ==================================================================
+ibTelnetsTraps OBJECT IDENTIFIER ::= { ibTelnets 2 }
+ibTelnetsTrapsPrefix OBJECT IDENTIFIER ::= { ibTelnetsTraps 0 }
+
+ibTelnetsLoginFailed NOTIFICATION-TYPE
+    OBJECTS { ibTelnetsLoginFailedTimes, ibTelnetsLoginFailedStatPeriod }
+    STATUS  current
+    DESCRIPTION
+        "Users failed to login telnet server too frequently."
+    ::= { ibTelnetsTrapsPrefix 1 }
+
+ibTelnetsLoginFailedClear NOTIFICATION-TYPE
+    STATUS  current
+    DESCRIPTION
+        "The telnet user login-failed alarm was cleared."
+    ::= { ibTelnetsTrapsPrefix 2 }
+
+END

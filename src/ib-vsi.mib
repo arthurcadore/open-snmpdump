@@ -1,0 +1,1307 @@
+-- =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The MIB for VSI (Virtual Switch Instance).
+-- Reference:
+-- Version: V2.0
+-- History:
+--   V1.0 2009-08-08 Initial version Created by Zhonghua Gao
+--   V1.1 2012-11-21 Modified by yanneng, added ibVsiSpbIsid,
+--               Value 'default(0)' is added for data type 'ibVsiMode'
+--   V1.2 2013-04-27 Modified by raoxiaobing, Value 'minmpxp(6), martiniAndMinmpxp(7)
+--               and kompellaAndMinmpxp(8)' is added for data type 'ibVsiMode'
+--   V1.3 2013-09-11 Modified by yanneng, added ibVsiPwBindTable table.
+--   V1.4 2013-11-22 Modified by yanneng, added ibVsiL2vpnStatus,
+--               ibVsiVxlanID, ibVsiArpSuppression, ibVsiFlooding,
+--               ibVsiLocalMacCount, ibVsiFloodMacTable, ibVsiLocalMacTable
+--   V1.5 2014-03-22 Modified by wangrui, added ibVsiInterfaceID, ibVsiStatistics,
+--               ibVsiPerfTable, ibVsiIfTable
+--        2014-04-12 Modified by yanneng, added ibVsiNvgreID
+--   V1.6 2015-05-19 Modified by fuzhihua, modified ibVsiXconnectEvcSrvInstId
+--   V1.7 2016-10-29 Modified by liuqingye, added value 'vxlan(9)' for
+--               data type 'ibVsiMode'
+--   V1.8 2021-11-30 Modified by lifei
+--   Added nodes ibVsiStateChangeToUp, ibVsiStateChangeToDown, ibVsiMacLimitMax,
+--        ibVsiMacLimitMaxClear, ibVsiLabelResourceNotEnough,  ibVsiLabelResourceRestore
+--        and ibVsiPwNumberMaxExceed
+--   V1.9 2022-03-21 Modified by wangshuji, added ibVsiPerfInRateOctets,
+--               ibVsiPerfInRatePackets,ibVsiPerfOutRateOctets,ibVsiPerfOutRatePackets
+--   V2.0 2022-07-29 Modified by wangzhenzhen, added nodes ibVsiDelete
+--   2023-03-01 Modified by wangshuji, added nodes ibVsiMacCount,ibVsiAcCount,
+--               ibVsiPerfInUcastPackets,ibVsiPerfOutUcastPackets,ibVsiPerfInMcastPackets,
+--               ibVsiPerfOutMcastPackets,ibVsiPerfInBcastPackets,ibVsiPerfOutBcastPackets,
+--               ibVsiXconnectInOctets,ibVsiXconnectInPackets,ibVsiXconnectInErrors,
+--               ibVsiXconnectInDiscards,ibVsiXconnectInRateOctets,ibVsiXconnectInRatePackets,
+--               ibVsiXconnectInUcastPackets,ibVsiXconnectInMcastPackets,ibVsiXconnectInBcastPackets,
+--               ibVsiXconnectOutOctets,ibVsiXconnectOutPackets,ibVsiXconnectOutErrors,
+--               ibVsiXconnectOutDiscards,ibVsiXconnectOutRateOctets,ibVsiXconnectOutRatePackets,
+--               ibVsiXconnectOutUcastPackets,ibVsiXconnectOutMcastPackets,ibVsiXconnectOutBcastPackets
+--               and added ibVsiPwPerfTable table
+-- =============================================================================
+IB-VSI-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+        RowStatus, TruthValue, MacAddress
+    FROM SNMPv2-TC
+        MODULE-IDENTITY,
+        OBJECT-TYPE,
+        Integer32,
+        Counter64,
+        Unsigned32,
+        NOTIFICATION-TYPE,
+        IpAddress
+    FROM SNMPv2-SMI
+        InterfaceIndex
+    FROM IF-MIB
+        ibCommon
+    FROM IB-OID-MIB;
+
+-- =============================================================================
+-- module identity part
+-- =============================================================================
+ibVsi MODULE-IDENTITY
+    LAST-UPDATED
+        "202303011726Z"        --  Mar 01, 2023 at 17:26 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB for VSI (Virtual Switch Instance)."
+    REVISION
+        "202303011726Z"   -- Mar 01, 2023 at 17:26 GMT
+    DESCRIPTION
+        "added nodes ibVsiMacCount ibVsiAcCount
+        ibVsiPerfInUcastPackets ibVsiPerfOutUcastPackets ibVsiPerfInMcastPackets
+        ibVsiPerfOutMcastPackets ibVsiPerfInBcastPackets ibVsiPerfOutBcastPackets
+        ibVsiXconnectInOctets ibVsiXconnectInPackets ibVsiXconnectInErrors
+        ibVsiXconnectInDiscards ibVsiXconnectInRateOctets ibVsiXconnectInRatePackets
+        ibVsiXconnectInUcastPackets ibVsiXconnectInMcastPackets ibVsiXconnectInBcastPackets
+        ibVsiXconnectOutOctets ibVsiXconnectOutPackets ibVsiXconnectOutErrors
+        ibVsiXconnectOutDiscards ibVsiXconnectOutRateOctets ibVsiXconnectOutRatePackets
+        ibVsiXconnectOutUcastPackets ibVsiXconnectOutMcastPackets ibVsiXconnectOutBcastPackets
+        and added ibVsiPwPerfTable table."
+    REVISION
+        "202207291427Z"   -- July 29, 2022 at 14:27 GMT
+    DESCRIPTION
+        "Added ibVsiDelete."
+    REVISION
+        "202203231415Z"   -- Mar 23, 2022 at 14:15 GMT
+    DESCRIPTION
+        "Added ibVsiPerfInRateOctets ibVsiPerfInRatePackets ibVsiPerfOutRateOctets
+        ibVsiPerfOutRatePackets."
+    REVISION
+        "202112101130Z"   -- Dec 10, 2021 at 11:30 GMT
+    DESCRIPTION
+        "Added ibVsiStateChangeToUp ibVsiStateChangeToDown ibVsiMacLimitMax
+         ibVsiMacLimitMaxClear ibVsiLabelResourceNotEnough  ibVsiLabelResourceRestore
+         and ibVsiPwNumberMaxExceed."
+    REVISION
+        "201610291650Z"   -- Oct 29, 2016 at 16:50 GMT
+    DESCRIPTION
+        "Added value 'vxlan(9)' for data type 'ibVsiMode' version."
+    REVISION
+        "201505261555Z"   -- May 26, 2015 at 15:55 GMT
+    DESCRIPTION
+        "Modified ibVsiXconnectEvcSrvInstId version."
+    REVISION
+        "200908081000Z"   -- Aug 08, 2009 at 10:00 GMT
+    DESCRIPTION
+        "Initial version."
+    ::= { ibCommon 105 }
+
+-- ==================================================================
+-- =================== ibVsiNotifications definition ==========
+-- ==================================================================
+
+ibVsiNotifications OBJECT IDENTIFIER ::= { ibVsi 0 }
+
+-- =============================================================================
+-- object definition begin
+-- =============================================================================
+
+ibVsiObjects      OBJECT IDENTIFIER ::= { ibVsi 1 }
+
+ibVsiScalarGroup OBJECT IDENTIFIER ::= { ibVsiObjects 1 }
+
+ibVsiNextAvailableVsiIndex    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Next available VSI entry index for creating VSI.  Its value ranges
+        from 0x1 to 0xFFFFFFFF.  The invalid value 0xFFFFFFFF indicates that
+        no VSI entry can be created."
+    ::= { ibVsiScalarGroup 1 }
+
+ibVsiL2vpnStatus    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The global configuration of L2VPN."
+    ::= { ibVsiScalarGroup 2 }
+
+-- =============================================================================
+-- ibVsiTable Definition
+-- =============================================================================
+ibVsiTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVsiEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring VSI parameters."
+    ::= { ibVsiObjects 2 }
+
+ibVsiEntry  OBJECT-TYPE
+    SYNTAX      IbVsiEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for configuring VSI parameters."
+    INDEX
+    {
+        ibVsiIndex
+    }
+    ::= { ibVsiTable 1 }
+
+IbVsiEntry ::=
+    SEQUENCE
+    {
+        ibVsiIndex             Unsigned32,
+        ibVsiName              OCTET STRING,
+        ibVsiMode              INTEGER,
+        ibMinmIsid             Integer32,
+        ibVsiId                Unsigned32,
+        ibVsiTransMode         INTEGER,
+        ibVsiEnableHubSpoke    INTEGER,
+        ibVsiAdminState        INTEGER,
+        ibVsiRowStatus         RowStatus,
+        ibVsiSpbIsid           Integer32,
+        ibVsiVxlanID           Unsigned32,
+        ibVsiArpSuppression    TruthValue,
+        ibVsiFlooding          TruthValue,
+        ibVsiLocalMacCount     Unsigned32,
+        ibVsiInterfaceID       Unsigned32,
+        ibVsiStatistics        TruthValue,
+        ibVsiNvgreID           Unsigned32,
+        ibVsiMacCount          Unsigned32,
+        ibVsiAcCount           Unsigned32
+    }
+
+ibVsiIndex    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Index of VSI.  Its value ranges from 0x1 to 0xFFFFFFFE."
+    ::= { ibVsiEntry 1 }
+
+ibVsiName    OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..31))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Name of VSI.  Max string length of VSI name is 31."
+    ::= { ibVsiEntry 2 }
+
+ibVsiMode    OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        default(0),
+        martini(1),
+        minm(2),
+        martiniAndMinm(3),
+        kompella(4),
+        kompellaAndMinm(5),
+        minmpxp(6),
+        martiniAndMinmpxp(7),
+        kompellaAndMinmpxp(8),
+        vxlan(9)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Mode of VSI.  Martini mode indicated this VSI supports VPLS service
+         signalled using LDP.  Kompella indicated this VSI supports VPLS
+         service signalled using BGP.  Minm indicated this VSI supports
+         MAC-in-MAC service.
+         Default indicated this VSI supports all services."
+
+    ::= { ibVsiEntry 3 }
+
+ibMinmIsid    OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The PBB I-SID of VSI in minm or martiniAndMinm mode.  It
+        must be different for every VSI.  Its value ranges from 0x1 to
+        0xFFFFFF.  In other VSI modes, its value is invalid value 0x0."
+    ::= { ibVsiEntry 4 }
+
+ibVsiId    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Identifier of VSI in martini or martiniAndMinm mode, by default,
+        it's the PW ID of this VSI.  Its value ranges from 1 to 4294967295.
+        In other VSI modes, its value is invalid value 0."
+    ::= { ibVsiEntry 5 }
+
+ibVsiTransMode    OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        vlan(1),
+        ethernet(2)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Transit Mode of VSI."
+    ::= { ibVsiEntry 6 }
+
+ibVsiEnableHubSpoke    OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        disable(1),
+        enable(2)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Config HubSpoke property of this VSI."
+    ::= { ibVsiEntry 7 }
+
+ibVsiAdminState   OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        adminUp(1),
+        adminDown(2)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Set VSI admin state as adminUp or adminDown."
+    ::= { ibVsiEntry 8 }
+
+ibVsiRowStatus     OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibVsiEntry 9 }
+
+ibVsiSpbIsid    OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The SPB I-SID of VSI in minm or martiniAndMinm mode.  It
+        must be different for every VSI.  Its value ranges from 0xFF to
+        0xFFFFFF.  In other VSI modes, its value is invalid value 0x0."
+    ::= { ibVsiEntry 10 }
+
+ibVsiVxlanID    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "VXLAN ID, in the range of 0x0 to 0xFFFFFF.  Value 0xFFFFFFFF means
+        this VSI does not enable VXLAN service."
+    ::= { ibVsiEntry 11 }
+
+ibVsiArpSuppression    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The capability of ARP suppression."
+    DEFVAL { false }
+    ::= { ibVsiEntry 12 }
+
+ibVsiFlooding    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The capability of MAC(Media Access Control) flooding."
+    DEFVAL { true }
+    ::= { ibVsiEntry 13 }
+
+ibVsiLocalMacCount    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of VSI local MAC addresses."
+    ::= { ibVsiEntry 14 }
+
+ibVsiInterfaceID    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "VSI interface ID.  A value of 0xFFFFFFFF indicates that no gateway
+        interface has been assigned to the VSI."
+    ::= { ibVsiEntry 15 }
+
+ibVsiStatistics    OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The enable status of VSI traffic flow statistics."
+    DEFVAL { false }
+    ::= { ibVsiEntry 16 }
+
+ibVsiNvgreID    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "NVGRE ID, in the range of 4096 to 16777214.  Value 4294967295 means
+        this VSI does not enable NVGRE service."
+    ::= { ibVsiEntry 17 }
+
+ibVsiMacCount    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of VSI MAC addresses."
+    ::= { ibVsiEntry 18 }
+
+ibVsiAcCount    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of VSI Ac."
+    ::= { ibVsiEntry 19 }
+
+-- =============================================================================
+-- End of ibVsiTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibVsiXconnectTable Definition
+-- =============================================================================
+ibVsiXconnectTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVsiXconnectEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring xconnect parameters."
+    ::= { ibVsiObjects 3 }
+
+ibVsiXconnectEntry  OBJECT-TYPE
+    SYNTAX      IbVsiXconnectEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for configuring xconnect parameters.  Each entry means
+        connecting a service instance of a interface to a VSI."
+    INDEX
+    {
+        ibVsiXconnectIfIndex,
+        ibVsiXconnectEvcSrvInstId
+    }
+    ::= { ibVsiXconnectTable 1 }
+
+IbVsiXconnectEntry ::=
+    SEQUENCE
+    {
+        ibVsiXconnectIfIndex          Unsigned32,
+        ibVsiXconnectEvcSrvInstId     Unsigned32,
+        ibVsiXconnectVsiName          OCTET STRING,
+        ibVsiXconnectAccessMode       INTEGER,
+        ibVsiXconnectHubSpoke         INTEGER,
+        ibVsiXconnectRowStatus        RowStatus,
+        ibVsiXconnectInOctets         Counter64,
+        ibVsiXconnectInPackets        Counter64,
+        ibVsiXconnectInErrors         Counter64,
+        ibVsiXconnectInDiscards       Counter64,
+        ibVsiXconnectInUcastPackets   Counter64,
+        ibVsiXconnectInMcastPackets   Counter64,
+        ibVsiXconnectInBcastPackets   Counter64,
+        ibVsiXconnectOutOctets        Counter64,
+        ibVsiXconnectOutPackets       Counter64,
+        ibVsiXconnectOutErrors        Counter64,
+        ibVsiXconnectOutDiscards      Counter64,
+        ibVsiXconnectOutUcastPackets  Counter64,
+        ibVsiXconnectOutMcastPackets  Counter64,
+        ibVsiXconnectOutBcastPackets  Counter64
+    }
+ibVsiXconnectIfIndex    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Index of the interface associated with the VSI."
+    ::= { ibVsiXconnectEntry 1 }
+
+ibVsiXconnectEvcSrvInstId    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Index of the service instance associated with the VSI.  The value is always 0 when the
+         interface isn't a layer 2 Ethernet interface."
+    ::= { ibVsiXconnectEntry 2 }
+
+
+ibVsiXconnectVsiName    OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..31))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Name of VSI.  Max string length of VSI name is 31."
+    ::= { ibVsiXconnectEntry 3 }
+
+ibVsiXconnectAccessMode    OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        vlan(1),
+        ethernet(2)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Access mode of this service instance."
+    ::= { ibVsiXconnectEntry 4 }
+
+ibVsiXconnectHubSpoke    OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        none(1),
+        hub(2),
+        spoke(3)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Config HubSpoke property of this service instance."
+    ::= { ibVsiXconnectEntry 5 }
+
+ibVsiXconnectRowStatus     OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibVsiXconnectEntry 6 }
+
+ibVsiXconnectInOctets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of octets received by the AC."
+    ::= { ibVsiXconnectEntry 7 }
+
+ibVsiXconnectInPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of packets received by the AC."
+    ::= { ibVsiXconnectEntry 8 }
+
+ibVsiXconnectInErrors    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of error packets received by the AC."
+    ::= { ibVsiXconnectEntry 9 }
+
+ibVsiXconnectInDiscards    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of incoming packets discarded by the AC."
+    ::= { ibVsiXconnectEntry 10 }
+
+ibVsiXconnectInUcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Unicast packets sent by the AC."
+    ::= { ibVsiXconnectEntry 11 }
+
+ibVsiXconnectInMcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Rate of packets sent by the AC."
+    ::= { ibVsiXconnectEntry 12 }
+
+ibVsiXconnectInBcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Rate of packets sent by the AC."
+    ::= { ibVsiXconnectEntry 13 }
+
+ibVsiXconnectOutOctets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of octets sent by the AC."
+    ::= { ibVsiXconnectEntry 14 }
+
+ibVsiXconnectOutPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of packets sent by the AC."
+    ::= { ibVsiXconnectEntry 15 }
+
+ibVsiXconnectOutErrors    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets that failed to be sent because of a AC error."
+    ::= { ibVsiXconnectEntry 16 }
+
+ibVsiXconnectOutDiscards    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Number of packets discarded by the AC because of transmission failure."
+    ::= { ibVsiXconnectEntry 17 }
+
+ibVsiXconnectOutUcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Unicast packets received by the AC."
+    ::= { ibVsiXconnectEntry 18 }
+
+ibVsiXconnectOutMcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Rate of packets received by the AC."
+    ::= { ibVsiXconnectEntry 19 }
+
+ibVsiXconnectOutBcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Rate of packets sent by the AC."
+    ::= { ibVsiXconnectEntry 20 }
+
+-- =============================================================================
+-- End of ibVsiXconnectTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibVsiPwBindTable Definition
+-- =============================================================================
+ibVsiPwBindTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVsiPwBindEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for PW(PseudoWire) mapping to VSI."
+    ::= { ibVsiObjects 4 }
+
+ibVsiPwBindEntry  OBJECT-TYPE
+    SYNTAX      IbVsiPwBindEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry means a PW mapping to a VSI."
+    INDEX
+    {
+        ibVsiIndex,
+        ibVsiPwIndex
+    }
+    ::= { ibVsiPwBindTable 1 }
+
+IbVsiPwBindEntry ::=
+    SEQUENCE
+    {
+        ibVsiPwIndex            Unsigned32,
+        ibVsiPwBindAttributes   BITS,
+        ibVsiPwBindRowStatus    RowStatus
+    }
+
+ibVsiPwIndex    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A unique index for the conceptual row identifying
+         a PW in the pwTable."
+    ::= { ibVsiPwBindEntry 1 }
+
+ibVsiPwBindAttributes    OBJECT-TYPE
+    SYNTAX      BITS {
+                     noSplitHorizon (0),
+                     hub (1)
+                    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This bit mask indicates optional values for this PW.
+         The following describes these bit fields:
+
+         noSplitHorizon flag indicates that the PW disable
+         split horizon forwarding.
+
+         hub flag indicates that the PW as the hub link the VSI."
+    ::= { ibVsiPwBindEntry 2 }
+
+ibVsiPwBindRowStatus     OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry.  A row entry cannot
+        be modified when the value of this object is 'active'."
+    ::= { ibVsiPwBindEntry 3 }
+
+-- =============================================================================
+-- End of ibVsiPwBindTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibVsiFloodMacTable Definition
+-- =============================================================================
+ibVsiFloodMacTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVsiFloodMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table of MAC addresses enabled with selective flooding."
+    ::= { ibVsiObjects 5 }
+
+ibVsiFloodMacEntry  OBJECT-TYPE
+    SYNTAX      IbVsiFloodMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry represents a selective flooding MAC."
+    INDEX
+    {
+        ibVsiIndex,
+        ibVsiFloodMac
+    }
+    ::= { ibVsiFloodMacTable 1 }
+
+IbVsiFloodMacEntry ::=
+    SEQUENCE
+    {
+        ibVsiFloodMac               MacAddress,
+        ibVsiFloodMacRowStatus      RowStatus
+    }
+
+ibVsiFloodMac    OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "MAC address."
+    ::= { ibVsiFloodMacEntry 1 }
+
+ibVsiFloodMacRowStatus     OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibVsiFloodMacEntry 2 }
+
+-- =============================================================================
+-- End of ibVsiFloodMacTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibVsiLocalMacTable Definition
+-- =============================================================================
+ibVsiLocalMacTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVsiLocalMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for VSI local MAC addresses."
+    ::= { ibVsiObjects 6 }
+
+ibVsiLocalMacEntry  OBJECT-TYPE
+    SYNTAX      IbVsiLocalMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A local MAC address of VSI."
+    INDEX
+    {
+        ibVsiIndex,
+        ibVsiLocalMacAddr
+    }
+    ::= { ibVsiLocalMacTable 1 }
+
+IbVsiLocalMacEntry ::=
+    SEQUENCE
+    {
+        ibVsiLocalMacAddr            MacAddress,
+        ibVsiLocalMacIfIndex         InterfaceIndex,
+        ibVsiLocalMacSrvID           Unsigned32
+    }
+
+ibVsiLocalMacAddr    OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "MAC address."
+    ::= { ibVsiLocalMacEntry 1 }
+
+ibVsiLocalMacIfIndex    OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index of the interface associated with the MAC address."
+    ::= { ibVsiLocalMacEntry 2 }
+
+ibVsiLocalMacSrvID    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Index of the service instance associated with the MAC address."
+    ::= { ibVsiLocalMacEntry 3 }
+
+-- =============================================================================
+-- End of ibVsiLocalMacTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibVsiPerfTable Definition
+-- =============================================================================
+ibVsiPerfTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVsiPerfEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains performance statistics for each VSI."
+    ::= { ibVsiObjects 7 }
+
+ibVsiPerfEntry  OBJECT-TYPE
+    SYNTAX      IbVsiPerfEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A row in this table contains statistics for a VSI."
+    INDEX
+    {
+        ibVsiIndex
+    }
+    ::= { ibVsiPerfTable 1 }
+
+IbVsiPerfEntry ::=
+    SEQUENCE
+    {
+        ibVsiPerfInOctets            Counter64,
+        ibVsiPerfInPackets           Counter64,
+        ibVsiPerfInErrors            Counter64,
+        ibVsiPerfInDiscards          Counter64,
+        ibVsiPerfOutOctets           Counter64,
+        ibVsiPerfOutPackets          Counter64,
+        ibVsiPerfOutErrors           Counter64,
+        ibVsiPerfOutDiscards         Counter64,
+        ibVsiPerfInRateOctets        Counter64,
+        ibVsiPerfInRatePackets       Counter64,
+        ibVsiPerfOutRateOctets       Counter64,
+        ibVsiPerfOutRatePackets      Counter64,
+        ibVsiPerfInUcastPackets      Counter64,
+        ibVsiPerfInMcastPackets      Counter64,
+        ibVsiPerfInBcastPackets      Counter64,
+        ibVsiPerfOutUcastPackets     Counter64,
+        ibVsiPerfOutMcastPackets     Counter64,
+        ibVsiPerfOutBcastPackets     Counter64
+    }
+
+ibVsiPerfInOctets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of octets received by the VSI."
+    ::= { ibVsiPerfEntry 1 }
+
+ibVsiPerfInPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of packets received by the VSI."
+    ::= { ibVsiPerfEntry 2 }
+
+ibVsiPerfInErrors    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of error packets received by the VSI."
+    ::= { ibVsiPerfEntry 3 }
+
+ibVsiPerfInDiscards    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of incoming packets discarded by the VSI."
+    ::= { ibVsiPerfEntry 4 }
+
+ibVsiPerfOutOctets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of octets sent by the VSI."
+    ::= { ibVsiPerfEntry 5 }
+
+ibVsiPerfOutPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of packets sent by the VSI."
+    ::= { ibVsiPerfEntry 6 }
+
+ibVsiPerfOutErrors    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets that failed to be sent because of a VSI error."
+    ::= { ibVsiPerfEntry 7 }
+
+ibVsiPerfOutDiscards    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Number of packets discarded by the VSI because of transmission failure."
+    ::= { ibVsiPerfEntry 8 }
+
+ibVsiPerfInRateOctets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Rate of octets received by the VSI."
+    ::= { ibVsiPerfEntry 9 }
+
+ibVsiPerfInRatePackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Rate of packets received by the VSI."
+    ::= { ibVsiPerfEntry 10 }
+
+ibVsiPerfOutRateOctets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Rate of octets sent by the VSI."
+    ::= { ibVsiPerfEntry 11 }
+
+ibVsiPerfOutRatePackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Rate of packets sent by the VSI."
+    ::= { ibVsiPerfEntry 12 }
+
+ibVsiPerfInUcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Unicast packets sent by the VSI."
+    ::= { ibVsiPerfEntry 13 }
+
+ibVsiPerfInMcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Rate of packets sent by the VSI."
+    ::= { ibVsiPerfEntry 14 }
+
+ibVsiPerfInBcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Rate of packets sent by the VSI."
+    ::= { ibVsiPerfEntry 15 }
+
+ibVsiPerfOutUcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Unicast packets received by the VSI."
+    ::= { ibVsiPerfEntry 16 }
+
+ibVsiPerfOutMcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Rate of packets received by the VSI."
+    ::= { ibVsiPerfEntry 17 }
+
+ibVsiPerfOutBcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Rate of packets sent by the VSI."
+    ::= { ibVsiPerfEntry 18 }
+
+-- =============================================================================
+-- End of ibVsiPerfTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibVsiNextAvailableVsiIfID Definition
+-- =============================================================================
+ibVsiNextAvailableVsiIfID OBJECT-TYPE
+   SYNTAX        Unsigned32
+   MAX-ACCESS    read-only
+   STATUS        current
+   DESCRIPTION
+       "This object contains the next available value for ibVsiIfID
+        when creating entries in the ibVsiIfTable.  A value of 0xFFFFFFFF
+        indicates that no new entries can be created in this table.
+        To prevent managers from creating entries in this table, the agent
+        must set this object to this special value."
+   ::= { ibVsiObjects 8 }
+
+-- =============================================================================
+-- ibVsiIfTable Definition
+-- =============================================================================
+ibVsiIfTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVsiIfEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "VSI interface table."
+    ::= { ibVsiObjects 9 }
+
+ibVsiIfEntry  OBJECT-TYPE
+    SYNTAX      IbVsiIfEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A row in this table contains a VSI interface."
+    INDEX
+    {
+        ibVsiIfID
+    }
+    ::= { ibVsiIfTable 1 }
+
+IbVsiIfEntry ::=
+    SEQUENCE
+    {
+        ibVsiIfID               Unsigned32,
+        ibVsiIfIndex            InterfaceIndex,
+        ibVsiIfRowStatus        RowStatus
+    }
+
+ibVsiIfID    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "VSI interface ID."
+    ::= { ibVsiIfEntry 1 }
+
+ibVsiIfIndex    OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "VSI interface index."
+    ::= { ibVsiIfEntry 2 }
+
+ibVsiIfRowStatus     OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of the table entry."
+    ::= { ibVsiIfEntry 3 }
+
+-- =============================================================================
+-- End of ibVsiIfTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ======================ibVsiPwPerfTable Definition==========================
+-- =============================================================================
+ibVsiPwPerfTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbVsiPwPerfEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains performance statistics for each VSI PW."
+    ::= { ibVsiObjects 10 }
+
+ibVsiPwPerfEntry  OBJECT-TYPE
+    SYNTAX      IbVsiPwPerfEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A row in this table contains statistics for a VSI PW."
+    INDEX
+    {
+        ibVsiIndex,
+        ibVsiPwPerfPeerIp,
+        ibVsiPwPerfPwID
+    }
+    ::= { ibVsiPwPerfTable 1 }
+
+IbVsiPwPerfEntry ::=
+    SEQUENCE
+    {
+        ibVsiPwPerfPeerIp              IpAddress,
+        ibVsiPwPerfPwID                Unsigned32,
+        ibVsiPwPerfInPackets           Counter64,
+        ibVsiPwPerfOutPackets          Counter64,
+        ibVsiPwPerfInUcastPackets      Counter64,
+        ibVsiPwPerfOutUcastPackets     Counter64,
+        ibVsiPwPerfInMcastPackets      Counter64,
+        ibVsiPwPerfOutMcastPackets     Counter64,
+        ibVsiPwPerfInBcastPackets      Counter64,
+        ibVsiPwPerfOutBcastPackets     Counter64,
+        ibVsiPwPerfInDiscards          Counter64,
+        ibVsiPwPerfInOctets            Counter64,
+        ibVsiPwPerfOutOctets           Counter64
+    }
+
+ibVsiPwPerfPeerIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Peer IP address."
+    ::= { ibVsiPwPerfEntry 1 }
+
+ibVsiPwPerfPwID OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "PW identifier(ID)."
+    ::= { ibVsiPwPerfEntry 2 }
+
+ibVsiPwPerfInPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Total number of packets received by the VSI PW."
+    ::= { ibVsiPwPerfEntry 3 }
+
+ibVsiPwPerfOutPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Total number of packets sent by the VSI PW."
+    ::= { ibVsiPwPerfEntry 4 }
+
+ibVsiPwPerfInUcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Unicast packets received by the VSI PW."
+    ::= { ibVsiPwPerfEntry 5 }
+
+ibVsiPwPerfOutUcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Unicast packets sent by the VSI PW."
+    ::= { ibVsiPwPerfEntry 6 }
+
+ibVsiPwPerfInMcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Multicast packets received by the VSI PW."
+    ::= { ibVsiPwPerfEntry 7 }
+
+ibVsiPwPerfOutMcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Multicast packets sent by the VSI PW."
+    ::= { ibVsiPwPerfEntry 8 }
+
+ibVsiPwPerfInBcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Broad packets received by the VSI PW."
+    ::= { ibVsiPwPerfEntry 9 }
+
+ibVsiPwPerfOutBcastPackets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Broad packets sent by the VSI PW."
+    ::= { ibVsiPwPerfEntry 10 }
+
+ibVsiPwPerfInDiscards    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Number of packets that failed to be sent because of a VSI PW error."
+    ::= { ibVsiPwPerfEntry 11 }
+
+ibVsiPwPerfInOctets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Total number of Octets received by the VSI PW."
+    ::= { ibVsiPwPerfEntry 12 }
+
+ibVsiPwPerfOutOctets    OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "Total number of Octets sent by the VSI PW."
+    ::= { ibVsiPwPerfEntry 13 }
+
+-- =============================================================================
+-- ====================End of ibVsiPwPerfTable Definition=====================
+-- =============================================================================
+
+-- ==================================================================
+-- ===============ibVsiNotifications definition  ==============
+-- ==================================================================
+ibVsiStateChangeToUp NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibVsiName
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when vsi state change to up
+         happens."
+    ::= { ibVsiNotifications 1 }
+
+ibVsiStateChangeToDown NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibVsiName
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when vsi state change to down
+         happens."
+    ::= { ibVsiNotifications 2 }
+
+ibVsiMacLimitMax NOTIFICATION-TYPE
+    OBJECTS
+        {
+             ibVsiName
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when The number
+         of MAC address entries on the VSI reached the
+         upper limit happens.  The first  element show
+         the vsi name"
+    ::= { ibVsiNotifications 3 }
+
+ibVsiMacLimitMaxClear NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibVsiName
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when The number of
+         MAC address entries on the VSI fell below the upper
+         limit happens.  The first element show the the vsi
+         name."
+    ::= { ibVsiNotifications 4 }
+
+ibVsiLabelResourceNotEnough NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibVsiName
+        }
+    STATUS      current
+    DESCRIPTION
+    "This notification is generated when alloc label failed due to no enough
+    label resource."
+    ::= {ibVsiNotifications 5}
+
+ibVsiLabelResourceRestore NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibVsiName
+        }
+    STATUS      current
+    DESCRIPTION
+    "This notification is generated when label resource restores available."
+    ::= {ibVsiNotifications 6}
+
+ibVsiPwNumberMaxExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibVsiName
+        }
+    STATUS      current
+    DESCRIPTION
+    "This notification is generated when pw number exceed specification."
+    ::= {ibVsiNotifications 7}
+
+ibVsiDelete NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibVsiName
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when a VSI is deleted."
+    ::= { ibVsiNotifications 8 }
+-- =============================================================================
+-- End of Notifications
+-- =============================================================================
+END

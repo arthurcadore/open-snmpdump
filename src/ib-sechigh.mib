@@ -1,0 +1,513 @@
+-- ==========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The MIB is designed to show information on high-end driver products.
+-- Reference:
+-- Version: V1.4
+-- History:
+-- V1.0  2017-09 Initial version created by meirongjun 14958.
+-- V1.1  2020-05 Added ibSecHighFaultMonitor by sunlibing 21109.
+-- V1.2  2021-01 Added ibSecHighTemperMonitor by sunlibing 21109.
+-- V1.3  2021-02 Added ibSecHighParityErrorMonitor by sunlibing 21109.
+-- V1.4  2021-05 Added ibSecHighInputVoltageMonitor by gkf 8708.
+-- ==========================================================================
+IB-SECHIGH-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI;         -- [RFC2578]
+
+ibSecHigh MODULE-IDENTITY
+    LAST-UPDATED "202105170000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The private MIB file includes the information on high-end driver products."
+    REVISION      "202105170000Z"
+    DESCRIPTION
+        "Add ibSecHighInputVoltageMonitor."
+    REVISION      "202102030000Z"
+    DESCRIPTION
+        "Add ibSecHighParityErrorMonitor."
+    REVISION      "202101060000Z"
+    DESCRIPTION
+        "Add ibSecHighTemperMonitor."
+    REVISION      "202005290000Z"
+    DESCRIPTION
+        "Added ibSecHighFaultMonitor."
+    REVISION      "201709162020Z"
+    DESCRIPTION
+        "Initial revision of this MIB module."
+    ::= { ibCommon 171 }
+--
+-- Node definitions
+--
+ibSecHighMonitor OBJECT IDENTIFIER ::= { ibSecHigh 1 }
+
+
+--
+-- ibSecHighHgMonitorAlarm context table definitions
+--
+ibSecHighHgMonitorAlarmVar OBJECT IDENTIFIER   ::= { ibSecHighMonitor 1 }
+
+ibSecHighHgMonitorAlarmType OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Type of the alarm,0 represent recovery normal,1 represent link status error,
+            2 represent Some packets were dropped on the link."
+    ::= { ibSecHighHgMonitorAlarmVar 1 }
+
+ibSecHighHgMonitorAlarmSrcChassis OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the chassis where the source end of the alarmed link resides."
+    ::= { ibSecHighHgMonitorAlarmVar 2 }
+
+ibSecHighHgMonitorAlarmSrcSlot OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the slot where the source end of the alarmed link resides."
+    ::= { ibSecHighHgMonitorAlarmVar 3 }
+
+ibSecHighHgMonitorAlarmSrcChip OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the chip where the source end of the alarmed link resides."
+    ::= { ibSecHighHgMonitorAlarmVar 4 }
+
+ibSecHighHgMonitorAlarmSrcPort OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the port where the source end of the alarmed link resides."
+    ::= { ibSecHighHgMonitorAlarmVar 5 }
+
+ibSecHighHgMonitorAlarmDstChassis OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the chassis where the destination end of the alarmed link resides."
+    ::= { ibSecHighHgMonitorAlarmVar 6 }
+
+ibSecHighHgMonitorAlarmDstSlot OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the slot where the destination end of the alarmed link resides."
+    ::= { ibSecHighHgMonitorAlarmVar 7 }
+
+ibSecHighHgMonitorAlarmDstChip OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the chip where the destination end of the alarmed link resides."
+    ::= { ibSecHighHgMonitorAlarmVar 8 }
+
+ibSecHighHgMonitorAlarmDstPort OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the port where the destination end of the alarmed link resides."
+    ::= { ibSecHighHgMonitorAlarmVar 9 }
+
+ibSecHighHgMonitorAlarmReason OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..512))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Cause of the alarm."
+    ::= { ibSecHighHgMonitorAlarmVar 10 }
+
+
+
+-- ===============================================
+-- Definition of traps.
+-- ===============================================
+ibSecHighHgMonitorAlarmTrap OBJECT IDENTIFIER ::= { ibSecHighMonitor 2 }
+ibSecHighHgMonitorAlarmNotifications OBJECT IDENTIFIER ::= { ibSecHighHgMonitorAlarmTrap 0 }
+
+ibSecHighHgMonitorAlarmNotification NOTIFICATION-TYPE
+    OBJECTS {
+                ibSecHighHgMonitorAlarmType,
+                ibSecHighHgMonitorAlarmSrcChassis,
+                ibSecHighHgMonitorAlarmSrcSlot,
+                ibSecHighHgMonitorAlarmSrcChip,
+                ibSecHighHgMonitorAlarmSrcPort,
+                ibSecHighHgMonitorAlarmDstChassis,
+                ibSecHighHgMonitorAlarmDstSlot,
+                ibSecHighHgMonitorAlarmDstChip,
+                ibSecHighHgMonitorAlarmDstPort,
+                ibSecHighHgMonitorAlarmReason
+            }
+    STATUS     current
+    DESCRIPTION
+           "This notification is generated when an HgMonitor alarm is generated."
+    ::= { ibSecHighHgMonitorAlarmNotifications 1 }
+
+
+
+-- ===============================================
+-- Definition of ibSecHighFaultMonitor.
+-- ===============================================
+ibSecHighFaultMonitor OBJECT IDENTIFIER ::= { ibSecHighMonitor 3 }
+
+-- ============
+-- ibSecHighFaultAlm context variables definition
+-- ============
+ibSecHighFaultAlmVar OBJECT IDENTIFIER ::= { ibSecHighFaultMonitor 1 }
+
+
+ibSecHighFaultAlmType OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Type of the alarm, 1 represents Hg link status error,
+            2 represents Hg packet loss error, 3 represents back board E2PROM error,
+            4 represents board E2PROM error, 5 represents CPLD chip error,
+            101 to 200 represent FPGA errors."
+    ::= { ibSecHighFaultAlmVar 1 }
+
+ibSecHighFaultAlmChassis OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the chassis in which error occurs."
+    ::= { ibSecHighFaultAlmVar 2 }
+
+ibSecHighFaultAlmSlot OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the slot in which error occurs."
+    ::= { ibSecHighFaultAlmVar 3 }
+
+ibSecHighFaultAlmDstChassis OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the destination chassis in which Hg error occurs."
+    ::= { ibSecHighFaultAlmVar 4 }
+
+ibSecHighFaultAlmDstSlot OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the destination slot in which Hg error occurs."
+    ::= { ibSecHighFaultAlmVar 5 }
+
+
+ibSecHighFaultAlmChip OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Id of the error chip."
+    ::= { ibSecHighFaultAlmVar 6 }
+
+ibSecHighFaultAlmInfo OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..512))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Details of the alarm notification."
+    ::= { ibSecHighFaultAlmVar 7 }
+
+
+-- ===============================================
+-- Definition of Fault monitor traps.
+-- ===============================================
+ibSecHighFaultAlmTrap OBJECT IDENTIFIER ::= { ibSecHighFaultMonitor 2 }
+
+-- ===============================================
+-- Definition of Fault monitor traps Pre.
+-- ===============================================
+ibSecHighFaultAlmTrapPre OBJECT IDENTIFIER ::= { ibSecHighFaultAlmTrap 0 }
+
+
+-- ============
+-- ibSecHighFaultMonitorChipAlarm trap definition
+-- ============
+
+ibSecHighFaultMonChipAlmNotifi NOTIFICATION-TYPE
+    OBJECTS {
+                ibSecHighFaultAlmType,
+                ibSecHighFaultAlmChassis,
+                ibSecHighFaultAlmSlot,
+                ibSecHighFaultAlmChip,
+                ibSecHighFaultAlmInfo
+            }
+    STATUS     current
+    DESCRIPTION
+           "This notification is generated when a chip error occurs."
+    ::= { ibSecHighFaultAlmTrapPre 1 }
+
+-- ============
+-- ibSecHighFaultMonChipAlm resume trap definition
+-- ============
+
+ibSecHighFaultMonChipAlmResu NOTIFICATION-TYPE
+    OBJECTS {
+                ibSecHighFaultAlmType,
+                ibSecHighFaultAlmChassis,
+                ibSecHighFaultAlmSlot,
+                ibSecHighFaultAlmChip,
+                ibSecHighFaultAlmInfo
+            }
+    STATUS     current
+    DESCRIPTION
+           "This notification is generated when a chip error is recovered."
+    ::= { ibSecHighFaultAlmTrapPre 2 }
+
+-- ============
+-- ibSecHighFaultMonitorHgAlarm trap definition
+-- ============
+
+ibSecHighFaultMonHgAlmNotifi NOTIFICATION-TYPE
+    OBJECTS {
+                ibSecHighFaultAlmType,
+                ibSecHighFaultAlmChassis,
+                ibSecHighFaultAlmSlot,
+                ibSecHighFaultAlmDstChassis,
+                ibSecHighFaultAlmDstSlot,
+                ibSecHighFaultAlmInfo
+            }
+    STATUS     current
+    DESCRIPTION
+           "This notification is generated when an Hg error occurs."
+    ::= { ibSecHighFaultAlmTrapPre 3 }
+
+-- ============
+-- ibSecHighFaultMonHgAlm resume trap definition
+-- ============
+
+ibSecHighFaultMonHgAlmResu NOTIFICATION-TYPE
+    OBJECTS {
+                ibSecHighFaultAlmType,
+                ibSecHighFaultAlmChassis,
+                ibSecHighFaultAlmSlot,
+                ibSecHighFaultAlmDstChassis,
+                ibSecHighFaultAlmDstSlot,
+                ibSecHighFaultAlmInfo
+            }
+    STATUS     current
+    DESCRIPTION
+           "This notification is generated when an Hg error is recovered."
+    ::= { ibSecHighFaultAlmTrapPre 4 }
+
+-- ============
+-- ibSecHighTemperMonitor definition
+-- ============
+ibSecHighTemperMonitor OBJECT IDENTIFIER ::= { ibSecHigh 2 }
+
+-- ============
+-- ibSecHighTemperAlarmVar definition
+-- ============
+ibSecHighTemperAlarmVar OBJECT IDENTIFIER ::= { ibSecHighTemperMonitor 1 }
+
+ibSecHighTemperAlarmChassis OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the chassis in which temperature exdceeds the shutdown threshold."
+    ::= { ibSecHighTemperAlarmVar 1 }
+
+ibSecHighTemperAlarmSlot OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the slot in which temperature exdceeds the shutdown threshold."
+    ::= { ibSecHighTemperAlarmVar 2 }
+
+ibSecHighTemperAlarmHotspotIndx OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Index of the hotspot of which temperature exdceeds the shutdown threshold."
+    ::= { ibSecHighTemperAlarmVar 3 }
+
+ibSecHighTemperAlarmCurTemper OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Current temperature of the hotspot that exceeds the high temperature shutdown threshold."
+    ::= { ibSecHighTemperAlarmVar 4 }
+
+ibSecHighTemperAlarmLimit OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "The power down threshold of ehe equipment."
+    ::= { ibSecHighTemperAlarmVar 5 }
+
+-- ===============================================
+-- Definition of Temperature monitor trap.
+-- ===============================================
+ibSecHighTemperAlarmTrap OBJECT IDENTIFIER ::= { ibSecHighTemperMonitor 2 }
+
+-- ===============================================
+-- Definition of Temperature monitor trap Pre.
+-- ===============================================
+ibSecHighTemperAlmTrapPre OBJECT IDENTIFIER ::= { ibSecHighTemperAlarmTrap 0 }
+
+-- ============
+-- ibSecHighTemperAlarm trap definition
+-- ============
+
+ibSecHighTemperAlarmNotify NOTIFICATION-TYPE
+    OBJECTS {
+                ibSecHighTemperAlarmChassis,
+                ibSecHighTemperAlarmSlot,
+                ibSecHighTemperAlarmHotspotIndx,
+                ibSecHighTemperAlarmCurTemper,
+                ibSecHighTemperAlarmLimit
+            }
+    STATUS     current
+    DESCRIPTION
+           "This notification is generated when a hotspot's temperature exceeds its power down threshold."
+    ::= { ibSecHighTemperAlmTrapPre 1 }
+
+-- ============
+-- ibSecHighParityErrorMonitor definition
+-- ============
+ibSecHighParityErrorMonitor OBJECT IDENTIFIER ::= { ibSecHigh 3 }
+
+-- ============
+-- ibSecHighParityErrorAlarmVar definition
+-- ============
+ibSecHighParityErrorAlarmVar OBJECT IDENTIFIER ::= { ibSecHighParityErrorMonitor 1 }
+
+ibSecHighParityErrorAlarmChassis OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the chassis in which Parity Error occurs."
+    ::= { ibSecHighParityErrorAlarmVar 1 }
+
+ibSecHighParityErrorAlarmSlot OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the slot in which Parity Error occurs."
+    ::= { ibSecHighParityErrorAlarmVar 2 }
+
+ibSecHighParityErrorAlarmChipUnit OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the ChipUnit of which Parity Error occurs."
+    ::= { ibSecHighParityErrorAlarmVar 3 }
+
+-- ===============================================
+-- Definition of Parity Error monitor trap.
+-- ===============================================
+ibSecHighParityErrorAlarmTrap OBJECT IDENTIFIER ::= { ibSecHighParityErrorMonitor 2 }
+
+-- ===============================================
+-- Definition of Parity Error trap Pre.
+-- ===============================================
+ibSecHighParityErrorAlarmTrapPre OBJECT IDENTIFIER ::= { ibSecHighParityErrorAlarmTrap 0 }
+
+-- ============
+-- ibSecHighParityError trap definition
+-- ============
+
+ibSecHighParityErrorAlarmNotify NOTIFICATION-TYPE
+    OBJECTS {
+                ibSecHighParityErrorAlarmChassis,
+                ibSecHighParityErrorAlarmSlot,
+                ibSecHighParityErrorAlarmChipUnit
+            }
+    STATUS     current
+    DESCRIPTION
+           "This notification is generated when a severe parity error occurs."
+    ::= { ibSecHighParityErrorAlarmTrapPre 1 }
+
+-- ============
+-- ibSecHighInputVoltageMonitor definition
+-- ============
+ibSecHighInputVoltageMonitor OBJECT IDENTIFIER ::= { ibSecHigh 4 }
+
+-- ============
+-- ibSecHighInputVoltageAlarmVar definition
+-- ============
+ibSecHighInputVoltageAlarmVar OBJECT IDENTIFIER ::= { ibSecHighInputVoltageMonitor 1 }
+
+ibSecHighInputVoltageAlarmChassis OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the chassis in which input voltage abnormal."
+    ::= { ibSecHighInputVoltageAlarmVar 1 }
+
+ibSecHighInputVoltageAlarmPowerId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Number of the slot in which input voltage abnormal."
+    ::= { ibSecHighInputVoltageAlarmVar 2 }
+
+ibSecHighInputVoltageAlarmState OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..512))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+            "Index of the hotspot of which input voltage abnormal."
+    ::= { ibSecHighInputVoltageAlarmVar 3 }
+
+-- ===============================================
+-- Definition of InputVoltage monitor trap.
+-- ===============================================
+ibSecHighInputVoltageAlarmTrap OBJECT IDENTIFIER ::= { ibSecHighInputVoltageMonitor 2 }
+
+-- ===============================================
+-- Definition of InputVoltage monitor trap Pre.
+-- ===============================================
+ibSecHighInputVoltageAlmTrapPre OBJECT IDENTIFIER ::= { ibSecHighInputVoltageAlarmTrap 0 }
+
+-- ============
+-- ibSecHighInputVoltageAlarm trap definition
+-- ============
+
+ibSecHighInputVoltageAlarmNotify NOTIFICATION-TYPE
+    OBJECTS {
+                ibSecHighInputVoltageAlarmChassis,
+                ibSecHighInputVoltageAlarmPowerId,
+                ibSecHighInputVoltageAlarmState
+            }
+    STATUS     current
+    DESCRIPTION
+           "This notification is generated when the value of power's input voltage register is abnormal"
+    ::= { ibSecHighInputVoltageAlmTrapPre 1 }
+END

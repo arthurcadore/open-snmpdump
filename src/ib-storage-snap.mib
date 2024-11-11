@@ -1,0 +1,1853 @@
+-- ===========================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- Description: The MIB is designed to manage the snap of storage device.
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 2007-09-14 created by yangqi
+-- =================================================================
+IB-STORAGE-SNAP-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+        Counter32, Integer32,
+        OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI
+        TEXTUAL-CONVENTION, TruthValue, DateAndTime, RowStatus
+    FROM SNMPv2-TC
+        InetAddressType, InetAddress
+    FROM INET-ADDRESS-MIB
+        entPhysicalIndex
+    FROM ENTITY-MIB
+        IbStorageOnlineState, IbStorageEnableState, IbStorageActionType,
+        IbLvIDType, IbRaidIDType, IbExtendSelectPolicy, ibStorageRef
+    FROM IB-STORAGE-REF-MIB;
+
+ibStorageSnap MODULE-IDENTITY
+    LAST-UPDATED "200709141452Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB describes the general information about snap of storage device."
+    ::= { ibStorageRef 2 }
+
+ibSnapMibObjects OBJECT IDENTIFIER ::= { ibStorageSnap 1 }
+
+ibGlobalSnapSettingsObject  OBJECT IDENTIFIER ::= { ibSnapMibObjects 1 }
+ibAddtionalSpaceMaxSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "TB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the maximal size of snapshot resource, safecache, 
+        and Continued replication Resource ."
+    ::= { ibGlobalSnapSettingsObject 1 }
+
+-- Snap Resource Config Table
+-- This table described how to config a snap on a special logic volume.
+ibSnapConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSnapConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity to config the snapshot resources for special logic
+        volumes."
+    ::= { ibSnapMibObjects 2 }
+
+ibSnapConfigEntry OBJECT-TYPE
+    SYNTAX      IbSnapConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing configuration about the snapshot resource."
+    INDEX
+        {
+            ibSnapLvIndex
+        }
+
+    ::= { ibSnapConfigTable 1 }
+
+IbSnapConfigEntry ::= SEQUENCE
+    {
+        ibSnapLvIndex             IbLvIDType,
+        ibSnapAreaId              IbLvIDType,
+        ibSnapAreaAutoExpand      IbStorageEnableState,
+        ibSnapAreaThreshold       Integer32,
+        ibSnapAreaIncSize         Integer32,
+        ibSnapAreaMaxSize         Integer32,
+        ibSnapAreaFullDeleteTM    INTEGER,
+        ibSnapAreaNotify          IbStorageEnableState,
+        ibSnapAreaStatus          IbStorageOnlineState,
+        ibSnapRaidUuid            IbRaidIDType,
+        ibSnapRaidSize            Integer32,
+        ibSnapRaidSelectPolicy    IbExtendSelectPolicy,
+        ibSnapAreaTotalSize       Integer32,
+        ibSnapAreaFreeSize        Integer32,
+        ibSnapExtendTimes         Integer32,
+        ibSnapRowStatus           RowStatus
+    }
+
+ibSnapLvIndex OBJECT-TYPE
+    SYNTAX      IbLvIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the index of ibSnapConfigTable. The object
+        identified by this index is the same object as identified by the
+        same value of ibLvIndex."
+    ::= { ibSnapConfigEntry 1 }
+
+ibSnapAreaId OBJECT-TYPE
+    SYNTAX      IbLvIDType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the snapshot resource of the logic volume."
+    ::= { ibSnapConfigEntry 2 }
+
+ibSnapAreaAutoExpand OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes if the space of snapshot resource can be expanded
+        automatically."
+    DEFVAL { disable }
+    ::= { ibSnapConfigEntry 3 }
+
+ibSnapAreaThreshold OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "If ibSnapAreaAutoExpand is selected, the 'ibSnapAreaThreshold' means 
+        the threshold of the snapshot resource."
+    ::= { ibSnapConfigEntry 4 }
+
+ibSnapAreaIncSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "If ibSnapAreaAutoExpand is selected, the 'ibSnapAreaIncSize' means 
+        the amount of space to be allocated for each expansion."
+    ::= { ibSnapConfigEntry 5 }
+
+
+ibSnapAreaMaxSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "If ibSnapAreaAutoExpand is selected, the 'ibSnapAreaIncSize' means the
+        max size of snapshot resource."
+    ::= { ibSnapConfigEntry 6 }
+
+ibSnapAreaFullDeleteTM OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            rotative(1),
+            none(2)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if the snapshot resource is out of space and expand 
+        failed, if the system delete the old timemark until enough space or not."        
+    DEFVAL { none }
+    ::= { ibSnapConfigEntry 7 }
+
+ibSnapAreaNotify OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes if a snapshot notification should be send to the client when the
+        system create a timemark."
+    ::= { ibSnapConfigEntry 8 }
+
+ibSnapAreaStatus OBJECT-TYPE
+    SYNTAX      IbStorageOnlineState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the state of the snapshot resource."
+    ::= { ibSnapConfigEntry 9 }
+
+ibSnapRaidUuid OBJECT-TYPE
+    SYNTAX      IbRaidIDType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the raid where the snapshot resource is created."
+    ::= { ibSnapConfigEntry 10 }
+
+
+
+ibSnapRaidSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the size designated when the snapshot resource
+        is created."
+    ::= { ibSnapConfigEntry 11 }
+
+
+ibSnapRaidSelectPolicy OBJECT-TYPE
+    SYNTAX      IbExtendSelectPolicy
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the policy when the snapshot resource is created
+        automatically.             
+        Note that the value can not be 'none' when the value of associated
+        ibSnapRaidUuid object is equal to null."
+    DEFVAL { none }
+    ::= { ibSnapConfigEntry 12 }
+
+
+ibSnapAreaTotalSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the current total size of the snapshot resource."
+    ::= { ibSnapConfigEntry 13 }
+
+ibSnapAreaFreeSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the free size of the snapshot resource."
+    ::= { ibSnapConfigEntry 14 }
+
+
+ibSnapExtendTimes OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the times the snapshot resource extended."
+    ::= { ibSnapConfigEntry 15 }
+    
+ibSnapRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the action of snapshot resource.
+        Note that the assocai snapshot resource can not be delete when a snapshot copy is
+        processing or the TimeMark is enabled, or the replication is enabled."
+    ::= { ibSnapConfigEntry 16 }
+
+
+-- Snap Resource Expand Table
+-- This table described how to expand a snapshot resource.
+ibSnapExpandTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSnapExpandEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity to expand a snapshot resource."
+    ::= { ibSnapMibObjects 3 }
+
+ibSnapExpandEntry OBJECT-TYPE
+    SYNTAX      IbSnapExpandEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing expand information applicable to the snapshot resource."
+    INDEX
+        {
+            ibSnapLvIndex,
+            ibSAExpRaidUuid
+        }
+
+    ::= { ibSnapExpandTable 1 }
+
+IbSnapExpandEntry ::= SEQUENCE
+    {
+        ibSAExpRaidUuid        IbRaidIDType,
+        ibSAExpSize            Integer32,
+        ibSAExpRaidSize        Integer32,
+        ibSnapAreaExpRowStatus RowStatus
+    }
+
+ibSAExpRaidUuid OBJECT-TYPE
+    SYNTAX      IbRaidIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This index is identical to ibRaidUuid in IB-RAID-MIB."
+    ::= { ibSnapExpandEntry 1 }
+
+ibSAExpSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the increased size for snapshot resource when
+        expanded. The units is million bytes. The value is always equal to
+        zero when read."
+    ::= { ibSnapExpandEntry 2 }
+
+
+ibSAExpRaidSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object describes the size for snapshot resource on the raid.
+        The units is million bytes. The value is always equal to
+        zero when read."
+    ::= { ibSnapExpandEntry 3 }
+
+ibSnapAreaExpRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the actions to expand the size for snap."
+    ::= { ibSnapExpandEntry 4 }
+
+
+-- Snap Resource Copy Table
+-- This table described how to take a snapshot copy.
+ibSnapCopyTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSnapCopyEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity about snapshot copy."
+    ::= { ibSnapMibObjects 4 }
+
+ibSnapCopyEntry OBJECT-TYPE
+    SYNTAX      IbSnapCopyEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing snapshot copy information applicable."
+    INDEX
+        {
+            ibSnapLvIndex
+        }
+
+    ::= { ibSnapCopyTable 1 }
+
+IbSnapCopyEntry ::= SEQUENCE
+    {
+        ibSnapCopyLvIndex       IbLvIDType,
+        ibSnapCopyPercentage    Integer32,
+        ibSnapCopyStartTime     DateAndTime,
+        ibSnapCopySwitch        INTEGER
+    }
+
+ibSnapCopyLvIndex OBJECT-TYPE
+    SYNTAX      IbLvIDType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the index of destination logic volume for
+        snapshot copy."
+    ::= { ibSnapCopyEntry 1 }
+
+ibSnapCopyPercentage OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the percentage of snapshot copy. The value
+        is equal to zero if the snapshot copy has not started. When finished,
+        the value is always equal to '100'."
+    ::= { ibSnapCopyEntry 2 }
+
+ibSnapCopyStartTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the time to start the snapshot copy."
+    ::= { ibSnapCopyEntry 3 }
+
+ibSnapCopySwitch OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            start(1),
+            stop(2),
+            none(3)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object describes the actions to start or stop the snapshot copy.
+        When read, the value of 'none' will be get.
+        Note that if the snapshot resource of source logic volume has not been
+        created, the action of snapshot copy will be refused by agent."
+    ::= { ibSnapCopyEntry 4 }
+
+
+-- TimeMark Resource Config Table
+-- This table described how to config a TimeMark resource on a special logic
+-- volume.
+ibTimeMarkConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTimeMarkConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity to config a TimeMark on a special logic
+        volume."
+    ::= { ibSnapMibObjects 5 }
+
+ibTimeMarkConfigEntry OBJECT-TYPE
+    SYNTAX      IbTimeMarkConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing config information applicable to the TimeMark."
+    INDEX
+        {
+            ibSnapLvIndex
+        }
+
+    ::= { ibTimeMarkConfigTable 1 }
+
+IbTimeMarkConfigEntry ::= SEQUENCE
+    {
+        ibTimeMarkCounts            Integer32,
+        ibTimeMarkInitializeTime    DateAndTime,
+        ibTimeMarkInterval          Integer32,
+        ibTimeMarkLastTime          DateAndTime,
+        ibTimeMarkTotal             Integer32,
+        ibTimeMarkSwitch            IbStorageEnableState
+    }
+
+
+ibTimeMarkCounts OBJECT-TYPE
+    SYNTAX      Integer32(1..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the max num of TimeMark which can be configed."
+    ::= { ibTimeMarkConfigEntry 1 }
+
+ibTimeMarkInitializeTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the date and time when the first TimeMark
+        is created on the logic volume."
+    ::= { ibTimeMarkConfigEntry 2 }
+
+ibTimeMarkInterval OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the interval when the TimeMark is created
+        automatically if the value of this object is not equal to zero.
+        The units is second. the min value is 10 seconds."
+    ::= { ibTimeMarkConfigEntry 3 }
+
+ibTimeMarkLastTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the date and time when the latest TimeMark
+        is created on the logic volume."
+    ::= { ibTimeMarkConfigEntry 4 }
+
+ibTimeMarkTotal OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the current num of TimeMark."
+    ::= { ibTimeMarkConfigEntry 5 }
+
+ibTimeMarkSwitch OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes enable or disable TimeMark."
+    ::= { ibTimeMarkConfigEntry 6 }
+
+
+-- TimeMark Resource Create Table
+-- This table described how to create a TimeMark on a special logic
+-- volume.
+ibTimeMarkCreateTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTimeMarkCreateEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity to create a TimeMark on a special logic
+        volume."
+    ::= { ibSnapMibObjects 6 }
+
+ibTimeMarkCreateEntry OBJECT-TYPE
+    SYNTAX      IbTimeMarkCreateEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing create information applicable to the TimeMark."
+    INDEX
+        {
+            ibSnapLvIndex,
+            ibTimeMarkStamp
+        }
+
+    ::= { ibTimeMarkCreateTable 1 }
+
+IbTimeMarkCreateEntry ::= SEQUENCE
+    {
+        ibTimeMarkStamp        DateAndTime,
+        ibTimeMarkComment      OCTET STRING,
+        ibTimeMarkSize         Integer32,
+        ibTimeMarkRowStatus    RowStatus
+    }
+
+ibTimeMarkStamp OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the date and time the TimeMark is created."
+    ::= { ibTimeMarkCreateEntry 1 }
+
+ibTimeMarkComment OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the comment of the TimeMark."
+    ::= { ibTimeMarkCreateEntry 2 }
+
+ibTimeMarkSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "KB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the current size of the TimeMark."
+    ::= { ibTimeMarkCreateEntry 3 }
+
+ibTimeMarkRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the action to create or delete the TimeMark.
+        Note that the TimeMark can not be deleted if it is using."
+    ::= { ibTimeMarkCreateEntry 4 }
+
+
+-- TimeMark Copy Table
+-- This table described how to do a TimeMark copy.
+ibTimeMarkCopyTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTimeMarkCopyEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity about a TimeMark copy."
+    ::= { ibSnapMibObjects 7 }
+
+ibTimeMarkCopyEntry OBJECT-TYPE
+    SYNTAX      IbTimeMarkCopyEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing config information applicable to the TimeMark copy."
+    INDEX
+        {
+            ibSnapLvIndex,
+            ibTimeMarkStamp
+        }
+
+    ::= { ibTimeMarkCopyTable 1 }
+
+IbTimeMarkCopyEntry ::= SEQUENCE
+    {
+        ibTMCopyDestLvId      IbLvIDType,
+        ibTMCopyPercentage    Integer32,
+        ibTMCopyStartTime     DateAndTime,
+        ibTMCopySwitch        INTEGER
+    }
+
+
+ibTMCopyDestLvId OBJECT-TYPE
+    SYNTAX      IbLvIDType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the index of destination logic volume for
+        TimeMark copy."
+    ::= { ibTimeMarkCopyEntry 1 }
+
+ibTMCopyPercentage OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the percentage of TimeMark copy. The value
+        is equal to zero if the TimeMark copy has not started. When finished,
+        the value is always equal to '100'."
+    ::= { ibTimeMarkCopyEntry 2 }
+
+
+ibTMCopyStartTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the time to start the TimeMark copy."
+    ::= { ibTimeMarkCopyEntry 3 }
+
+ibTMCopySwitch OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            start(1),
+            stop(2),
+            none(3)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object describes the actions to start or stop the TimeMark copy.
+        When read, the value of 'none' will be get."
+    ::= { ibTimeMarkCopyEntry 4 }
+
+
+-- TimeMark Rollback Table
+-- This table described how to use a TimeMark to rollback the logic volume.
+ibTimeMarkRollbackTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTimeMarkRollbackEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity to use a TimeMark to rollback the logic volume."
+    ::= { ibSnapMibObjects 8 }
+
+ibTimeMarkRollbackEntry OBJECT-TYPE
+    SYNTAX      IbTimeMarkRollbackEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing config information applicable to use a TimeMark to rollback the logic volume."
+    INDEX
+        {
+            ibSnapLvIndex,
+            ibTimeMarkStamp
+        }
+
+    ::= { ibTimeMarkRollbackTable 1 }
+
+IbTimeMarkRollbackEntry ::= SEQUENCE
+    {
+        ibTMRollbackPercentage    Integer32,
+        ibTMRollbackStartTime     DateAndTime,
+        ibTMRollbackSwitch        IbStorageActionType
+    }
+
+ibTMRollbackPercentage OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the percentage of rollback."
+    ::= { ibTimeMarkRollbackEntry 1 }
+
+ibTMRollbackStartTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the time to start the rollback."
+    ::= { ibTimeMarkRollbackEntry 2 }
+
+ibTMRollbackSwitch OBJECT-TYPE
+    SYNTAX      IbStorageActionType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object describes the actions to use a TimeMark to rollback the logic volume.
+        Note that once you roll back, you cannot roll forward, all the later TimeMark behind it
+        will be deleted."
+    ::= { ibTimeMarkRollbackEntry 3 }
+
+
+-- Time View Table
+-- This table described how to config TimeView on a special TimeMark
+-- mark.
+ibTimeViewTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbTimeViewEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity to config a TimeView on a special
+        TimeMark."
+    ::= { ibSnapMibObjects 9 }
+
+ibTimeViewEntry OBJECT-TYPE
+    SYNTAX      IbTimeViewEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing config information applicable to the TimeView."
+    INDEX
+        {
+            ibSnapLvIndex,
+            ibTimeViewStamp
+        }
+
+    ::= { ibTimeViewTable 1 }
+
+IbTimeViewEntry ::= SEQUENCE
+    {
+        ibTimeViewStamp     DateAndTime,
+        ibTimeViewID        IbLvIDType,
+        ibTimeViewName      OCTET STRING,
+        ibTimeViewRowStatus RowStatus
+    }
+    
+ibTimeViewStamp OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the TimeView. The object identified by this
+        index is the same object as identified by the same value of 
+        ibTimeMarkStamp."
+    ::= { ibTimeViewEntry 1 }
+    
+ibTimeViewID OBJECT-TYPE
+    SYNTAX      IbLvIDType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the TimeView. "
+    ::= { ibTimeViewEntry 2 }
+
+ibTimeViewName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the name of the TimeView."
+    ::= { ibTimeViewEntry 3 }
+
+ibTimeViewRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the actions to create or delete the TimeView."
+    ::= { ibTimeViewEntry 4 }
+
+
+-- Logic Volume Replica Config Table
+-- This table described how to config logic volume replica.
+ibReplicaConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbReplicaConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity to config replication for a logic volume."
+    ::= { ibSnapMibObjects 10 }
+
+ibReplicaConfigEntry OBJECT-TYPE
+    SYNTAX      IbReplicaConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing config information applicable to the replication for a logic volume."
+    INDEX
+        {
+            ibRepLocalLvIndex
+        }
+
+    ::= { ibReplicaConfigTable 1 }
+
+IbReplicaConfigEntry ::= SEQUENCE
+    {
+        ibRepLocalLvIndex  	    	IbLvIDType,
+        ibLvRepLocalWay            	INTEGER,
+        ibRepLocalServerIP          	InetAddress,
+        ibRepLocalServerIPType      	InetAddressType,
+        ibRepLocalServerName        	OCTET STRING,
+        ibRepLocalServerUsername    	OCTET STRING,
+        ibRepLocalServerPassword    	OCTET STRING,
+        ibRepRemoteServerIP          	InetAddress,
+        ibRepRemoteServerIPType      	InetAddressType,
+        ibRepRemoteServerName        	OCTET STRING,
+        ibRepRemoteServerUsername    	OCTET STRING,
+        ibRepRemoteServerPassword    	OCTET STRING,
+        ibRepRemoteLvIndex         	IbLvIDType,
+        ibReplicaMode              	INTEGER,
+        ibReplicaWatermark         	Integer32,
+        ibReplicaWatermarkRetry    	Integer32,
+        ibReplicaInitializeTime    	DateAndTime,
+        ibReplicaInterval          	Integer32,
+        ibReplicaEncrypt           	IbStorageEnableState,
+        ibReplicaCompress          	IbStorageEnableState,
+        ibReplicaUseExistTM        	IbStorageEnableState,
+        ibReplicaProtocol          	INTEGER,
+        ibReplicaScanDiff          	TruthValue,
+        ibReplicaStatSwitch        	INTEGER,
+        ibReplicaRowStatus         	RowStatus
+    }
+
+
+ibRepLocalLvIndex OBJECT-TYPE
+    SYNTAX      IbLvIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the local logic volume that is related with 
+        replication. The object identified by this index is the same object 
+        as identified by the same value of ibSnapLvIndex."
+    ::= { ibReplicaConfigEntry 1 }
+
+ibLvRepLocalWay OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            outgoing(1),
+            incoming(2)            
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of 'outgoing' means the ibRepLocalLvIndex is the primary logic 
+        volume of replication, and the ibRepRemoteLvIndex is the replica logic volume.
+        The value of 'incoming' means the ibRepLocalLvIndex is the replica logic 
+        volume of replication. , and the ibRepRemoteLvIndex is the primary logic volume."
+    ::= { ibReplicaConfigEntry 2 }
+
+ibRepLocalServerIP OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the ip address of local server."
+    ::= { ibReplicaConfigEntry 3 }
+
+ibRepLocalServerIPType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the ip address type of local server."
+    ::= { ibReplicaConfigEntry 4 }
+
+ibRepLocalServerName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the name of local server."
+    ::= { ibReplicaConfigEntry 5 }
+
+ibRepLocalServerUsername OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..32))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the username of local server."
+    ::= { ibReplicaConfigEntry 6 }
+
+ibRepLocalServerPassword OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..127))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the password of local server."
+    ::= { ibReplicaConfigEntry 7 }
+
+ibRepRemoteServerIP OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the ip address of remote server."
+    ::= { ibReplicaConfigEntry 8 }
+
+ibRepRemoteServerIPType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the ip address type of remote server."
+    ::= { ibReplicaConfigEntry 9 }
+
+ibRepRemoteServerName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the name of remote server."
+    ::= { ibReplicaConfigEntry 10 }
+
+ibRepRemoteServerUsername OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..32))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the username of remote server."
+    ::= { ibReplicaConfigEntry 11 }
+
+ibRepRemoteServerPassword OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..127))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the password of remote server."
+    ::= { ibReplicaConfigEntry 12 }
+
+ibRepRemoteLvIndex OBJECT-TYPE
+    SYNTAX      IbLvIDType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the logic volume of remote server."
+    ::= { ibReplicaConfigEntry 13 }
+
+ibReplicaMode OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            adaptive(1),
+            remote(2),
+            none(3)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the replication mode:
+        The value of 'adaptive' means that data from the primary resource is 
+        continuously replicated to a replica resource unless the system determines 
+        it is not practical or possible.
+        The value of 'remote' means that a snapshot is taken of the primary resource at 
+        prescribed intervals based on the criteria you set (schedule and/or watermark 
+        value).
+        Note that the associated Continuous Replication Resource can not be created
+        if the value of this boject is not equal to 'adaptive'."
+    ::= { ibReplicaConfigEntry 14 }
+
+ibReplicaWatermark OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the size of watermark which means a replication is scheduled."
+    ::= { ibReplicaConfigEntry 15 }
+
+ibReplicaWatermarkRetry OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "If the 'ibReplicaWatermark' is set, This object identifies the interval time to 
+        retry if the last replication is failed. 
+        The units is minute."
+    ::= { ibReplicaConfigEntry 16 }
+
+ibReplicaInitializeTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the time to start an initial replication."
+    ::= { ibReplicaConfigEntry 17 }
+
+ibReplicaInterval OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies how often the replication should be repeated after initial 
+        replication. The units is minute."
+    ::= { ibReplicaConfigEntry 18 }
+
+ibReplicaEncrypt OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the encrypt option is enable or diable."
+    DEFVAL { disable }
+    ::= { ibReplicaConfigEntry 19 }
+
+ibReplicaCompress OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the compress option is enable or diable."
+    DEFVAL { disable }
+    ::= { ibReplicaConfigEntry 20 }
+
+ibReplicaUseExistTM OBJECT-TYPE
+    SYNTAX      IbStorageEnableState
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies if using the exist TimeMark to replicate or not."
+    DEFVAL { disable }
+    ::= { ibReplicaConfigEntry 21 }
+
+ibReplicaProtocol OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            tcp(1),
+            rudp(2)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the protocol about replication. The value 'tcp' means
+        Transmission Control Protocol, and 'rudp' means Reliable User Datagram Protocol."
+    ::= { ibReplicaConfigEntry 22 }
+
+ibReplicaScanDiff OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the system to scan both the primary and replica resource 
+        to determine how much data needs to be synchronized."
+    ::= { ibReplicaConfigEntry 23 }
+
+ibReplicaStatSwitch OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            promte(1),
+            sync(2),
+            scan(3),
+            reversal(4),
+            stop(5),
+            suspend(6),
+            resume(7),
+            none(8)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the action how to operate the replica.
+        When read , a value of 'none' will be get.
+        The value of 'promte' means remove the replication relation and promote 
+        the remote copy on the target server.
+        The value of 'sync' means synchronize mannually (force a replication that 
+        is not scheduled.)        
+        The value of 'scan' means scan the delta data between primary resource and 
+        replica resource.
+        The value of 'reversal' means switch the roles of the primary resource and 
+        replica resource. The replication configuration is maintained. The primary 
+        and replica must be synchronized in order to reverse a replica. 
+        The value of 'stop' means stop a replication that is currently in progress.
+        The value of 'suspend' means suspend future replications from automatically 
+        being triggered by replication policies (watermark, interval, time). This will 
+        not stop a replication that is currently in progress.
+        The value of 'resume' means resume the replication status from suspended to 
+        normal.
+        Note that if the action of 'upgrade' is executed successfully, this replica
+        resource will become a normal logic volume, and this entry will be deleted
+        automatically.
+        Note that if the action of 'reversal' is executed successfully, Clients will 
+        be disconnected from the former primary resource."
+    ::= { ibReplicaConfigEntry 24 }
+
+ibReplicaRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the action to enable or disable the replication."
+    ::= { ibReplicaConfigEntry 25 }
+
+-- Logic Volume Replication State Table
+-- This table described the replication state.
+ibReplicaStateTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbReplicaStateEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity to show replication state."
+    ::= { ibSnapMibObjects 11 }
+
+ibReplicaStateEntry OBJECT-TYPE
+    SYNTAX      IbReplicaStateEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing show information applicable to the replication state."
+    INDEX
+        {
+            ibRepLocalLvIndex
+        }
+
+    ::= { ibReplicaStateTable 1 }
+
+IbReplicaStateEntry ::= SEQUENCE
+    {
+        ibReplicaDelta              Integer32,
+        ibReplicaLastSyncTime       DateAndTime,
+        ibReplicaNextSyncTime       DateAndTime,
+        ibReplicaSyncTotalSize      Integer32,
+        ibReplicaSyncCurPercentage  Integer32,
+        ibReplicaSyncPerformance    Integer32,
+        ibReplicaRunStatus          INTEGER
+    }
+
+ibReplicaDelta OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the size of delta data after last sync."
+    ::= { ibReplicaStateEntry 1 }
+
+ibReplicaLastSyncTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the date and time when last sync is taken."
+    ::= { ibReplicaStateEntry 2 }
+
+ibReplicaNextSyncTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the date and time when next sync will be
+        taken."
+    ::= { ibReplicaStateEntry 3 }
+
+ibReplicaSyncTotalSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies how much data need to be synchronized to 
+        the replica resource for current replication."
+    ::= { ibReplicaStateEntry 4 }
+
+ibReplicaSyncCurPercentage OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies how much data has been synchronized to the 
+        replica resource for current replication."
+    ::= { ibReplicaStateEntry 5 }
+
+ibReplicaSyncPerformance OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the performance of the synchronize. The unit is MB/s."
+    ::= { ibReplicaStateEntry 6 }
+
+ibReplicaRunStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            suspend(1),
+            idle(2),
+            stop(3),
+            sync(4),
+            scan(5)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the state of the replica."
+    ::= { ibReplicaStateEntry 7 }
+
+
+
+-- Continued replication Resource Config Table
+-- This table described how to config Continuous Replication Resource for a adaptive replication.
+ibCDRConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbCDRConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity to config Continuous Replication Resource."
+    ::= { ibSnapMibObjects 12 }
+
+ibCDRConfigEntry OBJECT-TYPE
+    SYNTAX      IbCDRConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing some information applicable to Continuous Replication 
+        Resource of the logic volume."
+    INDEX
+        {
+            ibCDRLvIndex
+        }
+
+    ::= { ibCDRConfigTable 1 }
+
+IbCDRConfigEntry ::= SEQUENCE
+    {
+        ibCDRLvIndex         IbLvIDType,
+        ibCDRID              Integer32,
+        ibCDRStatus          IbStorageOnlineState,
+        ibCDRTotalSize       Integer32,
+        ibCDRFreeSize        Integer32,
+        ibCDRSelectPolicy    IbExtendSelectPolicy,
+        ibCDRRowStatus       RowStatus
+    }
+
+ibCDRLvIndex OBJECT-TYPE
+    SYNTAX      IbLvIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the source logic volume of the Continuous Replication 
+        Resource. The object identified by this index is the same object as identified 
+        by the same value of ibRepLocalLvIndex.
+        Note that an entry of ibCDRConfigTable can be created only when the associated 
+        ibCDRDistributeTable's objects is ready or the associated select policy is not 
+        equal to 'none'.
+        If an entry is deleted, the associated ibCDRDistributeTable objects should be 
+        deleted automatically."
+    ::= { ibCDRConfigEntry 1 }
+
+ibCDRID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the Continuous Replication Resource."
+    ::= { ibCDRConfigEntry 2 }
+
+ibCDRStatus OBJECT-TYPE
+    SYNTAX      IbStorageOnlineState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the state of the Continuous Replication Resource."
+    ::= { ibCDRConfigEntry 3 }
+
+ibCDRTotalSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the total size of the Continuous Replication Resource."
+    ::= { ibCDRConfigEntry 4 }
+
+ibCDRFreeSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the free size of the Continuous Replication Resource."
+    ::= { ibCDRConfigEntry 5 }
+
+ibCDRSelectPolicy OBJECT-TYPE
+    SYNTAX      IbExtendSelectPolicy
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the policy about allocating the space for Continuous 
+        Replication Resource."
+    DEFVAL { none }
+    ::= { ibCDRConfigEntry 6 }
+
+ibCDRRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the action to create or delete the Continuous Replication 
+        Resource."
+    ::= { ibCDRConfigEntry 7 }
+
+
+-- Continuous Replication Resource Distributing Table
+-- This table described how to config the distribution of Continuous Replication Resource.
+ibCDRDistributeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbCDRDistributeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity to config the distribution of Continuous Replication 
+        Resource."
+    ::= { ibSnapMibObjects 13 }
+
+ibCDRDistributeEntry OBJECT-TYPE
+    SYNTAX      IbCDRDistributeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing some information applicable to the distribution of Continuous 
+        Replication Resource."
+    INDEX
+        {
+            ibCDRDistLvIndex,
+            ibCDRRaidUuid
+        }
+
+    ::= { ibCDRDistributeTable 1 }
+
+IbCDRDistributeEntry ::= SEQUENCE
+    {
+        ibCDRDistLvIndex     IbLvIDType,
+        ibCDRRaidUuid        IbRaidIDType,
+        ibCDRRaidSize        Integer32,
+        ibCDRExtRowStatus    RowStatus
+    }
+
+ibCDRDistLvIndex OBJECT-TYPE
+    SYNTAX      IbLvIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This index is identical to ibLvIndex in IB-LOGIC-VOLUME-MIB."
+    ::= { ibCDRDistributeEntry 1 }
+
+ibCDRRaidUuid OBJECT-TYPE
+    SYNTAX      IbRaidIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This index is identical to ibRaidUuid in IB-RAID-MIB."
+    ::= { ibCDRDistributeEntry 2 }
+
+ibCDRRaidSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the size on the special raid distributed
+        for the Continuous Replication Resource."
+    ::= { ibCDRDistributeEntry 3 }
+
+ibCDRExtRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the action to create the distribution
+        for the Continuous Replication Resource."
+    ::= { ibCDRDistributeEntry 4 }
+
+
+-- SafeCache Config Table
+-- This table described how to config SafeCache of logic volume.
+ibSafeCacheConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSafeCacheConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity to config SafeCache."
+    ::= { ibSnapMibObjects 14 }
+
+ibSafeCacheConfigEntry OBJECT-TYPE
+    SYNTAX      IbSafeCacheConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing some information applicable to SafeCache of
+        the logic volume."
+    INDEX
+        {
+            ibSafeCacheLvIndex
+        }
+
+    ::= { ibSafeCacheConfigTable 1 }
+
+IbSafeCacheConfigEntry ::= SEQUENCE
+    {
+        ibSafeCacheLvIndex         IbLvIDType,
+        ibSafeCacheID              Integer32,
+        ibSafeCacheStatus          IbStorageOnlineState,
+        ibSafeCacheTotalSize       Integer32,
+        ibSafeCacheFreeSize        Integer32,
+        ibSafeCacheSelectPolicy    IbExtendSelectPolicy,
+        ibSafeCacheThreshold       Integer32,
+        ibSafeCacheFlushTime       Integer32,
+        ibSafeCacheFlushCommand    Integer32,
+        ibSafeCacheSkipDupWrite    INTEGER,
+        ibSafeCacheRunStatus       INTEGER,
+        ibSafeCacheSwitch          INTEGER,
+        ibSafeCacheRowStatus       RowStatus
+    }
+
+ibSafeCacheLvIndex OBJECT-TYPE
+    SYNTAX      IbLvIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the source logic volume of the SafeCache.
+        The object identified by this index is the same object as identified
+        by the same value of ibLvindex.
+        Note that an entry of ibSafeCacheConfigTable can be created only when
+        the associated ibSafeCacheDistributeTable's objects is ready or the associated
+        select policy is not equal to 'none'.
+        If an entry is deleted, the associated ibSafeCacheDistributeTable
+        objects should be deleted automatically."
+    ::= { ibSafeCacheConfigEntry 1 }
+
+ibSafeCacheID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies a SafeCache."
+    ::= { ibSafeCacheConfigEntry 2 }
+
+
+ibSafeCacheStatus OBJECT-TYPE
+    SYNTAX      IbStorageOnlineState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the state of the SafeCache."
+    ::= { ibSafeCacheConfigEntry 3 }
+
+ibSafeCacheTotalSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the total size of the SafeCache.
+        The units is million bytes."
+    ::= { ibSafeCacheConfigEntry 4 }
+
+ibSafeCacheFreeSize OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the free size of the SafeCache.
+        The units is million bytes."
+    ::= { ibSafeCacheConfigEntry 5 }
+
+ibSafeCacheSelectPolicy OBJECT-TYPE
+    SYNTAX      IbExtendSelectPolicy
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the policy about allocating the space for SafeCache."
+    DEFVAL { none }
+    ::= { ibSafeCacheConfigEntry 6 }
+
+ibSafeCacheThreshold OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the maximal percentage of date changed
+        before data flushing."
+    ::= { ibSafeCacheConfigEntry 7 }
+
+
+ibSafeCacheFlushTime OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the period during which the date can stay
+        in cache before data flushing.
+        The units is second."
+    ::= { ibSafeCacheConfigEntry 8 }
+
+
+ibSafeCacheFlushCommand OBJECT-TYPE
+    SYNTAX      Integer32(1..64)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the number of commands when data flushing."
+    ::= { ibSafeCacheConfigEntry 9 }
+
+ibSafeCacheSkipDupWrite OBJECT-TYPE
+    SYNTAX      INTEGER
+	{
+            enable(1),
+            disable(2)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies skip duplicate write commands or not."
+    ::= { ibSafeCacheConfigEntry 10 }
+
+ibSafeCacheRunStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            run(1),
+            suspend(2)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the run state of the SafeCache."
+    ::= { ibSafeCacheConfigEntry 11 }
+
+ibSafeCacheSwitch OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            suspend(1),
+            resume(2),
+            none(3)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the action of the SafeCache.
+        The value 'suspend' means suspend the SafeCache.
+        The value 'resume' means resume the SafeCache."
+    ::= { ibSafeCacheConfigEntry 12 }
+
+ibSafeCacheRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the action to create or delete the SafeCache."
+    ::= { ibSafeCacheConfigEntry 13 }
+
+
+-- SafeCache Resource Distributing Table
+-- This table described how to config SafeCache resource of logic volume.
+ibSafeCacheDistributeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSafeCacheDistributeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity to config the SafeCache resource."
+    ::= { ibSnapMibObjects 15 }
+
+ibSafeCacheDistributeEntry OBJECT-TYPE
+    SYNTAX      IbSafeCacheDistributeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing some information applicable to SafeCache
+        resource of the logic volume."
+    INDEX
+        {
+            ibSafeCacheDistLvIndex,
+            ibSafeCacheRaidUuid
+        }
+
+    ::= { ibSafeCacheDistributeTable 1 }
+
+IbSafeCacheDistributeEntry ::= SEQUENCE
+    {
+        ibSafeCacheDistLvIndex     IbLvIDType,
+        ibSafeCacheRaidUuid        IbRaidIDType,
+        ibSafeCacheRaidSize        Integer32,
+        ibSafeCacheExtRowStatus    RowStatus
+    }
+
+
+ibSafeCacheDistLvIndex OBJECT-TYPE
+    SYNTAX      IbLvIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This index is identical to ibLvIndex in IB-LOGIC-VOLUME-MIB."
+    ::= { ibSafeCacheDistributeEntry 1 }
+
+ibSafeCacheRaidUuid OBJECT-TYPE
+    SYNTAX      IbRaidIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This index is identical to ibRaidUuid in IB-RAID-MIB."
+    ::= { ibSafeCacheDistributeEntry 2 }
+
+
+ibSafeCacheRaidSize OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the size on the special raid distributed
+        for the SafeCache resource."
+    ::= { ibSafeCacheDistributeEntry 3 }
+
+ibSafeCacheExtRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the action to create the distribution
+        for the SafeCache resource."
+    ::= { ibSafeCacheDistributeEntry 4 }
+
+
+
+
+-- Logic Volume Mirror Config Table
+-- This table described how to config mirror for a logic volume.
+ibMirrorConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMirrorConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity to config mirror."
+    ::= { ibSnapMibObjects 16 }
+
+ibMirrorConfigEntry OBJECT-TYPE
+    SYNTAX      IbMirrorConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing some information applicable to mirror for
+        the logic volume."
+    INDEX
+        {
+            ibMirrorLvIndex
+        }
+
+    ::= { ibMirrorConfigTable 1 }
+
+IbMirrorConfigEntry ::= SEQUENCE
+    {
+        ibMirrorLvIndex            IbLvIDType,
+        ibMirrorType               INTEGER,
+        ibMirrorStatus             IbStorageOnlineState,
+        ibMirrorName               OCTET STRING,
+        ibMirrorSyncPercentage     Integer32,
+        ibMirrorSyncPerformance    Integer32,
+        ibMirrorDelta              Integer32,
+        ibMirrorRaidType           INTEGER,
+        ibMirrorSelectPolicy       IbExtendSelectPolicy,
+        ibMirrorSwitch             INTEGER,
+        ibMirrorExtendRaidUuid     IbRaidIDType,
+        ibMirrorRowStatus          RowStatus
+    }
+
+ibMirrorLvIndex OBJECT-TYPE
+    SYNTAX      IbLvIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the source logic volume of the mirror.
+        The object identified by this index is the same object as identified
+        by the same value of ibLvindex.
+        Note that an entry of ibMirrorConfigTable can be created only when
+        the associated ibMirrorDistributeTable's objects is ready or the associated
+        select policy is not equal to 'none'.
+        If an entry is deleted, the associated ibMirrorDistributeTable
+        objects should be deleted automatically."
+    ::= { ibMirrorConfigEntry 1 }
+
+ibMirrorType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            sync(1),
+            async(2),
+            none(3)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the type of the mirror."
+    ::= { ibMirrorConfigEntry 2 }
+
+ibMirrorStatus OBJECT-TYPE
+    SYNTAX      IbStorageOnlineState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the state of the mirror resource."
+    ::= { ibMirrorConfigEntry 3 }
+
+ibMirrorName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the name of the mirror resource. it is used when 
+        promote mirror resource."
+    ::= { ibMirrorConfigEntry 4 }
+
+ibMirrorSyncPercentage OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the percentage of the mirror sync."
+    ::= { ibMirrorConfigEntry 5 }
+
+ibMirrorSyncPerformance OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the performance of the mirror sync. The unit is MB/S"
+    ::= { ibMirrorConfigEntry 6 }
+
+
+ibMirrorDelta OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "MB"    
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object identifies size of delta data after the last
+        mirror sync."
+    ::= { ibMirrorConfigEntry 7 }
+
+
+ibMirrorRaidType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            virtual(1),
+            serviceEnable(2),
+            none(3)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the raid type of the mirror resource."
+    ::= { ibMirrorConfigEntry 8 }
+
+
+ibMirrorSelectPolicy OBJECT-TYPE
+    SYNTAX      IbExtendSelectPolicy
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object describes the policy about allocating the space 
+        for mirror resource."
+    DEFVAL { none }
+    ::= { ibMirrorConfigEntry 9 }
+
+ibMirrorSwitch OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            sync(1),
+            swap(2),
+            promote(3),
+            none(4)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the state of the mirror.
+        The value of 'sync' means synchronize mannually.        
+        The value of 'swap' means switch the roles of the primary resource and 
+        mirror resource. 
+        The value of 'promte' means break the mirrored pair and convert the mirror 
+        resource into an independent logic volume. The new logic volume will have 
+        all of the properties of a regular logic volume.
+        Note that if the action of 'promte' is executed successfully, this mirror
+        resource will become a primary logic volume, and this entry will be deleted
+        automatically."
+    ::= { ibMirrorConfigEntry 10 }
+    
+ibMirrorExtendRaidUuid OBJECT-TYPE
+    SYNTAX      IbRaidIDType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the raid of the mirror resource when the primary
+        logic volume resource is extended."
+    ::= { ibMirrorConfigEntry 11 }
+
+ibMirrorRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the action to create or delete the mirror resource."
+    ::= { ibMirrorConfigEntry 12 }
+
+
+-- Logic Volume Mirror Resource Distributing Table
+-- This table described how to config mirror resource for logic volume.
+ibMirrorDistributeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMirrorDistributeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains some entity to config the mirror resource."
+    ::= { ibSnapMibObjects 17 }
+
+ibMirrorDistributeEntry OBJECT-TYPE
+    SYNTAX      IbMirrorDistributeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing some information applicable to mirror
+        resource for the logic volume."
+    INDEX
+        {
+            ibMirrorDistLvIndex,
+            ibMirrorRaidUuid
+        }
+
+    ::= { ibMirrorDistributeTable 1 }
+
+IbMirrorDistributeEntry ::= SEQUENCE
+    {
+        ibMirrorDistLvIndex     IbLvIDType,
+        ibMirrorRaidUuid        IbRaidIDType,
+        ibMirrorRaidSize        Integer32,
+        ibMirrorExtRowStatus    RowStatus
+    }
+
+
+ibMirrorDistLvIndex OBJECT-TYPE
+    SYNTAX      IbLvIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This index is identical to ibLvIndex in IB-LOGIC-VOLUME-MIB."
+    ::= { ibMirrorDistributeEntry 1 }
+
+ibMirrorRaidUuid OBJECT-TYPE
+    SYNTAX      IbRaidIDType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This index is identical to ibRaidUuid in IB-RAID-MIB."
+    ::= { ibMirrorDistributeEntry 2 }
+
+ibMirrorRaidSize OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the size on the special raid distributed
+        for the mirror resource."
+    ::= { ibMirrorDistributeEntry 3 }
+
+ibMirrorExtRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object identifies the action to create or delete the distribution
+        for the mirror resource."
+    ::= { ibMirrorDistributeEntry 4 }
+END

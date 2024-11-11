@@ -1,0 +1,80 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: International Electrotechnical Commission
+--              Media Redundancy Protocol (IECMRP) MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 created by zhengjun
+--     Initial version 2023-06-10
+-- =================================================================
+-- =================================================================
+--
+-- Import and definition
+--
+-- =================================================================
+IB-IECMRP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    MacAddress
+            FROM SNMPv2-TC;
+
+ibIecmrp MODULE-IDENTITY
+    LAST-UPDATED
+        "202306101131Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB defines objects for managing IECMRP.
+        IECMRP is a feature developed to address the slow convergence
+        issue with STP.
+        It provides link redundancy and fast convergence in
+        a ring network, allowing the backup link to take over quickly
+        when the primary link fails."
+
+    REVISION
+        "202306101131Z"
+    DESCRIPTION
+        "Initial revision of the IECMRP MIB module."
+    ::= { ibCommon  263 }
+
+ibIecmrpTrap            OBJECT IDENTIFIER ::= { ibIecmrp 1 }
+ibIecmrpTrapPrefix      OBJECT IDENTIFIER ::= { ibIecmrpTrap 0 }
+ibIecmrpMultiMangers NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIecmrpSrcMacInPdu,
+            ibIecmrpDomainID
+        }
+    STATUS      current
+    DESCRIPTION
+        "A trap message is generated when an IECMRP ring detect
+        multiple managers."
+    ::= { ibIecmrpTrapPrefix 1 }
+
+ibIecmrpTrapObjects OBJECT IDENTIFIER ::= { ibIecmrpTrap 1 }
+
+ibIecmrpSrcMacInPdu OBJECT-TYPE
+    SYNTAX MacAddress
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The source mac address in pdu."
+    ::= { ibIecmrpTrapObjects 1 }
+
+ibIecmrpDomainID OBJECT-TYPE
+    SYNTAX Integer32 (1..65535)
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "Iecmrp domain ID."
+    ::= { ibIecmrpTrapObjects 2 }
+
+END

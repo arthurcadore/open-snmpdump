@@ -1,0 +1,1465 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: RPR private MIB. Description of entity extend properties for
+-- IEEE-802DOT17-RPR-MIB
+-- Reference: IEEE-802DOT17-RPR-MIB
+-- Version: V1.2
+-- History:
+--  V1.0 created by qinxia
+--  V1.1 modified by hexuefei,Add the RPR packet drop counters table.
+--  V1.2 2015-04-30 Bug fixed by songhao
+-- =================================================================
+IB-RPR-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        ibCommon
+            FROM IB-OID-MIB
+        rprTopoImageEntry, rprTopoImageMacAddress, rprTopoImageInetAddress
+            FROM IEEE-802DOT17-RPR-MIB
+        InterfaceIndex
+            FROM IF-MIB
+        SnmpAdminString
+            FROM SNMP-FRAMEWORK-MIB
+        RowStatus, TruthValue, MacAddress, TEXTUAL-CONVENTION
+            FROM SNMPv2-TC
+        MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE,
+        Gauge32, Counter64, Integer32
+            FROM SNMPv2-SMI
+        InetAddress
+            FROM INET-ADDRESS-MIB;
+
+        ibRpr MODULE-IDENTITY
+            LAST-UPDATED "200503161000Z"  -- March 16, 2005 at 10:18:41 GMT
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION
+                "This MIB manages RPR(Resilient Packet Ring)interfaces by
+                 providing an operational table which controls parameters
+                 of each RPR interface and reports alarm conditions.
+
+                 A RPR ring is composed of two fiber rings: Outer and Inner."
+            REVISION "200503161000Z"      -- March 16, 2005 at 10:18:41 GMT
+            DESCRIPTION
+                "First published version."
+            ::= { ibCommon 60 }
+
+--
+-- Textual conventions
+--
+
+    IbRprRingletID ::= TEXTUAL-CONVENTION
+        STATUS current
+        DESCRIPTION
+            "Indicates the path on which data flow is selected.
+             The valid value is ringlet0 and ringlet1. They indicate
+             two RPR fiber rings. Ringlet0 refers to outer ring and
+             ringlet1 refers to inner ring."
+        REFERENCE
+            "IEEE 802.17 V3.3 Subclause 11.2.1.1 Span and
+             ringlet parameterization."
+        SYNTAX INTEGER
+            {
+             ringlet0(1),
+             ringlet1(2)
+        }
+
+    IbRprServiceClass ::= TEXTUAL-CONVENTION
+        STATUS current
+        DESCRIPTION
+            "Indicates the service class of RPR.
+             The valid value is ClassC, ClassB, ClassA1 and ClassA0."
+        REFERENCE
+                "IEEE 802.17 V3.3 Subclause 7.3 Service class."
+        SYNTAX INTEGER
+            {
+             classC(1),
+             classB(2),
+             classA1(3),
+             classA0(4)
+        }
+
+    ibRprObjects OBJECT IDENTIFIER ::= { ibRpr 1 }
+
+-- RPR maximum define table
+
+    ibRprMaxmumDefine OBJECT IDENTIFIER ::= { ibRprObjects 1 }
+
+    ibRprMaxmumDefineTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbRprMaxmumDefineEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This table contains the specs of RPR ring."
+      ::= { ibRprMaxmumDefine 1 }
+
+    ibRprMaxmumDefineEntry OBJECT-TYPE
+        SYNTAX IbRprMaxmumDefineEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The entry of RPR Maximum Table."
+        INDEX { ibRprMaxMumIfIndex }
+        ::= { ibRprMaxmumDefineTable 1 }
+
+    IbRprMaxmumDefineEntry ::=
+        SEQUENCE {
+            ibRprMaxMumIfIndex
+                InterfaceIndex,
+            ibRprMaxStationNumDefine
+                INTEGER,
+            ibRprMaxReservedRateDefine
+                Gauge32
+        }
+
+    ibRprMaxMumIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The ifIndex of this RPR interface."
+        ::= { ibRprMaxmumDefineEntry 1 }
+
+    ibRprMaxStationNumDefine OBJECT-TYPE
+        SYNTAX INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Max station number supported by RPR ring."
+        ::= { ibRprMaxmumDefineEntry 2 }
+
+
+    ibRprMaxReservedRateDefine OBJECT-TYPE
+        SYNTAX Gauge32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Max reserved rate supported by each RPR ringlet.
+             An estimate of the interface's current bandwidth in
+             units of 1,000,000 bits per second.  If this object
+             reports a value of 'n' then the speed of the interface
+             is somewhere in the range of 'n-500,000' to
+             'n+499,999'.  For interfaces which do not vary in
+             bandwidth or for those where no accurate estimation
+             can be made, this object should contain the nominal
+             bandwidth.  For a sub-layer which has no concept of
+             bandwidth, this object should be zero."
+        ::= { ibRprMaxmumDefineEntry 3 }
+
+    ibRprTopoImage OBJECT IDENTIFIER ::= { ibRprObjects 2 }
+
+-- extension to the RPR topology table
+
+    ibRprTopoImageXTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbRprTopoImageXEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This table contains additional objects
+             for the rprTopoImageTable in IEEE-802DOT17-RPR-MIB."
+        REFERENCE
+            "rprTopoImageTable in IEEE-802DOT17-RPR-MIB."
+        ::= { ibRprTopoImage 1 }
+
+    ibRprTopoImageXEntry OBJECT-TYPE
+        SYNTAX IbRprTopoImageXEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Each entry contains information specific to a particular
+             station on the ring. The table has at least one entry for
+             the station itself, this entry indicates zero hops on each
+             ringlet."
+         AUGMENTS { rprTopoImageEntry }
+         ::= { ibRprTopoImageXTable 1 }
+
+    IbRprTopoImageXEntry ::=
+        SEQUENCE {
+            ibRprTopoImageXWestEdgeStatus
+                TruthValue,
+            ibRprTopoImageXEastEdgeStatus
+                TruthValue,
+            ibRprTopoImageXStationName
+                SnmpAdminString
+        }
+
+    ibRprTopoImageXWestEdgeStatus OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The current edge status of the west span.
+             If an edge exists,the ibRprTopoImageXWestEdgeStatus is true.
+             Otherwise, the ibRprTopoImageXWestEdgeStatus is false."
+        REFERENCE
+            "IEEE 802.17  V3.3 Subclause 11.1.1.5, Edges"
+        ::= { ibRprTopoImageXEntry 3 }
+
+    ibRprTopoImageXEastEdgeStatus OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The current edge status of the east span.
+             If an edge exists, the ibRprTopoImageXEastEdgeStatus is true.
+             Otherwise, the ibRprTopoImageXEastEdgeStatus is false."
+        REFERENCE
+             "IEEE 802.17  V3.3 Subclause 11.1.1.5, Edges"
+        ::= { ibRprTopoImageXEntry 4 }
+
+    ibRprTopoImageXStationName OBJECT-TYPE
+        SYNTAX SnmpAdminString
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The operator assigned station name. The operator can assigned it
+             by ibRprTopoImageXStationName."
+        REFERENCE
+            "IEEE 802.17 V3.3 Subclause 11.2.6, stationName."
+        ::= { ibRprTopoImageXEntry 5 }
+
+    ibRprSpanCounters OBJECT IDENTIFIER ::= { ibRprObjects 3 }
+
+-- RPR source mac counters table
+
+    ibRprSrcMacCountTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbRprSrcMacCountEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The RPR Source Mac Count Table contains the cumulative sum
+             of frames and octects from the particular source station."
+        ::= { ibRprSpanCounters 1 }
+
+    ibRprSrcMacCountEntry OBJECT-TYPE
+        SYNTAX IbRprSrcMacCountEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry in the RPR Source Mac Count Table."
+        INDEX { ibRprSrcMacCountIfIndex, ibRprSrcMacCountBySrcAddress }
+        ::= { ibRprSrcMacCountTable 1 }
+
+    IbRprSrcMacCountEntry ::=
+        SEQUENCE {
+            ibRprSrcMacCountIfIndex
+                InterfaceIndex,
+            ibRprSrcMacCountBySrcAddress
+                MacAddress,
+          ibRprSrcMacCountReceivedFrames
+                Counter64,
+            ibRprSrcMacCountReceivedOctets
+                Counter64
+        }
+
+    ibRprSrcMacCountIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The ifIndex of this RPR interface."
+        REFERENCE
+            "RFC 2863, ifIndex."
+        ::= { ibRprSrcMacCountEntry 1 }
+
+    ibRprSrcMacCountBySrcAddress OBJECT-TYPE
+        SYNTAX MacAddress
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "MAC address of the source station where the frames come from."
+        ::= { ibRprSrcMacCountEntry 2 }
+
+    ibRprSrcMacCountReceivedFrames OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Frames received from a particular MAC address of source station."
+        ::= { ibRprSrcMacCountEntry 3 }
+
+    ibRprSrcMacCountReceivedOctets OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Octets received from a particular MAC address of source station."
+        ::= { ibRprSrcMacCountEntry 4 }
+
+-- RPR destination mac counters table
+
+    ibRprDestMacCountTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbRprDestMacCountEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The RPR Destination MAC Count Table contains the cumulative sum
+             of  frames and octects to the particular destination station."
+        ::= { ibRprSpanCounters 2 }
+
+    ibRprDestMacCountEntry OBJECT-TYPE
+        SYNTAX IbRprDestMacCountEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry in the RPR MAC Destination Count Table."
+        INDEX { ibRprDestMacCountIfIndex, ibRprDestMacCountByDestAddress }
+        ::= { ibRprDestMacCountTable 1 }
+
+    IbRprDestMacCountEntry ::=
+        SEQUENCE {
+            ibRprDestMacCountIfIndex
+                InterfaceIndex,
+            ibRprDestMacCountByDestAddress
+                MacAddress,
+            ibRprDestMacCountReceivedFrames
+                Counter64,
+            ibRprDestMacCountReceivedOctets
+                Counter64
+        }
+
+    ibRprDestMacCountIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The ifIndex of RPR interface."
+        REFERENCE
+            "RFC 2863, ifIndex"
+        ::= { ibRprDestMacCountEntry 1 }
+
+    ibRprDestMacCountByDestAddress OBJECT-TYPE
+        SYNTAX MacAddress
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "MAC address of the destination station where the frames are sent
+             to."
+        ::= { ibRprDestMacCountEntry 2 }
+
+    ibRprDestMacCountReceivedFrames OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Frames sent to a particular MAC address of destination station."
+        ::= { ibRprDestMacCountEntry 3 }
+
+    ibRprDestMacCountReceivedOctets OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Octets sent to a particular MAC address of destination station."
+        ::= { ibRprDestMacCountEntry 4 }
+
+-- RPR packet drop counters table
+
+     ibRprPktDropCountTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbRprPktDropCountEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The RPR Packet Drop Count Table contains the cumulative sum
+             of packets dropped for congestion."
+        ::= { ibRprSpanCounters 3 }
+
+     ibRprPktDropCountEntry OBJECT-TYPE
+        SYNTAX IbRprPktDropCountEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry in the RPR Packet Drop Count Table."
+        INDEX { ibRprPktDropCntIfIndex, ibRprPktDropCntRingletID }
+        ::= { ibRprPktDropCountTable 1 }
+
+     IbRprPktDropCountEntry ::=
+        SEQUENCE {
+                ibRprPktDropCntIfIndex
+                    InterfaceIndex,
+                ibRprPktDropCntRingletID
+                    IbRprRingletID,
+                ibRprDownFlowClassAPktDrops
+                    Counter64,
+                ibRprUpFlowClassAPktDrops
+                    Counter64,
+                ibRprDownFlowClassBPktDrops
+                    Counter64,
+                ibRprUpFlowClassBPktDrops
+                    Counter64,
+                ibRprDownFlowClassCPktDrops
+                    Counter64,
+                ibRprUpFlowClassCPktDrops
+                    Counter64
+        }
+
+     ibRprPktDropCntIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The ifIndex of this RPR interface."
+        REFERENCE
+             "RFC 2863, ifIndex."
+        ::= { ibRprPktDropCountEntry 1 }
+
+     ibRprPktDropCntRingletID OBJECT-TYPE
+        SYNTAX IbRprRingletID
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The RPR Ringlet of the station through which the packets transmit."
+        ::= { ibRprPktDropCountEntry 2 }
+
+     ibRprDownFlowClassAPktDrops OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total dropped number of Class A packets which transmit
+             down from the host."
+        ::= { ibRprPktDropCountEntry 3 }
+
+     ibRprUpFlowClassAPktDrops OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total dropped number of Class A packets which transmit
+             up to the host."
+        ::= { ibRprPktDropCountEntry 4 }
+
+     ibRprDownFlowClassBPktDrops OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The total dropped number of Class B packets which transmit
+             down from the host."
+        ::= { ibRprPktDropCountEntry 5 }
+
+     ibRprUpFlowClassBPktDrops OBJECT-TYPE
+         SYNTAX Counter64
+         MAX-ACCESS read-only
+         STATUS current
+         DESCRIPTION
+            "The total dropped number of Class B packets which transmit
+             up to the host."
+         ::= { ibRprPktDropCountEntry 6 }
+
+     ibRprDownFlowClassCPktDrops OBJECT-TYPE
+         SYNTAX Counter64
+         MAX-ACCESS read-only
+         STATUS current
+         DESCRIPTION
+             "The total dropped number of Class C packets which transmit
+              down from the host."
+         ::= { ibRprPktDropCountEntry 7 }
+
+     ibRprUpFlowClassCPktDrops OBJECT-TYPE
+         SYNTAX Counter64
+         MAX-ACCESS read-only
+         STATUS current
+         DESCRIPTION
+             "The total dropped number of Class C packets which transmit
+              up to the host."
+         ::= { ibRprPktDropCountEntry 8 }
+
+    ibRprRS OBJECT IDENTIFIER ::= { ibRprObjects 4 }
+
+-- The RPR static ring selection table
+
+    ibRprStaticRSTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbRprStaticRSEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The RPR Static Ring Selection table contains the static
+             ring selection information by the way of configuration."
+        ::= { ibRprRS 1 }
+
+    ibRprStaticRSEntry OBJECT-TYPE
+        SYNTAX IbRprStaticRSEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry in the RPR Static Ring Selection table."
+        INDEX { ibRprStaticRSIfIndex, ibRprStaticRSMacAddress }
+        ::= { ibRprStaticRSTable 1 }
+
+    IbRprStaticRSEntry ::=
+        SEQUENCE {
+            ibRprStaticRSIfIndex
+                InterfaceIndex,
+            ibRprStaticRSMacAddress
+                MacAddress,
+            ibRprStaticRSRingletID
+                IbRprRingletID,
+            ibRprStaticRSTtl
+                INTEGER,
+            ibRprStaticRSValid
+                TruthValue,
+            ibRprStaticRSRowStatus
+                RowStatus
+        }
+
+    ibRprStaticRSIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The ifIndex of RPR interface."
+        REFERENCE
+            "RFC 2863, ifIndex"
+        ::= { ibRprStaticRSEntry 1 }
+
+    ibRprStaticRSMacAddress OBJECT-TYPE
+        SYNTAX MacAddress
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The MAC address of the station on the ring."
+        ::= { ibRprStaticRSEntry 2 }
+
+    ibRprStaticRSRingletID OBJECT-TYPE
+        SYNTAX IbRprRingletID
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The identifier of the ring which frames are sent
+             from one station to another. Ringlet0 refers to outer ring,
+             while ringlet1 does inner."
+        ::= { ibRprStaticRSEntry 3 }
+
+    ibRprStaticRSTtl  OBJECT-TYPE
+        SYNTAX INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The hops from source station to destination station by the
+             selected ringlet."
+        ::= { ibRprStaticRSEntry 4 }
+
+    ibRprStaticRSValid OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The flag identify whether the configed ringlet is valid.
+             If it is true, the configed ringlet is valid, otherwise
+             it's invalid."
+        ::= { ibRprStaticRSEntry 5 }
+
+    ibRprStaticRSRowStatus OBJECT-TYPE
+        SYNTAX RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The status of this table entry.
+             The status includes createAndGo, active and destroy."
+        ::= { ibRprStaticRSEntry 6 }
+
+-- The RPR Ipv4 dynamic ring selection table
+
+    ibRprIpv4DynamicRSTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbRprIpv4DynamicRSEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The RPR Ipv4Dynamic Ring Selection Table that contains the
+             dynamic ring selection information by shortest path."
+        ::= { ibRprRS 2 }
+
+    ibRprIpv4DynamicRSEntry OBJECT-TYPE
+        SYNTAX IbRprIpv4DynamicRSEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry in the RPR Ipv4Dynamic Ring Selection Table."
+        INDEX { ibRprIpv4DynamicRSIfIndex, ibRprIpv4DynamicRSMacAddress }
+        ::= { ibRprIpv4DynamicRSTable 1 }
+
+    IbRprIpv4DynamicRSEntry ::=
+        SEQUENCE {
+            ibRprIpv4DynamicRSIfIndex
+                InterfaceIndex,
+            ibRprIpv4DynamicRSMacAddress
+                MacAddress,
+            ibRprIpv4DynamicRSRingletID
+                IbRprRingletID,
+            ibRprIpv4DynamicRSTtl
+                INTEGER
+        }
+
+    ibRprIpv4DynamicRSIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The ifIndex of RPR interface."
+        REFERENCE
+            "RFC 2863, ifIndex"
+        ::= { ibRprIpv4DynamicRSEntry 1 }
+
+    ibRprIpv4DynamicRSMacAddress OBJECT-TYPE
+        SYNTAX MacAddress
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The Ipv4 MAC address of destination station on the ring."
+        ::= { ibRprIpv4DynamicRSEntry 2 }
+
+    ibRprIpv4DynamicRSRingletID OBJECT-TYPE
+        SYNTAX IbRprRingletID
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The identifier of the ring which frames are sent
+             from the source station to the destination station."
+        ::= { ibRprIpv4DynamicRSEntry 3 }
+
+    ibRprIpv4DynamicRSTtl OBJECT-TYPE
+        SYNTAX INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The hops from source station to destination station by the
+             selected ringlet."
+        ::= { ibRprIpv4DynamicRSEntry 4 }
+
+-- The RPR Ipv6 dynamic ring selection table
+
+    ibRprIpv6DynamicRSTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbRprIpv6DynamicRSEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The RPR Ipv6 Dynamic Ring Selection Table that contains the Ipv6
+             ring selection information by dynamic ring selection and static
+             ring selection."
+        ::= { ibRprRS 3 }
+
+    ibRprIpv6DynamicRSEntry OBJECT-TYPE
+        SYNTAX IbRprIpv6DynamicRSEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry in the RPR Ipv6 Ring Selection Table."
+        INDEX { ibRprIpv6DynamicRSIfIndex, ibRprIpv6DynamicRSMacAddress }
+        ::= { ibRprIpv6DynamicRSTable 1 }
+
+    IbRprIpv6DynamicRSEntry ::=
+        SEQUENCE {
+            ibRprIpv6DynamicRSIfIndex
+                InterfaceIndex,
+            ibRprIpv6DynamicRSMacAddress
+                MacAddress,
+            ibRprIpv6DynamicRSRingletID
+                IbRprRingletID,
+            ibRprIpv6DynamicRSTtl
+                INTEGER
+        }
+
+    ibRprIpv6DynamicRSIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The ifIndex of RPR interface."
+        REFERENCE
+            "RFC 2863, ifIndex"
+        ::= { ibRprIpv6DynamicRSEntry 1 }
+
+    ibRprIpv6DynamicRSMacAddress OBJECT-TYPE
+        SYNTAX MacAddress
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The Ipv6 MAC address of the destination station on the ring."
+        ::= { ibRprIpv6DynamicRSEntry 2 }
+
+    ibRprIpv6DynamicRSRingletID OBJECT-TYPE
+        SYNTAX IbRprRingletID
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The identifier of the ring which frames are sent
+             from the source station to the destination station."
+        ::= { ibRprIpv6DynamicRSEntry 3 }
+
+    ibRprIpv6DynamicRSTtl OBJECT-TYPE
+        SYNTAX INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The hops from source station to destination station by selected
+             ringlet."
+        ::= { ibRprIpv6DynamicRSEntry 4 }
+
+-- The RPR Ipv4 overall ring selection table
+
+    ibRprIpv4OverallRSTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbRprIpv4OverallRSEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The RPR Ipv4 Overall Ring Selection Table that contains the
+             overall and active  ring selection infomation by dynamic ring
+             selection and static ring selection."
+        ::= { ibRprRS 4 }
+
+    ibRprIpv4OverallRSEntry OBJECT-TYPE
+        SYNTAX IbRprIpv4OverallRSEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry in the RPR Overall Ring Selection Table."
+        INDEX { ibRprIpv4OverallRSIfIndex, ibRprIpv4OverallRSMacAddress }
+        ::= { ibRprIpv4OverallRSTable 1 }
+
+    IbRprIpv4OverallRSEntry ::=
+        SEQUENCE {
+            ibRprIpv4OverallRSIfIndex
+                InterfaceIndex,
+            ibRprIpv4OverallRSMacAddress
+                MacAddress,
+            ibRprIpv4OverallRSType
+                INTEGER,
+            ibRprIpv4OverallRSRingletID
+                IbRprRingletID,
+            ibRprIpv4OverallRSTtl
+                INTEGER
+        }
+
+    ibRprIpv4OverallRSIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The ifIndex of RPR interface."
+        REFERENCE
+            "RFC 2863, ifIndex"
+        ::= { ibRprIpv4OverallRSEntry 1 }
+
+    ibRprIpv4OverallRSMacAddress OBJECT-TYPE
+        SYNTAX MacAddress
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The MAC address of the destination station on the ring."
+        ::= { ibRprIpv4OverallRSEntry 2 }
+
+    ibRprIpv4OverallRSType OBJECT-TYPE
+        SYNTAX INTEGER {
+            static(1),
+            dynamic(2)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The ring selection item type indicates static or dynamic."
+        ::= { ibRprIpv4OverallRSEntry 3 }
+
+    ibRprIpv4OverallRSRingletID OBJECT-TYPE
+        SYNTAX IbRprRingletID
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The identifier of the ring which frames are sent
+             from the source station to the destination station."
+        ::= { ibRprIpv4OverallRSEntry 4 }
+
+    ibRprIpv4OverallRSTtl OBJECT-TYPE
+        SYNTAX INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The hops from source station to destination station  by
+             selected ringlet."
+        ::= { ibRprIpv4OverallRSEntry 5 }
+
+-- The RPR VRRP ring selection table
+
+    ibRprVrrpRSTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbRprVrrpRSEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The RPR VRRP Ring Selection Table that contains the ring
+             selection information when the vrrp group is configured."
+        ::= { ibRprRS 5 }
+
+    ibRprVrrpRSEntry OBJECT-TYPE
+        SYNTAX IbRprVrrpRSEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry in the RPR VRRP Ring Selection Table."
+        INDEX { ibRprVrrpRSIfIndex, ibRprVrrpRSVirtualMacAddress }
+        ::= { ibRprVrrpRSTable 1 }
+
+    IbRprVrrpRSEntry ::=
+        SEQUENCE {
+            ibRprVrrpRSIfIndex
+                InterfaceIndex,
+            ibRprVrrpRSVirtualMacAddress
+                MacAddress,
+            ibRprVrrpRSMacAddress
+                MacAddress,
+            ibRprVrrpRSRingletID
+                IbRprRingletID,
+            ibRprVrrpRSTtl
+                INTEGER
+        }
+
+    ibRprVrrpRSIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The ifIndex of RPR interface."
+        REFERENCE
+            "RFC 2863, ifIndex"
+        ::= { ibRprVrrpRSEntry 1 }
+
+    ibRprVrrpRSVirtualMacAddress OBJECT-TYPE
+        SYNTAX MacAddress
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The virtual MAC address of the staion in VRRP group."
+        ::= { ibRprVrrpRSEntry 2 }
+
+
+    ibRprVrrpRSMacAddress OBJECT-TYPE
+        SYNTAX MacAddress
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The MAC address of the station that is  the master in VRRP group."
+        ::= { ibRprVrrpRSEntry 3 }
+
+    ibRprVrrpRSRingletID OBJECT-TYPE
+        SYNTAX IbRprRingletID
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The identifier of the ring which frames are sent
+             from the source station to the destination station."
+        ::= { ibRprVrrpRSEntry 4 }
+
+    ibRprVrrpRSTtl OBJECT-TYPE
+        SYNTAX INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The hops from source station to destination station by
+             selected ringlet."
+        ::= { ibRprVrrpRSEntry 5 }
+
+
+-- The RPR default ring identifier config Table
+
+    ibRprDefaultRingIDTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbRprDefaultRingIDEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The RPR Default RingID Table specify the default ringID."
+        ::= { ibRprRS 6 }
+
+    ibRprDefaultRingIDEntry OBJECT-TYPE
+        SYNTAX IbRprDefaultRingIDEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry in the RPR Default RingID Table."
+        INDEX { ibRprDefaultRingIDIfIndex }
+        ::= { ibRprDefaultRingIDTable 1 }
+
+    IbRprDefaultRingIDEntry ::=
+        SEQUENCE {
+            ibRprDefaultRingIDIfIndex
+                InterfaceIndex,
+            ibRprDefaultConfigRingletID
+                IbRprRingletID,
+            ibRprDefaultActiveRingID
+                IbRprRingletID
+        }
+
+    ibRprDefaultRingIDIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The ifIndex of RPR interface."
+        REFERENCE
+            "RFC 2863, ifIndex"
+        ::= { ibRprDefaultRingIDEntry 1 }
+
+    ibRprDefaultConfigRingletID OBJECT-TYPE
+        SYNTAX IbRprRingletID
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The default identifier of the ring configured by user."
+        ::= { ibRprDefaultRingIDEntry 2 }
+
+    ibRprDefaultActiveRingID OBJECT-TYPE
+        SYNTAX IbRprRingletID
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The identifier of the default ring which is active currently.
+             The default ring configured by user may be inactive."
+        ::= { ibRprDefaultRingIDEntry 3 }
+
+-- The RPR defect report table
+
+    ibRprDefect OBJECT IDENTIFIER ::= { ibRprObjects 5 }
+
+    ibRprDefectReportTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbRprDefectReportEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The RPR Defect Report Table that contains the trap information on
+             the ring."
+        ::= { ibRprDefect 1 }
+
+    ibRprDefectReportEntry OBJECT-TYPE
+        SYNTAX IbRprDefectReportEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry in the RPR Defect Report Table."
+        INDEX { ibRprDefectIfIndex }
+        ::= { ibRprDefectReportTable 1 }
+
+    IbRprDefectReportEntry ::=
+        SEQUENCE {
+            ibRprDefectIfIndex
+                InterfaceIndex,
+            ibRprDefectCurrentStatus
+                BITS
+        }
+
+    ibRprDefectIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The ifIndex of RPR interface."
+        REFERENCE
+            "RFC 2863, ifIndex"
+        ::= { ibRprDefectReportEntry 1 }
+
+    ibRprDefectCurrentStatus OBJECT-TYPE
+        SYNTAX BITS {
+            topologyOpenRing(0),
+            topoInstability(1),
+            topoInconsistent(2),
+            dulpMacAddress(3),
+            dulpIPAddress(4),
+            lrttDefect(5),
+            protCfgDefect(6),
+            jumboCfgDefect(7),
+            excessReservedRateDefect(8),
+            excessMaxStationNum(9),
+            miscabling(10),
+            backPressure(11)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Indicates the current status of RPR ring.
+             This attribute is used to notify the management system that
+             alarms generate or clear about some RPR ring."
+        REFERENCE
+            "IEEE 802.17 V3.3 Subclause 11.2.9."
+        ::= { ibRprDefectReportEntry 2 }
+
+-- The priority to RPR service class map table
+
+    ibRprPriorityMap OBJECT IDENTIFIER ::= { ibRprObjects 6 }
+
+    ibRprPriority2ClassMapTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbRprPriority2ClassMapEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The Table is for Class Of Service and RPR Service Class Mapping."
+        ::= { ibRprPriorityMap 1 }
+
+    ibRprPriority2ClassMapEntry OBJECT-TYPE
+        SYNTAX IbRprPriority2ClassMapEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry in the COS to Service Class Map Table."
+        INDEX { ibRprPriority2ClassMapIfIndex,
+                ibRprPriority2ClassMapType,
+                ibRprPriorityValue
+        }
+        ::= { ibRprPriority2ClassMapTable 1 }
+
+    IbRprPriority2ClassMapEntry ::=
+        SEQUENCE {
+            ibRprPriority2ClassMapIfIndex
+                InterfaceIndex,
+            ibRprPriority2ClassMapType
+                INTEGER,
+            ibRprPriorityValue
+                INTEGER,
+            ibRprPriority2ClassMap
+                IbRprServiceClass
+        }
+
+    ibRprPriority2ClassMapIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The ifIndex of RPR interface."
+        REFERENCE
+            "RFC 2863, ifIndex"
+        ::= { ibRprPriority2ClassMapEntry 1 }
+
+    ibRprPriority2ClassMapType OBJECT-TYPE
+        SYNTAX INTEGER {
+            tag(1),
+            mpls(2),
+            ip(3)
+        }
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The type of Priority,include tag, mpls, ip."
+        ::= { ibRprPriority2ClassMapEntry 2 }
+
+    ibRprPriorityValue OBJECT-TYPE
+        SYNTAX INTEGER {
+            pri0(1),
+            pri1(2),
+            pri2(3),
+            pri3(4),
+            pri4(5),
+            pri5(6),
+            pri6(7),
+            pri7(8)
+        }
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The priority of tag,mpls and ip, the value range is 0~7."
+        ::= { ibRprPriority2ClassMapEntry 3 }
+
+    ibRprPriority2ClassMap OBJECT-TYPE
+        SYNTAX IbRprServiceClass
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The RPR service class."
+        REFERENCE
+            "IEEE 802.17 V3.3 Subclause 7.3 Service class."
+        ::= { ibRprPriority2ClassMapEntry 4 }
+
+-- The RPR rate-limit config table
+
+    ibRprRateLimitConfig OBJECT IDENTIFIER ::= { ibRprObjects 7 }
+
+    ibRprRateLimitConfigTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbRprRateLimitConfigEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The RPR Rate Limit Configuration Table that contains the rate
+             limit infomation of RPR serviec class."
+        ::= { ibRprRateLimitConfig 1 }
+
+    ibRprRateLimitConfigEntry  OBJECT-TYPE
+        SYNTAX IbRprRateLimitConfigEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry in the RPR Rate Limit Configuration Table."
+        INDEX { ibRprRateLimitConfigIfIndex,
+                ibRprRateLimitConfigRingletId,
+                ibRprRateLimitConfigServiceClass
+        }
+        ::= { ibRprRateLimitConfigTable 1 }
+
+    IbRprRateLimitConfigEntry  ::=
+        SEQUENCE {
+            ibRprRateLimitConfigIfIndex
+                InterfaceIndex,
+            ibRprRateLimitConfigRingletId
+                IbRprRingletID,
+            ibRprRateLimitConfigServiceClass
+                IbRprServiceClass,
+            ibRprRateLimitConfigValue
+                Integer32
+        }
+
+    ibRprRateLimitConfigIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The ifIndex of RPR interface."
+        REFERENCE
+            "RFC 2863, ifIndex"
+        ::= { ibRprRateLimitConfigEntry 1 }
+
+    ibRprRateLimitConfigRingletId OBJECT-TYPE
+        SYNTAX IbRprRingletID
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The identifier of the ring of RPR ringlet."
+        ::= { ibRprRateLimitConfigEntry 2 }
+
+    ibRprRateLimitConfigServiceClass OBJECT-TYPE
+        SYNTAX IbRprServiceClass
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The RPR service class."
+        REFERENCE
+            "IEEE 802.17 V3.3 Subclause 7.3 Service class."
+        ::= { ibRprRateLimitConfigEntry 3 }
+
+    ibRprRateLimitConfigValue OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The value of rate-limit that configured for diffrent service class.
+             The unit is permillage."
+        ::= { ibRprRateLimitConfigEntry 4 }
+
+-- The RPR mac address learning config table
+
+    ibRprMacAddrLearn  OBJECT IDENTIFIER ::= { ibRprObjects 8 }
+
+    ibRprMacLearnCfgTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbRprMacLearnCfgEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The RPR MAC Address Table."
+        ::= { ibRprMacAddrLearn 1 }
+
+    ibRprMacLearnCfgEntry OBJECT-TYPE
+        SYNTAX IbRprMacLearnCfgEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The entry of RPR MAC Address Table."
+        INDEX { ibRprMacLearnIfIndex, ibRprMacLearnRprMac }
+        ::= { ibRprMacLearnCfgTable 1 }
+
+    IbRprMacLearnCfgEntry ::=
+        SEQUENCE {
+            ibRprMacLearnIfIndex
+                InterfaceIndex,
+            ibRprMacLearnRprMac
+                MacAddress,
+            ibRprMacLearnType
+                INTEGER,
+            ibRprMacLearnDestMac
+                MacAddress,
+            ibRprMacLearnVlanId
+                Integer32,
+            ibRprMacLearnRinglet
+                IbRprRingletID,
+            ibRprMacLearnTtl
+                INTEGER,
+            ibRprMacLearnIsValid
+                TruthValue,
+            ibRprMacLearnRowStatus
+                RowStatus
+        }
+
+    ibRprMacLearnIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The ifIndex of RPR interface."
+        REFERENCE
+            "RFC 2863, ifIndex"
+        ::= { ibRprMacLearnCfgEntry 1 }
+
+    ibRprMacLearnRprMac OBJECT-TYPE
+        SYNTAX MacAddress
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The MAC address of the RPR station."
+        ::= { ibRprMacLearnCfgEntry 2 }
+
+    ibRprMacLearnType OBJECT-TYPE
+        SYNTAX INTEGER
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The type of MAC address item that the user built. The type
+             includes static and dynamic."
+        ::= { ibRprMacLearnCfgEntry 3 }
+
+    ibRprMacLearnDestMac OBJECT-TYPE
+        SYNTAX MacAddress
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The destination of MAC address."
+        ::= { ibRprMacLearnCfgEntry 4 }
+
+    ibRprMacLearnVlanId OBJECT-TYPE
+        SYNTAX Integer32 (1..4094)
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The vlan ID that the MAC address learned from by RPR staion."
+        ::= { ibRprMacLearnCfgEntry 5 }
+
+    ibRprMacLearnRinglet OBJECT-TYPE
+        SYNTAX IbRprRingletID
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The identifier of the ring which frames are sent
+             from the source station to the destination station."
+        ::= { ibRprMacLearnCfgEntry 6 }
+
+    ibRprMacLearnTtl OBJECT-TYPE
+        SYNTAX INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The hops from source station to destination station on the
+             selected ringlet."
+        ::= { ibRprMacLearnCfgEntry 7 }
+
+    ibRprMacLearnIsValid OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The flag identify whether the configured mac address is valid.
+             If it is true, the configured mac address is valid,
+             otherwise it's invalid."
+        ::= { ibRprMacLearnCfgEntry 8 }
+
+    ibRprMacLearnRowStatus OBJECT-TYPE
+        SYNTAX RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The status of this table entry.
+             The status includes createAndGo, active and destroy."
+        ::= { ibRprMacLearnCfgEntry 9 }
+
+-- The RPR table for trap
+
+    ibRprTrapVar OBJECT IDENTIFIER ::= { ibRprObjects 9 }
+
+    ibRprTrapVarTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbRprTrapVarEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "The RPR Defect Report Table that contains varible that
+             used to bind in trap."
+        ::= { ibRprTrapVar 1 }
+
+    ibRprTrapVarEntry OBJECT-TYPE
+        SYNTAX IbRprTrapVarEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "An entry in the RPR Trap Var Table."
+        INDEX { ibRprTrapIfIndex }
+        ::= { ibRprTrapVarTable 1 }
+
+    IbRprTrapVarEntry ::=
+        SEQUENCE {
+            ibRprTrapIfIndex
+                InterfaceIndex,
+            ibRprTrapRinglet
+                IbRprRingletID,
+            ibRprTrapTopoMacAddress
+                MacAddress,
+            ibRprTrapIpAddress
+                InetAddress
+        }
+
+    ibRprTrapIfIndex OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The ifIndex of RPR interface. It is only used for trap to bind."
+        REFERENCE
+            "RFC 2863, ifIndex"
+        ::= { ibRprTrapVarEntry 1 }
+
+     ibRprTrapRinglet OBJECT-TYPE
+        SYNTAX IbRprRingletID
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The span of RPR station. It is only used for trap to bind."
+        ::= { ibRprTrapVarEntry 2 }
+
+     ibRprTrapTopoMacAddress OBJECT-TYPE
+        SYNTAX MacAddress
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The MAC address of RPR station. It is only used for trap to bind."
+        ::= { ibRprTrapVarEntry 3 }
+
+    ibRprTrapIpAddress OBJECT-TYPE
+        SYNTAX InetAddress
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The IP address of RPR station. It is only used for trap to bind."
+        ::= { ibRprTrapVarEntry 4 }
+
+
+-- The RPR Traps
+
+    ibRprTrap  OBJECT IDENTIFIER ::= { ibRprObjects 10 }
+
+    ibRprTopologyOpenRing NOTIFICATION-TYPE
+        OBJECTS { ibRprTrapIfIndex, ibRprTrapRinglet }
+        STATUS  current
+        DESCRIPTION
+            "The topology openRing trap indicates that the RPR ring is opened."
+        REFERENCE
+            "IEEE 802.17 Subclause 3.2.77 open ring."
+        ::= { ibRprTrap 1 }
+
+    ibRprTopologyCloseRing NOTIFICATION-TYPE
+        OBJECTS { ibRprTrapIfIndex, ibRprTrapRinglet }
+        STATUS  current
+        DESCRIPTION
+            "The topology openRing trap indicates that the RPR ring is closed."
+        REFERENCE
+            "IEEE 802.17 Subclause 3.2.77 close ring."
+        ::= { ibRprTrap 2 }
+
+    ibRprTopologyInconsistent NOTIFICATION-TYPE
+        OBJECTS { ibRprTrapIfIndex }
+        STATUS  current
+        DESCRIPTION
+            "The topology inconsistent trap indicates that the topology of
+             RPR is inconsistent."
+        REFERENCE
+            "IEEE 802.17 Subclause 11.6.6.1 topology consistency."
+        ::= { ibRprTrap 3 }
+
+    ibRprTopologyInstability NOTIFICATION-TYPE
+        OBJECTS { ibRprTrapIfIndex }
+        STATUS  current
+        DESCRIPTION
+            "The topology instability trap indicates that the topology of
+             RPR is instability."
+        ::= { ibRprTrap 4 }
+
+
+    ibRprDuplicateMacAddress NOTIFICATION-TYPE
+        OBJECTS { ibRprTrapIfIndex, ibRprTrapTopoMacAddress}
+        STATUS  current
+        DESCRIPTION
+            "The duplicate MAC address trap indicates that the mac address
+             of the station on the ring is dulplicate. That means there is the
+             same MAC address between two stations on the ring."
+        ::= { ibRprTrap 5 }
+
+    ibRprDulplicateIPAddress NOTIFICATION-TYPE
+        OBJECTS { ibRprTrapIfIndex, ibRprTrapIpAddress }
+        STATUS  current
+        DESCRIPTION
+            "The dulplicate IP address trap indicates that the IP address of
+             the station on the ring is dulplicate. That means there is the same
+             IP address between two stations on the ring."
+        ::= { ibRprTrap 6 }
+
+    ibRprIncompleteLRTT NOTIFICATION-TYPE
+        OBJECTS { ibRprTrapIfIndex }
+        STATUS  current
+        DESCRIPTION
+            "The incomplete LRTT trap indicates that LRTT is not completed."
+        ::= { ibRprTrap 7 }
+
+    ibRprProtecConfigInconsistent NOTIFICATION-TYPE
+        OBJECTS { ibRprTrapIfIndex }
+        STATUS  current
+        DESCRIPTION
+            "The protection configuration inconsistent trap indicates that
+             the configuration of protection mode on the ring is inconsistent.
+             That is one station is configured steer mode while the other is
+             configured wrap mode."
+        ::= { ibRprTrap 8 }
+
+    ibRprJumboConfigInconsistent NOTIFICATION-TYPE
+        OBJECTS { ibRprTrapIfIndex }
+        STATUS  current
+        DESCRIPTION
+            "The jumbo configuration inconsistent trap indicates that the
+             configuration of jumbo mode on the ring is inconsistent.
+             That is one station supports jumbo frame while the other
+             doesn't support jumbo frame."
+        ::= { ibRprTrap 9 }
+
+    ibRprExceedMaxReservRate NOTIFICATION-TYPE
+        OBJECTS { ibRprTrapIfIndex, ibRprTrapRinglet }
+        STATUS  current
+        DESCRIPTION
+            "The exceeded max reserved rate trap indicates that the rate
+             on the ringlet exceeded the max reserved rate. The operator can
+             configure reserved rate for every station, but the sum of all
+             stations' reserved rate of each RPR ringlet can't exceed maximum."
+        ::= { ibRprTrap 10 }
+
+    ibRprExceedMaxStationNum NOTIFICATION-TYPE
+        OBJECTS { ibRprTrapIfIndex }
+        STATUS  current
+        DESCRIPTION
+            "The exceeded max station number trap indicates that the number
+             of the stations on the ring exceeded the max station number."
+        ::= { ibRprTrap 11 }
+
+    ibRprMiscabling NOTIFICATION-TYPE
+        OBJECTS { ibRprTrapIfIndex, ibRprTrapRinglet }
+        STATUS  current
+        DESCRIPTION
+            "The miscabling trap indicates that the miscabling event occurred."
+        REFERENCE
+            "IEEE 802.17 V3.0 Subclause 11.9.2.1 miscabling defect."
+        ::= { ibRprTrap 12 }
+
+    ibRprBackPressure NOTIFICATION-TYPE
+        OBJECTS { ibRprTrapIfIndex, ibRprTrapRinglet, ibRprPriority2ClassMap}
+        STATUS  current
+        DESCRIPTION
+            "The back pressure trap indicates that the backpressure is generated
+             on the ringlet. That is the data flow on the ringlet exceeded
+             the range of rate-limit configured."
+        ::= { ibRprTrap 13 }
+
+    ibRprBackPressureOver NOTIFICATION-TYPE
+        OBJECTS { ibRprTrapIfIndex, ibRprTrapRinglet, ibRprPriority2ClassMap }
+        STATUS  current
+        DESCRIPTION
+            "The back pressure over trap indicates that the backpressure is
+             disappeared on the ringlet."
+        ::= { ibRprTrap 14 }
+
+END

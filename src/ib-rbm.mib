@@ -1,0 +1,147 @@
+-- =========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The MIB is designed to set rbm configuration or get rbm information.
+-- Reference:
+-- Version: V1.1
+-- History:
+--  V1.0 2020-05-19 created by liuzhengrui 17656
+--       Initial version.
+--  V1.1 2022-08-03  modified by wangjuxnaing 27996
+--       Add ibRbmCompareTrap,ibRbmDualActiveCheckTrap,
+--       ibRbmDualActiveCheckRecvTrap,ibRbmCfgCheckAlarmTrap
+-- =========================================================================
+IB-RBM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+    FROM IB-OID-MIB
+        Integer32, OBJECT-TYPE, MODULE-IDENTITY , NOTIFICATION-TYPE
+    FROM SNMPv2-SMI;
+
+
+ibRbm MODULE-IDENTITY
+    LAST-UPDATED "202208031105Z"  -- August 3, 2022
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB is designed to manage Rbm products."
+
+ -- Revision History
+    REVISION "202208031105Z"  -- August 3, 2022
+    DESCRIPTION
+        "Add ibRbmCompareTrap ibRbmDualActiveCheckTrap ibRbmDualActiveCheckRecvTrap ibRbmCfgCheckAlarmTrap"
+    REVISION     "202005191105Z"  -- May 19, 2020
+    DESCRIPTION  "Initial version."
+    ::= { ibCommon 187 }
+
+--
+-- Table definitions
+--
+
+ibRbmTables OBJECT IDENTIFIER ::= { ibRbm 1 }
+
+-- Describe objects for rbm abrupt trap
+
+ibRbmTrapObjects OBJECT IDENTIFIER ::= { ibRbmTables 1 }
+
+ibRbmTrapVar OBJECT-TYPE
+    SYNTAX Integer32 (0..1)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The value is RBM trap."
+::= { ibRbmTrapObjects 1 }
+
+ibRbmTrapLogVar OBJECT-TYPE
+    SYNTAX OCTET STRING(SIZE(0..256))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+    "The value is the reason for this notification."
+    ::= { ibRbmTrapObjects 2}
+
+ibRbmMonitor OBJECT IDENTIFIER ::= { ibRbmTables 2 }
+
+ibRbmTrap OBJECT IDENTIFIER ::= { ibRbmMonitor 0 }
+
+ibRbmKeepaliveNormal NOTIFICATION-TYPE
+    OBJECTS
+  {
+    ibRbmTrapVar
+  }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when RBM keepalive channel connected."
+::= { ibRbmTrap 1 }
+
+ibRbmKeepaliveFailure NOTIFICATION-TYPE
+    OBJECTS
+  {
+    ibRbmTrapVar
+  }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when RBM keepalive channel disconnected."
+::= { ibRbmTrap 2 }
+
+ibRbmStateChange NOTIFICATION-TYPE
+    OBJECTS
+  {
+    ibRbmTrapVar
+  }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when RBM running status changes(0:new-state = Active,1:new-state = Standby)."
+::= { ibRbmTrap 3 }
+
+ibRbmCfgInconsistentTrap NOTIFICATION-TYPE
+    OBJECTS
+  {
+    ibRbmTrapLogVar
+  }
+    STATUS current
+    DESCRIPTION
+        "When the result of RBM configuration consistency check is inconsistent, it checks the result of the last check.
+        If the result of the last check is also inconsistent, this notification is generated."
+::= { ibRbmTrap 4 }
+
+ibRbmDualActiveCheckTrap NOTIFICATION-TYPE
+    OBJECTS
+  {
+    ibRbmTrapLogVar
+  }
+    STATUS current
+    DESCRIPTION
+        "After the RBM is linked with the MAD,it responds to the MAD event.
+        When it receives a dual-primary conflict reported by the MAD,
+        it adds this notification to the original processing logic."
+::= { ibRbmTrap 5 }
+
+ibRbmDualActiveCheckRecvTrap NOTIFICATION-TYPE
+    OBJECTS
+  {
+    ibRbmTrapLogVar
+  }
+    STATUS current
+    DESCRIPTION
+        "After the RBM is linked with the MAD,it responds to the MAD event.
+        When receiving the MAD report of dual-primary conflict recovery,
+        this notification is added to the original processing logic."
+::= { ibRbmTrap 6 }
+
+ibRbmCfgCheckTrap NOTIFICATION-TYPE
+    OBJECTS
+  {
+    ibRbmTrapLogVar
+  }
+    STATUS current
+    DESCRIPTION
+        "After the heartbeat cable is connected,
+         if the RBM configuration is a dual management master or dual management backup configuration or
+         is not configured with data-channel,this notification is sent every 30s."
+::= { ibRbmTrap 7 }
+
+END

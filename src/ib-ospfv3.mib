@@ -1,0 +1,110 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: OSPFv3 (Open Shortest Path First version 3) MIB
+-- Reference:
+-- Version: V1.1
+-- History:
+-- V1.0 2022-07-05 Created pengqing
+--                 Initial version.
+-- V1.1 2022-12-08 updated by pengqing
+--      Add ibOspfv3NbrAddr, ibOspfv3IntraAreaRtrIdConflict.
+-- =================================================================
+IB-OSPFV3-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    IpAddress, Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC
+    ibCommon
+        FROM IB-OID-MIB
+    InetAddressIPv6
+        FROM INET-ADDRESS-MIB;
+
+ibOspfv3 MODULE-IDENTITY
+    LAST-UPDATED "202212081002Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB file provides information about OSPFv3."
+    REVISION "202212081002Z"
+    DESCRIPTION
+        "Add ibOspfv3NbrAddr, ibOspfv3IntraAreaRtrIdConflict."
+    REVISION "202207051002Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 239 }
+
+ibOspfv3Notifications        OBJECT IDENTIFIER ::= { ibOspfv3 0 }
+ibOspfv3NotificationObjects  OBJECT IDENTIFIER ::= { ibOspfv3 2 }
+
+ibOspfv3ProcessIdForNotify OBJECT-TYPE
+    SYNTAX Integer32 (1..65535)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The process ID field indicates the OSPFv3 process number."
+    ::= { ibOspfv3NotificationObjects 1 }
+
+ibOspfv3AreaIdForNotify OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "A 32-bit integer uniquely identifying an area.
+        Area ID 0.0.0.0 is used for the OSPFv3 backbone."
+    ::= { ibOspfv3NotificationObjects 2 }
+
+ibOspfv3IfName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (1..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The interface name."
+    ::= { ibOspfv3NotificationObjects 3 }
+
+ibOspfv3RouterID OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The Router ID of OSPFv3 protocol."
+    ::= { ibOspfv3NotificationObjects 4 }
+
+ibOspfv3NbrAddr OBJECT-TYPE
+    SYNTAX InetAddressIPv6
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The IP address of neighbor."
+    ::= { ibOspfv3NotificationObjects 5 }
+
+ibOspfv3LastAuthKeyExpiry NOTIFICATION-TYPE
+    OBJECTS {
+        ibOspfv3ProcessIdForNotify,
+        ibOspfv3AreaIdForNotify,
+        ibOspfv3IfName,
+        ibOspfv3RouterID
+    }
+    STATUS current
+    DESCRIPTION
+        "The last authentication key has expired or no active send key in keychain."
+    ::= { ibOspfv3Notifications 1 }
+
+ibOspfv3IntraAreaRtrIdConflict NOTIFICATION-TYPE
+    OBJECTS {
+        ibOspfv3ProcessIdForNotify,
+        ibOspfv3AreaIdForNotify,
+        ibOspfv3IfName,
+        ibOspfv3RouterID,
+        ibOspfv3NbrAddr
+    }
+    STATUS current
+    DESCRIPTION
+        "A notification sent when Router ID conflict."
+    ::= { ibOspfv3Notifications 2 }
+
+END

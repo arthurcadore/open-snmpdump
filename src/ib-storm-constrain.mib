@@ -1,0 +1,294 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Storm-Constrain MIB
+-- Reference:
+-- Version: V1.2
+-- History:
+-- V1.0 2005-11-19 Created by XueCong
+-- V1.1 2008-06-06 Modified the description of IbStormConstrainUnit
+--                 Added ibStormCtrlPortMode by jinyi
+-- V1.2 2015-06-17 Modified the description of IbStormConstrainUnit
+--                 Added knownUnicast to ibStormTrapType by yangyiquan
+-- ==================================================================
+IB-STORM-CONSTRAIN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32,
+    NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+
+    RowStatus, TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+
+    ifIndex
+        FROM IF-MIB
+
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibStormConstrain MODULE-IDENTITY
+    LAST-UPDATED "201506170000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The Storm-Constrain function is used to avoid the
+         packet-storm on a port.  Three types of flux can be
+         set observed respectively: broadcast, multicast and
+         unicast.  If an observed flux exceeds its upper limit,
+         this kind of flux will be recognized as over-upper-flux.
+         This kind of flux will be considered as normal-flux
+         until it falls below its lower limit.  If any type of
+         observed flux is over-upper-flux, the port will change
+         its status to controlled-status, that is to stop packet
+         forwarding to avoid storm.  Only when all the observed
+         fluxes are not over-upper-flux, will the port return to
+         normal(forwarding) status."
+    REVISION        "201506170000Z"
+    DESCRIPTION
+        "To add knownUnicast to ibStormTrapType."
+    ::= { ibCommon  66 }
+
+IbStormConstrainUnit ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The unit of the flux.
+         none: not define.
+         packetsPerSecond: packets per second.
+         ratio: unit is 1%.  For example, if the value is 40, it means 40%.
+         bytesPerSecond: bytes per second.
+         kbitsPerSecond: kilobits per second."
+    SYNTAX INTEGER
+        {
+        none(1),
+        packetsPerSecond(2),
+        ratio(3),
+        bytesPerSecond(4),
+        kbitsPerSecond(5)
+        }
+
+-- ==================================================================
+--
+-- ======================= definition begin =========================
+--
+-- ==================================================================
+
+ibStormScalarGroup OBJECT IDENTIFIER ::= {  ibStormConstrain 1  }
+
+ibStormTrapType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        broadcast(1),
+        multicast(2),
+        unicast(3),
+        knownUnicast(4)
+        }
+    MAX-ACCESS      accessible-for-notify
+    STATUS          current
+    DESCRIPTION
+        "This value is used to identify the type of trap.
+         broadcast: Trap message generated when broadcast traffic exceeds
+                    the upper limit or falls below the lower limit on a port.
+         multicast: Trap message generated when multicast traffic exceeds
+                    the upper limit or falls below the lower limit on a port.
+         unicast  : Trap message generated when unknown unicast traffic exceeds
+                    the upper limit or falls below the lower limit on a port.
+         knownUnicast: Trap message generated when known unicast traffic exceeds
+                    the upper limit or falls below the lower limit on a port."
+    ::= { ibStormScalarGroup 1 }
+
+ibStormTrapThreshold OBJECT-TYPE
+    SYNTAX          Integer32
+    MAX-ACCESS      accessible-for-notify
+    STATUS          current
+    DESCRIPTION
+        "This value is used to figure the threshold of flux in
+         trap message.
+         For example, when the trap is generated for broadcast
+         flux exceeds upper limit on a port, this value is
+         equal to upper limit value configured.  And when the
+         trap is generated for broadcast flux fell under lower
+         limit, this value is equal to lower limit value configured."
+    ::= { ibStormScalarGroup 2 }
+
+ibStormTableGroup OBJECT IDENTIFIER ::= {  ibStormConstrain 2  }
+
+ibStormCtrlTable  OBJECT-TYPE
+    SYNTAX          SEQUENCE OF IbStormCtrlEntry
+    MAX-ACCESS      not-accessible
+    STATUS          current
+    DESCRIPTION
+        "A table containing configurations of storm-constrain."
+    ::= { ibStormTableGroup  1 }
+
+ibStormCtrlEntry  OBJECT-TYPE
+    SYNTAX          IbStormCtrlEntry
+    MAX-ACCESS      not-accessible
+    STATUS          current
+    DESCRIPTION
+        "Detailed information of storm-constrain configurations."
+    INDEX { ifIndex }
+    ::= { ibStormCtrlTable 1 }
+
+IbStormCtrlEntry  ::=
+    SEQUENCE {
+        ibStormCtrlPortStatus                      INTEGER,
+        ibStormCtrlBroadcastUnit                   IbStormConstrainUnit,
+        ibStormCtrlBroadcastUpper                  Integer32,
+        ibStormCtrlBroadcastLower                  Integer32,
+        ibStormCtrlMulticastUnit                   IbStormConstrainUnit,
+        ibStormCtrlMulticastUpper                  Integer32,
+        ibStormCtrlMulticastLower                  Integer32,
+        ibStormCtrlUnicastUnit                     IbStormConstrainUnit,
+        ibStormCtrlUnicastUpper                    Integer32,
+        ibStormCtrlUnicastLower                    Integer32,
+        ibStormCtrlRowStatus                       RowStatus,
+        ibStormCtrlPortMode                        INTEGER
+             }
+
+ibStormCtrlPortStatus OBJECT-TYPE
+    SYNTAX          INTEGER{ controlled(1), normal(2)}
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "Status of the port:
+         controlled: indicate that the port is in controlled status.
+                     Port which is in this status will not forward some type
+                     of packet.
+         normal    : indicate that the port is in normal status."
+    ::= { ibStormCtrlEntry 1 }
+
+ibStormCtrlBroadcastUnit OBJECT-TYPE
+    SYNTAX          IbStormConstrainUnit
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The unit of the broadcast flux.
+         This value must be set together with ibStormCtrlBroadcastUpper
+         and ibStormCtrlBroadcastLower."
+    ::= { ibStormCtrlEntry 2 }
+
+ibStormCtrlBroadcastUpper  OBJECT-TYPE
+    SYNTAX          Integer32
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The upper-limit of incoming broadcast taffic at a port
+         within 1 second interval.
+         Its unit depends on ibStormCtrlBroadcastUnit value."
+    ::= { ibStormCtrlEntry 3 }
+
+ibStormCtrlBroadcastLower  OBJECT-TYPE
+    SYNTAX          Integer32
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The lower-limit of incoming broadcast taffic at a port
+         within 1 second interval.
+         This value must be lower than ibStormCtrlBroadcastUpper value.
+         Its unit depends on ibStormCtrlBroadcastUnit value."
+    ::= { ibStormCtrlEntry 4 }
+
+ibStormCtrlMulticastUnit  OBJECT-TYPE
+    SYNTAX          IbStormConstrainUnit
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The unit of the multicast flux.
+         This value must be set together with ibStormCtrlMulticastUpper
+         and ibStormCtrlMulticastLower."
+    ::= { ibStormCtrlEntry 5 }
+
+ibStormCtrlMulticastUpper  OBJECT-TYPE
+    SYNTAX          Integer32
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The upper-limit of incoming multicast taffic at a port
+         within 1 second interval.
+         Its unit depends on ibStormCtrlMulticastUnit value."
+    ::= { ibStormCtrlEntry 6 }
+
+ibStormCtrlMulticastLower  OBJECT-TYPE
+    SYNTAX          Integer32
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The lower-limit of incoming multicast taffic at a port
+         within 1 second interval.
+         This value must be lower than ibStormCtrlMulticastUpper value.
+         Its unit depends on ibStormCtrlMulticastUnit value."
+    ::= { ibStormCtrlEntry 7 }
+
+ibStormCtrlUnicastUnit  OBJECT-TYPE
+    SYNTAX          IbStormConstrainUnit
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The unit of the unicast flux.
+         This value must be set together with ibStormCtrlUnicastUpper
+         and ibStormCtrlUnicastLower."
+    ::= { ibStormCtrlEntry 8 }
+
+ibStormCtrlUnicastUpper  OBJECT-TYPE
+    SYNTAX          Integer32
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The upper-limit of incoming unicast taffic at a port
+         within 1 second interval.
+         Its unit depends on ibStormCtrlUnicastUnit value."
+    ::= { ibStormCtrlEntry 9 }
+
+ibStormCtrlUnicastLower  OBJECT-TYPE
+    SYNTAX          Integer32
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The lower-limit of incoming unicast taffic at a port
+         within 1 second interval.
+         This value must be lower than ibStormCtrlUnicastUpper value.
+         Its unit depends on ibStormCtrlUnicastUnit value."
+    ::= { ibStormCtrlEntry 10 }
+
+ibStormCtrlRowStatus OBJECT-TYPE
+    SYNTAX          RowStatus
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "This object is responsible for managing the creation,
+         deletion and modification of rows, which supports active
+         status and CreatAndGo, destroy operation."
+    ::= { ibStormCtrlEntry 11 }
+
+ibStormCtrlPortMode OBJECT-TYPE
+    SYNTAX          INTEGER{ none(1), block(2), shutdown(3) }
+    MAX-ACCESS      read-create
+    STATUS          current
+    DESCRIPTION
+        "The storm control mode of the port."
+    ::= { ibStormCtrlEntry 12 }
+
+ibStormNotifications OBJECT IDENTIFIER ::= {  ibStormConstrain 3  }
+
+ibStormRising NOTIFICATION-TYPE
+    OBJECTS  { ifIndex, ibStormTrapType, ibStormTrapThreshold, ibStormCtrlPortStatus }
+    STATUS          current
+    DESCRIPTION
+        "This trap message is generated when any type of the
+         flux exceeds its upper limit on a port."
+    ::= { ibStormNotifications 1 }
+
+ibStormFalling NOTIFICATION-TYPE
+    OBJECTS  { ifIndex, ibStormTrapType, ibStormTrapThreshold, ibStormCtrlPortStatus }
+    STATUS          current
+    DESCRIPTION
+        "This trap message is generated when a flux which used
+         to overflow its upper limit, falls below its lower
+         limit on a port."
+    ::= { ibStormNotifications 2 }
+
+END

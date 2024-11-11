@@ -1,0 +1,96 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- 
+-- Description: Rmon alarm Information MIB
+-- Reference:
+-- Version: V1.1
+-- History:
+--(1) Created by Qizhenglin, 2002.8.15
+-- V1.1 2004-10-12 updated by gaolong
+--      Change MAX-ACCESS to ACCESS.
+--      Change current to mandatory.
+-- ==================================================================
+
+-- ==================================================================
+-- 
+-- Varibles and types be imported
+--
+-- ==================================================================
+
+IB-LswSMON-MIB DEFINITIONS ::= BEGIN
+
+              IMPORTS
+                  OBJECT-TYPE
+                      FROM RFC-1212
+                  ibRhw
+                      FROM IB-OID-MIB;
+
+-- ==================================================================
+--
+-- ======================= definition begin =========================
+--
+-- ==================================================================
+
+ibSmonExtend         OBJECT IDENTIFIER ::= { ibRhw 26 }
+
+ibsmonExtendObject        OBJECT IDENTIFIER ::= { ibSmonExtend 1 }
+
+ 
+ibdot1qVlanStatNumber OBJECT-TYPE
+     SYNTAX  INTEGER
+     ACCESS  read-only
+     STATUS  mandatory
+     DESCRIPTION
+         "The number of vlans that can collect statistics of packets."
+     ::= { ibsmonExtendObject 1 }
+     
+-- ==================================================================
+--
+-- VLAN statistics status table (for SMON)
+--
+-- ==================================================================
+ ibdot1qVlanStatStatusTable OBJECT-TYPE
+     SYNTAX     SEQUENCE OF Ibdot1qVlanStatStatusEntry
+     ACCESS     not-accessible
+     STATUS     mandatory
+     DESCRIPTION
+         "VLAN statistics status table."
+     ::= { ibsmonExtendObject 2 }
+
+ ibdot1qVlanStatStatusEntry OBJECT-TYPE
+     SYNTAX     Ibdot1qVlanStatStatusEntry
+     ACCESS	not-accessible
+     STATUS     mandatory
+     DESCRIPTION
+         " VLAN statistics status table entry."
+     INDEX { ibdot1qVlanStatEnableIndex }
+     ::= { ibdot1qVlanStatStatusTable 1 }
+
+      
+    Ibdot1qVlanStatStatusEntry ::= SEQUENCE {
+        ibdot1qVlanStatEnableIndex                INTEGER,
+        ibdot1qVlanStatEnableStatus               INTEGER
+    }
+        
+        
+    ibdot1qVlanStatEnableIndex  OBJECT-TYPE
+        SYNTAX     INTEGER
+        ACCESS 	    read-only
+        STATUS      mandatory
+        DESCRIPTION
+        "Vlan index ."
+        ::= { ibdot1qVlanStatStatusEntry 1 }  
+        
+    ibdot1qVlanStatEnableStatus  OBJECT-TYPE
+        SYNTAX     INTEGER
+        {
+            enabled(1),
+            disabled(2)
+        }
+        ACCESS read-write
+        STATUS      mandatory
+        DESCRIPTION
+        "VLAN Statistics Status.It represent the current VLAN supports statistic or not."
+        ::= { ibdot1qVlanStatStatusEntry 2 } 
+
+   END

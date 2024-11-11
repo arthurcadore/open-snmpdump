@@ -1,0 +1,109 @@
+-- ===========================================================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: context MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+-- revision 1.0 2014-3-18 created by c08124
+--
+-- ============================================================================================================
+IB-CONTEXT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC;
+
+ibContext MODULE-IDENTITY
+    LAST-UPDATED "201403180000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB contains objects for managing context operations."
+
+    REVISION "201403180000Z"
+    DESCRIPTION
+        "Initial revision of this MIB module."
+    ::= { ibCommon 154 }
+
+ibContextTables OBJECT IDENTIFIER ::= { ibContext 1 }
+
+ibContextControl OBJECT IDENTIFIER ::= { ibContextTables 1 }
+
+
+ibContextControlTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbContextControlEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table is used to configure contexts for a device and
+         show context status info."
+    ::= { ibContextControl 1 }
+
+
+ibContextControlEntry OBJECT-TYPE
+    SYNTAX IbContextControlEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An entry of the ibContextControlTable.
+         Each entry corresponds to one context."
+    INDEX { ibContextIndex }
+    ::= { ibContextControlTable 1 }
+
+IbContextControlEntry ::=
+    SEQUENCE
+        {
+            ibContextIndex
+                Integer32,
+            ibContextName
+                DisplayString
+        }
+
+ibContextIndex OBJECT-TYPE
+    SYNTAX Integer32 (1..2147483647)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The value range of Context ID depends on the device model."
+    ::= { ibContextControlEntry 1 }
+
+
+ibContextName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (1..15))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Specifies the context name,
+         a case-sensitive string of 1 to 15 characters.
+         The context name cannot be modified once created."
+    ::= { ibContextControlEntry 2 }
+
+
+ibContextNotification OBJECT IDENTIFIER ::= { ibContext 8 }
+
+ibContextNotificationObjects OBJECT IDENTIFIER ::= { ibContextNotification 0 }
+
+ibContextStateChangeToActive NOTIFICATION-TYPE
+    OBJECTS {ibContextIndex, ibContextName}
+    STATUS current
+    DESCRIPTION
+        "The ibContextStateChangeToActive trap indicates
+         that the context status has changed to active."
+    ::= { ibContextNotificationObjects 1 }
+
+ibContextStateChangeToInactive NOTIFICATION-TYPE
+    OBJECTS {ibContextIndex, ibContextName}
+    STATUS current
+    DESCRIPTION
+        "The ibContextStateChangeToInactive trap indicates
+         that the context status has changed to inactive."
+    ::= { ibContextNotificationObjects 2 }
+
+END

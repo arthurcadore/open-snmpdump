@@ -1,0 +1,1354 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The purpose of this MIB file is to provide the definition of
+--              the ARP trap.
+-- Reference:
+-- Version: V1.2
+-- History:
+-- V1.0 2021-12-08
+--   Initial version, created by daifei
+-- V1.1 2022-05-13
+--   Added ibARPTrapPacketValidCheck by lkf9751
+--   Added ibARPTrapHostMoveResume and ibARPTrapGatewayCheck by zkf9482
+--   Added ibARPTrapDtcDropVlanPkt, ibARPTrapDtcDropVsiPkt,
+--   ibARPTrapDtcDropIfPkt, ibARPTrapMacMismatch,
+--   ibARPTrapEntryCheck by xkf9359
+-- V1.2 2023-04-20
+--   Added ibARPTrapPktQueue by yuanyuchen
+-- ============================================================================
+IB-ARP-TRAP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        DisplayString
+    FROM SNMPv2-TC
+        Unsigned32, IpAddress, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI;
+-- Node definitions
+ibARPTrap MODULE-IDENTITY
+    LAST-UPDATED "202304201710Z"      -- APR 20, 2023 at 17:10 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB file defines the ARP trap warning feature only."
+    REVISION "202304201710Z"        -- APR 20, 2023 at 17:10 GMT
+    DESCRIPTION
+        "Add ibARPTrapPktQueue."
+    REVISION "202205131800Z"        -- MAY 13, 2022 at 18:00 GMT
+    DESCRIPTION
+        "Added ibARPTrapPacketValidCheck, ibARPTrapHostMoveResume, ibARPTrapDtcDropVlanPkt, ibARPTrapDtcDropVsiPkt,
+         ibARPTrapDtcDropIfPkt, ibARPTrapMacMismatch,
+         ibARPTrapEntryCheck, and
+         ibARPTrapGatewayCheck."
+    REVISION "202112081800Z"        -- DEC 08, 2021 at 18:00 GMT
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 217}
+
+-- ibARPTrapEntry
+ibARPTrapEntry OBJECT IDENTIFIER ::= { ibARPTrap 1 }
+
+ibARPTrapsEntry OBJECT IDENTIFIER  ::= { ibARPTrapEntry 0 }
+
+-- ibARPTrapsEntry
+ibARPTrapThresholdAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapEntryThreshold,
+            ibARPTrapDynamicEntryNum,
+            ibARPTrapStaticEntryNum,
+            ibARPTrapOtherEntryNum
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the numbers of ARP entry on a device exceeds the threshold,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibARPTrapsEntry 1 }
+
+ibARPTrapThresholdResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapEntryThreshold,
+            ibARPTrapDynamicEntryNum,
+            ibARPTrapStaticEntryNum,
+            ibARPTrapOtherEntryNum
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the numbers of ARP entry on a device drops below the threshold,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibARPTrapsEntry 2 }
+
+ibARPTrapSlotThresholdAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapEntryChassis,
+            ibARPTrapEntrySlot,
+            ibARPTrapEntryThreshold,
+            ibARPTrapDynamicEntryNum
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the numbers of ARP entry of slot exceeds the threshold,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibARPTrapsEntry 3 }
+
+ibARPTrapSlotThresholdResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapEntryChassis,
+            ibARPTrapEntrySlot,
+            ibARPTrapEntryThreshold,
+            ibARPTrapDynamicEntryNum
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the numbers of ARP entry of slot drops below the threshold,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibARPTrapsEntry 4 }
+
+ibARPTrapIfThresholdAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapEntryIfName,
+            ibARPTrapEntryThreshold,
+            ibARPTrapDynamicEntryNum
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the numbers of ARP entry exceeds the threshold of the interface,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibARPTrapsEntry 5 }
+
+ibARPTrapIfThresholdResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapEntryIfName,
+            ibARPTrapEntryThreshold,
+            ibARPTrapDynamicEntryNum
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the numbers of ARP entry drops below the threshold of the interface,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibARPTrapsEntry 6 }
+
+ibARPTrapSuppThresholdAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapEntryThreshold,
+            ibARPTrapSuppEntryNum
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the numbers of ARP suppression entry on a device exceeds the
+         threshold, a trap message is generated and sent to the remote
+         monitoring device."
+    ::= { ibARPTrapsEntry 7 }
+
+ibARPTrapSuppThresholdResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapEntryThreshold,
+            ibARPTrapSuppEntryNum
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the numbers of ARP suppression entry on a device drops below the
+        threshold, a trap message is generated and sent to the remote
+        monitoring device."
+    ::= { ibARPTrapsEntry 8 }
+
+ibARPTrapEntryObjects OBJECT IDENTIFIER  ::= { ibARPTrapEntry 1 }
+
+-- ibARPEntryTrapObjects
+
+ibARPTrapEntryChassis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of chassis ID. If the value is 65535, the device is
+        not a stacked device ."
+    ::= { ibARPTrapEntryObjects 1 }
+
+ibARPTrapEntrySlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+    "The information of slot."
+    ::= { ibARPTrapEntryObjects 2 }
+
+ibARPTrapEntryIfName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE (0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of interface name."
+    ::= { ibARPTrapEntryObjects 3 }
+
+ibARPTrapEntryThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of Threshold."
+    ::= { ibARPTrapEntryObjects 4 }
+
+ibARPTrapDynamicEntryNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The numbers of ARP dynamic entry."
+    ::= { ibARPTrapEntryObjects 5 }
+
+ibARPTrapStaticEntryNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The numbers of ARP static entry."
+    ::= { ibARPTrapEntryObjects 6 }
+
+ibARPTrapOtherEntryNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The numbers of ARP other entry."
+    ::= { ibARPTrapEntryObjects 7 }
+
+ibARPTrapSuppEntryNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The numbers of ARP suppression entry."
+    ::= { ibARPTrapEntryObjects 8 }
+
+ibARPTrapPkt OBJECT IDENTIFIER  ::= { ibARPTrap 2 }
+
+-- ibARPTrapLocalConflict
+ibARPTrapLocalConflict OBJECT IDENTIFIER ::= { ibARPTrapPkt 1 }
+
+ibARPTrapsLocal OBJECT IDENTIFIER  ::= { ibARPTrapLocalConflict 0 }
+
+ibARPTrapMACConflictAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapLocalConflictIf,
+            ibARPTrapLocalConflictMac,
+            ibARPTrapLocalSrcIp,
+            ibARPTrapLocalPeVlan,
+            ibARPTrapLocalCeVlan,
+            ibARPTrapLocalInboundIf
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the MAC address conflict occurred, a trap message is generated
+        and sent to the remote monitoring device."
+    ::= { ibARPTrapsLocal 1 }
+
+ibARPTrapMACConflictResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapLocalConflictIf,
+            ibARPTrapLocalConflictMac,
+            ibARPTrapLocalSrcIp,
+            ibARPTrapLocalPeVlan,
+            ibARPTrapLocalCeVlan,
+            ibARPTrapLocalInboundIf
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the MAC address conflict was removed, a trap message is generated
+        and sent to the remote monitoring device."
+    ::= { ibARPTrapsLocal 2 }
+
+ibARPTrapMACIPConflictAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapLocalConflictIf,
+            ibARPTrapLocalConflictMac,
+            ibARPTrapLocalConflictIP,
+            ibARPTrapLocalDstMac,
+            ibARPTrapLocalDstIP,
+            ibARPTrapLocalPeVlan,
+            ibARPTrapLocalCeVlan,
+            ibARPTrapLocalInboundIf
+        }
+    STATUS      current
+    DESCRIPTION
+        "If a MAC and IP address conflicts occurred, a trap message is generated
+        and sent to the remote monitoring device."
+    ::= { ibARPTrapsLocal 3 }
+
+ibARPTrapMACIPConflictResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapLocalConflictIf,
+            ibARPTrapLocalConflictMac,
+            ibARPTrapLocalConflictIP,
+            ibARPTrapLocalDstMac,
+            ibARPTrapLocalDstIP,
+            ibARPTrapLocalPeVlan,
+            ibARPTrapLocalCeVlan,
+            ibARPTrapLocalInboundIf
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the MAC and IP address conflicts were resolved, a trap
+          message is generated and sent
+         to the remote monitoring device."
+    ::= { ibARPTrapsLocal 4 }
+
+ibARPTrapIPConflictAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapLocalConflictIf,
+            ibARPTrapLocalConflictIP,
+            ibARPTrapLocalSrcMac,
+            ibARPTrapLocalPeVlan,
+            ibARPTrapLocalCeVlan
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the device received an ARP packet with a duplicate
+         IP address, a trap message is generated and sent
+         to the remote monitoring device."
+    ::= { ibARPTrapsLocal 5 }
+
+ibARPTrapIPConflictResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapLocalConflictIf,
+            ibARPTrapLocalConflictIP,
+            ibARPTrapLocalSrcMac,
+            ibARPTrapLocalPeVlan,
+            ibARPTrapLocalCeVlan
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the IP address conflicts were resolved, a trap message is generated
+        and sent to the remote monitoring device."
+    ::= { ibARPTrapsLocal 6 }
+
+ibARPTrapLocalObjects OBJECT IDENTIFIER  ::= { ibARPTrapLocalConflict 1 }
+
+ibARPTrapLocalConflictIf OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..47))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Conflict Interface name."
+    ::= { ibARPTrapLocalObjects 1 }
+
+ibARPTrapLocalConflictMac OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..15))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The mac address of Conflict Interface."
+    ::= { ibARPTrapLocalObjects 2 }
+
+ibARPTrapLocalConflictIP OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The ip address of Conflict Interface."
+    ::= { ibARPTrapLocalObjects 3 }
+
+ibARPTrapLocalSrcMac OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..15))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The source mac of Arp packet"
+    ::= { ibARPTrapLocalObjects 4}
+
+ibARPTrapLocalSrcIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The source ip of Arp packet"
+    ::= { ibARPTrapLocalObjects 5 }
+
+ibARPTrapLocalDstMac OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..15))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The destination mac of Arp packet."
+    ::= { ibARPTrapLocalObjects 6}
+
+ibARPTrapLocalDstIP OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The destination ip of Arp packet."
+    ::= { ibARPTrapLocalObjects 7 }
+
+ibARPTrapLocalPeVlan OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The first vlan ip of Arp packet."
+    ::= { ibARPTrapLocalObjects 8}
+
+ibARPTrapLocalCeVlan OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "TThe second vlan ip of Arp packet."
+    ::= { ibARPTrapLocalObjects 9 }
+
+ibARPTrapLocalInboundIf OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..47))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "TThe physical inbound inerface of Arp packet."
+    ::= { ibARPTrapLocalObjects 10}
+
+-- ibARPTrapHostMove
+ibARPTrapHostMove OBJECT IDENTIFIER ::= { ibARPTrapPkt 2 }
+
+ibARPTrapsHostMove OBJECT IDENTIFIER  ::= { ibARPTrapHostMove 0 }
+
+ibARPTrapHostMoveAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapMoveUserIP,
+            ibARPTrapMoveUserMAC,
+            ibARPTrapMoveLocalIf,
+            ibARPTrapMoveLocalPeVlan,
+            ibARPTrapMoveLocalCeVlan,
+            ibARPTrapMoveRemoteIF,
+            ibARPTrapMoveRemotePeVlan,
+            ibARPTrapMoveRemoteCeVlan
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the device detected a user moved to another interface,
+         a trap message is generated and sent
+         to the remote monitoring device."
+    ::= { ibARPTrapsHostMove 1 }
+
+ibARPTrapHostMoveResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapMoveUserIP,
+            ibARPTrapMoveUserMAC,
+            ibARPTrapMoveLocalIf,
+            ibARPTrapMoveLocalPeVlan,
+            ibARPTrapMoveLocalCeVlan,
+            ibARPTrapMoveRemoteIF,
+            ibARPTrapMoveRemotePeVlan,
+            ibARPTrapMoveRemoteCeVlan
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the device detects that the event of the user moving to
+        another interface is cleared, it sends a trap message to the remote
+        monitoring device."
+    ::= { ibARPTrapsHostMove 2 }
+
+ibARPTrapHostMoveObjects OBJECT IDENTIFIER  ::= { ibARPTrapHostMove 1 }
+
+ibARPTrapMoveUserIP OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The ip address of user moved to another interface."
+    ::= { ibARPTrapHostMoveObjects 1 }
+
+ibARPTrapMoveUserMAC OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..15))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The mac address of user moved to another interface."
+    ::= { ibARPTrapHostMoveObjects 2 }
+
+ibARPTrapMoveLocalIf OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..47))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The interface before user move."
+    ::= { ibARPTrapHostMoveObjects 3 }
+
+ibARPTrapMoveLocalPeVlan OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The first vlan before user move."
+    ::= { ibARPTrapHostMoveObjects 4}
+
+ibARPTrapMoveLocalCeVlan OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The second vlan before user move."
+    ::= { ibARPTrapHostMoveObjects 5 }
+
+ibARPTrapMoveRemoteIF OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..47))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The interface after user move."
+    ::= { ibARPTrapHostMoveObjects 6}
+
+ibARPTrapMoveRemotePeVlan OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The first vlan after user move."
+    ::= { ibARPTrapHostMoveObjects 7 }
+
+ibARPTrapMoveRemoteCeVlan OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The second vlan after user move."
+    ::= { ibARPTrapHostMoveObjects 8 }
+
+-- ibARPTrapUserIpConflict
+ibARPTrapUserIpConflict OBJECT IDENTIFIER ::= { ibARPTrapPkt 3 }
+
+ibARPTrapsUserIpConflict OBJECT IDENTIFIER  ::= { ibARPTrapUserIpConflict 0 }
+
+ibARPTrapUserIpConflictAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapUIPCPRcvMac,
+            ibARPTrapUIPCPRcvPVid,
+            ibARPTrapUIPCPRcvCVid,
+            ibARPTrapUIPCPRcvIf,
+            ibARPTrapUIPCPLocalMac,
+            ibARPTrapUIPCPLocalIf,
+            ibARPTrapUIPCPLocalPVid,
+            ibARPTrapUIPCPLocalCVid,
+            ibARPTrapUIPCPIpAddr
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the device detected a user IP address conflict,
+        a trap message is generated and sent
+        to the remote monitoring device."
+    ::= { ibARPTrapsUserIpConflict 1 }
+
+ibARPTrapUserIpConflictObjs OBJECT IDENTIFIER  ::= { ibARPTrapUserIpConflict 1 }
+
+ibARPTrapUIPCPRcvMac OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..15))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The mac address of New user."
+    ::= { ibARPTrapUserIpConflictObjs 1 }
+
+ibARPTrapUIPCPRcvPVid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The first vlan of New user."
+    ::= { ibARPTrapUserIpConflictObjs 2}
+
+ibARPTrapUIPCPRcvCVid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The second vlan of  New user."
+    ::= { ibARPTrapUserIpConflictObjs 3 }
+
+ibARPTrapUIPCPRcvIf OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..47))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The  Interface of  New user."
+    ::= { ibARPTrapUserIpConflictObjs 4 }
+
+ibARPTrapUIPCPLocalMac OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..15))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The mac address of  Old user."
+    ::= { ibARPTrapUserIpConflictObjs 5}
+
+ibARPTrapUIPCPLocalPVid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The first vlan of  Old user."
+    ::= { ibARPTrapUserIpConflictObjs 6 }
+
+ibARPTrapUIPCPLocalCVid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The second vlan of  Old user."
+    ::= { ibARPTrapUserIpConflictObjs 7}
+
+ibARPTrapUIPCPLocalIf OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..47))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The Interface of  Old user."
+    ::= { ibARPTrapUserIpConflictObjs 8 }
+
+ibARPTrapUIPCPIpAddr OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Conflict ip address."
+    ::= { ibARPTrapUserIpConflictObjs 9 }
+
+-- ibARPTrapAckStrictCheck
+ibARPTrapAckStrictCheck OBJECT IDENTIFIER ::= { ibARPTrapPkt 4 }
+
+ibARPTrapsAckStrictCheck OBJECT IDENTIFIER  ::= { ibARPTrapAckStrictCheck 0 }
+
+ibARPTrapAckStrictCheckAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapAckIfName,
+            ibARPTrapAckSourceIP
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the interface received an ARP reply that was not requested by the
+         device, a trap message is generated and sent to the remote monitoring
+         device."
+    ::= { ibARPTrapsAckStrictCheck 1 }
+
+ibARPTrapAckStrictObjs OBJECT IDENTIFIER  ::= { ibARPTrapAckStrictCheck 1 }
+
+ibARPTrapAckIfName OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE (0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The interface of receiving an ARP reply."
+    ::= { ibARPTrapAckStrictObjs 1}
+
+ibARPTrapAckSourceIP OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The source ip of the ARP reply."
+    ::= { ibARPTrapAckStrictObjs 2 }
+
+-- ibARPTrapSpeedLimit
+ibARPTrapSpeedLimit OBJECT IDENTIFIER ::= { ibARPTrapPkt 5 }
+
+ibARPTrapsSpeedLimit OBJECT IDENTIFIER  ::= { ibARPTrapSpeedLimit 0 }
+
+ibARPTrapSpeedLimitAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapSpeedLimitChassis,
+            ibARPTrapSpeedLimitSlot,
+            ibARPTrapSpeedLimitSupValue,
+            ibARPTrapSpeedLimitCurValue,
+            ibARPTrapSpeedLimitSupType
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the rate of sending ARP packets or deliving ARP miss messages
+        exceeded the rate limit, a trap message is generated and sent
+        to the remote monitoring device."
+    ::= { ibARPTrapsSpeedLimit 1 }
+
+ibARPTrapSpeedLimitResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapSpeedLimitChassis,
+            ibARPTrapSpeedLimitSlot,
+            ibARPTrapSpeedLimitSupValue,
+            ibARPTrapSpeedLimitCurValue,
+            ibARPTrapSpeedLimitSupType
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the rate of sending ARP packets or deliving ARP miss messages
+        droped below the rate limit, a trap message is generated and sent
+        to the remote monitoring device."
+    ::= { ibARPTrapsSpeedLimit 2 }
+
+ibARPTrapSpeedLimitObjs OBJECT IDENTIFIER  ::= { ibARPTrapSpeedLimit 1 }
+
+ibARPTrapSpeedLimitChassis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of chassis ID. If the value is 65535, the device is
+        not a stacked device ."
+    ::= { ibARPTrapSpeedLimitObjs 1 }
+
+ibARPTrapSpeedLimitSlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+    "The information of slot."
+    ::= { ibARPTrapSpeedLimitObjs 2 }
+
+ibARPTrapSpeedLimitSupValue OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "pps"
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The threshold rate of speed limit."
+    ::= { ibARPTrapSpeedLimitObjs 3 }
+
+ibARPTrapSpeedLimitCurValue OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "pps"
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The current rate of speed limit."
+    ::= { ibARPTrapSpeedLimitObjs 4 }
+
+ibARPTrapSpeedLimitSupType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            packet(1),
+            miss(2)
+        }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The current rate of speed limit:
+         'packet' means Arp packet Speed Limit.
+         'miss' means Arp Miss Message Speed Limit."
+    ::= { ibARPTrapSpeedLimitObjs 5}
+
+-- ibARPTrapPacketValidCheck
+ibARPTrapPacketValidCheck OBJECT IDENTIFIER ::= { ibARPTrapPkt 6 }
+
+ibARPTrapsPacketValidCheck OBJECT IDENTIFIER  ::= { ibARPTrapPacketValidCheck 0 }
+
+ibARPTrapPacketValidCheckAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapPktValidCheckIf,
+            ibARPTrapPktValidCheckMac,
+            ibARPTrapPktValidCheckIp,
+            ibARPTrapPktValidCheckVlan,
+            ibARPTrapPktValidtCheckSvlan
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the device receives an invalid ARP packet,
+        a trap message is generated and sent to
+        the remote monitoring device."
+    ::= { ibARPTrapsPacketValidCheck 1 }
+
+ibARPTrapPacketValidCheckObjs OBJECT IDENTIFIER  ::= { ibARPTrapPacketValidCheck 1 }
+
+ibARPTrapPktValidCheckIf OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..47))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of the interface that received the ARP packet."
+    ::= { ibARPTrapPacketValidCheckObjs 1 }
+
+ibARPTrapPktValidCheckMac OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..15))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        " Source MAC address of the ARP packet."
+    ::= { ibARPTrapPacketValidCheckObjs 2 }
+
+ibARPTrapPktValidCheckIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Source IP address of ARP packet."
+    ::= { ibARPTrapPacketValidCheckObjs 3 }
+
+ibARPTrapPktValidCheckVlan OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VLAN ID of the ARP packet."
+    ::= { ibARPTrapPacketValidCheckObjs 4 }
+
+ibARPTrapPktValidtCheckSvlan OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Service VLAN ID of the ARP packet."
+    ::= { ibARPTrapPacketValidCheckObjs 5 }
+
+-- ibARPTrapGatewayCheck
+ibARPTrapGatewayCheck OBJECT IDENTIFIER ::= { ibARPTrapPkt 7 }
+
+ibARPTrapsGatewayCheck OBJECT IDENTIFIER  ::= { ibARPTrapGatewayCheck 0 }
+ibARPTrapGatewayCheckAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapGatewayCheckIf,
+            ibARPTrapGatewayCheckSlot,
+            ibARPTrapGatewayCheckIp
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the ARP gateway protection feature intercepts an ARP attack
+        packet, a trap message is generated and sent to
+        the remote monitoring device."
+    ::= { ibARPTrapsGatewayCheck 1 }
+
+ibARPTrapGatewayCheckResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapGatewayCheckIf,
+            ibARPTrapGatewayCheckSlot,
+            ibARPTrapGatewayCheckIp
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the device is no longer attacked for a period of
+        time, a trap message is generated and sent to
+        the remote monitoring device."
+    ::= { ibARPTrapsGatewayCheck 2 }
+
+ibARPTrapGatewayCheckObjs OBJECT IDENTIFIER  ::= { ibARPTrapGatewayCheck 1 }
+
+ibARPTrapGatewayCheckIf OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..47))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of the interface that received the ARP packet."
+    ::= { ibARPTrapGatewayCheckObjs 1 }
+
+ibARPTrapGatewayCheckSlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Slot of interface board."
+    ::= { ibARPTrapGatewayCheckObjs 2 }
+
+ibARPTrapGatewayCheckIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        " IP address of the ARP packet."
+    ::= { ibARPTrapGatewayCheckObjs 3 }
+
+-- ibARPTrapDtcDropVlanPkt
+ibARPTrapDtcDropVlanPkt OBJECT IDENTIFIER ::= { ibARPTrapPkt 8 }
+
+ibARPTrapsDtcDropVlanPkt OBJECT IDENTIFIER  ::= { ibARPTrapDtcDropVlanPkt 0 }
+
+ibARPTrapDtcDropVlanPktAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapDtcDropVlanPktChassis,
+            ibARPTrapDtcDropVlanPktSlot,
+            ibARPTrapDtcDropVlanPktIfName,
+            ibARPTrapDtcDropVlanPktVlanId,
+            ibARPTrapDtcDropVlanPktServId,
+            ibARPTrapDtcDropVlanPktType
+        }
+    STATUS      current
+    DESCRIPTION
+        "ARP detection packet loss alarm of VLAN virtual interface."
+    ::= { ibARPTrapsDtcDropVlanPkt 1 }
+
+ibARPTrapDtcDropVlanPktObjs OBJECT IDENTIFIER  ::= { ibARPTrapDtcDropVlanPkt 1 }
+
+ibARPTrapDtcDropVlanPktChassis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The chassis number of the loss ARP detection-drop packet. If the value is 65535, the device is
+        not a stacked device."
+    ::= { ibARPTrapDtcDropVlanPktObjs 1 }
+
+ibARPTrapDtcDropVlanPktSlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+    "The slot number of the ARP detection-drop packet."
+    ::= { ibARPTrapDtcDropVlanPktObjs 2 }
+
+ibARPTrapDtcDropVlanPktIfName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE (0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of the interface of the ARP detection-drop packet."
+    ::= { ibARPTrapDtcDropVlanPktObjs 3 }
+
+ibARPTrapDtcDropVlanPktVlanId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The vlan id of the ARP detection-drop packet."
+    ::= { ibARPTrapDtcDropVlanPktObjs 4 }
+
+ibARPTrapDtcDropVlanPktServId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The service id of the ARP detection-drop packet."
+    ::= { ibARPTrapDtcDropVlanPktObjs 5}
+
+ibARPTrapDtcDropVlanPktType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            sourceMacInvalidDrop(1),
+            destMacInvalidDrop(2),
+            ipInvalidDrop(3),
+            ipcimNobindingDrop(4)
+        }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The type of the ARP detection-drop packet:
+         'sourceMacInvalidDrop' means Arp packet dropped by invalid source mac address.
+     'destMacInvalidDrop' means Arp packet dropped by invalid destination mac address.
+     'ipInvalidDrop' means Arp packet dropped by invalid ip address.
+         'ipcimNobindingDrop' means Arp packet dropped by ipcim has no binding."
+    ::= { ibARPTrapDtcDropVlanPktObjs 6}
+
+-- ibARPTrapDtcDropVsiPkt
+
+ibARPTrapDtcDropVsiPkt OBJECT IDENTIFIER ::= { ibARPTrapPkt 9 }
+
+ibARPTrapsDtcDropVsiPkt OBJECT IDENTIFIER  ::= { ibARPTrapDtcDropVsiPkt 0 }
+
+ibARPTrapDtcDropVsiPktAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapDtcDropVsiPktChassis,
+            ibARPTrapDtcDropVsiPktSlot,
+            ibARPTrapDtcDropVsiPktIfName,
+            ibARPTrapDtcDropVsiPktVlanId,
+            ibARPTrapDtcDropVsiPktServId,
+            ibARPTrapDtcDropVsiPktType
+        }
+    STATUS      current
+    DESCRIPTION
+        "ARP detection packet loss alarm of VSI virtual interface."
+    ::= { ibARPTrapsDtcDropVsiPkt 1 }
+
+ibARPTrapDtcDropVsiPktObjs OBJECT IDENTIFIER  ::= { ibARPTrapDtcDropVsiPkt 1 }
+
+ibARPTrapDtcDropVsiPktChassis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The chassis number of the loss ARP detection-drop packet. If the value is 65535, the device is
+        not a stacked device."
+    ::= { ibARPTrapDtcDropVsiPktObjs 1 }
+
+ibARPTrapDtcDropVsiPktSlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+    "The slot number of the ARP detection-drop packet."
+    ::= { ibARPTrapDtcDropVsiPktObjs 2 }
+
+ibARPTrapDtcDropVsiPktIfName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE (0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of the interface of the ARP detection-drop packet."
+    ::= { ibARPTrapDtcDropVsiPktObjs 3 }
+
+ibARPTrapDtcDropVsiPktVlanId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The vlan id of the ARP detection-drop packet."
+    ::= { ibARPTrapDtcDropVsiPktObjs 4 }
+
+ibARPTrapDtcDropVsiPktServId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The service id of the ARP detection-drop packet."
+    ::= { ibARPTrapDtcDropVsiPktObjs 5}
+
+ibARPTrapDtcDropVsiPktType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            sourceMacInvalidDrop(1),
+            destMacInvalidDrop(2),
+            ipInvalidDrop(3),
+            ipcimNobindingDrop(4)
+        }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The type of the ARP detection-drop packet:
+         'sourceMacInvalidDrop' means Arp packet dropped by invalid source mac address.
+     'destMacInvalidDrop' means Arp packet dropped by invalid destination mac address.
+     'ipInvalidDrop' means Arp packet dropped by invalid ip address.
+         'ipcimNobindingDrop' means Arp packet dropped by ipcim has no binding."
+    ::= { ibARPTrapDtcDropVsiPktObjs 6}
+
+-- ibARPTrapDtcDropIfPkt
+
+ibARPTrapDtcDropIfPkt OBJECT IDENTIFIER ::= { ibARPTrapPkt 10 }
+
+ibARPTrapsDtcDropIfPkt OBJECT IDENTIFIER  ::= { ibARPTrapDtcDropIfPkt 0 }
+
+ibARPTrapDtcDropIfPktAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapDtcDropIfPktChassis,
+            ibARPTrapDtcDropIfPktSlot,
+            ibARPTrapDtcDropIfPktIfName,
+            ibARPTrapDtcDropIfPktVlanId,
+            ibARPTrapDtcDropIfPktServId,
+            ibARPTrapDtcDropIfPktType
+        }
+    STATUS      current
+    DESCRIPTION
+        "ARP detection packet loss alarm of layer 2 Ethernet interface"
+    ::= { ibARPTrapsDtcDropIfPkt 1 }
+
+ibARPTrapDtcDropIfPktObjs OBJECT IDENTIFIER  ::= { ibARPTrapDtcDropIfPkt 1 }
+
+ibARPTrapDtcDropIfPktChassis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The chassis number of the loss ARP detection-drop packet. If the value is 65535, the device is
+        not a stacked device."
+    ::= { ibARPTrapDtcDropIfPktObjs 1 }
+
+ibARPTrapDtcDropIfPktSlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+    "The slot number of the ARP detection-drop packet."
+    ::= { ibARPTrapDtcDropIfPktObjs 2 }
+
+ibARPTrapDtcDropIfPktIfName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE (0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of the interface of the ARP detection-drop packet."
+    ::= { ibARPTrapDtcDropIfPktObjs 3 }
+
+ibARPTrapDtcDropIfPktVlanId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The vlan id of the ARP detection-drop packet."
+    ::= { ibARPTrapDtcDropIfPktObjs 4 }
+
+ibARPTrapDtcDropIfPktServId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The service id of the ARP detection-drop packet."
+    ::= { ibARPTrapDtcDropIfPktObjs 5}
+
+ibARPTrapDtcDropIfPktType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            sourceMacInvalidDrop(1),
+            destMacInvalidDrop(2),
+            ipInvalidDrop(3),
+            ipcimNobindingDrop(4)
+        }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The type of the ARP detection-drop packet:
+         'sourceMacInvalidDrop' means Arp packet dropped by invalid source mac address.
+     'destMacInvalidDrop' means Arp packet dropped by invalid destination mac address.
+     'ipInvalidDrop' means Arp packet dropped by invalid ip address.
+         'ipcimNobindingDrop' means Arp packet dropped by ipcim has no binding."
+    ::= { ibARPTrapDtcDropIfPktObjs 6}
+
+-- ibARPTrapMacMismatch
+ibARPTrapMacMismatch OBJECT IDENTIFIER ::= { ibARPTrapPkt 11 }
+
+ibARPTrapsMacMismatch OBJECT IDENTIFIER  ::= { ibARPTrapMacMismatch 0 }
+
+ibARPTrapMacMismatchAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapMacMismatchChassis,
+            ibARPTrapMacMismatchSlot,
+            ibARPTrapMacMismatchIfName,
+            ibARPTrapMacMismatchIP,
+            ibARPTrapMacMismatchVrf,
+            ibARPTrapMacMismatchMac
+        }
+    STATUS      current
+    DESCRIPTION
+        "Alarm of inconsistency between MAC address of static ARP and actual MAC address."
+    ::= { ibARPTrapsMacMismatch 1 }
+
+ibARPTrapMacMismatchResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapMacMismatchChassis,
+            ibARPTrapMacMismatchSlot,
+            ibARPTrapMacMismatchIfName,
+            ibARPTrapMacMismatchIP,
+            ibARPTrapMacMismatchVrf,
+            ibARPTrapMacMismatchMac
+        }
+    STATUS      current
+    DESCRIPTION
+        "Alarm of consistency between MAC address of static ARP and actual MAC address."
+    ::= { ibARPTrapsMacMismatch 2 }
+
+ibARPTrapMacMismatchObjs OBJECT IDENTIFIER  ::= { ibARPTrapMacMismatch 1 }
+
+ibARPTrapMacMismatchChassis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of chassis ID. If the value is 65535, the device is
+        not a stacked device ."
+    ::= { ibARPTrapMacMismatchObjs 1 }
+
+ibARPTrapMacMismatchSlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+    "The information of slot."
+    ::= { ibARPTrapMacMismatchObjs 2 }
+
+ibARPTrapMacMismatchIfName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE (0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of the interface name."
+    ::= { ibARPTrapMacMismatchObjs 3 }
+
+ibARPTrapMacMismatchIP OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of ip address."
+    ::= { ibARPTrapMacMismatchObjs 4 }
+
+ibARPTrapMacMismatchVrf OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of vrf index."
+    ::= { ibARPTrapMacMismatchObjs 5}
+
+ibARPTrapMacMismatchMac OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..15))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of mac address."
+    ::= { ibARPTrapMacMismatchObjs 6}
+
+-- ibARPTrapEntryCheck
+ibARPTrapEntryCheck OBJECT IDENTIFIER ::= { ibARPTrapPkt 12 }
+
+ibARPTrapsEntryCheck OBJECT IDENTIFIER  ::= { ibARPTrapEntryCheck 0 }
+
+ibARPTrapEntryCheckAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapEntryCheckChassis,
+            ibARPTrapEntryCheckSlot,
+            ibARPTrapEntryCheckIfName,
+            ibARPTrapEntryCheckIP,
+            ibARPTrapEntryCheckMac,
+            ibARPTrapEntryCheckPeVlan,
+            ibARPTrapEntryCheckCeVlan,
+            ibARPTrapEntryCheckPortIfName
+        }
+    STATUS      current
+    DESCRIPTION
+        "The alarm of attempts to modify an existing ARP table entry."
+    ::= { ibARPTrapsEntryCheck 1 }
+
+ibARPTrapEntryCheckObjs OBJECT IDENTIFIER  ::= { ibARPTrapEntryCheck 1 }
+
+ibARPTrapEntryCheckChassis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of chassis ID. If the value is 65535, the device is
+        not a stacked device ."
+    ::= { ibARPTrapEntryCheckObjs 1 }
+
+ibARPTrapEntryCheckSlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+    "The information of slot."
+    ::= { ibARPTrapEntryCheckObjs 2 }
+
+ibARPTrapEntryCheckIfName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE (0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of the interface name."
+    ::= { ibARPTrapEntryCheckObjs 3 }
+
+ibARPTrapEntryCheckIP OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of the ip address."
+    ::= { ibARPTrapEntryCheckObjs 4 }
+
+ibARPTrapEntryCheckMac OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..15))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of the mac address."
+    ::= { ibARPTrapEntryCheckObjs 5}
+
+ibARPTrapEntryCheckPeVlan OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of the pe vlan id."
+    ::= { ibARPTrapEntryCheckObjs 6}
+
+ibARPTrapEntryCheckCeVlan OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of the ce vlan id."
+    ::= { ibARPTrapEntryCheckObjs 7}
+
+ibARPTrapEntryCheckPortIfName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE (0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of the port name."
+    ::= { ibARPTrapEntryCheckObjs 8}
+
+-- ibARPTrapPktQueue
+ibARPTrapPktQueue OBJECT IDENTIFIER ::= { ibARPTrapPkt 13 }
+
+ibARPTrapsPktQueue OBJECT IDENTIFIER  ::= { ibARPTrapPktQueue 0 }
+
+ibARPTrapPktQueThresholdAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapPktQueChassis,
+            ibARPTrapPktQueSlot,
+            ibARPTrapPktQueNum
+        }
+    STATUS      current
+    DESCRIPTION
+        "The current size of the ARP_PKT queue exceeds the threshold."
+    ::= { ibARPTrapsPktQueue 1 }
+
+ibARPTrapPktQueThresholdResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibARPTrapPktQueChassis,
+            ibARPTrapPktQueSlot,
+            ibARPTrapPktQueNum
+        }
+    STATUS      current
+    DESCRIPTION
+        "The current size of the ARP_PKT queue drops below the threshold."
+    ::= { ibARPTrapsPktQueue 2 }
+
+ibARPTrapPktQueueObjects OBJECT IDENTIFIER  ::= { ibARPTrapPktQueue 1 }
+
+ibARPTrapPktQueChassis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of chassis ID. If the value is 65535, the device is
+         not a stacked device."
+    ::= { ibARPTrapPktQueueObjects 1 }
+
+ibARPTrapPktQueSlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of slot."
+    ::= { ibARPTrapPktQueueObjects 2 }
+
+ibARPTrapPktQueNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The number of packets in the ARP_PKT queue."
+    ::= { ibARPTrapPktQueueObjects 3 }
+
+END
+

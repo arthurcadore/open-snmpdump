@@ -1,0 +1,647 @@
+-- =============================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: flexe interface mib
+-- Reference: Extension of RFC 1213 and RFC 2233
+-- Version: V1.2
+-- History:
+--   V1.0 2018-08-06
+--        Initial Version by mazhixing
+--   V1.1 2019-4-3
+--        Modify nodename by mazhixing
+--   V1.2 2022-03-28
+--        Added ibFlexEGroupFMMismatch, ibFlexEGroupFMMismatchRecover by zhangjindong.
+-- =============================================================
+IB-FLEXE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        ifIndex, ifDescr
+    FROM IF-MIB
+        Integer32,
+        OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI
+        RowStatus
+    FROM SNMPv2-TC;
+
+
+ibFlexE  MODULE-IDENTITY
+        LAST-UPDATED    "202203280000Z"
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+             "This MIB provides FlexE interface information that is
+             excluded by RFC 1213 and RFC 2233"
+        REVISION        "202203280000Z"
+        DESCRIPTION
+                "Added ibFlexEGroupFMMismatch and ibFlexEGroupFMMismatchRecover."
+        REVISION        "201904031936Z"
+        DESCRIPTION
+                "Modify trapnode name"
+        REVISION        "201808031436Z"
+        DESCRIPTION
+                "Initial version of this MIB module,
+                 including ibFlexEGroupTable,ibFlexESubTimeSlotGranularTable,
+                 ibFlexEPhyIfTable,ibFlexEIfTable,ibFlexETrap"
+        ::= { ibCommon 177 }
+
+-- ibFlexESubSlotInfo:
+
+ibFlexESubSlotInfo OBJECT IDENTIFIER ::= { ibFlexE 1 }
+
+ibFlexESubSlotTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF  IbFlexESubSlotEntry
+        MAX-ACCESS   not-accessible
+        STATUS       current
+        DESCRIPTION
+         "A list of FlexE subslot entries."
+        ::= { ibFlexESubSlotInfo 1 }
+
+ibFlexESubSlotEntry     OBJECT-TYPE
+        SYNTAX         IbFlexESubSlotEntry
+        MAX-ACCESS     not-accessible
+        STATUS         current
+        DESCRIPTION
+         "This entry contains FlexE subslot information."
+        INDEX {
+                ibFlexEFrameIndex,
+                ibFlexESlotIndex,
+                ibFlexESubslotIndex
+        }
+        ::= { ibFlexESubSlotTable 1 }
+
+IbFlexESubSlotEntry ::= SEQUENCE  {
+        ibFlexEFrameIndex                   Integer32,
+        ibFlexESlotIndex                    Integer32,
+        ibFlexESubslotIndex                 Integer32,
+        ibFlexESubTimeSlotGranular          Integer32
+        }
+
+ibFlexEFrameIndex       OBJECT-TYPE
+        SYNTAX          Integer32 (0..65535)
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION
+         "Frame index."
+        ::= { ibFlexESubSlotEntry 1 }
+
+ibFlexESlotIndex       OBJECT-TYPE
+        SYNTAX          Integer32 (0..65535)
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION
+         "Slot index."
+        ::= { ibFlexESubSlotEntry 2 }
+
+ibFlexESubslotIndex       OBJECT-TYPE
+        SYNTAX          Integer32 (0..65535)
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION
+         "Subslot index."
+        ::= { ibFlexESubSlotEntry 3 }
+
+ibFlexESubTimeSlotGranular     OBJECT-TYPE
+        SYNTAX          Integer32
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION
+         "Specify the sub-time-slot granularity of the FlexE subslot."
+        ::= { ibFlexESubSlotEntry 4 }
+
+-- ibFlexEGroupTable:
+
+ibFlexEGroupTable     OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbFlexEGroupEntry
+        MAX-ACCESS   not-accessible
+        STATUS       current
+        DESCRIPTION
+         "A list of FlexE groups."
+        ::= { ibFlexESubSlotInfo 2 }
+
+ibFlexEGroupEntry     OBJECT-TYPE
+        SYNTAX         IbFlexEGroupEntry
+        MAX-ACCESS     not-accessible
+        STATUS         current
+        DESCRIPTION
+         "This entry contains the FlexE group information."
+        INDEX {
+                ibFlexEFrameIndex,
+                ibFlexESlotIndex,
+                ibFlexESubslotIndex,
+                ibFlexEGroupID
+        }
+        ::= { ibFlexEGroupTable 1 }
+
+IbFlexEGroupEntry ::= SEQUENCE  {
+        ibFlexEGroupID                   Integer32,
+        ibFlexEGroupRowStatus            RowStatus
+        }
+
+ibFlexEGroupID      OBJECT-TYPE
+        SYNTAX          Integer32 (1..1048574)
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION
+         "Specify the group ID of the FlexE interface."
+        ::= { ibFlexEGroupEntry 1 }
+
+ibFlexEGroupRowStatus       OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS      read-create
+        STATUS          current
+        DESCRIPTION
+         "Only active, createAndGo and destroy are supported."
+        ::= { ibFlexEGroupEntry 2 }
+
+-- ibFlexEPhyIfTable:
+
+ibFlexEPhyIfTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbFlexEPhyIfEntry
+        MAX-ACCESS   not-accessible
+        STATUS       current
+        DESCRIPTION
+         "A list of FlexE interface entries."
+        ::= { ibFlexE 2 }
+
+ibFlexEPhyIfEntry     OBJECT-TYPE
+        SYNTAX         IbFlexEPhyIfEntry
+        MAX-ACCESS     not-accessible
+        STATUS         current
+        DESCRIPTION
+         "This entry contains the information of FlexE physical interface management."
+        INDEX { ifIndex }
+        ::= { ibFlexEPhyIfTable 1 }
+
+IbFlexEPhyIfEntry ::= SEQUENCE  {
+        ibFlexEPhyGroupID             Integer32,
+        ibFlexEPhyNumber            Integer32,
+        ibFlexEClockPort             OCTET STRING
+        }
+
+ibFlexEPhyGroupID             OBJECT-TYPE
+        SYNTAX          Integer32 (1..1048574)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION
+         "Specify the group ID of the FlexE physical interface."
+        ::= { ibFlexEPhyIfEntry 1 }
+
+ibFlexEPhyNumber       OBJECT-TYPE
+        SYNTAX          Integer32 (0|1..254)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION
+         "Specify the physical number of the FlexE physical interface."
+        ::= { ibFlexEPhyIfEntry 2 }
+
+ibFlexEClockPort          OBJECT-TYPE
+        SYNTAX          OCTET STRING (SIZE (0..48))
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION
+         "Specify the clock FlexE interface."
+        ::= { ibFlexEPhyIfEntry 3 }
+
+-- ibFlexEIfTable:
+
+ibFlexEIfTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbFlexEIfEntry
+        MAX-ACCESS   not-accessible
+        STATUS       current
+        DESCRIPTION
+         "A list of FlexE interface entries."
+        ::= { ibFlexE 3 }
+
+ibFlexEIfEntry OBJECT-TYPE
+        SYNTAX         IbFlexEIfEntry
+        MAX-ACCESS     not-accessible
+        STATUS         current
+        DESCRIPTION
+         "This entry contains the information of FlexE interface management."
+        INDEX { ifIndex }
+        ::= { ibFlexEIfTable 1 }
+
+IbFlexEIfEntry ::= SEQUENCE  {
+        ibFlexEIfGroupID               Integer32,
+        ibFlexEBandwidth               Integer32,
+        ibFlexEClientID                Integer32,
+        ibFlexEMinAvailableBandwidth   Integer32
+        }
+
+ibFlexEIfGroupID        OBJECT-TYPE
+        SYNTAX                Integer32 (1..1048574)
+        MAX-ACCESS            read-write
+        STATUS                current
+        DESCRIPTION
+         "Specify the group ID of the FlexE interface."
+        ::= { ibFlexEIfEntry 1 }
+
+ibFlexEBandwidth      OBJECT-TYPE
+        SYNTAX                Integer32
+        MAX-ACCESS            read-write
+        STATUS                current
+        DESCRIPTION
+         "Specify the bandwidth of the FlexE interface."
+        ::= { ibFlexEIfEntry 2 }
+
+ibFlexEClientID      OBJECT-TYPE
+        SYNTAX                Integer32 (1..65534)
+        MAX-ACCESS            read-write
+        STATUS                current
+        DESCRIPTION
+         "Specify the client ID of the FlexE interface."
+        ::= { ibFlexEIfEntry 3 }
+
+ibFlexEMinAvailableBandwidth      OBJECT-TYPE
+        SYNTAX                Integer32 (0|1..100)
+        MAX-ACCESS            read-write
+        STATUS                current
+        DESCRIPTION
+         "Specifies the minimum available bandwidth of the FlexE interface."
+        ::= { ibFlexEIfEntry 4 }
+
+-- Notification definitions
+-- =================================================================
+-- Traps are defined below.
+
+-- Nodes of ibFlexETrapObjects
+
+ibFlexETrapObjects OBJECT IDENTIFIER ::= { ibFlexE 4 }
+
+ibFlexERemotePhyNumber OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS             accessible-for-notify
+    STATUS                 current
+    DESCRIPTION
+        "The physical number of Remote FLEXPhyIf."
+    ::= { ibFlexETrapObjects 1 }
+
+ibFlexERemotePhyGroupID OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The physical group ID of Remote FLEXPhyIf."
+    ::= { ibFlexETrapObjects 2 }
+
+ibFlexEGroupMemberCount OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The number of group members."
+    ::= { ibFlexETrapObjects 3 }
+
+ibFlexEPortList OBJECT-TYPE
+    SYNTAX OCTET STRING
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The interface list."
+    ::= { ibFlexETrapObjects 4 }
+
+
+
+-- Nodes of ibFlexETrap
+
+ibFlexETrap OBJECT IDENTIFIER ::= { ibFlexE 5 }
+ibFlexETrapPrex OBJECT IDENTIFIER ::= { ibFlexETrap 0 }
+-- All trap definitions should be placed under this object.
+
+ibFlexEPhyNumberMismatch NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibFlexEPhyNumber,
+            ibFlexERemotePhyNumber
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the physical number of the FlexE interface doesn't
+         match the other."
+    ::= { ibFlexETrapPrex 1 }
+
+ibFlexEPhyNumberMismatchRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibFlexEPhyNumber,
+            ibFlexERemotePhyNumber
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the physical number of the FlexE interface
+        matches the other."
+    ::= { ibFlexETrapPrex 2 }
+
+ibFlexEPhyGroupMismatch NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibFlexEPhyGroupID,
+            ibFlexERemotePhyGroupID
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the group ID of the FlexE interface doesn't
+         matches the other."
+    ::= { ibFlexETrapPrex 3 }
+
+ibFlexEPhyGroupMismatchRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibFlexEPhyGroupID,
+            ibFlexERemotePhyGroupID
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the group ID of the FlexE interface
+        matches the other."
+    ::= { ibFlexETrapPrex 4 }
+
+ibFlexEClientIDMismatch NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the client ID of the FlexE interface doesn't
+         match the other."
+    ::= { ibFlexETrapPrex 5 }
+
+ibFlexEClientIDMismatchRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the client ID of the FlexE interface
+        matches the other."
+    ::= { ibFlexETrapPrex 6 }
+
+ibFlexEBandwidthReduce NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibFlexEBandwidth
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the bandwidth of the FlexE interface becomes
+         smaller."
+    ::= { ibFlexETrapPrex 7 }
+
+ibFlexEBandwidthReduceRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibFlexEBandwidth
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the bandwidth of the FlexE interface recovers."
+    ::= { ibFlexETrapPrex 8 }
+
+ibFlexEPhyFcsSdAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the error code fault happens."
+    ::= { ibFlexETrapPrex 9 }
+
+ibFlexEPhyFcsSdAlarmRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the error code fault recovers."
+    ::= { ibFlexETrapPrex 10 }
+
+ibFlexEPhyLocalFault NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the fault happens in the near_end."
+    ::= { ibFlexETrapPrex 11 }
+
+ibFlexEPhyLocalFaultRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the fault in the near_end recovers."
+    ::= { ibFlexETrapPrex 12 }
+
+ibFlexEPhyRemoteFault NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the fault happens in the far_end"
+    ::= { ibFlexETrapPrex 13 }
+
+ibFlexEPhyRemoteFaultRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the fault in the far_end recovers."
+    ::= { ibFlexETrapPrex 14 }
+
+ibFlexEBandwidthMismatch NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the bandwidth of the FlexE interface
+        doesn't match the other."
+    ::= { ibFlexETrapPrex 15 }
+
+ibFlexEBandwidthMismatchRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the bandwidth of the FlexE interface
+        matches the other."
+    ::= { ibFlexETrapPrex 16 }
+
+ibFlexEPhyDelayOverAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibFlexEPortList
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the TimeDelay is oversize."
+    ::= { ibFlexETrapPrex 17 }
+
+ibFlexEPhyDelayOverAlarmRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibFlexEPortList
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the TimeDelay becomes normal."
+    ::= { ibFlexETrapPrex 18 }
+
+ibFlexESTSGMismatch NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibFlexESubTimeSlotGranular
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the granularity of the FlexE interface
+        doesn't match the other."
+    ::= { ibFlexETrapPrex 19 }
+
+ibFlexESTSGMismatchRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibFlexESubTimeSlotGranular
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the granularity of the FlexE interface
+        matches the other."
+    ::= { ibFlexETrapPrex 20 }
+
+
+ibFlexEGroupMemberFault NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibFlexEFrameIndex,
+            ibFlexESlotIndex,
+            ibFlexESubslotIndex,
+            ibFlexEGroupID,
+            ibFlexEGroupMemberCount,
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the fault happens on group members."
+    ::= { ibFlexETrapPrex 21 }
+
+ibFlexEGroupMemberFaultRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibFlexEFrameIndex,
+            ibFlexESlotIndex,
+            ibFlexESubslotIndex,
+            ibFlexEGroupID,
+            ibFlexEGroupMemberCount,
+            ifIndex,
+            ifDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the fault on group members recovers."
+    ::= { ibFlexETrapPrex 22 }
+
+ibFlexEGroupFaultAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibFlexEFrameIndex,
+            ibFlexESlotIndex,
+            ibFlexESubslotIndex,
+            ibFlexEGroupID
+        }
+      STATUS current
+    DESCRIPTION
+        "The notification is generated when the fault happens on the last group member."
+    ::= { ibFlexETrapPrex 23 }
+
+ibFlexEGroupFaultAlarmRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibFlexEFrameIndex,
+            ibFlexESlotIndex,
+            ibFlexESubslotIndex,
+            ibFlexEGroupID
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the fault on the first group member recovers."
+    ::= { ibFlexETrapPrex 24 }
+
+ibFlexEGroupFMMismatch NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibFlexEFrameIndex,
+            ibFlexESlotIndex,
+            ibFlexESubslotIndex,
+            ibFlexEGroupID
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the FEC modes of the FlexE physical interfaces
+         in the FlexE group are inconsistent."
+    ::= { ibFlexETrapPrex 25 }
+
+ibFlexEGroupFMMismatchRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibFlexEFrameIndex,
+            ibFlexESlotIndex,
+            ibFlexESubslotIndex,
+            ibFlexEGroupID
+        }
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the FEC mode of the FlexE physical interfaces
+         in the FlexE group is consistent."
+    ::= { ibFlexETrapPrex 26 }
+
+END

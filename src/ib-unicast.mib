@@ -1,0 +1,126 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: This MIB is a framework MIB for unicast technology
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2005-04-20 created by fuzhenyu
+-- ============================================================================
+IB-UNICAST-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        ibCommon
+            FROM IB-OID-MIB
+        Integer32, Counter64, OBJECT-TYPE, MODULE-IDENTITY
+            FROM SNMPv2-SMI
+        TruthValue
+            FROM SNMPv2-TC;
+
+
+    ibUnicast MODULE-IDENTITY
+        LAST-UPDATED "200501311454Z"        -- January 31, 2005 at 14:54 GMT
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+            " This MIB is a framework MIB for unicast related features."
+        REVISION      "200503241454Z"
+        DESCRIPTION
+                " Revisions made by MIB team."
+        ::= { ibCommon 44 }
+
+
+    ibURPFTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbURPFEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            " Unicast Reverse Path Forwarding (URPF) is used to prevent the network
+            attacks caused by source address spoofing. This table is used to configure
+            URPF on specific interfaces."
+        ::= { ibUnicast 1 }
+
+
+    ibURPFEntry OBJECT-TYPE
+        SYNTAX IbURPFEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            " The entry of ibURPFTable, indexed by vlan interface index."
+        INDEX { ibURPFIfIndex }
+        ::= { ibURPFTable 1 }
+
+
+    IbURPFEntry ::=
+        SEQUENCE {
+            ibURPFIfIndex
+                Integer32,
+            ibURPFEnabled
+                TruthValue,
+            ibURPFSlotID
+                Integer32,
+            ibURPFTotalReceivedPacket
+                Counter64,
+            ibURPFDroppedPacket
+                Counter64,
+            ibURPFClearStat
+                INTEGER
+         }
+
+    ibURPFIfIndex OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            " The ifIndex of vlan interface."
+        ::= { ibURPFEntry 1 }
+
+    ibURPFEnabled OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            " This object is used to enable or disable URPF on certain vlan interfaces."
+        DEFVAL { false }
+        ::= { ibURPFEntry 2 }
+
+    ibURPFSlotID OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            " This object specifies to which slot packets are redirected in order to
+            perform URPF check."
+        ::= { ibURPFEntry 3 }
+
+    ibURPFTotalReceivedPacket OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            " This object provides total received packets number."
+        ::= { ibURPFEntry 4 }
+
+    ibURPFDroppedPacket OBJECT-TYPE
+        SYNTAX Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            " This object provides total dropped invalid packets number."
+        ::= { ibURPFEntry 5 }
+
+    ibURPFClearStat OBJECT-TYPE
+        SYNTAX INTEGER { reserved(0),reset(1) }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            " This object is used to clear the URPF statistics on certain
+            vlan interfaces. This object is actually a write-only object.
+            When read, it always returns 0. When set to 1, the objects
+            ibURPFTotalReceivedPacket and ibURPFDroppedPacket are reset
+            to 0."
+        ::= { ibURPFEntry 6 }
+
+END

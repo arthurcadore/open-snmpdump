@@ -1,0 +1,305 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: subnet vlan mib
+-- Reference:
+-- Version: V1.1
+-- History:
+--  V1.0 Initial version 2005-08-02
+--  V1.1 2013-04-23 updated by yangxiaoren
+--       Add ibSubnetVlanPortStatus object to support the subnet vlan status
+--       of port applied.
+-- =================================================================
+IB-SUBNET-VLAN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-GROUP, MODULE-COMPLIANCE
+        FROM SNMPv2-CONF
+    Integer32, OBJECT-TYPE, MODULE-IDENTITY
+        FROM SNMPv2-SMI
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB
+    RowStatus
+        FROM SNMPv2-TC;
+
+
+ibSubnetVlan MODULE-IDENTITY
+    LAST-UPDATED "200508021353Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB contains the objects for managing the subnet-based VLAN
+        configurations."
+    REVISION "200508021353Z"        -- August 02, 2005 at 13:53 GMT
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 61 }
+
+--
+-- Textual Conventions
+--
+
+--
+-- Node definitions
+--
+
+ibSubnetVlanObjects OBJECT IDENTIFIER ::= { ibSubnetVlan 1 }
+
+ibSubnetVlanScalarObjects OBJECT IDENTIFIER ::= { ibSubnetVlanObjects 1 }
+
+ibSubnetNumAllVlan OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The maximum number of subnets that can be configured on all VLANs."
+    ::= { ibSubnetVlanScalarObjects 1 }
+
+ibSubnetNumPerVlan OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The maximum number of subnets that can be configured on each VLAN."
+    ::= { ibSubnetVlanScalarObjects 2 }
+
+ibSubnetNumAllPort OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The maximum number of subnets that can be applied to all ports."
+    ::= { ibSubnetVlanScalarObjects 3 }
+
+ibSubnetNumPerPort OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The maximum number of subnets that can be applied to each port."
+    ::= { ibSubnetVlanScalarObjects 4 }
+
+ibSubnetVlanTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSubnetVlanEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Subnet-based VLAN configuration table."
+    ::= { ibSubnetVlanObjects 2 }
+
+ibSubnetVlanEntry OBJECT-TYPE
+    SYNTAX IbSubnetVlanEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Subnet-based VLAN configuration entry."
+    INDEX { ibSubnetVlanVlanId, ibSubnetVlanSubnetIndex }
+    ::= { ibSubnetVlanTable 1 }
+
+IbSubnetVlanEntry ::=
+    SEQUENCE {
+        ibSubnetVlanVlanId
+            Integer32,
+        ibSubnetVlanSubnetIndex
+            Integer32,
+        ibSubnetVlanVlanIpAddressType
+            InetAddressType,
+        ibSubnetVlanIpAddressValue
+            InetAddress,
+        ibSubnetVlanNetMaskValue
+            InetAddress,
+        ibSubnetVlanRowStatus
+            RowStatus
+         }
+
+ibSubnetVlanVlanId OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Vlan id."
+    ::= { ibSubnetVlanEntry 1 }
+
+ibSubnetVlanSubnetIndex OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The subnet index value of a row in this table is from zero to
+         the value of ibSubnetNumPerVlan subtracting one."
+    ::= { ibSubnetVlanEntry 2 }
+
+ibSubnetVlanVlanIpAddressType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "There are two kinds of ip address supported by VLAN.
+         One is IPv4, which is 32 bits.
+         The other is IPv6, which is 128 bits."
+    ::= { ibSubnetVlanEntry 3 }
+
+ibSubnetVlanIpAddressValue OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The ip address of the configured subnet on VLAN, which can be an IPv4
+        or IPv6."
+    ::= { ibSubnetVlanEntry 4 }
+
+ibSubnetVlanNetMaskValue OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The net mask of the configured subnet on VLAN, which can be an IPv4 or
+        IPv6."
+    ::= { ibSubnetVlanEntry 5 }
+
+ibSubnetVlanRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The row status of this table."
+    ::= { ibSubnetVlanEntry 6 }
+
+
+ibSubnetVlanPortCreateTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSubnetVlanPortCreateEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Subnet-based VLAN port table."
+    ::= { ibSubnetVlanObjects 3 }
+
+ibSubnetVlanPortCreateEntry OBJECT-TYPE
+    SYNTAX IbSubnetVlanPortCreateEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Subnet-based VLAN port creation entry."
+    INDEX { ibSubnetVlanPortCreateIndex, ibSubnetVlanPortCreateVlanId }
+    ::= { ibSubnetVlanPortCreateTable 1 }
+
+IbSubnetVlanPortCreateEntry ::=
+    SEQUENCE {
+        ibSubnetVlanPortCreateIndex
+            Integer32,
+        ibSubnetVlanPortCreateVlanId
+            Integer32,
+        ibSubnetVlanPortInfoVlanId
+            Integer32,
+        ibSubnetVlanPortRowStatus
+            RowStatus,
+        ibSubnetVlanPortStatus
+            INTEGER
+         }
+
+ibSubnetVlanPortCreateIndex OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The port index."
+    ::= { ibSubnetVlanPortCreateEntry  1 }
+
+ibSubnetVlanPortCreateVlanId OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The subnet-based VLAN id."
+    ::= { ibSubnetVlanPortCreateEntry  2 }
+
+ibSubnetVlanPortInfoVlanId OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This value is the same as the value of ibSubnetVlanPortCreateVlanId index.
+         All of the subnet information in this port,
+         is described on vlan, whose VLAN id is the value of ibSubnetVlanPortInfoVlanId.
+         The VLAN id of vlan including subnet information can be obtained here.
+         The subnet information can be obtained in the ibSubnetVlanTable above."
+    ::= { ibSubnetVlanPortCreateEntry  3 }
+
+ibSubnetVlanPortRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The row status of this table."
+    ::= { ibSubnetVlanPortCreateEntry  4 }
+
+ibSubnetVlanPortStatus OBJECT-TYPE
+    SYNTAX  INTEGER
+    {
+        active   (1),
+        inactive (2)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The subnet VLAN status on the port.  The value is active only
+        when ibSubnetVlanPortCreateVlanId has the corresponding entry in
+        ibSubnetVlanTable, the port link type is hybrid, and the VLAN is
+        allowed by the port.
+
+        active:   subnet VLAN has been applied on the port.
+        inactive: subnet VLAN is not applied on the port."
+    ::= { ibSubnetVlanPortCreateEntry  5 }
+ibSubnetVlanConformance OBJECT IDENTIFIER ::= { ibSubnetVlan 2 }
+
+
+ibSubnetVlanCompliances OBJECT IDENTIFIER ::= { ibSubnetVlanConformance 1 }
+
+
+ibSubnetVlanCompliance MODULE-COMPLIANCE
+    STATUS current
+    DESCRIPTION
+        "The compliance statement for subnet VLAN MIB."
+    MODULE -- this module
+        MANDATORY-GROUPS {
+                   ibSubnetVlanScalarObjectGroup,
+                   ibSubnetVlanSubnetGroup,
+                   ibSubnetVlanPortCreateGroup }
+    ::= { ibSubnetVlanCompliances 1 }
+
+
+ibSubnetVlanGroups OBJECT IDENTIFIER ::= { ibSubnetVlanConformance 2 }
+
+ibSubnetVlanScalarObjectGroup OBJECT-GROUP
+    OBJECTS { ibSubnetNumAllVlan,
+          ibSubnetNumPerVlan,
+          ibSubnetNumAllPort,
+          ibSubnetNumPerPort }
+    STATUS current
+    DESCRIPTION
+        "A group of scalar objects describing the maximum number."
+    ::= { ibSubnetVlanGroups 1 }
+
+ibSubnetVlanSubnetGroup OBJECT-GROUP
+    OBJECTS { ibSubnetVlanVlanIpAddressType,
+          ibSubnetVlanIpAddressValue,
+          ibSubnetVlanNetMaskValue,
+          ibSubnetVlanRowStatus }
+    STATUS current
+    DESCRIPTION
+        "A group of subnet VLAN subnets."
+    ::= { ibSubnetVlanGroups 2 }
+
+ibSubnetVlanPortCreateGroup OBJECT-GROUP
+    OBJECTS { ibSubnetVlanPortInfoVlanId,
+          ibSubnetVlanPortRowStatus }
+    STATUS current
+    DESCRIPTION
+        "A group of subnet VLAN port creation table."
+    ::= { ibSubnetVlanGroups 3 }
+
+END

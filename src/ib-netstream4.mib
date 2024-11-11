@@ -1,0 +1,94 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The purpose of this MIB file is to provide the definition of
+--              the IP netstream trap.
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2022-11-16
+--   Initial version, created by wangyuqing
+-- ============================================================================
+IB-NETSTREAM4-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI;
+
+-- Node definitions
+ibNetstream4 MODULE-IDENTITY
+    LAST-UPDATED "202211231800Z"        -- Nov 23, 2022 at 18:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB file is to provide the definition of the IP netstream."
+    REVISION "202211231800Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 256}
+
+-- ibNetstream4TrapEntry
+ibNetstream4TrapEntry OBJECT IDENTIFIER ::= { ibNetstream4 1 }
+
+ibNetstream4TrapEntrys OBJECT IDENTIFIER  ::= { ibNetstream4TrapEntry 0 }
+
+ibNetstream4TrapEntryTHAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibNetstream4TrapEntrySpec,
+            ibNetstream4TrapEntryChassis,
+            ibNetstream4TrapEntrySlot
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the number of netstream4 tables exceeds the maximum value of the board by 80%,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibNetstream4TrapEntrys 1 }
+
+ibNetstream4TrapEntryTHResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibNetstream4TrapEntrySpec,
+            ibNetstream4TrapEntryChassis,
+            ibNetstream4TrapEntrySlot
+        }
+    STATUS      current
+    DESCRIPTION
+        "If the number of Netstream4 tables drops below 70% of the board maximum,
+         a trap message is generated and sent to the remote monitoring device."
+    ::= { ibNetstream4TrapEntrys 2 }
+
+ibNetstream4TrapEntryObjects OBJECT IDENTIFIER  ::= { ibNetstream4TrapEntry 1 }
+
+-- ibNetstream4TrapEntryObjects
+
+ibNetstream4TrapEntrySpec OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The Maximum number of entries in the IP netStream cache."
+    ::= { ibNetstream4TrapEntryObjects 1 }
+
+ibNetstream4TrapEntryChassis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of chassis ID. If the value is 65535, the device is
+        not a stacked device ."
+    ::= { ibNetstream4TrapEntryObjects 2 }
+
+ibNetstream4TrapEntrySlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of slot."
+    ::= { ibNetstream4TrapEntryObjects 3 }
+
+END

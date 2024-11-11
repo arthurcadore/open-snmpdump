@@ -1,0 +1,610 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- 
+-- Description:This MIB file is used for management of Class Based 
+--             FR QoS information. 
+-- Reference:
+-- Version: V1.1
+-- History:      
+-- 			V1.0 caolei,2004.7.12,publish 
+--          V1.1 2004-10-12 updated by gaolong
+--               Relocate ibFrQoSMib MODULE-IDENTITY.
+-- =================================================================
+
+	IB-FR-QOS-MIB DEFINITIONS ::= BEGIN
+ 
+		IMPORTS
+			ibQoS
+				FROM IB-OID-MIB
+		
+			ifIndex			
+				FROM RFC1213-MIB
+			
+			OBJECT-GROUP, MODULE-COMPLIANCE                 
+				FROM SNMPv2-CONF
+			
+			Integer32, Counter32, OBJECT-TYPE, MODULE-IDENTITY                   
+				FROM SNMPv2-SMI
+			
+			TEXTUAL-CONVENTION, RowStatus
+				FROM SNMPv2-TC;        
+
+            ibFrQoSMib MODULE-IDENTITY 
+                    LAST-UPDATED "200407120000Z"            -- JULY 12, 2004 at 00:00 GMT
+                    ORGANIZATION
+                        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+                    CONTACT-INFO
+                        ""
+                    DESCRIPTION 
+                            "This MIB contains objects to 
+                            Manage configuration and Monitor running state 
+                            for Class Based FR QoS feature.
+                            
+                           	    *********************************
+                        			MIB Tables
+                           	    **********************************
+                        	This MIB consists of the following tables:
+                        	     1 :  ibFrClassCfgInfoTable
+                        	     2 :  ibCirCfgInfoTable
+                        	     3 :  ibIfApplyFrClassTable
+                        	     4 :  ibPvcApplyFrClassTable
+                        	     5 :  ibFrPvcBandwidthTable
+                        	     5 :  ibRTPFrClassApplyTable
+                        	     6 :  ibRTPFrPvcQueueRunInfoTable  	             	 
+                            "
+                    ::= { ibQoS 3 } -- need modification later
+
+--            
+--type definitions in the policy 
+--
+				
+--Direction         
+				
+			IbCirAllowDirection ::= TEXTUAL-CONVENTION
+			        STATUS  current  
+			        DESCRIPTION
+			              "The Packet Direction apply on."				 
+					SYNTAX  INTEGER { 
+						inbound (1),
+						outbound (2),
+						inboundAndOutbound (3)
+					}                  
+	
+--            
+--end of type definitions in policy 
+--				 
+
+--
+-- Node definitions
+--     
+	ibFrQoSObjects OBJECT IDENTIFIER ::= { ibFrQoSMib 1 } 
+                                                                                                           
+--ibFrClassObjects 
+		
+	ibFrClassObjects OBJECT IDENTIFIER ::= { ibFrQoSObjects 1 } 
+		
+-- Fr Class Next Index 
+	ibFrClassIndexNext OBJECT-TYPE
+		SYNTAX Integer32 
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"This object contains an appropriate value to be used for 
+			ibFrClassIndex when creating rows in the 
+			ibFrClassCfgInfoTable. Begin with 0.
+			"                                
+		::= { ibFrClassObjects 1 }
+		                                                                                         
+-- Fr Class               
+	ibFrClassCfgInfoTable OBJECT-TYPE
+		SYNTAX SEQUENCE OF IbFrClassCfgInfoEntry
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"A table of Fr Class configuration information."
+		::= { ibFrClassObjects 2 }
+
+	ibFrClassCfgInfoEntry OBJECT-TYPE
+		SYNTAX IbFrClassCfgInfoEntry
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"Fr Class Configuration Information Entry."
+		INDEX { ibFrClassIndex }
+		::= { ibFrClassCfgInfoTable 1 }
+		
+	IbFrClassCfgInfoEntry ::=
+		SEQUENCE { 
+			ibFrClassIndex
+				Integer32,
+			ibFrClassName
+				OCTET STRING,
+			ibFrClassRowStatus
+				RowStatus
+		} 	
+
+		
+	ibFrClassIndex OBJECT-TYPE
+		SYNTAX Integer32 
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"Index of Fr Class. Begin with 0."
+		::= { ibFrClassCfgInfoEntry 1 }
+		        
+	ibFrClassName OBJECT-TYPE
+		SYNTAX OCTET STRING (SIZE (1..31))
+		MAX-ACCESS read-create
+		STATUS current
+		DESCRIPTION
+			"Name of Fr Class."
+		::= { ibFrClassCfgInfoEntry 2 }                                  
+		
+	ibFrClassRowStatus OBJECT-TYPE
+		SYNTAX RowStatus
+		MAX-ACCESS read-create
+		STATUS current
+		DESCRIPTION
+			"RowStatus. Three actions are used: active,
+			createAndGo, destroy"
+		::= { ibFrClassCfgInfoEntry 3 }
+
+-- Cir Allow on the Fr Class               
+	ibCirAllowCfgInfoTable OBJECT-TYPE
+		SYNTAX SEQUENCE OF IbCirAllowCfgInfoEntry
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"A table of DCE allowed rate Configuration information."
+		::= { ibFrClassObjects 3 }
+		
+	ibCirAllowCfgInfoEntry OBJECT-TYPE
+		SYNTAX IbCirAllowCfgInfoEntry
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"DCE allowed ratee Configuration Information Entry."
+		INDEX { ibCirAllowFrClassIndex,
+				ibCirAllowDirection}
+		::= { ibCirAllowCfgInfoTable 1 }
+		
+	IbCirAllowCfgInfoEntry ::=
+		SEQUENCE { 
+			ibCirAllowFrClassIndex
+				Integer32,  
+			ibCirAllowDirection 
+				IbCirAllowDirection,                                        
+			ibCirAllowValue
+				Integer32, 
+			ibCirAllowRowStatus
+				RowStatus
+		} 
+		
+	ibCirAllowFrClassIndex OBJECT-TYPE
+		SYNTAX Integer32 
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"Index of Fr Class. Begin with 0.Equal to ibFrClassIndex"
+		::= { ibCirAllowCfgInfoEntry 1 }
+		        
+	ibCirAllowDirection OBJECT-TYPE
+		SYNTAX IbCirAllowDirection     
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"Packet Direction. 		
+			inbound (1)
+			outbound (2)
+			inbound and outbound (3)  
+			"
+		::= { ibCirAllowCfgInfoEntry 2 }                                  
+		
+	ibCirAllowValue OBJECT-TYPE
+		SYNTAX Integer32(1..45000000) 
+		MAX-ACCESS read-create
+		STATUS current
+		DESCRIPTION
+			"DCE allowed rate (value greater than CIR) 
+			Unit : Bits per second. 
+			Value : <1-45000000> ."
+		::= { ibCirAllowCfgInfoEntry 3 } 
+		
+	ibCirAllowRowStatus OBJECT-TYPE
+		SYNTAX RowStatus
+		MAX-ACCESS read-create
+		STATUS current
+		DESCRIPTION
+			"RowStatus. Three actions are used: active,
+			createAndGo, destroy"
+		::= { ibCirAllowCfgInfoEntry 4 }
+		                                    
+-- Cir on the Fr Class               
+	ibCirCfgInfoTable OBJECT-TYPE
+		SYNTAX SEQUENCE OF IbCirCfgInfoEntry
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"A table of Committed Information Rate Configuration information."
+		::= { ibFrClassObjects 4 }
+		
+	ibCirCfgInfoEntry OBJECT-TYPE
+		SYNTAX IbCirCfgInfoEntry
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"Committed Information Rate Configuration Information Entry."
+		INDEX { ibCirFrClassIndex }
+		::= { ibCirCfgInfoTable 1 }
+		
+	IbCirCfgInfoEntry ::=
+		SEQUENCE { 
+			ibCirFrClassIndex
+				Integer32,  
+			ibCirValue
+				Integer32,		
+			ibCirRowStatus
+				RowStatus
+		} 
+		
+	ibCirFrClassIndex OBJECT-TYPE
+		SYNTAX Integer32 
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"Index of Fr Class. Begin with 0.Equal to ibFrClassIndex"
+		::= { ibCirCfgInfoEntry 1 }
+		        
+	ibCirValue OBJECT-TYPE
+		SYNTAX Integer32(1000..45000000)
+		MAX-ACCESS read-create
+		STATUS current
+		DESCRIPTION
+			" CIR in packet output direction ,bps. 
+			Value : <1000-45000000>."
+		::= { ibCirCfgInfoEntry 2 } 
+		                               
+	ibCirRowStatus OBJECT-TYPE
+		SYNTAX RowStatus
+		MAX-ACCESS read-create
+		STATUS current
+		DESCRIPTION
+			"RowStatus. Three actions are used: active,
+			createAndGo, destroy"
+		::= { ibCirCfgInfoEntry 3 }
+		
+		                                  
+-- Fr Class Instance on interface Table
+	ibIfApplyFrClassTable OBJECT-TYPE
+		SYNTAX SEQUENCE OF IbIfApplyFrClassEntry
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"A table of QoS Fr Class instance."
+		::= { ibFrClassObjects 5 }
+		
+	ibIfApplyFrClassEntry OBJECT-TYPE
+		SYNTAX IbIfApplyFrClassEntry
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"FrClass applied on interface Configuration Information Entry."
+		INDEX { ibIfApplyFrClassIfIndex }
+		::= { ibIfApplyFrClassTable 1 }
+		
+	IbIfApplyFrClassEntry ::=
+			SEQUENCE {        
+				ibIfApplyFrClassIfIndex
+			Integer32,                                                                                                                                              
+				ibIfApplyFrClassIndex
+			Integer32,    
+				ibIfApplyFrClassRowStatus
+			RowStatus                            	                                            
+		}    
+			                                 
+	ibIfApplyFrClassIfIndex OBJECT-TYPE
+		SYNTAX Integer32
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"Interface Index, equal to ifIndex."
+		::= { ibIfApplyFrClassEntry 1 }    
+		
+	ibIfApplyFrClassIndex OBJECT-TYPE
+		SYNTAX Integer32
+		MAX-ACCESS read-create
+		STATUS current
+		DESCRIPTION
+			"Index of Fr Class, equal to ibFrClassIndex"
+		::= { ibIfApplyFrClassEntry 2 }    
+		
+	ibIfApplyFrClassRowStatus OBJECT-TYPE
+		SYNTAX RowStatus
+		MAX-ACCESS read-create
+		STATUS current
+		DESCRIPTION
+			"RowStatus. Three actions are used: active,
+			createAndGo, destroy"
+		::= { ibIfApplyFrClassEntry 3 }
+		         
+-- Fr Class Instance on fr pvc Table                        
+	ibPvcApplyFrClassTable OBJECT-TYPE
+		SYNTAX SEQUENCE OF IbPvcApplyFrClassEntry
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"A table of QoS Fr Class instance."
+		::= { ibFrClassObjects 6 }
+		
+	ibPvcApplyFrClassEntry OBJECT-TYPE
+		SYNTAX IbPvcApplyFrClassEntry
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"Fr Class applied on FR Pvc Configuration Information Entry."
+		INDEX { ibPvcApplyFrClassIfIndex, 
+			ibPvcApplyFrClassDlciNum 
+		}
+		::= { ibPvcApplyFrClassTable 1 }
+		
+	IbPvcApplyFrClassEntry ::=
+		SEQUENCE {            
+			ibPvcApplyFrClassIfIndex
+				Integer32,
+			ibPvcApplyFrClassDlciNum
+				Integer32,                                                                                                                                        
+			ibPvcApplyFrClassIndex
+				Integer32,
+			ibPvcApplyFrClassRowStatus
+				RowStatus                           		                              	                                            
+		}    
+			                                 
+	ibPvcApplyFrClassIfIndex OBJECT-TYPE
+		SYNTAX Integer32
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"Fr Interface Index, equal to ifIndex."
+		::= { ibPvcApplyFrClassEntry 1 }
+		
+	ibPvcApplyFrClassDlciNum OBJECT-TYPE
+		SYNTAX Integer32 (16..1007)
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"Fr DLCI number."
+		::= { ibPvcApplyFrClassEntry 2 }                            
+		
+	ibPvcApplyFrClassIndex OBJECT-TYPE
+		SYNTAX Integer32
+		MAX-ACCESS read-create
+		STATUS current
+		DESCRIPTION
+			"Index of Fr Class, equal to ibFrClassIndex"
+		::= { ibPvcApplyFrClassEntry 3 }    
+		
+	ibPvcApplyFrClassRowStatus OBJECT-TYPE
+		SYNTAX RowStatus
+		MAX-ACCESS read-create
+		STATUS current
+		DESCRIPTION
+			"RowStatus. Three actions are used: active,
+			createAndGo, destroy"
+		::= { ibPvcApplyFrClassEntry 4 }
+
+
+-- bandwidth parameter on interface                        
+                       
+	ibFrPvcBandwidthTable OBJECT-TYPE
+		SYNTAX SEQUENCE OF IbFrPvcBandwidthEntry
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"A table of Running statistics for bandwidth.
+			"
+		::= { ibFrClassObjects 7 }
+		
+	ibFrPvcBandwidthEntry OBJECT-TYPE
+		SYNTAX IbFrPvcBandwidthEntry
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"Bandwidth Running statistics"
+		INDEX { ibPvcApplyFrClassIfIndex, 
+			ibPvcApplyFrClassDlciNum 
+		}
+
+		::= { ibFrPvcBandwidthTable 1 }
+		
+	IbFrPvcBandwidthEntry ::=
+			SEQUENCE {                                                                                                                                                                          
+				ibFrPvcBandwidthMaxReservedBW
+					Integer32,
+				ibFrPvcBandwidthAvailable
+					Integer32					                                	                                            
+				}    		 		                                                       
+					
+	ibFrPvcBandwidthMaxReservedBW OBJECT-TYPE
+		SYNTAX Integer32
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"Max reserved bandWidth. Unit : Kbps"
+		::= { ibFrPvcBandwidthEntry 1 }	
+		
+	ibFrPvcBandwidthAvailable OBJECT-TYPE
+		SYNTAX Integer32
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"Available bandWidth. Unit : Kbps"
+		::= { ibFrPvcBandwidthEntry 2 }  			
+		
+                                                                                                       
+--ibRTPQoSObjects 
+		
+	ibRTPQoSObjects OBJECT IDENTIFIER ::= { ibFrQoSObjects 2 } 
+		
+-- Rtpq applied on the Fr Class 
+		
+	ibRTPFrClassApplyTable OBJECT-TYPE
+		SYNTAX SEQUENCE OF IbRTPFrClassApplyEntry
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"A table of RTP(Realtime Transport Protocol) Queue instance."
+		::= { ibRTPQoSObjects 1 }
+		
+	ibRTPFrClassApplyEntry OBJECT-TYPE
+		SYNTAX IbRTPFrClassApplyEntry
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"RTP(Realtime Transport Protocol) Queue Configuration Information Entry."
+		INDEX { ibRTPFrClassApplyFrClassIndex }
+		::= { ibRTPFrClassApplyTable 1 }
+		
+	IbRTPFrClassApplyEntry ::=
+		SEQUENCE { 
+			ibRTPFrClassApplyFrClassIndex
+				Integer32,
+			ibRTPFrClassApplyStartPort
+				Integer32,
+			ibRTPFrClassApplyEndPort 
+				Integer32,
+			ibRTPFrClassApplyBandWidth 
+				Integer32,
+			ibRTPFrClassApplyCbs 
+				Integer32,				
+			ibRTPFrClassApplyRowStatus 
+				RowStatus                               		 
+		}  
+		
+	ibRTPFrClassApplyFrClassIndex OBJECT-TYPE
+		SYNTAX Integer32
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"Fr Class Index, equal to IbFrClassIndex."
+		::= { ibRTPFrClassApplyEntry 1 }    
+		
+	ibRTPFrClassApplyStartPort OBJECT-TYPE
+		SYNTAX Integer32(2000..65535)
+		MAX-ACCESS read-create
+		STATUS current
+		DESCRIPTION
+			"                                                                                        
+			RTP-PORT(3): start-port: 2000~65535   
+			"                         
+		::= { ibRTPFrClassApplyEntry 2 }
+		
+	ibRTPFrClassApplyEndPort OBJECT-TYPE
+		SYNTAX Integer32(2000..65535)
+		MAX-ACCESS read-create
+		STATUS current
+		DESCRIPTION
+			"                         
+			RTP-PORT(3): end-port: 2000~65535
+			"                         
+		::= { ibRTPFrClassApplyEntry 3 }
+		
+	ibRTPFrClassApplyBandWidth OBJECT-TYPE
+		SYNTAX Integer32 (8..1000000)
+		MAX-ACCESS read-create
+		STATUS current
+		DESCRIPTION
+			"Max bandWidth Value:
+			Absolute value: 8~1000000. Unit: Kbps             
+			"                
+		::= { ibRTPFrClassApplyEntry 4 }  
+		
+	ibRTPFrClassApplyCbs OBJECT-TYPE
+		SYNTAX Integer32 (1500..2000000)
+		MAX-ACCESS read-create
+		STATUS current
+		DESCRIPTION
+			"
+			Committed Burst Size: 1500~2000000. Unit: byte             
+			"                
+		::= { ibRTPFrClassApplyEntry 5 }  		
+		
+	ibRTPFrClassApplyRowStatus OBJECT-TYPE
+		SYNTAX RowStatus
+		MAX-ACCESS read-create
+		STATUS current
+		DESCRIPTION
+			"RowStatus for RTPFrClassApply Table. 
+			Three actions are used: active, createAndGo, destroy"
+		::= { ibRTPFrClassApplyEntry 6 } 
+
+-- RTPQ statistics on the Fr Pvc 
+		                 
+	ibRTPFrPvcQueueRunInfoTable OBJECT-TYPE
+		SYNTAX SEQUENCE OF IbRTPFrPvcQueueRunInfoEntry
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"A table of Running statistics for RTP(Realtime Transport Protocol) Queue
+			applied on the FR PVC"
+		::= { ibRTPQoSObjects 2 }
+		
+	ibRTPFrPvcQueueRunInfoEntry OBJECT-TYPE
+		SYNTAX IbRTPFrPvcQueueRunInfoEntry
+		MAX-ACCESS not-accessible
+		STATUS current
+		DESCRIPTION
+			"RTP(Realtime Transport Protocol) Queue statistics entry."
+		INDEX { ibPvcApplyFrClassIfIndex,                        		
+			ibPvcApplyFrClassDlciNum                      	    
+		}
+		::= { ibRTPFrPvcQueueRunInfoTable 1 }
+		
+	IbRTPFrPvcQueueRunInfoEntry ::=
+		SEQUENCE {
+			ibRTPFrPvcQueueSize
+				Integer32,
+			ibRTPFrPvcQueueMaxSize
+				Integer32, 
+			ibRTPFrPvcQueueOutputs
+				Counter32,
+			ibRTPFrPvcQueueDiscards
+				Counter32                                                                                                                                                                                                                                    
+		}  
+		    
+	ibRTPFrPvcQueueSize OBJECT-TYPE
+		SYNTAX Integer32
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"the packet number of RTP(Realtime Transport Protocol) Queue now."
+		::= { ibRTPFrPvcQueueRunInfoEntry 1 }    
+		    		         
+	ibRTPFrPvcQueueMaxSize OBJECT-TYPE
+		SYNTAX Integer32
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"the Max packet number of RTP(Realtime Transport Protocol) Queue."
+		::= { ibRTPFrPvcQueueRunInfoEntry 2 }
+		
+	ibRTPFrPvcQueueOutputs OBJECT-TYPE
+		SYNTAX Counter32
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"the Output packet number of RTP(Realtime Transport Protocol) Queue."
+		::= { ibRTPFrPvcQueueRunInfoEntry 3 } 
+		         
+	ibRTPFrPvcQueueDiscards OBJECT-TYPE
+		SYNTAX Counter32
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"the Discarded packet number of RTP(Realtime Transport Protocol) Queue."
+		::= { ibRTPFrPvcQueueRunInfoEntry 4 }
+											        
+END
+
+       
+                             
+                                                                                                       

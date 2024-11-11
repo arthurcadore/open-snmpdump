@@ -1,0 +1,789 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Lawful Interception MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 2009-08-25 Initial version Created by Lixin Xu
+-- ============================================================================
+IB-LI-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Counter64, Counter32, Integer32, Unsigned32,
+    OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    RowStatus, TruthValue, MacAddress, DateAndTime
+        FROM SNMPv2-TC
+    InetAddress, InetAddressType, InetAddressPrefixLength, InetPortNumber
+        FROM INET-ADDRESS-MIB
+    InterfaceIndexOrZero
+        FROM IF-MIB
+    SnmpAdminString
+        FROM SNMP-FRAMEWORK-MIB;
+
+ibLI MODULE-IDENTITY
+    LAST-UPDATED "200908251000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Lawful Interception MIB"
+    REVISION
+        "200908251000Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { ibCommon 111 }
+
+--
+-- Node definitions
+--
+
+ibLICommon OBJECT IDENTIFIER ::= { ibLI 1 }
+
+ibLITrapBindObjects OBJECT IDENTIFIER ::= { ibLICommon 1 }
+
+ibLIBoardInformation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "It is a slot number."
+    ::= { ibLITrapBindObjects 1 }
+
+ibLINotifications OBJECT IDENTIFIER ::= { ibLICommon 2 }
+
+ibLINotificationsPrefix OBJECT IDENTIFIER ::= { ibLINotifications 0 }
+
+ibLIActive NOTIFICATION-TYPE
+    OBJECTS {
+              ibLIStreamtype
+            }
+    STATUS current
+    DESCRIPTION
+        "This Notification is sent when a type of intercepting configuration
+        is changed from inactive to active.
+        The value of the ibLIStreamtype which identify the actual intercept
+        stream is included in this notification."
+    ::= { ibLINotificationsPrefix 1 }
+
+ibLITimeOut NOTIFICATION-TYPE
+    OBJECTS { ibLIMediationRowStatus }
+    STATUS current
+    DESCRIPTION
+        "When the time specified in ibLIMediationTimeout arrives,
+        the device notifies the manager corresponding intercept is removed."
+    ::= { ibLINotificationsPrefix 2 }
+
+ibLIFailureInformation NOTIFICATION-TYPE
+    OBJECTS {
+                ibLIStreamtype,
+                ibLIBoardInformation
+            }
+    STATUS current
+    DESCRIPTION
+        "When interception is configured on distributed device,
+        the configuration perhaps failed on some board.
+        If this happened, this notification will occur."
+    ::= { ibLINotificationsPrefix 3 }
+
+ibLIObjects OBJECT IDENTIFIER ::= { ibLICommon 3 }
+
+ibLINewIndex OBJECT-TYPE
+    SYNTAX Integer32 (1..2147483647)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object will be used as an index value for a new
+        ibLIMediationEntry.  Whenever read, the agent will
+        give a non-used value.  This is to reduce the probability
+        of conflict during creation of new ibLIMediationTable entries."
+    ::= { ibLIObjects 1 }
+--
+-- ibLIMediationTable definition
+--
+ibLIMediationTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbLIMediationEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table describes interception gateway information with which
+        interception device communicates."
+    ::= { ibLIObjects 2 }
+
+ibLIMediationEntry OBJECT-TYPE
+    SYNTAX IbLIMediationEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An entry of configuring mediation device."
+    INDEX { ibLIMediationIndex }
+    ::= { ibLIMediationTable 1 }
+
+IbLIMediationEntry ::=
+    SEQUENCE {
+        ibLIMediationIndex                 Integer32,
+        ibLIMediationDestAddrType          InetAddressType,
+        ibLIMediationDestAddr              InetAddress,
+        ibLIMediationDestPort              InetPortNumber,
+        ibLIMediationSrcInterface          InterfaceIndexOrZero,
+        ibLIMediationDscp                  Integer32,
+        ibLIMediationTimeOut               DateAndTime,
+        ibLIMediationTransport             INTEGER,
+        ibLIMediationNotificationEnable    TruthValue,
+        ibLIMediationRowStatus             RowStatus
+     }
+
+ibLIMediationIndex OBJECT-TYPE
+    SYNTAX Integer32 (1..2147483647)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "ibLIMediationIndex is a entry identifier.  The Mediation Device
+            should be responsible for making sure these are unique.
+            Before creating a new entry, a value for this variable may be
+            obtained by reading ibLINewIndex to reduce the probability
+            of a value collision."
+    ::= { ibLIMediationEntry 1 }
+
+ibLIMediationDestAddrType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The type of ibLIMediationDestAddr."
+    ::= { ibLIMediationEntry 2 }
+
+ibLIMediationDestAddr OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The IP Address of the Mediation Device to receive intercepted traffic."
+    ::= { ibLIMediationEntry 3 }
+
+ibLIMediationDestPort OBJECT-TYPE
+    SYNTAX InetPortNumber
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The L4-port number on the Mediation Device
+         to receive intercepted traffic."
+    ::= { ibLIMediationEntry 4 }
+
+ibLIMediationSrcInterface OBJECT-TYPE
+    SYNTAX InterfaceIndexOrZero
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The interface on the intercepting device from which to
+        transmit intercepted data.
+        If zero, intercepting device will select an outbound
+        interface according to ibLIMediationDestAddr."
+    ::= { ibLIMediationEntry 5 }
+
+ibLIMediationDscp OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The Differentiated Services Code Point the intercepting
+        device applies to the IP packets encapsulating the intercepted traffic."
+    DEFVAL { 34 }
+    ::= { ibLIMediationEntry 6 }
+
+ibLIMediationTimeOut OBJECT-TYPE
+    SYNTAX DateAndTime
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The time at which this row and all related Stream Table rows
+        should be automatically removed, and the intercept function expire."
+    ::= { ibLIMediationEntry 7 }
+
+ibLIMediationTransport OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+            udp(1)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The protocol used in transferring intercepted data to the
+        Mediation Device."
+    ::= { ibLIMediationEntry 8 }
+
+ibLIMediationNotificationEnable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "This variable controls the generation of any notifications or
+        informs by the MIB agent for this table entry."
+    DEFVAL { true }
+    ::= { ibLIMediationEntry 9 }
+
+ibLIMediationRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibLIMediationEntry 10 }
+
+--
+-- ibLIStreamTable definition
+--
+ibLIStreamTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbLIStreamEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table lists the traffic stream's type to be intercepted.
+         The specified filter is defined in ibLIIPStreamTable,
+         ibLIMACStreamTable or ibLIUserStreamTable, according to
+         ibLIStreamtype.  Also it contains counters for packets to
+         be intercepted and dropped by attached type of filter."
+    ::= { ibLIObjects 3 }
+
+ibLIStreamEntry OBJECT-TYPE
+    SYNTAX IbLIStreamEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A single type of data stream to be intercepted."
+    INDEX { ibLIMediationIndex, ibLIStreamIndex }
+    ::= { ibLIStreamTable 1 }
+
+IbLIStreamEntry ::=
+    SEQUENCE {
+        ibLIStreamIndex        Integer32,
+        ibLIStreamtype         INTEGER,
+        ibLIStreamEnable       TruthValue,
+        ibLIStreamPackets      Counter32,
+        ibLIStreamDrops        Counter32,
+        ibLIStreamHPackets     Counter64,
+        ibLIStreamHDrops       Counter64,
+        ibLIStreamRowStatus    RowStatus
+     }
+
+ibLIStreamIndex OBJECT-TYPE
+    SYNTAX Integer32 (1..2147483647)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The index of the stream entry."
+    ::= { ibLIStreamEntry 1 }
+
+ibLIStreamtype OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+            ip(1),
+            mac(2),
+            userConnection(3)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Identifies the type of stream, and according to it uses filter table.
+        It can not be changed after a filter table is attached to it.
+        The following types of streams are supported:
+         ip:             IP filter.  The exact definition is a row in
+                         ibLIIPStreamTable.
+         mac:            MAC filter.  The exact definition is a row in
+                         ibLIMACStreamTable.
+         userConnecton:  User connection filter.  The exact definition
+                         is a row in ibLIUserStreamTable."
+    ::= { ibLIStreamEntry 2 }
+
+ibLIStreamEnable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "If 'true', the interception is active.  And it is set to 'true'
+         only after an additional filter specification has been attached
+         to this stream."
+    DEFVAL { false }
+    ::= { ibLIStreamEntry 3 }
+
+ibLIStreamPackets OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The numbers of packets that have been intercepted."
+    ::= { ibLIStreamEntry 4 }
+
+ibLIStreamDrops OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The numbers of packets were dropped in the lawful intercept process."
+    ::= { ibLIStreamEntry 5 }
+
+ibLIStreamHPackets OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The numbers of packets have been intercepted.
+        This object is a 64-bit version of ibLIStreamPackets."
+    ::= { ibLIStreamEntry 6 }
+
+ibLIStreamHDrops OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The numbers of packets were dropped in the lawful intercept process.
+        This object is a 64-bit version of ibLIStreamDrops."
+    ::= { ibLIStreamEntry 7 }
+
+ibLIStreamRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibLIStreamEntry 8 }
+
+--
+-- ibLIIPStreamTable definition
+--
+ibLIIPStream OBJECT IDENTIFIER ::= { ibLI 2 }
+
+ibLIIPStreamObjects OBJECT IDENTIFIER ::= { ibLIIPStream 1 }
+
+ibLIIPStreamTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbLIIPStreamEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table lists the IPv4 and IPv6 streams to be intercepted.
+        It is associated with ibLIMediationTable and ibLIStreamTable."
+    ::= { ibLIIPStreamObjects 1 }
+
+ibLIIPStreamEntry OBJECT-TYPE
+    SYNTAX IbLIIPStreamEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A single stream to be intercepted.
+        The first index indicates the Mediation Device.
+        The second index is that of the stream's counter entry
+        in the ibLIStreamTable.  The second index permits multiple
+        classifiers to be used together, such as having an IP address
+        as source or destination."
+    INDEX { ibLIMediationIndex, ibLIStreamIndex }
+    ::= { ibLIIPStreamTable 1 }
+
+IbLIIPStreamEntry ::=
+    SEQUENCE {
+        ibLIIPStreamInterface          InterfaceIndexOrZero,
+        ibLIIPStreamAddrType           InetAddressType,
+        ibLIIPStreamDestAddr           InetAddress,
+        ibLIIPStreamDestAddrLength     InetAddressPrefixLength,
+        ibLIIPStreamSrcAddr            InetAddress,
+        ibLIIPStreamSrcAddrLength      InetAddressPrefixLength,
+        ibLIIPStreamTosByte            Integer32,
+        ibLIIPStreamTosByteMask        Integer32,
+        ibLIIPStreamFlowId             Integer32,
+        ibLIIPStreamProtocol           Integer32,
+        ibLIIPStreamDestL4PortMin      InetPortNumber,
+        ibLIIPStreamDestL4PortMax      InetPortNumber,
+        ibLIIPStreamSrcL4PortMin       InetPortNumber,
+        ibLIIPStreamSrcL4PortMax       InetPortNumber,
+        ibLIIPStreamVRF                SnmpAdminString,
+        ibLIIPStreamRowStatus          RowStatus
+     }
+
+ibLIIPStreamInterface OBJECT-TYPE
+    SYNTAX InterfaceIndexOrZero
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Traffic received or transmitted over this interface
+         will be intercepted.
+
+         This value must be set when creating a stream entry,
+         either zero, or a valid interface index.
+
+         If the value is zero, interception accepts any interface.
+         Then at least one additional parameter must be selected,
+         and not be default value."
+    ::= { ibLIIPStreamEntry 1 }
+
+ibLIIPStreamAddrType OBJECT-TYPE
+    SYNTAX InetAddressType
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The type of address, used in packet selection."
+    DEFVAL { ipv4 }
+    ::= { ibLIIPStreamEntry 2 }
+
+ibLIIPStreamDestAddr OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The Destination address  used in packet selection.
+        This address will be consistent with the type specified in
+        ibLIIPStreamAddrType."
+    DEFVAL  { '00000000'H }
+    ::= { ibLIIPStreamEntry 3 }
+
+ibLIIPStreamDestAddrLength OBJECT-TYPE
+    SYNTAX InetAddressPrefixLength
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The length of the Destination Prefix.  A value of zero means
+        all addresses to match.  This prefix length will be consistent
+        with the type specified in ibLIIPStreamAddrType."
+    DEFVAL { 0 }
+    ::= { ibLIIPStreamEntry 4 }
+
+ibLIIPStreamSrcAddr OBJECT-TYPE
+    SYNTAX InetAddress
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The Source Address used in packet selection.  This address will
+        be consistent with the type specified in ibLIIPStreamAddrType."
+    DEFVAL  { '00000000'H }
+    ::= { ibLIIPStreamEntry 5 }
+
+ibLIIPStreamSrcAddrLength OBJECT-TYPE
+    SYNTAX InetAddressPrefixLength
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The length of the Source Prefix.  A value of zero means all
+        addresses to match.  This prefix length will be consistent with
+        the type specified in ibLIIPStreamAddrType."
+    DEFVAL { 0 }
+    ::= { ibLIIPStreamEntry 6 }
+
+ibLIIPStreamTosByte OBJECT-TYPE
+    SYNTAX Integer32 (0..255)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The value of the TOS byte.
+        If ibLIIPStreamTosByte&(~ibLIIPStreamTosByteMask)!=0,
+        configuration is rejected."
+    DEFVAL { 0 }
+    ::= { ibLIIPStreamEntry 7 }
+
+ibLIIPStreamTosByteMask OBJECT-TYPE
+    SYNTAX Integer32 (0..255)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "This value is ANDed with the value of the TOS byte in a packet
+         and compared with ibLIIPStreamTosByte.  If the values are equal,
+         the comparison is equal.
+         If both the mask and the TosByte value are zero,
+         the result is to always accept."
+    DEFVAL { 0 }
+    ::= { ibLIIPStreamEntry 8 }
+
+ibLIIPStreamFlowId OBJECT-TYPE
+    SYNTAX Integer32 (-1 | 0..1048575)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The flow identifier in an IPv6 header.  -1 indicates that the
+        Flow Id is unused."
+    DEFVAL { -1 } -- any flow identifier value
+    ::= { ibLIIPStreamEntry 9 }
+
+ibLIIPStreamProtocol OBJECT-TYPE
+    SYNTAX Integer32 (-1 | 0..255)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The IP protocol to match against the IPv4 protocol number or
+        the IPv6 Next- Header number in the packet."
+    DEFVAL { -1 } -- any IP protocol
+    ::= { ibLIIPStreamEntry 10 }
+
+ibLIIPStreamDestL4PortMin OBJECT-TYPE
+    SYNTAX InetPortNumber
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The minimum value that the layer-4 destination port number in
+         the packet must have in order to match.  This value must be
+         equal to or less than the value specified for this entry in
+         ibLIIPStreamDestL4PortMax.
+
+         If both ibLIIPStreamDestL4PortMin and ibLIIPStreamDestL4PortMax
+         are at their default values, the port number is effectively unused.
+         If ibLIIPStreamDestL4PortMin is equal to
+         ibLIIPStreamDestL4PortMax, only one port number to be intercepted."
+    DEFVAL { 0 }
+    ::= { ibLIIPStreamEntry 11 }
+
+ibLIIPStreamDestL4PortMax OBJECT-TYPE
+    SYNTAX InetPortNumber
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The maximum value that the layer-4 destination port number in
+         the packet must have in order to match this classifier entry.
+         This value must be equal to or greater than the value specified
+         for this entry in ibLIIPStreamDestL4PortMin.
+         If both ibLIIPStreamDestL4PortMin and ibLIIPStreamDestL4PortMax
+         are at their default values, the port number is effectively unused.
+         If ibLIIPStreamDestL4PortMin is equal to ibLIIPStreamDestL4PortMax,
+         only one port number to be intercepted."
+    DEFVAL { 65535 }
+    ::= { ibLIIPStreamEntry 12 }
+
+ibLIIPStreamSrcL4PortMin OBJECT-TYPE
+    SYNTAX InetPortNumber
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The minimum value that the layer-4 destination port number in
+         the packet must have in order to match.  This value must be
+         equal to or less than the value specified for this entry in
+         ibLIIPStreamSrcL4PortMax.
+         If both ibLIIPStreamSrcL4PortMin and ibLIIPStreamSrcL4PortMax
+         are at their default values, the port number is effectively unused.
+         If ibLIIPStreamSrcL4PortMin is equal to
+         ibLIIPStreamSrcL4PortMax, only one port number to be intercepted."
+    DEFVAL { 0 }
+    ::= { ibLIIPStreamEntry 13 }
+
+ibLIIPStreamSrcL4PortMax OBJECT-TYPE
+    SYNTAX InetPortNumber
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The maximum value that the layer-4 destination port number in
+         the packet must have in order to match this classifier entry.
+         This value must be equal to or greater than the value specified
+         for this entry in ibLIIPStreamSrcL4PortMin.
+         If both ibLIIPStreamSrcL4PortMin and ibLIIPStreamSrcL4PortMax
+         are at their default values, the port number is effectively unused.
+         If ibLIIPStreamSrcL4PortMin is equal to ibLIIPStreamSrcL4PortMax,
+         only one port number to be intercepted."
+    DEFVAL { 65535 }
+    ::= { ibLIIPStreamEntry 14 }
+
+ibLIIPStreamVRF OBJECT-TYPE
+    SYNTAX SnmpAdminString
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "It is the name of a Virtual Routing and Forwarding (VRF) of a VPN."
+    DEFVAL { "" }
+    ::= { ibLIIPStreamEntry 15 }
+
+ibLIIPStreamRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibLIIPStreamEntry 18 }
+
+--
+-- ibLIMACStreamTable definition
+--
+ibLIMACStream OBJECT IDENTIFIER ::= { ibLI 3 }
+
+ibLIMACStreamObjects OBJECT IDENTIFIER ::= { ibLIMACStream 1 }
+
+ibLIMACStreamTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbLIMACStreamEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table lists the IEEE 802 streams to be intercepted.
+        It is associated with ibLIMediationTable and ibLIStreamTable."
+    ::= { ibLIMACStreamObjects 1 }
+
+ibLIMACStreamEntry OBJECT-TYPE
+    SYNTAX IbLIMACStreamEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A single stream to be intercepted.
+        The first index indicates the Mediation Device.
+        The second index is that of the stream's counter entry
+        in the ibLIStreamTable.  The second index permits multiple
+        classifiers to be used together, such as having an MAC address
+        as source or destination."
+    INDEX { ibLIMediationIndex, ibLIStreamIndex }
+    ::= { ibLIMACStreamTable 1 }
+
+IbLIMACStreamEntry ::=
+    SEQUENCE {
+        ibLIMACStreamFields        BITS,
+        ibLIMACStreamInterface     InterfaceIndexOrZero,
+        ibLIMACStreamDestAddr      MacAddress,
+        ibLIMACStreamSrcAddr       MacAddress,
+        ibLIMACStreamEthPid        Unsigned32,
+        ibLIMACStreamDSap          Unsigned32,
+        ibLIMACStreamSSap          Unsigned32,
+        ibLIMACStreamRowStatus     RowStatus
+     }
+
+ibLIMACStreamFields OBJECT-TYPE
+    SYNTAX BITS {
+                    interface(0),
+                    dstMacAddress(1),
+                    srcMacAddress(2),
+                    ethernetPid(3),
+                    dSap(4),
+                    sSap(5)
+                }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "This object displays what attributes will be compared to
+         identify traffic.
+         interface:     indicates that traffic on the stated
+                                interface is to be intercepted
+         dstMacAddress: indicates that traffic destined to a
+                                given address should be intercepted
+         srcMacAddress: indicates that traffic sourced from a
+                                given address should be intercepted
+         ethernetPid:   indicates that traffic with a stated
+                                Ethernet Protocol Identifier should
+                                be intercepted
+         dSap:          indicates that traffic with an certain
+                                802.2 LLC Destination SAP should be
+                                intercepted
+         sSap:          indicates that traffic with an certain
+                                802.2 LLC Source SAP should be intercepted
+
+         At least one of the bits has to be set in order to activate an
+         entry.  If multiple bits are set, traffic to be intercepted must
+         be satisfied with all set attributes."
+    ::= { ibLIMACStreamEntry 1 }
+
+ibLIMACStreamInterface OBJECT-TYPE
+    SYNTAX InterfaceIndexOrZero
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Traffic received or transmitted over this interface
+         will be intercepted.
+         This value must be set when creating a stream entry,
+         either zero, or a valid interface index.
+         If the value is zero, interception accepts any interface.
+         Additional parameter must be selected together."
+    ::= { ibLIMACStreamEntry 2 }
+
+ibLIMACStreamDestAddr OBJECT-TYPE
+    SYNTAX MacAddress
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The Destination address used in packet selection."
+    ::= { ibLIMACStreamEntry 3 }
+
+ibLIMACStreamSrcAddr OBJECT-TYPE
+    SYNTAX MacAddress
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The Source Address used in packet selection."
+    ::= { ibLIMACStreamEntry 4 }
+
+ibLIMACStreamEthPid OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The value of the Ethernet Protocol Identifier in the
+        Ethernet traffic or IEEE 802.2 SNAP traffic."
+    ::= { ibLIMACStreamEntry 5 }
+
+ibLIMACStreamDSap OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The value of the IEEE 802.2 Destination SAP."
+    ::= { ibLIMACStreamEntry 6 }
+
+ibLIMACStreamSSap OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The value of the IEEE 802.2 Source SAP."
+    ::= { ibLIMACStreamEntry 7 }
+
+ibLIMACStreamRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibLIMACStreamEntry 8 }
+
+--
+-- ibLIUserStreamTable definition
+--
+ibLIUserStream OBJECT IDENTIFIER ::= { ibLI 4 }
+
+ibLIUserStreamObjects OBJECT IDENTIFIER ::= { ibLIUserStream 1 }
+
+ibLIUserStreamTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbLIUserStreamEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table lists the user connection streams to be intercepted.
+        It is associated with ibLIMediationTable and ibLIStreamTable."
+    ::= { ibLIUserStreamObjects 1 }
+
+ibLIUserStreamEntry OBJECT-TYPE
+    SYNTAX IbLIUserStreamEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A single stream to be intercepted.
+        The first index indicates the Mediation Device.
+        The second index is that of the stream's counter entry
+        in the ibLIStreamTable.  This permits multiple classifiers
+        to be used together."
+    INDEX { ibLIMediationIndex, ibLIStreamIndex }
+    ::= { ibLIUserStreamTable 1 }
+
+IbLIUserStreamEntry ::=
+    SEQUENCE {
+        ibLIUserStreamAcctSessID       OCTET STRING,
+        ibLIUserStreamRowStatus        RowStatus
+     }
+
+ibLIUserStreamAcctSessID OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (0..253))
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "This is the RADIUS attribute 44 acct-session-ID.
+         The string must be set, and the length not be zero."
+    ::= { ibLIUserStreamEntry 1 }
+
+ibLIUserStreamRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibLIUserStreamEntry 2 }
+
+END

@@ -1,0 +1,191 @@
+-- =============================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: This file describes the MIB implementation of ATM
+-- Reference:  extension of RFC 1695
+-- Version: V1.1
+-- History:
+--   V1.0 Initial Version  by lizhiyong
+--   V1.1 Add node ibAal5VccState and Trap ibAal5VccStateChange
+-- =============================================================
+IB-AAL5-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        MODULE-IDENTITY,
+        OBJECT-TYPE,
+        Integer32,
+        NOTIFICATION-TYPE,
+        Counter32
+    FROM SNMPv2-SMI
+        MODULE-COMPLIANCE,
+        OBJECT-GROUP,
+        NOTIFICATION-GROUP
+    FROM SNMPv2-CONF
+        ifIndex
+    FROM RFC1213-MIB
+        ibAAL5
+    FROM IB-OID-MIB;
+
+ibAAL5MIB  MODULE-IDENTITY
+    LAST-UPDATED    "200411041350Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB file provides AAL5 specific information
+        that are excluded by RFC 1695 "
+    REVISION        "200411041350Z"
+    DESCRIPTION
+        "Initial version of this MIB module."
+    ::= { ibAAL5 1 }
+
+
+ibAal5MIBObjects OBJECT IDENTIFIER ::= { ibAAL5MIB 1 }
+ibAal5MIBTraps OBJECT IDENTIFIER ::= { ibAAL5MIB 0 }
+
+ibAal5VccTable OBJECT-TYPE
+    SYNTAX       SEQUENCE OF IBAal5VccEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "This table extends AAL5 VCC performance
+         parameters which definded in aal5VccEntry of RFC1695."
+    ::= { ibAal5MIBObjects 1 }
+
+ibAal5VccEntry OBJECT-TYPE
+    SYNTAX         IBAal5VccEntry
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION
+        "This list contains the additional AAL5 VCC performance
+         parameters which are not definded in aal5VccEntry
+         of RFC1695."
+    INDEX { ifIndex, ibAal5VccVpi, ibAal5VccVci }
+    ::= { ibAal5VccTable 1 }
+
+IBAal5VccEntry ::= SEQUENCE  {
+    ibAal5VccVpi        Integer32,
+    ibAal5VccVci        Integer32,
+    ibAal5VccInPkts     Counter32,
+    ibAal5VccOutPkts    Counter32,
+    ibAal5VccInOctets   Counter32,
+    ibAal5VccOutOctets  Counter32,
+    ibAal5VccState      INTEGER
+    }
+
+ibAal5VccVpi              OBJECT-TYPE
+    SYNTAX         Integer32  (0..4095)
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION
+        "The VPI value of the AAL5 VCC."
+    ::= { ibAal5VccEntry 1 }
+
+ibAal5VccVci             OBJECT-TYPE
+    SYNTAX         Integer32  (0..65535)
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION
+        "The VCI value of the AAL5 VCC."
+    ::= { ibAal5VccEntry 2 }
+
+ibAal5VccInPkts          OBJECT-TYPE
+    SYNTAX          Counter32
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "The number of AAL5 CPCS PDUs received."
+    ::= { ibAal5VccEntry 3 }
+
+ibAal5VccOutPkts        OBJECT-TYPE
+    SYNTAX          Counter32
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "The number of AAL5 CPCS PDUs transmitted."
+    ::= { ibAal5VccEntry 4 }
+
+ibAal5VccInOctets       OBJECT-TYPE
+    SYNTAX          Counter32
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "The number of AAL5 CPCS PDU octets received."
+    ::= { ibAal5VccEntry 5 }
+
+ibAal5VccOutOctets     OBJECT-TYPE
+    SYNTAX          Counter32
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "The number of AAL5 CPCS PDU octets transmitted."
+    ::= { ibAal5VccEntry 6 }
+
+ibAal5VccState OBJECT-TYPE
+    SYNTAX   INTEGER    {
+                invalid (1),
+                active (2),
+                inactive (3)
+            }
+    MAX-ACCESS   read-only
+    STATUS   current
+    DESCRIPTION
+        "Indicates whether the particular virtual circuit is
+        operational. 'Active' indicates the particular virtual
+        circuit is operational.  'Inactive' indicates the circuit
+        is temporarily disabled.  'Invalid' indicates the circuit
+        is deleted"
+    DEFVAL { active }
+        ::= { ibAal5VccEntry 7 }
+
+ibAal5VccStateChange   NOTIFICATION-TYPE
+    OBJECTS  { ibAal5VccState }
+    STATUS          current
+    DESCRIPTION
+        "The status of AAL5 VCC."
+    ::= { ibAal5MIBTraps 1 }
+
+
+-- Conformance Information
+
+ibAal5MIBConformance OBJECT IDENTIFIER ::= { ibAAL5MIB 3 }
+ibAal5MIBCompliances OBJECT IDENTIFIER ::= { ibAal5MIBConformance 1 }
+ibAal5MIBGroups      OBJECT IDENTIFIER ::= { ibAal5MIBConformance 2 }
+
+-- Compliance Statement
+ibAal5MIBCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+        "The compliance statement."
+    MODULE  -- this module
+    MANDATORY-GROUPS { ibAal5MIBGroup }
+    GROUP       ibAal5NotificationGroup
+    DESCRIPTION
+        "This optional group defines the asynchronous
+        notifications generated by ATM Systems."
+    ::= { ibAal5MIBCompliances 1 }
+
+-- units of conformance:
+
+ibAal5MIBGroup OBJECT-GROUP
+    OBJECTS {
+        ibAal5VccInPkts,
+        ibAal5VccOutPkts,
+        ibAal5VccInOctets,
+        ibAal5VccOutOctets
+    }
+    STATUS  current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { ibAal5MIBGroups 1 }
+
+ibAal5NotificationGroup NOTIFICATION-GROUP
+    NOTIFICATIONS { ibAal5VccStateChange }
+    STATUS  current
+    DESCRIPTION
+        "Traps which may be used to enhance event driven
+        management of the interface."
+    ::= { ibAal5MIBGroups 2 }
+
+END

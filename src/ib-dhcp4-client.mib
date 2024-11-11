@@ -1,0 +1,150 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Segment Routing over DHCPv4 CLIENT MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2022-07-25 The initial version, created by W26721
+--      Add ibDhcp4ClientConflictIP
+--      Add ibDhcp4ClientIpConflictAlm
+--      Add ibDhcp4ClientIpConflictAlmRsm
+--      Add ibDhcp4ClientApplyIpFailAlm
+--      Add ibDhcp4ClientApplyIpFailAlmRsm
+--      Add ibDhcp4ClientApplyIpConflictAlm
+-- =================================================================
+IB-DHCP4-CLIENT-MIB DEFINITIONS ::= BEGIN
+
+-- =============================================================================
+-- Imported variables and types
+-- =============================================================================
+IMPORTS
+    MacAddress
+        FROM SNMPv2-TC
+    OBJECT-TYPE, MODULE-IDENTITY,NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    ifIndex, ifName
+        FROM IF-MIB
+    InetAddressIPv4
+        FROM INET-ADDRESS-MIB
+    ibCommon
+        FROM IB-OID-MIB;
+
+-- =============================================================================
+-- Module identity
+-- =============================================================================
+ibDhcp4Client MODULE-IDENTITY
+    LAST-UPDATED "202207250000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB file provides information about Segment Routing over DHCPv4 client."
+    REVISION "202207250000Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 242 }
+
+-- =============================================================================
+-- scalar objects definition.
+-- =============================================================================
+ibDhcp4ClientScalarObjects OBJECT IDENTIFIER ::= { ibDhcp4Client 1 }
+
+ibDhcp4ClientTrapEntry OBJECT IDENTIFIER ::= { ibDhcp4ClientScalarObjects 1 }
+
+ibDhcp4ClientConflictIP OBJECT-TYPE
+    SYNTAX       InetAddressIPv4
+    MAX-ACCESS   accessible-for-notify
+    STATUS   current
+    DESCRIPTION
+        "The dhcp client conflict IP."
+    ::= { ibDhcp4ClientTrapEntry 1 }
+
+ibDhcp4ClientReacquiredIP OBJECT-TYPE
+    SYNTAX       InetAddressIPv4
+    MAX-ACCESS   accessible-for-notify
+    STATUS   current
+    DESCRIPTION
+        "The dhcp client reacquired IP."
+    ::= { ibDhcp4ClientTrapEntry 2 }
+
+ibDhcp4ClientUserInfoMacAddr OBJECT-TYPE
+    SYNTAX       MacAddress
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "DHCP client's MAC address."
+    ::= { ibDhcp4ClientTrapEntry 3 }
+
+-- ==========================================================================
+-- Table definition
+-- ==========================================================================
+    ibDhcp4ClientTables OBJECT IDENTIFIER ::= {  ibDhcp4Client 2  }
+
+-- ==========================================================================
+-- Trap definition
+-- ==========================================================================
+ibDhcp4ClientTraps OBJECT IDENTIFIER ::= {  ibDhcp4Client 3  }
+
+ibDhcp4ClientTrapNotify OBJECT IDENTIFIER ::= { ibDhcp4ClientTraps 0 }
+
+ibDhcp4ClientIpConflictAlm NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ifName,
+        ibDhcp4ClientConflictIP
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the IP obtained by
+        the client conflicts with other interface subnets."
+    ::= { ibDhcp4ClientTrapNotify 1 }
+
+ibDhcp4ClientIpConflictAlmRsm  NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ifName,
+        ibDhcp4ClientReacquiredIP
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the DHCP client recover
+        form ibDhcp4ClientIpConflictAlm."
+    ::= { ibDhcp4ClientTrapNotify 2 }
+
+ibDhcp4ClientApplyIpFailAlm  NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ifName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the failed to apply for address."
+    ::= { ibDhcp4ClientTrapNotify 3 }
+
+ibDhcp4ClientApplyIpFailAlmRsm  NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ifName,
+        ibDhcp4ClientReacquiredIP
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when User applied for address successfully."
+    ::= { ibDhcp4ClientTrapNotify 4 }
+
+ibDhcp4ClientApplyIpConflictAlm  NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ifName,
+        ibDhcp4ClientConflictIP,
+        ibDhcp4ClientUserInfoMacAddr
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the usage of DHCP receives
+        a conflicting ARP packet after obtaining the IP address."
+    ::= { ibDhcp4ClientTrapNotify 5 }
+
+END

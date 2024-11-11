@@ -1,0 +1,1091 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:  DHCP Server MIB
+-- Reference:
+-- Version: V1.7
+-- History:
+-- V1.0 Initial version Created by y04444
+-- V1.1 2009-09-07 Modify by xuyufei
+--      Add DHCP Server trap
+-- V1.2 2010-05-30 Modify by liuxiaoming06874
+--      Add ibDHCPSrvMibObject,including ibDHCPSrvGlobalPoolTable
+--      ibDHCPSrvGlobalPoolConfigTable,ibDHCPSrvGlobalPoolParaTable
+--      ibDHCPSrvGlobalPoolOptionTable
+--      2010-08-13 Modify by Cui Jing
+--      Add ibDHCPSrvGlobalPoolStatTable,
+--      modify ibDHCPServerReqTimes and ibDHCPServerReqSuccessTimes.
+-- V1.3 2011-08-10 Modify by zhangshuai06624
+--      modify ibDHCPSrvGlbPoolReqTimes and ibDHCPSrvGlbPoolSuccessTimes.
+--      Add ibDHCPSrvGlbPoolDiscoverTimes, ibDHCPSrvGlbPoolOfferTimes and
+--      ibDHCPSrvGlbPoolACKTimes
+-- V1.4 2011-11-23 Modify by zhangshuai06624
+--      Add ibDHCPServerTrapObjects and ibDHCPServerFirstTrapTime
+-- V1.5 2012-08-10 Modify by xuyufei03122
+--      modify ibDHCPSrvGlbPoolOptHexString
+-- V1.6 2013-08-28 Modify by ganchanghua06076
+--      Add ibDHCPSvrOptionGroupTable, ibDHCPSvrOptionTable,
+--      ibDHCPSvrVerifyMacTable and ibDHCPSvrPoolMacTable.
+--      2013-10-17 Modify by xuyufei03122
+--      Add ibDHCPSrvGlbPoolTotalIpNum and ibDHCPSrvGlbPoolInUsedIpNum
+-- V1.7 2014-04-17 Modify by cuixiaohui03029
+--      Add ibDHCPSrvGlobalPoolAllocObject
+--      Add ibDHCPSrvGlbPoolLeaseTimeSec
+--      Add ibDHCPSrvGlbPoolCliGWIPAddr
+-- =================================================================
+IB-DHCP-SERVER-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, NOTIFICATION-TYPE, MODULE-IDENTITY, IpAddress, Integer32,
+    TimeTicks, Counter32
+        FROM SNMPv2-SMI
+    RowStatus, MacAddress
+        FROM SNMPv2-TC;
+
+ibDHCPServer MODULE-IDENTITY
+    LAST-UPDATED "200905060000Z"            -- May 06th, 2009 at 00:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB module is used for DHCP server."
+    REVISION    "200905060000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { ibCommon 101 }
+
+--
+-- Define the DHCP Server GLOBAL.
+--
+    ibDHCPServerObjects OBJECT IDENTIFIER ::= { ibDHCPServer 1 }
+
+    ibDHCPServerIPPoolUsage OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Usage factor of DHCP server ip pool."
+        ::= { ibDHCPServerObjects 1 }
+
+    ibDHCPServerReqTimes OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Number of requests received by the DHCP server."
+        ::= { ibDHCPServerObjects 2 }
+
+    ibDHCPServerReqSuccessTimes OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Number of requests success responses sent by the DHCP server."
+        ::= { ibDHCPServerObjects 3 }
+
+    ibDHCPServerAvgIpUseThreshold OBJECT-TYPE
+        SYNTAX      Integer32 (0..100)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Threshold of average IP usage of a DHCP server pool in 5 minutes."
+        ::= { ibDHCPServerObjects 4 }
+
+    ibDHCPServerMaxIpUseThreshold OBJECT-TYPE
+        SYNTAX      Integer32 (0..100)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Threshold of maximum IP usage of a DHCP server pool in 5 minutes."
+        ::= { ibDHCPServerObjects 5 }
+
+    ibDHCPServerAllocateThreshold OBJECT-TYPE
+        SYNTAX      Integer32 (0..100)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Threshold of DHCP server allocated IP address in 5 minutes."
+        ::= { ibDHCPServerObjects 6 }
+
+--
+-- Define the DHCP Server Tables.
+--
+    ibDHCPServerTables OBJECT IDENTIFIER ::= { ibDHCPServer 2 }
+
+    ibDHCPServerPoolName OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..255))
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "DHCP server pool name."
+        ::= { ibDHCPServerTables 1 }
+
+-- =================================================================
+-- 1st Table of ibDHCPServerTables: ibDHCPSrvGlobalPoolTable
+-- =================================================================
+    ibDHCPSrvGlobalPoolTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSrvGlobalPoolEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for creating DHCP server global pools."
+        ::= { ibDHCPServerTables 2 }
+
+    ibDHCPSrvGlobalPoolEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSrvGlobalPoolEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry containing objects for creating or
+            deleting a global pool for the DHCP server."
+        INDEX { ibDHCPSrvGlobalPoolName }
+        ::= { ibDHCPSrvGlobalPoolTable 1 }
+
+    IbDHCPSrvGlobalPoolEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSrvGlobalPoolName         OCTET STRING,
+                ibDHCPSrvGlobalPoolRowStatus    RowStatus
+            }
+
+    ibDHCPSrvGlobalPoolName OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..255))
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "DHCP server global pool name."
+        ::= { ibDHCPSrvGlobalPoolEntry 1 }
+
+    ibDHCPSrvGlobalPoolRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus.  Three actions are used: active,
+            createAndGo, destroy."
+        ::= { ibDHCPSrvGlobalPoolEntry 2 }
+
+-- =================================================================
+-- 2nd Table of ibDHCPServerTables: ibDHCPSrvGlobalPoolConfigTable
+-- =================================================================
+    ibDHCPSrvGlobalPoolConfigTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSrvGlobalPoolConfigEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table containing the configurations of dhcp
+            server global pools."
+        ::= { ibDHCPServerTables 3 }
+
+    ibDHCPSrvGlobalPoolConfigEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSrvGlobalPoolConfigEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry containing the objects for configuring
+            the network ip or host ip etc. to global pools for
+            DHCP server."
+        INDEX { ibDHCPSrvGlobalPoolName }
+        ::= { ibDHCPSrvGlobalPoolConfigTable 1 }
+
+    IbDHCPSrvGlobalPoolConfigEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSrvGlobalPoolType              INTEGER,
+                ibDHCPSrvGlobalPoolNetwork           IpAddress,
+                ibDHCPSrvGlobalPoolNetworkMask       IpAddress,
+                ibDHCPSrvGlobalPoolHostIPAddr        IpAddress,
+                ibDHCPSrvGlobalPoolHostMask          IpAddress,
+                ibDHCPSrvGlobalPoolHostHAddr         MacAddress,
+                ibDHCPSrvGlobalPoolCfgUndoFlag       INTEGER,
+                ibDHCPSrvGlobalPoolStartAddr         IpAddress,
+                ibDHCPSrvGlobalPoolEndAddr           IpAddress,
+                ibDHCPSrvGlobalPoolAllocObject       INTEGER
+            }
+
+    ibDHCPSrvGlobalPoolType OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                null(0),
+                host(1),
+                network(2)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Type of a DHCP global pool.  Any operations of
+            this object will be bound with the operations
+            of ibDHCPSrvGlobalPoolNetwork, ibDHCPSrvGlobalPoolHostIPAddr,
+            or ibDHCPSrvGlobalPoolHostHAddr.
+            That means any operation of this object alone will
+            be regarded as invalid operation."
+        ::= { ibDHCPSrvGlobalPoolConfigEntry 1 }
+
+    ibDHCPSrvGlobalPoolNetwork OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Network ip of a DHCP global pool.
+            To delete a configured network ip, please set
+            ibDHCPSrvGlobalPoolCfgUndoFlag to 1."
+        ::= { ibDHCPSrvGlobalPoolConfigEntry 2 }
+
+    ibDHCPSrvGlobalPoolNetworkMask OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Net mask of a DHCP global pool(network).
+            The SET operation to this object ought to be with
+            the SET of ibDHCPSrvGlobalPoolNetwork together, and
+            any SET operation alone to this object will be
+            regarded as an invalid operation.
+            When a network ip of a DHCP global pool was
+            deleted, the net mask would also be deleted
+            automatically, and no further operation needed."
+        ::= { ibDHCPSrvGlobalPoolConfigEntry 3 }
+
+    ibDHCPSrvGlobalPoolHostIPAddr OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Host ip of a DHCP global pool.
+            To delete a configured network ip, please set
+            ibDHCPSrvGlobalPoolCfgUndoFlag to 2."
+        ::= { ibDHCPSrvGlobalPoolConfigEntry 4 }
+
+    ibDHCPSrvGlobalPoolHostMask OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Net mask of a DHCP global pool(host)
+            The SET operation to this object ought to be with
+            the SET of ibDHCPSrvGlobalPoolHostIPAddr together,
+            and any SET operation alone to this object will be
+            regarded as an invalid operation.
+            When a host ip of a DHCP global pool was
+            deleted, the net mask would also be deleted
+            automatically, and no further operation needed."
+        ::= { ibDHCPSrvGlobalPoolConfigEntry 5 }
+
+    ibDHCPSrvGlobalPoolHostHAddr OBJECT-TYPE
+        SYNTAX      MacAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Hardware address of a DHCP global pool(host).
+            To delete a configured hardware address, please
+            set ibDHCPSrvGlobalPoolCfgUndoFlag to 3."
+        ::= { ibDHCPSrvGlobalPoolConfigEntry 6 }
+
+    ibDHCPSrvGlobalPoolCfgUndoFlag OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                undonetworkip(1),
+                undohostip(2),
+                undohosthaddr(3)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Flag of undo operation for ibDHCPSrvGlobalPoolConfigTable."
+        ::= { ibDHCPSrvGlobalPoolConfigEntry 7 }
+
+    ibDHCPSrvGlobalPoolStartAddr OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Start IP of a DHCP global pool.
+            To delete a configured start IP, please set
+            ibDHCPSrvGlobalPoolStartAddr to 0.  It takes
+            effect only when ibDHCPSrvGlobalPoolNetwork is set."
+        ::= { ibDHCPSrvGlobalPoolConfigEntry 8 }
+
+    ibDHCPSrvGlobalPoolEndAddr OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "End ip of a DHCP global pool."
+        ::= { ibDHCPSrvGlobalPoolConfigEntry 9 }
+
+    ibDHCPSrvGlobalPoolAllocObject OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                user(0),
+                admin(1)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "A DHCP global pool type for object allocated address.
+            User: the DHCP global pool allocates address for user.
+            Admin: the DHCP global pool allocates address for route
+            or switch.  The default value is 0."
+        ::= { ibDHCPSrvGlobalPoolConfigEntry 10 }
+-- =================================================================
+-- 3rd Table of ibDHCPServerTables: ibDHCPSrvGlobalPoolParaTable
+-- =================================================================
+    ibDHCPSrvGlobalPoolParaTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSrvGlobalPoolParaEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for configuring parameters to DHCP global
+            pools."
+        ::= { ibDHCPServerTables 4 }
+
+    ibDHCPSrvGlobalPoolParaEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSrvGlobalPoolParaEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry containing the objects for the
+            configurations of parameters of DHCP global pools."
+        INDEX { ibDHCPSrvGlobalPoolName }
+        ::= { ibDHCPSrvGlobalPoolParaTable 1 }
+
+    IbDHCPSrvGlobalPoolParaEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSrvGlbPoolLeaseDay                 Integer32,
+                ibDHCPSrvGlbPoolLeaseHour                Integer32,
+                ibDHCPSrvGlbPoolLeaseMinute              Integer32,
+                ibDHCPSrvGlbPoolLeaseUnlimited           INTEGER,
+                ibDHCPSrvGlbPoolDomainName               OCTET STRING,
+                ibDHCPSrvGlbPoolCliGWIPStr               OCTET STRING,
+                ibDHCPSrvGlbPoolCliGWIPUndo              IpAddress,
+                ibDHCPSrvGlbPoolCliDNSIPStr              OCTET STRING,
+                ibDHCPSrvGlbPoolCliDNSIPUndo             IpAddress,
+                ibDHCPSrvGlbPoolCliNetbiosType           INTEGER,
+                ibDHCPSrvGlbPoolCliNbnsIPStr             OCTET STRING,
+                ibDHCPSrvGlbPoolCliNbnsIPUndo            IpAddress,
+                ibDHCPSrvGlbPoolParaUndoFlag             INTEGER,
+                ibDHCPSrvGlbPoolIPInUseReset             INTEGER,
+                ibDHCPSrvGlbPoolLeaseTime                TimeTicks,
+                ibDHCPSrvGlbPoolPrimaryDNSIP             IpAddress,
+                ibDHCPSrvGlbPoolSecondaryDNSIP           IpAddress,
+                ibDHCPSrvGlbPoolLeaseSecond              Integer32,
+                ibDHCPSrvGlbPoolLeaseTimeSec             Integer32,
+                ibDHCPSrvGlbPoolCliGWIPAddr              IpAddress
+            }
+
+    ibDHCPSrvGlbPoolLeaseDay OBJECT-TYPE
+        SYNTAX      Integer32(0..365)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Number of days of the lease."
+        DEFVAL { 1 }
+        ::= { ibDHCPSrvGlobalPoolParaEntry 1 }
+
+    ibDHCPSrvGlbPoolLeaseHour OBJECT-TYPE
+        SYNTAX      Integer32(0..23)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Number of hours of the lease."
+        DEFVAL { 0 }
+        ::= { ibDHCPSrvGlobalPoolParaEntry 2 }
+
+    ibDHCPSrvGlbPoolLeaseMinute OBJECT-TYPE
+        SYNTAX      Integer32(0..59)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Number of minutes of the lease."
+        DEFVAL { 0 }
+        ::= { ibDHCPSrvGlobalPoolParaEntry 3 }
+
+    ibDHCPSrvGlbPoolLeaseUnlimited OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                invalid(0),
+                unlimited(1)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "A flag denoting if the lease of a pool is
+            unlimited."
+        ::= { ibDHCPSrvGlobalPoolParaEntry 4 }
+
+    ibDHCPSrvGlbPoolDomainName OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..255))
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Domain name for DHCP clients."
+        ::= { ibDHCPSrvGlobalPoolParaEntry 5 }
+
+    ibDHCPSrvGlbPoolCliGWIPStr OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..129))
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "String of gateway ip addresses for DHCP clients.
+            Since mostly 8 ip can be configured for a pool
+            totally, a string is defined to get or configure 8 ip
+            ip at a time."
+        ::= { ibDHCPSrvGlobalPoolParaEntry 6 }
+
+    ibDHCPSrvGlbPoolCliGWIPUndo OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "A gateway ip address to delete.  This object is
+            only for deleting a given ip of gateway router."
+        ::= { ibDHCPSrvGlobalPoolParaEntry 7 }
+
+    ibDHCPSrvGlbPoolCliDNSIPStr OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..129))
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "String of DNS server ip addresses for DHCP clients.
+            Since mostly 8 ip can be configured for a pool
+            totally, a string is defined to get or configure 8
+            ip at a time."
+        ::= { ibDHCPSrvGlobalPoolParaEntry 8 }
+
+    ibDHCPSrvGlbPoolCliDNSIPUndo OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "A DNS server ip address to delete.  This object
+            is only for deleting a given ip of DNS server."
+        ::= { ibDHCPSrvGlobalPoolParaEntry 9 }
+
+    ibDHCPSrvGlbPoolCliNetbiosType OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                null(0),
+                bnode(1),
+                pnode(2),
+                mnode(4),
+                hnode(8)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "NetBios node type for DHCP clients."
+        DEFVAL { 0 }
+        ::= { ibDHCPSrvGlobalPoolParaEntry 10 }
+
+    ibDHCPSrvGlbPoolCliNbnsIPStr OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..129))
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "String of NetBios server ip addresses for DHCP
+            clients.  Since mostly 8 ip can be configured for
+            a pool totally, so a string is defined to get or
+            configure 8 ip at a time."
+        ::= { ibDHCPSrvGlobalPoolParaEntry 11 }
+
+    ibDHCPSrvGlbPoolCliNbnsIPUndo OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "A NetBios server ip address to delete.  This
+            object is only for deleting a given ip of NetBios
+            server."
+        ::= { ibDHCPSrvGlobalPoolParaEntry 12 }
+
+    ibDHCPSrvGlbPoolParaUndoFlag OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                undoDomain(1),
+                undoLease(2),
+                undoGateway(3),
+                undoDns(4),
+                undoNbns(5),
+                undoNbType(6)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Flag of undo-operation for ibDHCPSrvGlobalPoolParaTable."
+        ::= { ibDHCPSrvGlobalPoolParaEntry 13 }
+
+    ibDHCPSrvGlbPoolIPInUseReset OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                reset(1)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Reset the auto binding ip of the given global
+            pool for DHCP server."
+        ::= { ibDHCPSrvGlobalPoolParaEntry 14 }
+
+    ibDHCPSrvGlbPoolLeaseTime OBJECT-TYPE
+        SYNTAX      TimeTicks
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Number of timeticks of the lease."
+        ::= { ibDHCPSrvGlobalPoolParaEntry 15 }
+
+    ibDHCPSrvGlbPoolPrimaryDNSIP OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The Primary DNS server IP address to be assigned to the
+            client.  To delete a configured Primary DNS server IP, please
+            set ibDHCPSrvGlbPoolPrimaryDNSIP to 0.   It takes
+            effect only when ibDHCPSrvGlobalPoolNetwork is set."
+        ::= { ibDHCPSrvGlobalPoolParaEntry 16 }
+
+    ibDHCPSrvGlbPoolSecondaryDNSIP OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The Secondary DNS server IP address to be assigned to the
+            client.  To delete a configured Secondary DNS server IP, please
+            set ibDHCPSrvGlbPoolSecondaryDNSIP to 0.  It takes
+            effect only when ibDHCPSrvGlobalPoolNetwork is set."
+        ::= { ibDHCPSrvGlobalPoolParaEntry 17 }
+
+    ibDHCPSrvGlbPoolLeaseSecond OBJECT-TYPE
+        SYNTAX      Integer32(0..59)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Number of seconds of the lease."
+        DEFVAL { 0 }
+        ::= { ibDHCPSrvGlobalPoolParaEntry 18 }
+
+    ibDHCPSrvGlbPoolLeaseTimeSec OBJECT-TYPE
+        SYNTAX      Integer32 (5..31622399)
+        UNITS      "seconds"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Number of seconds of the lease.  The default
+             value is 86400"
+        ::= { ibDHCPSrvGlobalPoolParaEntry 19 }
+
+    ibDHCPSrvGlbPoolCliGWIPAddr OBJECT-TYPE
+        SYNTAX      IpAddress
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Ip addresses of gateway for DHCP clients."
+        ::= { ibDHCPSrvGlobalPoolParaEntry 20 }
+
+-- =================================================================
+-- 4th Table of ibDHCPServerTables: ibDHCPSrvGlobalPoolOptionTable
+-- =================================================================
+    ibDHCPSrvGlobalPoolOptionTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSrvGlobalPoolOptionEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for configuring options to DHCP global pools."
+        ::= { ibDHCPServerTables 5 }
+
+    ibDHCPSrvGlobalPoolOptionEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSrvGlobalPoolOptionEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry containing the objects for configuring
+            options to DHCP global pools."
+        INDEX { ibDHCPSrvGlobalPoolName, ibDHCPSrvGlbPoolOptCode }
+        ::= { ibDHCPSrvGlobalPoolOptionTable 1 }
+
+    IbDHCPSrvGlobalPoolOptionEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSrvGlbPoolOptCode         Integer32,
+                ibDHCPSrvGlbPoolOptType         INTEGER,
+                ibDHCPSrvGlbPoolOptAscii        OCTET STRING,
+                ibDHCPSrvGlbPoolOptHexString    OCTET STRING,
+                ibDHCPSrvGlbPoolOptIPString     OCTET STRING,
+                ibDHCPSrvGlbPoolOptRowStatus    RowStatus
+             }
+
+    ibDHCPSrvGlbPoolOptCode OBJECT-TYPE
+        SYNTAX      Integer32 (1..254)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Option code."
+        ::= { ibDHCPSrvGlobalPoolOptionEntry 1 }
+
+    ibDHCPSrvGlbPoolOptType OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                ascii(1),
+                hex(2),
+                ip(3)
+            }
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Option type."
+        ::= { ibDHCPSrvGlobalPoolOptionEntry 2 }
+
+    ibDHCPSrvGlbPoolOptAscii OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..63))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Ascii string of an option."
+        ::= { ibDHCPSrvGlobalPoolOptionEntry 3 }
+
+    ibDHCPSrvGlbPoolOptHexString OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..573))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Hex string of an option.  1st to 16th hex strings,
+            which are 2 bytes, 4 bytes, 6 bytes or 8 bytes,
+            can be configured at most simultaneously.
+            That means the format of each string
+            must be '12', '1234', '123456' or '12345678'."
+        ::= { ibDHCPSrvGlobalPoolOptionEntry 4 }
+
+    ibDHCPSrvGlbPoolOptIPString OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..129))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "IP string of an option.  1 to 8 ip addresses  can
+            be configured at most simultaneously."
+        ::= { ibDHCPSrvGlobalPoolOptionEntry 5 }
+
+    ibDHCPSrvGlbPoolOptRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus.  Three actions are used: active,
+            createAndGo, destroy."
+        ::= { ibDHCPSrvGlobalPoolOptionEntry 6 }
+
+-- =================================================================
+-- 5th Table of ibDHCPServerTables: ibDHCPSrvGlobalPoolStatTable
+-- =================================================================
+    ibDHCPSrvGlobalPoolStatTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSrvGlobalPoolStatEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "The statistics of each DHCP address pool."
+        ::= { ibDHCPServerTables 6 }
+
+    ibDHCPSrvGlobalPoolStatEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSrvGlobalPoolStatEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry containing the statistics of each DHCP address pool."
+        INDEX { ibDHCPSrvGlobalPoolName }
+        ::= { ibDHCPSrvGlobalPoolStatTable 1 }
+
+    IbDHCPSrvGlobalPoolStatEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSrvGlbPoolIPPoolUsage     Integer32,
+                ibDHCPSrvGlbPoolReqTimes        Counter32,
+                ibDHCPSrvGlbPoolSuccessTimes    Counter32,
+                ibDHCPSrvGlbPoolDiscoverTimes   Counter32,
+                ibDHCPSrvGlbPoolOfferTimes      Counter32,
+                ibDHCPSrvGlbPoolACKTimes        Counter32,
+                ibDHCPSrvGlbPoolTotalIpNum      Counter32,
+                ibDHCPSrvGlbPoolInUsedIpNum     Counter32
+             }
+
+    ibDHCPSrvGlbPoolIPPoolUsage OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Utilization rate of IP addresses in each DHCP address pool, in percentage."
+        ::= { ibDHCPSrvGlobalPoolStatEntry 1 }
+
+    ibDHCPSrvGlbPoolReqTimes OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Number of request packets received by each DHCP address pool,
+            including the request packets for an extension of the lease."
+        ::= { ibDHCPSrvGlobalPoolStatEntry 2 }
+
+    ibDHCPSrvGlbPoolSuccessTimes OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Number of positive responses sent by each DHCP address pool,
+            including responses to the request for an extension of the lease."
+        ::= { ibDHCPSrvGlobalPoolStatEntry 3 }
+
+    ibDHCPSrvGlbPoolDiscoverTimes OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Number of discover packets received by each DHCP address pool."
+        ::= { ibDHCPSrvGlobalPoolStatEntry 4 }
+
+    ibDHCPSrvGlbPoolOfferTimes OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Number of offer packets sent by each DHCP address pool."
+        ::= { ibDHCPSrvGlobalPoolStatEntry 5 }
+
+    ibDHCPSrvGlbPoolACKTimes OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Number of ACK packets sent by each DHCP address pool."
+        ::= { ibDHCPSrvGlobalPoolStatEntry 6 }
+
+    ibDHCPSrvGlbPoolTotalIpNum OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Number of IP addresses in each DHCP address pool."
+        ::= { ibDHCPSrvGlobalPoolStatEntry 7 }
+
+    ibDHCPSrvGlbPoolInUsedIpNum OBJECT-TYPE
+        SYNTAX      Counter32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Number of allocated IP addresses in each DHCP address pool."
+        ::= { ibDHCPSrvGlobalPoolStatEntry 8 }
+
+-- =================================================================
+-- 6th Table of ibDHCPServerTables: ibDHCPSvrOptionGroupTable
+-- =================================================================
+    ibDHCPSvrOptionGroupTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSvrOptionGroupEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for creating DHCP server global option groups."
+        ::= { ibDHCPServerTables 7 }
+
+    ibDHCPSvrOptionGroupEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSvrOptionGroupEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry containing objects for creating or
+            deleting a global option group."
+        INDEX { ibDHCPSvrOptionGroupIndex }
+        ::= { ibDHCPSvrOptionGroupTable 1 }
+
+    IbDHCPSvrOptionGroupEntry ::=
+        SEQUENCE
+            {   ibDHCPSvrOptionGroupIndex      Integer32,
+                ibDHCPSvrOptionGroupRowstatus  RowStatus
+            }
+
+    ibDHCPSvrOptionGroupIndex OBJECT-TYPE
+        SYNTAX      Integer32 (0..2147483647)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The global option group index."
+        ::= { ibDHCPSvrOptionGroupEntry 1 }
+
+    ibDHCPSvrOptionGroupRowstatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus.  Three actions are used: active,
+            createAndGo, destroy."
+        ::= { ibDHCPSvrOptionGroupEntry 2 }
+
+-- =================================================================
+-- 7th Table of ibDHCPServerTables: ibDHCPSvrOptionTable
+-- =================================================================
+    ibDHCPSvrOptionTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSvrOptionEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table for configuring options in a global option group."
+        ::= { ibDHCPServerTables 8 }
+
+    ibDHCPSvrOptionEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSvrOptionEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry containing objects for configuring
+             an option in a global option group."
+        INDEX {ibDHCPSvrOptionGroupIndex , ibDHCPSvrOptionCode }
+        ::= { ibDHCPSvrOptionTable 1 }
+
+    IbDHCPSvrOptionEntry ::=
+        SEQUENCE
+            {   ibDHCPSvrOptionCode         Integer32,
+                ibDHCPSvrOptionType         INTEGER,
+                ibDHCPSvrOptionAsciiString  OCTET STRING,
+                ibDHCPSvrOptionHexString    OCTET STRING,
+                ibDHCPSvrOptionIPString     OCTET STRING,
+                ibDHCPSvrOptionRowstatus    RowStatus
+            }
+
+
+    ibDHCPSvrOptionCode OBJECT-TYPE
+        SYNTAX      Integer32 (1..254)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Option code."
+        ::= { ibDHCPSvrOptionEntry 1 }
+
+    ibDHCPSvrOptionType OBJECT-TYPE
+        SYNTAX      INTEGER
+            {
+                ascii(1),
+                hex(2),
+                ip(3)
+            }
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Option type."
+        ::= { ibDHCPSvrOptionEntry 2 }
+
+    ibDHCPSvrOptionAsciiString OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..255))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Ascii string of an option."
+        DEFVAL { "" }
+        ::= { ibDHCPSvrOptionEntry 3 }
+
+    ibDHCPSvrOptionHexString OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..573))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Hex string of an option.  1 to 16 hex strings,
+            which are 2 bytes, 4 bytes, 6 bytes or 8 bytes,
+            can be configured at most simultaneously.
+            That means the format of each string
+            must be '12', '1234', '123456' or '12345678'."
+        DEFVAL { "" }
+        ::= { ibDHCPSvrOptionEntry 4 }
+
+    ibDHCPSvrOptionIPString OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..129))
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "Ip string of an option.  1 to 8 ip addresses can
+            be configured at most simultaneously."
+        DEFVAL { "" }
+        ::= { ibDHCPSvrOptionEntry 5 }
+
+    ibDHCPSvrOptionRowstatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus.  Three actions are used: active,
+            createAndGo, destroy."
+        ::= { ibDHCPSvrOptionEntry 6 }
+
+-- =================================================================
+-- 8th Table of ibDHCPServerTables: ibDHCPSvrVerifyMacTable
+-- =================================================================
+    ibDHCPSvrVerifyMacTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSvrVerifyMacEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table containing the verifying switches status for pools."
+        ::= { ibDHCPServerTables 9 }
+
+    ibDHCPSvrVerifyMacEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSvrVerifyMacEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry containing the switch status for a pool."
+        INDEX { ibDHCPSrvGlobalPoolName }
+        ::= { ibDHCPSvrVerifyMacTable 1 }
+
+    IbDHCPSvrVerifyMacEntry ::=
+        SEQUENCE
+            {
+                ibDHCPSvrVerifyMacSwitch    INTEGER
+            }
+
+    ibDHCPSvrVerifyMacSwitch OBJECT-TYPE
+        SYNTAX  INTEGER
+            {
+                enabled(1),
+                disabled(2)
+            }
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The switch status for this pool.
+             It has two defined values: enabled and disabled.
+             If the value is enabled, the DHCP server only allocates IP address
+             to host in the MAC list.  The default value is disabled."
+        DEFVAL { disabled }
+        ::= { ibDHCPSvrVerifyMacEntry 1 }
+
+-- =================================================================
+-- 9th Table of ibDHCPServerTables: ibDHCPSvrPoolMacTable
+-- =================================================================
+    ibDHCPSvrPoolMacTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDHCPSvrPoolMacEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "A table containing the MAC addresses list for pools."
+        ::= { ibDHCPServerTables 10 }
+
+    ibDHCPSvrPoolMacEntry OBJECT-TYPE
+        SYNTAX      IbDHCPSvrPoolMacEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry containing a MAC address and a mask."
+        INDEX { ibDHCPSrvGlobalPoolName, ibDHCPSvrPoolMac, ibDHCPSvrPoolMacMask }
+        ::= { ibDHCPSvrPoolMacTable 1 }
+
+    IbDHCPSvrPoolMacEntry ::=
+        SEQUENCE
+            {   ibDHCPSvrPoolMac               MacAddress,
+                ibDHCPSvrPoolMacMask           MacAddress,
+                ibDHCPSvrPoolMacOptIndex       Integer32,
+                ibDHCPSvrPoolMacRowstatus      RowStatus
+            }
+
+    ibDHCPSvrPoolMac OBJECT-TYPE
+        SYNTAX      MacAddress
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "MAC address."
+        ::= { ibDHCPSvrPoolMacEntry 1 }
+
+    ibDHCPSvrPoolMacMask OBJECT-TYPE
+        SYNTAX      MacAddress
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Mask for MAC address."
+        ::= { ibDHCPSvrPoolMacEntry 2 }
+
+    ibDHCPSvrPoolMacOptIndex OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Option group index binding for the MAC address."
+        DEFVAL { 0 }
+        ::= { ibDHCPSvrPoolMacEntry 3 }
+
+    ibDHCPSvrPoolMacRowstatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "RowStatus.  Three actions are used: active,
+            createAndGo, destroy."
+        ::= { ibDHCPSvrPoolMacEntry 4 }
+
+--
+-- Define the DHCP Server Traps.
+--
+    ibDHCPServerTraps OBJECT IDENTIFIER ::= { ibDHCPServer 3 }
+
+    ibDHCPServerTrapPrefix OBJECT IDENTIFIER ::= { ibDHCPServerTraps 0 }
+
+    ibDHCPServerAddrExhaust NOTIFICATION-TYPE
+        OBJECTS
+        {
+            ibDHCPServerPoolName,
+            ibDHCPServerFirstTrapTime
+        }
+        STATUS      current
+        DESCRIPTION
+            "This trap is generated when the device DHCP server address
+            exhaust."
+        ::= { ibDHCPServerTrapPrefix 1 }
+
+    ibDHCPServerAddrExhaustRecover NOTIFICATION-TYPE
+        OBJECTS
+        {
+            ibDHCPServerPoolName,
+            ibDHCPServerFirstTrapTime
+        }
+        STATUS      current
+        DESCRIPTION
+            "This trap is generated when the device DHCP server address
+            exhaust recover."
+        ::= { ibDHCPServerTrapPrefix 2 }
+
+    ibDHCPServerAvgIpUsageOverflow NOTIFICATION-TYPE
+        OBJECTS
+        {
+            ibDHCPServerPoolName
+        }
+        STATUS      current
+        DESCRIPTION
+            "This trap is generated when the average IP address usage
+            of DHCP server pool in 5 minutes overflows."
+        ::= { ibDHCPServerTrapPrefix 3 }
+
+    ibDHCPServerMaxIpUsageOverflow NOTIFICATION-TYPE
+        OBJECTS
+        {
+            ibDHCPServerPoolName
+        }
+        STATUS      current
+        DESCRIPTION
+            "This trap is generated when the maximum IP address usage
+            of DHCP server pool in 5 minutes overflows."
+        ::= { ibDHCPServerTrapPrefix 4 }
+
+    ibDHCPServerAllocateOverflow NOTIFICATION-TYPE
+        STATUS      current
+        DESCRIPTION
+            "This trap is generated when the number of DHCP server
+            allocated IP address in 5 minutes overflows."
+        ::= { ibDHCPServerTrapPrefix 5 }
+
+    ibDHCPServerTrapObjects OBJECT IDENTIFIER ::= { ibDHCPServerTraps 1 }
+
+    ibDHCPServerFirstTrapTime  OBJECT-TYPE
+        SYNTAX      TimeTicks
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Represents the first trap time."
+        ::= { ibDHCPServerTrapObjects 1 }
+
+END

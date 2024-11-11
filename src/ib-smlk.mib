@@ -1,0 +1,445 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Smart Link MIB
+-- Reference:
+-- Version: V1.1
+-- History:
+--   2014-07-23 created by Lei Gongwu
+--     Initial version V1.0
+--   V1.1 2022-05-11 Add ibSmlkGroupStatusSwitch, ibSmlkInactiveLinkDown,
+--                   ibSmlkInactiveLinkUp trap by zhengjun
+-- =================================================================
+-- =================================================================
+--
+-- Import and definition
+--
+-- =================================================================
+IB-SMLK-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    RowStatus, DateAndTime, MacAddress
+        FROM SNMPv2-TC
+    Integer32, Counter64, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    InterfaceIndex, ifDescr
+        FROM IF-MIB;
+
+ibSmlk MODULE-IDENTITY
+    LAST-UPDATED
+        "202205111453Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB defines objects for managing Smart Link.
+        Smart Link is a feature developed to address the slow convergence
+        issue with STP.
+        It provides link redundancy and fast convergence in
+        a dual uplink network, allowing the backup link to take over quickly
+        when the primary link fails."
+    REVISION
+        "202205111453Z"
+    DESCRIPTION
+        "Add smart link group status switchover notification."
+    REVISION
+        "201407231503Z"
+    DESCRIPTION
+        "Initial revision of the Smart Link MIB module."
+    ::= { ibCommon  147 }
+
+ibSmlkObject OBJECT IDENTIFIER ::= { ibSmlk 1 }
+
+ibSmlkGroupTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSmlkGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A list of entries of a smart link group."
+    ::= { ibSmlkObject 1 }
+
+ibSmlkGroupEntry OBJECT-TYPE
+    SYNTAX      IbSmlkGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A list of parameters that describe a smart link group."
+    INDEX
+    {
+        ibSmlkGroupID
+    }
+  ::= { ibSmlkGroupTable 1 }
+
+IbSmlkGroupEntry ::=
+    SEQUENCE
+    {
+        ibSmlkGroupID           Integer32,
+        ibSmlkDeviceID          MacAddress,
+        ibSmlkPreemptionMode    INTEGER,
+        ibSmlkSpeedThreshold    Integer32,
+        ibSmlkPreemptionDelay   Integer32,
+        ibSmlkControlVlanID     Integer32,
+        ibSmlkInstanceListLow   OCTET STRING,
+        ibSmlkInstanceListHigh  OCTET STRING,
+        ibSmlkGroupRowStatus    RowStatus
+    }
+
+ibSmlkGroupID OBJECT-TYPE
+    SYNTAX Integer32 (1..256)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "An index that uniquely identifies an entry in the smart link
+        group table."
+    ::={ ibSmlkGroupEntry 1 }
+
+ibSmlkDeviceID OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device ID of a smart link group.
+        The device ID is the bridge MAC of the device."
+    ::={ ibSmlkGroupEntry 2 }
+
+ibSmlkPreemptionMode OBJECT-TYPE
+    SYNTAX      INTEGER
+                {
+                    none(1),
+                    role(2),
+                    speed(3)
+                }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Preemption mode of a smart link group."
+    DEFVAL      { 1 }
+    ::={ ibSmlkGroupEntry 3 }
+
+ibSmlkSpeedThreshold OBJECT-TYPE
+    SYNTAX      Integer32 (0..10000)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Speed threshold for a smart link group in speed mode.
+        This object is valid only when the value of ibSmlkPreemptionMode
+        is 'speed'."
+    DEFVAL      { 0 }
+    ::={ ibSmlkGroupEntry 4 }
+
+ibSmlkPreemptionDelay OBJECT-TYPE
+    SYNTAX      Integer32 (0..300)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Preemption delay for a smart link group, in the range of 0 to 300
+        seconds."
+    DEFVAL      { 1 }
+    ::={ ibSmlkGroupEntry 5 }
+
+ibSmlkControlVlanID OBJECT-TYPE
+    SYNTAX      Integer32 (1..4094|65535)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Index of the control VLAN specified for a smart link group.
+        The value 65535 indicates that the control VLAN has not been
+        configured."
+    DEFVAL      { 1 }
+    ::={ ibSmlkGroupEntry 6 }
+
+ibSmlkInstanceListLow OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(256))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Each octet contained in this value specifies an eight-instance
+        group, with the first octet specifying instances 0 through 7,
+        the second octet specifying instances 8 through 15, and so on.
+        Within each octet, the most significant bit represents the
+        highest numbered instance, and the least significant bit represents
+        the lowest numbered instance. Each instance to which the
+        protected VLANs of a smart link group are mapped corresponds to a
+        bit within the value of this object. A bit with a value of '1'
+        indicates that the VLANs mapped to the instance are protected
+        VLANs of the smart link group. The VLANs mapped to
+        the instance are not protected VLANs if the corresponding bit has a
+        value of '0'. The value of this object must be set with
+        ibSmlkInstanceListHigh at the same time when a SET
+        operation is performed."
+    DEFVAL      { "" }
+    ::= { ibSmlkGroupEntry 7 }
+
+ibSmlkInstanceListHigh OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(256))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Each octet contained in this value specifies an eight-instance
+        group, with the first octet specifying instances 2048 through
+        2055, the second octet specifying instances 2056 through 2063,
+        and so on. Within each octet, the most significant bit represents
+        the highest numbered instance, and the least significant bit
+        represents the lowest numbered instance. The most significant bit
+        of the last octet is invalid. Each instance to which the
+        protected VLANs of a smart link group are mapped corresponds to a
+        bit within the value of this object. A bit with a value of '1'
+        indicates that the VLANs mapped to the instance are protected VLANs
+        of the smart link group. The VLANs mapped to the
+        instance are not protected VLANs if the corresponding bit has a
+        value of '0'. The value of this object must be set with
+        ibSmlkInstanceListLow at the same time when a SET operation
+        is performed."
+    DEFVAL      { "" }
+    ::= { ibSmlkGroupEntry 8 }
+
+ibSmlkGroupRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object is responsible for managing creation,
+        deletion, and modification of rows. The rows support active
+        status, CreatAndGo, and destroy operations."
+    ::={ ibSmlkGroupEntry 9 }
+
+ibSmlkPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSmlkPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A list of port entries of a smart link group."
+    ::= { ibSmlkObject 2 }
+
+ibSmlkPortEntry OBJECT-TYPE
+    SYNTAX      IbSmlkPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A list of parameters that describe a port to be added to a smart
+        link group."
+    INDEX
+    {
+        ibSmlkGroupID,
+        ibSmlkPortIfIndex
+    }
+    ::= { ibSmlkPortTable 1 }
+
+IbSmlkPortEntry ::=
+    SEQUENCE
+    {
+        ibSmlkPortIfIndex      InterfaceIndex,
+        ibSmlkPortRole         INTEGER,
+        ibSmlkPortStatus       INTEGER,
+        ibSmlkFlushCount       Counter64,
+        ibSmlkLastFlushTime    DateAndTime,
+        ibSmlkPortRowStatus    RowStatus
+    }
+
+ibSmlkPortIfIndex OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "IfIndex of a port in a smart link group."
+    ::={ ibSmlkPortEntry 1 }
+
+ibSmlkPortRole OBJECT-TYPE
+    SYNTAX      INTEGER
+                {
+                    primary(1),
+                    secondary(2)
+                }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Role of a port in a smart link group."
+    ::={ ibSmlkPortEntry 2 }
+
+ibSmlkPortStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+                {
+                    down(1),
+                    active(2),
+                    standby(3)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Status of a port in a smart link group."
+    ::={ ibSmlkPortEntry 3 }
+
+ibSmlkFlushCount OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of transmitted flush messages."
+    ::={ ibSmlkPortEntry 4 }
+
+ibSmlkLastFlushTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Time when the last flush message was transmitted."
+    ::= { ibSmlkPortEntry 5 }
+
+ibSmlkPortRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object is responsible for managing creation,
+        deletion, and modification of rows. The rows support active
+        status, CreatAndGo, and destroy operations."
+    ::={ ibSmlkPortEntry 6 }
+
+ibSmlkFlushEnableTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSmlkFlushEnableEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A list of ports on which flush message receiving is enabled."
+    ::= { ibSmlkObject 3 }
+
+ibSmlkFlushEnableEntry OBJECT-TYPE
+    SYNTAX      IbSmlkFlushEnableEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A list of parameters that describe a port on which flush message
+        receiving is enabled."
+    INDEX
+    {
+          ibSmlkIfIndex
+    }
+    ::= { ibSmlkFlushEnableTable 1 }
+
+IbSmlkFlushEnableEntry ::=
+    SEQUENCE
+    {
+        ibSmlkIfIndex               InterfaceIndex,
+        ibSmlkControlVlanListLow    OCTET STRING,
+        ibSmlkControlVlanListHigh   OCTET STRING
+    }
+
+ibSmlkIfIndex OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "IfIndex of a port on which flush message receiving is enabled."
+    ::={ ibSmlkFlushEnableEntry 1 }
+
+ibSmlkControlVlanListLow OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(256))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specifies the control VLANs used for receiving flush messages.
+        The VLAN ID range, described by bitmap, is from 1 to
+        2048. The length of bitmap is 256 in bytes. Each octet
+        within this value specifies a set of eight VLANs, with
+        the first octet specifying VLANs 1 through 8, the second
+        octet specifying VLANs 9 through 16, and so on. Within each
+        octet, the most significant bit represents the highest
+        numbered VLAN, and the least significant bit represents
+        the lowest numbered VLAN."
+    ::= { ibSmlkFlushEnableEntry 2 }
+
+ibSmlkControlVlanListHigh OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(256))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specifies the control VLANs used for receiving flush messages.
+        The VLAN ID range, described by bitmap, is from 2049 to
+        4094. The length of bitmap is 256 in bytes. Each octet
+        within this value specifies a set of eight VLANs, with
+        the first octet specifying VLANs 2049 through 2056, the
+        second octet specifying VLANs 2057 through 2064, and so on.
+        Within each octet, the most significant bit represents
+        the highest numbered VLAN, and the least significant bit
+        represents the lowest numbered VLAN."
+    ::= { ibSmlkFlushEnableEntry 3 }
+
+ibSmlkTrap            OBJECT IDENTIFIER ::= { ibSmlk 2 }
+ibSmlkTrapPrefix      OBJECT IDENTIFIER ::= { ibSmlkTrap 0 }
+ibSmlkGroupLinkActive NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSmlkGroupID,
+            ibSmlkPortIfIndex
+        }
+    STATUS      current
+    DESCRIPTION
+        "A trap message is generated when the status of a port
+        in a smart link group changes to active."
+    ::= { ibSmlkTrapPrefix 1 }
+
+ibSmlkGroupStatusSwitch NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSmlkGroupID,
+            ibSmlkGroupStatus
+        }
+    STATUS      current
+    DESCRIPTION
+        "A trap message is generated upon status change of
+        a smart link group."
+    ::= { ibSmlkTrapPrefix 2 }
+
+ibSmlkInactiveLinkDown NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSmlkGroupID,
+            ibSmlkPortIfIndex,
+            ifDescr
+        }
+    STATUS      current
+    DESCRIPTION
+        "A trap message is generated when the status of an inactive
+        port in a smart link group changes to down."
+    ::= { ibSmlkTrapPrefix 3 }
+
+ibSmlkInactiveLinkUp NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSmlkGroupID,
+            ibSmlkPortIfIndex,
+            ifDescr
+        }
+    STATUS      current
+    DESCRIPTION
+        "A trap message is generated when the status of an inactive
+        port in a smart link group changes to up."
+    ::= { ibSmlkTrapPrefix 4 }
+
+ibSmlkTrapOjbects      OBJECT IDENTIFIER ::= { ibSmlkTrap 1 }
+
+ibSmlkGroupStatus OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        unknown(1),
+        allDown(2),
+        oneUp(3),
+        twoUp(4),
+        delay(5)
+        }
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The smart link group status.
+        unknown: The group status is unknown.
+        allDown: All ports in the group are down.
+        oneUp: The group has one port in up state.
+        twoUp: The group has two port in up state.
+        delay: The group is in preemption delay state.
+        "
+    ::= { ibSmlkTrapOjbects 1 }
+
+END

@@ -1,0 +1,540 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: This MIB define objects for MPLS Te Tunnel.
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2011-03-24 Created by fengnina 04924.
+-- ==================================================================
+
+IB-TE-TUNNEL-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    MplsTunnelIndex, MplsTunnelInstanceIndex, MplsExtendedTunnelId, MplsLabel
+        FROM MPLS-TC-STD-MIB
+    OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP
+        FROM SNMPv2-CONF
+    Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    RowPointer
+        FROM SNMPv2-TC;
+
+ibTeTunnel MODULE-IDENTITY
+    LAST-UPDATED "201103240948Z"                -- March 24, 2011 at 09:48 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB contains managed object definitions for the
+        Multiprotocol Label Switching (MPLS) Te Tunnel."
+    ::= { ibCommon 115 }
+
+--
+-- Node definitions
+--
+
+ibTeTunnelScalars OBJECT IDENTIFIER ::= { ibTeTunnel 1 }
+
+ibTeTunnelMaxTunnelIndex OBJECT-TYPE
+    SYNTAX MplsTunnelIndex
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The max value of tunnel id is permitted configure on the device."
+    ::= { ibTeTunnelScalars 1 }
+
+ibTeTunnelObjects OBJECT IDENTIFIER ::= { ibTeTunnel 2 }
+
+ibTeTunnelStaticCrlspTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbTeTunnelStaticCrlspEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table contains information for static-crlsp, and through this
+        to get detail information about this static-crlsp.  Only support
+        transit LSR and egress LSR."
+    ::= { ibTeTunnelObjects 1 }
+
+ibTeTunnelStaticCrlspEntry OBJECT-TYPE
+    SYNTAX IbTeTunnelStaticCrlspEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The entry in this table describes static-crlsp information."
+    INDEX { ibTeTunnelStaticCrlspInLabel }
+    ::= { ibTeTunnelStaticCrlspTable 1 }
+
+IbTeTunnelStaticCrlspEntry ::=
+    SEQUENCE {
+        ibTeTunnelStaticCrlspInLabel
+            MplsLabel,
+        ibTeTunnelStaticCrlspName
+            OCTET STRING,
+        ibTeTunnelStaticCrlspStatus
+            INTEGER,
+        ibTeTunnelStaticCrlspRole
+            INTEGER,
+        ibTeTunnelStaticCrlspXCPointer
+            RowPointer
+    }
+
+ibTeTunnelStaticCrlspInLabel OBJECT-TYPE
+    SYNTAX MplsLabel
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This is unique label value that manualy assigned.  Uniquely
+        identifies a static-crlsp.  Managers should use this to obtain
+        detail static-crlsp information."
+    ::= { ibTeTunnelStaticCrlspEntry 1 }
+
+ibTeTunnelStaticCrlspName OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1..15))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The unique name assigned to the static-crlsp."
+    ::= { ibTeTunnelStaticCrlspEntry 2 }
+
+ibTeTunnelStaticCrlspStatus OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        up(1),
+        down(2)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Indicates the actual status of this static-crlsp,
+        The value must be up when the static-crlsp status is up and
+        the value must be down when the static-crlsp status is down."
+    ::= { ibTeTunnelStaticCrlspEntry 3 }
+
+ibTeTunnelStaticCrlspRole OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        transit(1),
+        tail(2)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This value indicate the role of this static-crlsp. This value must
+        be transit at transit point of the tunnel, and tail at
+        terminating point of the tunnel."
+    ::= { ibTeTunnelStaticCrlspEntry 4 }
+
+ibTeTunnelStaticCrlspXCPointer OBJECT-TYPE
+    SYNTAX RowPointer
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This pointer unique identify a row of mplsXCTable.
+        This value should be zeroDotZero when the static-crlsp
+        is down.  The mplsXCTable identifies the segments that
+        compose this tunnel, their characteristics, and relationships
+        to each other."
+    ::= { ibTeTunnelStaticCrlspEntry 5 }
+
+ibTeTunnelCoTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbTeTunnelCoEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table contains information for Co-routed reverse crlsp and
+        infomation of Co-routed bidirectional Tunnel Interface.
+        If ibCorouteTunnelLspInstance is zero, to obtain infomation of
+        Co-routed bidirectional Tunnel Interface, otherwise to obtain
+        Co-routed reverse crlsp infomation."
+    ::= { ibTeTunnelObjects 2 }
+
+ibTeTunnelCoEntry OBJECT-TYPE
+    SYNTAX IbTeTunnelCoEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The entry in this table describes Co-routed infomation of
+        bidirectional Tunnel Interface and reserver lsp information."
+    INDEX { ibTeTunnelCoIndex, ibTeTunnelCoLspInstance, ibTeTunnelCoIngressLSRId, ibTeTunnelCoEgressLSRId }
+    ::= { ibTeTunnelCoTable 1 }
+
+IbTeTunnelCoEntry ::=
+    SEQUENCE {
+        ibTeTunnelCoIndex
+            MplsTunnelIndex,
+        ibTeTunnelCoLspInstance
+            MplsTunnelInstanceIndex,
+        ibTeTunnelCoIngressLSRId
+            MplsExtendedTunnelId,
+        ibTeTunnelCoEgressLSRId
+            MplsExtendedTunnelId,
+        ibTeTunnelCoBiMode
+            INTEGER,
+        ibTeTunnelCoReverseLspInstance
+            MplsTunnelInstanceIndex,
+        ibTeTunnelCoReverseLspXCPointer
+            RowPointer
+     }
+
+ibTeTunnelCoIndex OBJECT-TYPE
+    SYNTAX MplsTunnelIndex
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Uniquely identifies a set of tunnel instances between a pair
+        of ingress and egress LSRs that specified at originating point.
+        This value should be equal to the value signaled in the
+        Tunnel Id of the Session object."
+    ::= { ibTeTunnelCoEntry 1 }
+
+ibTeTunnelCoLspInstance OBJECT-TYPE
+    SYNTAX MplsTunnelInstanceIndex
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "When obtain infomation of Co-routed bidirectional Tunnel Interface,
+        this vlaue should be zero.  And this value must be LspID to obtain
+        reverse crlsp information.  Values greater than 0, but less than or
+        equal to 65535, should be useless."
+    ::= { ibTeTunnelCoEntry 2 }
+
+ibTeTunnelCoIngressLSRId OBJECT-TYPE
+    SYNTAX MplsExtendedTunnelId
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Identity the ingress LSR associated with this tunnel instance.
+        This vlaue is equal to the LsrID of originating endpoint."
+    ::= { ibTeTunnelCoEntry 3 }
+
+ibTeTunnelCoEgressLSRId OBJECT-TYPE
+    SYNTAX MplsExtendedTunnelId
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Identity of the egress LSR associated with this tunnel instance.
+        This vlaue is equal to the LsrID of terminating point."
+    ::= { ibTeTunnelCoEntry 4 }
+
+ibTeTunnelCoBiMode OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        coroutedActive(1),
+        coroutedPassive(2)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This vlaue indicated the bidirection mode of tunnel interface.
+        The valuemust be coroutedActive at the originating point of the
+        tunnel and coroutedPassive at the terminating point."
+    ::= { ibTeTunnelCoEntry 5 }
+
+ibTeTunnelCoReverseLspInstance OBJECT-TYPE
+    SYNTAX MplsTunnelInstanceIndex
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This value indicated the reverse lsp instance, and
+        should be equal to obverse lsp instance."
+    ::= { ibTeTunnelCoEntry 6 }
+
+ibTeTunnelCoReverseLspXCPointer OBJECT-TYPE
+    SYNTAX RowPointer
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This pointer unique index to mplsXCTable of the reverse lsp.
+        The mplsXCTable identifies the segments that compose this tunnel,
+        their characteristics, and relationships to each other.  A
+        value of zeroDotZero indicate that there is no crlsp assigned
+        to this."
+    ::= { ibTeTunnelCoEntry 7 }
+
+ibTeTunnelPsTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbTeTunnelPsEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table defines some objects for managers to obtain
+        TE tunnel Protection Switching group current status information."
+    ::= { ibTeTunnelObjects 3 }
+
+ibTeTunnelPsEntry OBJECT-TYPE
+    SYNTAX IbTeTunnelPsEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The entry in this table describes TE tunnel Protection
+        Switching group infromation."
+    INDEX { ibTeTunnelPsIndex, ibTeTunnelPsIngressLSRId, ibTeTunnelPsEgressLSRId }
+    ::= { ibTeTunnelPsTable 1 }
+
+IbTeTunnelPsEntry ::=
+    SEQUENCE {
+        ibTeTunnelPsIndex
+            MplsTunnelIndex,
+        ibTeTunnelPsIngressLSRId
+            MplsExtendedTunnelId,
+        ibTeTunnelPsEgressLSRId
+            MplsExtendedTunnelId,
+        ibTeTunnelPsProtectIndex
+            MplsTunnelIndex,
+        ibTeTunnelPsProtectIngressLSRId
+            MplsExtendedTunnelId,
+        ibTeTunnelPsProtectEgressLSRId
+            MplsExtendedTunnelId,
+        ibTeTunnelPsProtectType
+            INTEGER,
+        ibTeTunnelPsRevertiveMode
+            INTEGER,
+        ibTeTunnelPsWtrTime
+            Unsigned32,
+        ibTeTunnelPsHoldOffTime
+            Unsigned32,
+        ibTeTunnelPsSwitchMode
+            INTEGER,
+        ibTeTunnelPsWorkPathStatus
+            INTEGER,
+        ibTeTunnelPsProtectPathStatus
+            INTEGER,
+        ibTeTunnelPsSwitchResult
+            INTEGER
+     }
+
+ibTeTunnelPsIndex OBJECT-TYPE
+    SYNTAX MplsTunnelIndex
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Uniquely identifies a TE tunnel Protection Switching group
+        instance.  This value must be equal to the tunnel id of work
+        tunnel instance."
+    ::= { ibTeTunnelPsEntry 1 }
+
+ibTeTunnelPsIngressLSRId OBJECT-TYPE
+    SYNTAX MplsExtendedTunnelId
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Identity the ingress LSR associated with work tunnel instance."
+    ::= { ibTeTunnelPsEntry 2 }
+
+ibTeTunnelPsEgressLSRId OBJECT-TYPE
+    SYNTAX MplsExtendedTunnelId
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Identity of the egress LSR associated with work tunnel instance."
+    ::= { ibTeTunnelPsEntry 3 }
+
+ibTeTunnelPsProtectIndex OBJECT-TYPE
+    SYNTAX MplsTunnelIndex
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Uniquely identifies a TE tunnel Protection Switching
+        group instance. This value must be equal to the tunnel
+        id of TE tunnel Protection Switching group instance."
+    ::= { ibTeTunnelPsEntry 4 }
+
+ibTeTunnelPsProtectIngressLSRId OBJECT-TYPE
+    SYNTAX MplsExtendedTunnelId
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Identity the ingress LSR associated with TE tunnel
+        Protection Switching group instance."
+    ::= { ibTeTunnelPsEntry 5 }
+
+ibTeTunnelPsProtectEgressLSRId OBJECT-TYPE
+    SYNTAX MplsExtendedTunnelId
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Identity of the egress LSR associated with TE tunnel
+        Protection Switching group instance."
+    ::= { ibTeTunnelPsEntry 6 }
+
+ibTeTunnelPsProtectType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        oneToOne(1),
+        onePlusOne(2)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This value indicated TE tunnel Protection Switching group
+        type. The default value is oneToOne."
+    DEFVAL { oneToOne }
+    ::= { ibTeTunnelPsEntry 7 }
+
+ibTeTunnelPsRevertiveMode OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        revertive(1),
+        noRevertive(2)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This value indicated protect switch mode. The value must be
+        revertive or nonRevertive, default value is revertive.
+        "
+    DEFVAL { revertive }
+    ::= { ibTeTunnelPsEntry 8 }
+
+ibTeTunnelPsWtrTime OBJECT-TYPE
+    SYNTAX Unsigned32 (0..60)
+    UNITS "30 seconds"
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The cycle time that switch to protect tunnel."
+    DEFVAL { 24 }
+    ::= { ibTeTunnelPsEntry 9 }
+
+ibTeTunnelPsHoldOffTime OBJECT-TYPE
+    SYNTAX Unsigned32 (0..20)
+    UNITS "500ms"
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This value is switchback delay time.  When detected the work path
+        fault, switch to protect path after this time."
+    DEFVAL { 0 }
+    ::= { ibTeTunnelPsEntry 10 }
+
+ibTeTunnelPsSwitchMode OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        uniDirectional(1),
+        biDirectional(2)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This value indicated TE tunnel Protection Switching
+        group switch mode."
+    DEFVAL { uniDirectional }
+    ::= { ibTeTunnelPsEntry 11 }
+
+ibTeTunnelPsWorkPathStatus OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        noDefect(2),
+        inDefect(3)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This value indicates work path status.  none, noDefect, inDefect
+        will be used."
+    ::= { ibTeTunnelPsEntry 12 }
+
+ibTeTunnelPsProtectPathStatus OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        noDefect(2),
+        inDefect(3)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This value indicates protect path status.  none, noDefect,
+        inDefect(3) will be used."
+    ::= { ibTeTunnelPsEntry 13 }
+
+ibTeTunnelPsSwitchResult OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        workPath(1),
+        protectPath(2)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This value indicated current using path is work path or protect
+        path."
+    ::= { ibTeTunnelPsEntry 14 }
+
+ibTeTunnelNotifications OBJECT IDENTIFIER ::= { ibTeTunnel 3 }
+
+ibTeTunnelNotificationsPrefix OBJECT IDENTIFIER ::= { ibTeTunnelNotifications 0 }
+
+ibTeTunnelPsSwitchWtoP NOTIFICATION-TYPE
+    OBJECTS { ibTeTunnelPsWorkPathStatus, ibTeTunnelPsProtectPathStatus }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when protect workgroup switch from
+        work tunnel to protect tunnel."
+    ::= { ibTeTunnelNotificationsPrefix 1 }
+
+ibTeTunnelPsSwitchPtoW NOTIFICATION-TYPE
+    OBJECTS { ibTeTunnelPsWorkPathStatus, ibTeTunnelPsProtectPathStatus }
+    STATUS current
+    DESCRIPTION
+        "This notification is generated when protect workgroup switch from
+        protect tunnel to work tunnel."
+    ::= { ibTeTunnelNotificationsPrefix 2 }
+
+ibTeTunnelConformance OBJECT IDENTIFIER ::= { ibTeTunnel 4 }
+
+ibTeTunnelCompliances OBJECT IDENTIFIER ::= { ibTeTunnelConformance 1 }
+
+ibTeTunnelCompliance MODULE-COMPLIANCE
+    STATUS current
+    DESCRIPTION
+        "The compliance statement for SNMP."
+    MODULE -- this module
+        MANDATORY-GROUPS { ibTeTunnelNotificationsGroup, ibTeTunnelScalarsGroup, ibTeTunnelStaticCrlspGroup, ibTeTunnelCorouteGroup, ibTeTunnelPsGroup
+             }
+    ::= { ibTeTunnelCompliances 1 }
+
+ibTeTunnelGroups OBJECT IDENTIFIER ::= { ibTeTunnelConformance 2 }
+
+ibTeTunnelNotificationsGroup NOTIFICATION-GROUP
+    NOTIFICATIONS { ibTeTunnelPsSwitchPtoW, ibTeTunnelPsSwitchWtoP }
+    STATUS current
+    DESCRIPTION
+        "This group contains MPLS Te Tunnel traps."
+    ::= { ibTeTunnelGroups 1 }
+
+ibTeTunnelScalarsGroup OBJECT-GROUP
+    OBJECTS { ibTeTunnelMaxTunnelIndex }
+    STATUS current
+    DESCRIPTION
+        "Scalar object needed to implement MPLS te tunnels."
+    ::= { ibTeTunnelGroups 2 }
+
+ibTeTunnelStaticCrlspGroup OBJECT-GROUP
+    OBJECTS { ibTeTunnelStaticCrlspName, ibTeTunnelStaticCrlspStatus, ibTeTunnelStaticCrlspRole, ibTeTunnelStaticCrlspXCPointer }
+    STATUS current
+    DESCRIPTION
+        "Objects for quering static-crlsp information."
+    ::= { ibTeTunnelGroups 3 }
+
+ibTeTunnelCorouteGroup OBJECT-GROUP
+    OBJECTS { ibTeTunnelCoBiMode, ibTeTunnelCoReverseLspInstance, ibTeTunnelCoReverseLspXCPointer }
+    STATUS current
+    DESCRIPTION
+        "Objects for quering Co-routed reverse crlsp information."
+    ::= { ibTeTunnelGroups 4 }
+
+ibTeTunnelPsGroup OBJECT-GROUP
+    OBJECTS { ibTeTunnelPsProtectIndex, ibTeTunnelPsProtectIngressLSRId, ibTeTunnelPsProtectEgressLSRId, ibTeTunnelPsProtectType, ibTeTunnelPsRevertiveMode,
+        ibTeTunnelPsWtrTime, ibTeTunnelPsHoldOffTime, ibTeTunnelPsSwitchMode, ibTeTunnelPsWorkPathStatus, ibTeTunnelPsProtectPathStatus,
+        ibTeTunnelPsSwitchResult }
+    STATUS current
+    DESCRIPTION
+        "Objects for quering protect workgroup information."
+    ::= { ibTeTunnelGroups 5 }
+
+END

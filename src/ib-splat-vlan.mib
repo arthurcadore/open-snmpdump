@@ -1,0 +1,1081 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: VLAN MIB
+-- Reference:
+-- Version: V2.3
+-- History:
+-- (1) Created by Zhangshilin, 2001.06.29
+-- (2) Revised by Qi Zhenglin, 2002.01.08
+--   V1.1 2004-09-08 modify STATUS of ibLswVlanProtoObject from mandatory to current by gaolong.
+--   V1.2 2004-09-23 add ifEntry IMPORT clause by gaolong
+--   V1.3 2004-10-12 updated by gaolong
+--        Import TEXTUAL-CONVENTION and OBJECT-IDENTITY.
+--        Relocate ibLswVlan MODULE-IDENTITY.
+--        Change MAX-ACCESS clause value of ibVLANMibSwitchGarpStatClear to read-write.
+--   V1.4 2004-12-28 modified by jiaoyi
+--          Add ibdot1qVlanMulticast in ibdot1qVlanMIBTable
+--        2005-01-22 update by wangyingxia
+--          Add all objects of ibLswVlanMngObject from IB-LswINF-MIB into this MIB
+--          Add TruthValue, RowStatus, TimeTicks, IpAddress, SnmpAdminString, VlanIndex, PortList
+--          Remove InterfaceIndex and import it from IB-LswINF-MIB
+--   V1.5 2005-01-22
+--        Add superVlan to ibdot1qVlanType by sunqiang
+--   V1.6 2005-05-18
+--        Add ibDot1qVlanBatchMIBTable by lipei
+--   V1.7 2005-08-08
+--        Add IbVlanIndex and modified all VlanIndex to IbVlanIndex by longyin
+--   V1.8 2006-02-14
+--        Modify description of ibVlanInterfaceID, ibifIsolateSecondaryVlanlistLow
+--        and ibifIsolateSecondaryVlanlistHigh by wangyong
+--        Adjust the format of the file by wangyong
+--        Add the object ibdot1qVlanTaggedPorts, ibdot1qVlanUntaggedPorts by jiliyan
+--        Add ibifSuperVlanMappingTable, ibifSuperVlanMappingEntry, ibifSuperVlanID,
+--        ibifSubVlanlistLow, ibifSubVlanlistHigh by hejunwei
+--        Add ibdot1qVlanBatchSetOperate, change the description of
+--        ibDot1qVlanBatchMIBTable and ibDot1qVlanBatchMIBEntry by hejunwei
+--   V1.9 2007-12-18 Add enmu 'vrrp' for ibVlanInterfaceIpType by Zhangyinfei
+--   V2.0 2010-01-18 Add ibdot1qVlanPortIndexs and ibVlanInterfaceIfIndex by duyanbing
+--   V2.1 2012-06-11 Modify ibVlanInterfaceIpAddr, ibVlanInterfaceIpMask and ibVlanInterfaceIpType by liuxibo
+--        2012-08-13
+--        Add ibPrivateVlanMappingTable by chenkaiping
+--        Add primaryVlan for ibdot1qVlanType by xiedong
+--   V2.2 2015-11-12 Modify ibdot1qVlanName by yuhaiyan
+--   V2.3 2016-08-29 Modify ibdot1qVlanMIBTable,add VLAN statistics related entries by niuchuanzheng
+-- ==================================================================
+IB-LswVLAN-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    TimeInterval, TEXTUAL-CONVENTION, TruthValue, RowStatus
+        FROM SNMPv2-TC
+    MODULE-IDENTITY, OBJECT-TYPE, Counter32, Integer32, OBJECT-IDENTITY, TimeTicks, IpAddress, Counter64
+        FROM SNMPv2-SMI
+    SnmpAdminString
+        FROM SNMP-FRAMEWORK-MIB
+    iblswCommon
+        FROM IB-OID-MIB
+    ifEntry
+        FROM RFC1213-MIB
+    ibifVLANTrunkStatusEntry, PortList
+        FROM IB-LswINF-MIB;
+
+    ibLswVlan MODULE-IDENTITY
+            LAST-UPDATED "201608310000Z"
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION ""
+            REVISION        "201608310000Z"
+            DESCRIPTION
+                "To modify size of ibdot1qVlanName."
+            ::= { iblswCommon 2 }
+
+    IbVlanIndex ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "A value used to index per-VLAN tables: values of 0 and
+        4095 are not permitted; if the value is between 1 and
+        4094 inclusive, it represents an IEEE 802.1Q VLAN-ID with
+        global scope within a given bridged domain (see VlanId
+        textual convention).  If the value is greater than 4095
+        then it represents a VLAN with scope local to the
+        particular agent, i.e. one without a global VLAN-ID
+        assigned to it. Such VLANs are outside the scope of
+        IEEE 802.1Q but it is convenient to be able to manage them
+        in the same way using this MIB."
+    SYNTAX      Integer32(0..2147483647)
+
+-- ==================================================================
+--
+-- ======================= definition begin =========================
+--
+-- ==================================================================
+
+    ibLswVlanMngObject OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION
+                "Description."
+            ::= { ibLswVlan 1 }
+
+    ibdot1qVlanMIBTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbDot1qVlanMIBEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "VLAN MIB table"
+        ::= { ibLswVlanMngObject  1 }
+
+
+    ibdot1qVlanMIBEntry OBJECT-TYPE
+        SYNTAX IbDot1qVlanMIBEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Entries of VLAN MIB table"
+        INDEX   { ibdot1qVlanIndex }
+        ::= { ibdot1qVlanMIBTable 1}
+
+    IbDot1qVlanMIBEntry ::=
+    SEQUENCE {
+        ibdot1qVlanIndex    IbVlanIndex,
+        ibdot1qVlanName     SnmpAdminString,
+        ibdot1qVlanPorts    PortList,
+        ibdot1qVlanType     INTEGER,
+        ibdot1qVlanMacFilter    TruthValue,
+        ibdot1qVlanMcastUnknownProtos   TruthValue,
+        ibExistInterface    TruthValue,
+        ibVlanInterfaceIndex    INTEGER,
+        ibdot1qVlanMacLearn TruthValue,
+        ibdot1qVlanStatus   INTEGER,
+        ibdot1qVlanCreationTime TimeTicks,
+        ibdot1qVlanPriority INTEGER,
+        ibdot1qVlanRowStatus    RowStatus,
+        ibdot1qVlanBroadcastSuppression INTEGER,
+        ibdot1qVlanBcastSuppressionPPS   INTEGER,
+        ibdot1qVlanMulticast INTEGER,
+        ibdot1qVlanTaggedPorts    PortList,
+        ibdot1qVlanUntaggedPorts    PortList,
+        ibdot1qVlanPortIndexs    OCTET STRING,
+        ibdot1qVlanStatisticStatus    TruthValue,
+        ibdot1qVlanStatisticClear    INTEGER,
+        ibdot1qVlanStatisticInTotalPkts    Counter64,
+        ibdot1qVlanStatisticInTotalBytes    Counter64,
+        ibdot1qVlanStatisticInPPS    Counter64,
+        ibdot1qVlanStatisticInBPS    Counter64,
+        ibdot1qVlanStatisticOutTotalPkts    Counter64,
+        ibdot1qVlanStatisticOutTotalBytes    Counter64,
+        ibdot1qVlanStatisticOutPPS    Counter64,
+        ibdot1qVlanStatisticOutBPS    Counter64
+        }
+
+
+
+    ibdot1qVlanIndex OBJECT-TYPE
+        SYNTAX  IbVlanIndex
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The VLAN-ID."
+        ::= { ibdot1qVlanMIBEntry 1 }
+
+
+    ibdot1qVlanName  OBJECT-TYPE
+        SYNTAX  SnmpAdminString (SIZE (0..80))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Name of the VLAN."
+        ::= { ibdot1qVlanMIBEntry 2 }
+
+
+    ibdot1qVlanPorts OBJECT-TYPE
+        SYNTAX  PortList
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Port list of the VLAN."
+        ::= { ibdot1qVlanMIBEntry 3 }
+
+
+    ibdot1qVlanType  OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        superVlan   (1),
+        common-vlan (2),
+        sub-vlan    (3),
+        isolate-user-vlan(4),
+        secondary-vlan(5),
+        primaryVlan(6)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Vlan types: SuperVlan(1), Common vlan(2), and Sub-vlan(3)."
+        ::= { ibdot1qVlanMIBEntry 4 }
+
+
+    ibdot1qVlanMacFilter OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Whether to filter MAC addresses."
+        ::= { ibdot1qVlanMIBEntry 5 }
+
+
+    ibdot1qVlanMcastUnknownProtos OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Whether to broadcast the unknown packets."
+        ::= { ibdot1qVlanMIBEntry 6 }
+
+
+    ibExistInterface OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Whether there is virtual interface."
+        ::= { ibdot1qVlanMIBEntry 7 }
+
+
+    ibVlanInterfaceIndex OBJECT-TYPE
+        SYNTAX  INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Whether vlan interface is configured on vlan. If vlan interface is
+            configured, the value of the node is vlan id, else the value is 0."
+        ::= { ibdot1qVlanMIBEntry 8 }
+
+
+    ibdot1qVlanMacLearn OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "MAC address learning identity. (common vlan/Sub-vlan)"
+        ::= { ibdot1qVlanMIBEntry 9 }
+
+
+    ibdot1qVlanStatus OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        other       (1),
+        static   (2),
+        dynamic (3)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Status of the VLAN."
+        ::= { ibdot1qVlanMIBEntry 10 }
+
+
+    ibdot1qVlanCreationTime OBJECT-TYPE
+        SYNTAX  TimeTicks
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The sysUPTime when the VLAN is created."
+        ::= { ibdot1qVlanMIBEntry 11 }
+
+
+    ibdot1qVlanPriority OBJECT-TYPE
+        SYNTAX  INTEGER (0..7)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Priority of the VLAN."
+        DEFVAL  {0}
+        ::= { ibdot1qVlanMIBEntry 12 }
+
+
+    ibdot1qVlanRowStatus  OBJECT-TYPE
+        SYNTAX  RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "Operation status."
+        ::= { ibdot1qVlanMIBEntry 13 }
+
+    ibdot1qVlanBroadcastSuppression  OBJECT-TYPE
+        SYNTAX  INTEGER (0..100)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Whether broadcast suppression of vlan be supported pro rata.
+            The vlaue of 100 indicates no broadcast suppression. If the
+            function is not supported, this object cannot be written,
+            and 100 will be returned when reading"
+        DEFVAL { 100 }
+        ::= { ibdot1qVlanMIBEntry 14 }
+
+    ibdot1qVlanBcastSuppressionPPS   OBJECT-TYPE
+        SYNTAX  INTEGER (0..148800)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "If the broadcast can be controlled with pps(packet per second)type,
+            the value of 0 indicates no suppression. This node is conflicted
+            with ibdot1qVlanBroadcastSuppression. If the mode is set,
+            ibdot1qVlanBroadcastSuppression is unavailable. And vice versa."
+        ::= { ibdot1qVlanMIBEntry 15 }
+
+    ibdot1qVlanMulticast  OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        disable  (0),
+        enable   (1)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Multicast vlan. The default value is disable(0)."
+        ::= { ibdot1qVlanMIBEntry 16 }
+
+    ibdot1qVlanTaggedPorts OBJECT-TYPE
+        SYNTAX  PortList
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Tagged port list of the VLAN."
+        ::= { ibdot1qVlanMIBEntry 17 }
+
+    ibdot1qVlanUntaggedPorts OBJECT-TYPE
+        SYNTAX  PortList
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Untagged port list of the VLAN."
+        ::= { ibdot1qVlanMIBEntry 18 }
+
+    ibdot1qVlanPortIndexs OBJECT-TYPE
+        SYNTAX  OCTET STRING
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "PortIndex list of the VLAN, that delimited by comma, such as 1,3,4,7."
+        ::= { ibdot1qVlanMIBEntry 19 }
+
+    ibdot1qVlanStatisticStatus OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "VLAN traffic statistics switch.
+            The default value is false, which means the switch is off."
+        ::= { ibdot1qVlanMIBEntry 20 }
+
+    ibdot1qVlanStatisticClear  OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+            clear(1)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Clear statistics for the specified VLANs. Operation read is not supported."
+        ::= { ibdot1qVlanMIBEntry 21 }
+
+    ibdot1qVlanStatisticInTotalPkts OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of inbound packets."
+        ::= { ibdot1qVlanMIBEntry 22 }
+
+    ibdot1qVlanStatisticInTotalBytes OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of inbound bytes."
+        ::= { ibdot1qVlanMIBEntry 23 }
+
+    ibdot1qVlanStatisticInPPS OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The number of inbound packets per second."
+        ::= { ibdot1qVlanMIBEntry 24 }
+
+    ibdot1qVlanStatisticInBPS OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The number of inbound bytes per second."
+        ::= { ibdot1qVlanMIBEntry 25 }
+
+    ibdot1qVlanStatisticOutTotalPkts OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of outbound packets."
+        ::= { ibdot1qVlanMIBEntry 26 }
+
+    ibdot1qVlanStatisticOutTotalBytes OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The total number of outbound bytes."
+        ::= { ibdot1qVlanMIBEntry 27 }
+
+    ibdot1qVlanStatisticOutPPS OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The number of outbound packets per second."
+        ::= { ibdot1qVlanMIBEntry 28 }
+
+    ibdot1qVlanStatisticOutBPS OBJECT-TYPE
+        SYNTAX      Counter64
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "The number of outbound bytes per second."
+        ::= { ibdot1qVlanMIBEntry 29 }
+
+    ibVlanInterfaceTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbVlanInterfaceEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Virtual interface configuration table"
+        ::= { ibLswVlanMngObject  2}
+
+
+    ibVlanInterfaceEntry OBJECT-TYPE
+        SYNTAX IbVlanInterfaceEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Entries of virtual interface configuration table"
+        INDEX   { ibVlanInterfaceID }
+        ::= {ibVlanInterfaceTable 1}
+
+    IbVlanInterfaceEntry    ::=
+    SEQUENCE {
+        ibVlanInterfaceID       INTEGER,
+        ibdot1qVlanID       IbVlanIndex,
+        ibdot1qVlanIpAddress        IpAddress,
+        ibdot1qVlanIpAddressMask    IpAddress,
+        ibVlanInterfaceAdminStatus  INTEGER,
+        ibVlanInterfaceFrameType    INTEGER,
+        ibInterfaceRowStatus        RowStatus,
+        ibVlanInterfaceIpMethod     INTEGER,
+        ibVlanInterfaceIfIndex      INTEGER
+        }
+
+    ibVlanInterfaceID OBJECT-TYPE
+        SYNTAX  INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Index of the vlan interface table."
+        ::= { ibVlanInterfaceEntry 1 }
+
+
+    ibdot1qVlanID OBJECT-TYPE
+        SYNTAX  IbVlanIndex
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "VLAN-ID"
+        ::= { ibVlanInterfaceEntry 2 }
+
+
+    ibdot1qVlanIpAddress OBJECT-TYPE
+        SYNTAX  IpAddress
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "IP address of interface."
+        ::= { ibVlanInterfaceEntry 3 }
+
+
+    ibdot1qVlanIpAddressMask OBJECT-TYPE
+        SYNTAX  IpAddress
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "IP address mask of interface."
+        ::= { ibVlanInterfaceEntry 4 }
+
+    ibVlanInterfaceAdminStatus OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        up      (1),
+        down    (2)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Status of VLAN virtual interfaces."
+        ::= { ibVlanInterfaceEntry 5 }
+
+    ibVlanInterfaceFrameType OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        ethernet-ii     (1),
+        ethernet-snap   (2),
+        ethernet-8022   (3),
+        ethernet-8023   (4)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Frame type accepted by VLAN virtual interfaces."
+        ::= { ibVlanInterfaceEntry 6 }
+
+
+    ibInterfaceRowStatus OBJECT-TYPE
+        SYNTAX  RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "Operation status."
+        ::= { ibVlanInterfaceEntry 7 }
+
+
+    ibVlanInterfaceIpMethod OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        assigned-ip    (1),
+        dhcp-ip        (2),
+        bootp-ip       (3)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Vlan interface ip address acquiring method which is manual, dhcp or bootp."
+        ::= { ibVlanInterfaceEntry 8 }
+
+    ibVlanInterfaceIfIndex OBJECT-TYPE
+        SYNTAX  INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "IfIndex of VLAN interface."
+        ::= { ibVlanInterfaceEntry 9 }
+
+    ibifIsolateMappingTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbifIsolateMappingEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Secondary vlan lists of Isolate-VLANs."
+        ::= { ibLswVlanMngObject  4 }
+
+
+    ibifIsolateMappingEntry OBJECT-TYPE
+        SYNTAX IbifIsolateMappingEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+             "Secondary vlan lists of Isolate-VLANs."
+        INDEX   { ibifIsolatePrimaryVlanID }
+        ::= { ibifIsolateMappingTable 1}
+
+    IbifIsolateMappingEntry   ::=
+    SEQUENCE {
+        ibifIsolatePrimaryVlanID  IbVlanIndex,
+        ibifIsolateSecondaryVlanlistLow   OCTET STRING,
+        ibifIsolateSecondaryVlanlistHigh OCTET STRING
+        }
+
+    ibifIsolatePrimaryVlanID OBJECT-TYPE
+        SYNTAX  IbVlanIndex
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Primary VLAN-ID."
+        ::= { ibifIsolateMappingEntry 1 }
+
+
+    ibifIsolateSecondaryVlanlistLow OBJECT-TYPE
+        SYNTAX  OCTET STRING(SIZE(0..256))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Each octet within this value specifies a set of eight
+            VLANs, with the first octet specifying VLANs 1 through
+            8, the second octet specifying VLANs 9 through 16, etc.
+            Within each octet, the most significant bit represents
+            the highest numbered VLAN, and the least significant bit
+            represents the lowest numbered VLAN. Thus, each secondary
+            VLAN of the primary VLAN is represented by a single bit
+            within the value of this object. If that bit has a value
+            of '1' then that VLAN is secondary VLAN in the set of VLANs;
+            the VLAN is not secondary VLAN if its bit has a value of
+            '0'."
+        ::= { ibifIsolateMappingEntry 2 }
+
+    ibifIsolateSecondaryVlanlistHigh OBJECT-TYPE
+        SYNTAX  OCTET STRING(SIZE(0..256))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Each octet within this value specifies a set of eight
+            VLANs, with the first octet specifying VLANs 2049 through
+            2056, the second octet specifying VLANs 2057 through 2064,
+            etc. Within each octet, the most significant bit represents
+            the highest numbered VLAN, and the least significant bit
+            represents the lowest numbered VLAN. Thus, each secondary
+            VLAN of the primary VLAN is represented by a single bit
+            within the value of this object. If that bit has a value
+            of '1' then that VLAN is secondary VLAN in the set of VLANs;
+            the VLAN is not secondary VLAN if its bit has a value of
+            '0'."
+        ::= { ibifIsolateMappingEntry 3 }
+
+    ibVlanInterfaceAddrTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbVlanInterfaceAddrEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "VLAN interface IP address configuration table"
+        ::= { ibLswVlanMngObject 5 }
+
+    ibVlanInterfaceAddrEntry OBJECT-TYPE
+        SYNTAX IbVlanInterfaceAddrEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Entries of VLAN interface IP address configuration table"
+        INDEX   { ibVlanInterfaceIpIfIndex, ibVlanInterfaceIpAddr }
+        ::= { ibVlanInterfaceAddrTable 1 }
+
+    IbVlanInterfaceAddrEntry ::=
+    SEQUENCE {
+        ibVlanInterfaceIpIfIndex     INTEGER,
+        ibVlanInterfaceIpAddr        IpAddress,
+        ibVlanInterfaceIpMask        IpAddress,
+        ibVlanInterfaceIpType        INTEGER,
+        ibVlanInterfaceIpRowStatus   RowStatus
+        }
+
+    ibVlanInterfaceIpIfIndex OBJECT-TYPE
+        SYNTAX  INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Index of VLAN interfaces."
+        ::= { ibVlanInterfaceAddrEntry 1 }
+
+    ibVlanInterfaceIpAddr OBJECT-TYPE
+        SYNTAX  IpAddress
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "IP address of VLAN interface."
+        ::= { ibVlanInterfaceAddrEntry 2 }
+
+    ibVlanInterfaceIpMask OBJECT-TYPE
+        SYNTAX  IpAddress
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "IP address mask of VLAN interface. When destory single IP address,
+            you must set it correct to relative IP address."
+        ::= { ibVlanInterfaceAddrEntry 3 }
+
+    ibVlanInterfaceIpType OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        primary     (1),
+        sub         (2),
+        cluster     (3),
+        vrrp        (4)
+        }
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "IP address type."
+        ::= { ibVlanInterfaceAddrEntry 4 }
+
+    ibVlanInterfaceIpRowStatus OBJECT-TYPE
+        SYNTAX  RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "Operation status. active(1) will only be set when taking GET or
+            GET NEXT operation. createAndGo(4) and destory(6) is valid when
+            taking SET operation."
+        ::= { ibVlanInterfaceAddrEntry 5 }
+
+
+    ibDot1qVlanBatchMIBTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbDot1qVlanBatchMIBEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "VLAN batch configuration table.
+            In the case of VLAN batch creation, ibdot1qVlanBatchSetOperate should
+            be set to 1.
+            For example, if creating a row is for creating VLANs 2 to 4, the value
+            of the objects should be set as follows:
+            ibdot1qVlanBatchStartIndex 2,
+            ibdot1qVlanBatchEndIndex 4,
+            ibdot1qVlanBatchSetOperate create(1),
+            ibdot1qVlanBatchRowStatus createAndGo(4).
+
+            In the case of VLAN batch deletion, ibdot1qVlanBatchSetOperate should
+            be set to 2.
+            For example, if creating a row is for deleting VLANs 10 to 20, the value
+            of the objects should be set as follows:
+            ibdot1qVlanBatchStartIndex 10,
+            ibdot1qVlanBatchEndIndex 20,
+            ibdot1qVlanBatchSetOperate delete(2),
+            ibdot1qVlanBatchRowStatus createAndGo(4).
+
+            When the action of batch VLANs deleting or creating is done, one row
+            will be existent until it is deleted manually or ages out, but the VLANs
+            of it won't disappear with the deletion of the row."
+        ::= { ibLswVlanMngObject  6 }
+
+    ibDot1qVlanBatchMIBEntry OBJECT-TYPE
+        SYNTAX IbDot1qVlanBatchMIBEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "VLAN batch configuration entry."
+        INDEX   { ibdot1qVlanBatchOperIndex }
+        ::= { ibDot1qVlanBatchMIBTable 1}
+
+    IbDot1qVlanBatchMIBEntry ::=
+        SEQUENCE {
+            ibdot1qVlanBatchOperIndex
+                Integer32,
+            ibdot1qVlanBatchStartIndex
+                IbVlanIndex,
+            ibdot1qVlanBatchEndIndex
+                IbVlanIndex,
+            ibdot1qVlanBatchOperStatus
+                INTEGER,
+            ibdot1qVlanBatchRowStatus
+                RowStatus,
+            ibdot1qVlanBatchSetOperate
+                INTEGER
+        }
+
+    ibdot1qVlanBatchOperIndex OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The consequence of operation."
+        ::= { ibDot1qVlanBatchMIBEntry 1 }
+
+    ibdot1qVlanBatchStartIndex OBJECT-TYPE
+        SYNTAX  IbVlanIndex
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The value of start VLAN-ID."
+        ::= { ibDot1qVlanBatchMIBEntry 2 }
+
+    ibdot1qVlanBatchEndIndex OBJECT-TYPE
+        SYNTAX  IbVlanIndex
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The value of end VLAN-ID."
+        ::= { ibDot1qVlanBatchMIBEntry 3 }
+
+    ibdot1qVlanBatchOperStatus OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+            opInprogress      (1), -- If the operation is running, the system
+                                   -- will return OpInprogress.
+            opfailure         (2), -- If the operation is failure, the system
+                                   -- will return Opfailure.
+            opsuccess         (3), -- If the operation is success, the system
+                                   -- will return Opsuccess.
+            opsuccesspartial  (4)  -- If the operation is success partially,
+                                   -- the system will return Opsuccesspartial.
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The status of operation."
+        ::= { ibDot1qVlanBatchMIBEntry 4 }
+
+    ibdot1qVlanBatchRowStatus OBJECT-TYPE
+        SYNTAX  RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "The row status of IbDot1qVlanBatchMIBEntry."
+        ::= { ibDot1qVlanBatchMIBEntry 5 }
+
+    ibdot1qVlanBatchSetOperate OBJECT-TYPE
+         SYNTAX  INTEGER
+         {
+            create(1),
+            delete(2)
+         }
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "VLAN batch creation or deletion."
+        ::= { ibDot1qVlanBatchMIBEntry 6 }
+
+    ibifSuperVlanMappingTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbifSuperVlanMappingEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Sub VLAN lists of super-VLANs."
+        ::= { ibLswVlanMngObject  7 }
+
+    ibifSuperVlanMappingEntry OBJECT-TYPE
+        SYNTAX IbifSuperVlanMappingEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Sub VLAN lists of super-VLANs."
+        INDEX   { ibifSuperVlanID }
+        ::= { ibifSuperVlanMappingTable 1}
+
+    IbifSuperVlanMappingEntry   ::=
+    SEQUENCE {
+        ibifSuperVlanID  IbVlanIndex,
+        ibifSubVlanlistLow   OCTET STRING,
+        ibifSubVlanlistHigh  OCTET STRING
+        }
+
+    ibifSuperVlanID OBJECT-TYPE
+        SYNTAX  IbVlanIndex
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Super VLAN ID."
+        ::= { ibifSuperVlanMappingEntry 1 }
+
+    ibifSubVlanlistLow OBJECT-TYPE
+        SYNTAX  OCTET STRING(SIZE(0..256))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Each octet within this value specifies a set of eight
+            VLANs, with the first octet specifying VLANs 1 through
+            8, the second octet specifying VLANs 9 through 16, etc.
+            Within each octet, the most significant bit represents
+            the highest numbered VLAN, and the least significant bit
+            represents the lowest numbered VLAN. Thus, each sub
+            VLAN of the super VLAN is represented by a single bit
+            within the value of this object. If that bit has a value
+            of '1' then that VLAN is a sub VLAN of the super VLAN; the
+            VLAN is not a sub VLAN of the super VLAN if its bit has
+            a value of '0'."
+        ::= { ibifSuperVlanMappingEntry 2 }
+
+    ibifSubVlanlistHigh OBJECT-TYPE
+        SYNTAX  OCTET STRING(SIZE(0..256))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Each octet within this value specifies a set of eight
+            VLANs, with the first octet specifying VLANs 2049 through
+            2056, the second octet specifying VLANs 2057 through 2064,
+            etc. Within each octet, the most significant bit represents
+            the highest numbered VLAN, and the least significant bit
+            represents the lowest numbered VLAN. Thus, each sub
+            VLAN of the super VLAN is represented by a single bit
+            within the value of this object. If that bit has a value of
+            '1' then that VLAN is a sub VLAN of the super VLAN; the
+            VLAN is not a sub VLAN of the super VLAN if its bit has
+            a value of '0'."
+        ::= { ibifSuperVlanMappingEntry 3 }
+
+    ibPrivateVlanMappingTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbPrivateVlanMappingEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Secondary vlan lists of Primary-VLANs."
+        ::= { ibLswVlanMngObject  8 }
+
+    ibPrivateVlanMappingEntry OBJECT-TYPE
+        SYNTAX IbPrivateVlanMappingEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+             "Secondary vlan lists of Primary-VLANs."
+        INDEX   { ibPrimaryVlanID }
+        ::= { ibPrivateVlanMappingTable 1}
+
+    IbPrivateVlanMappingEntry   ::=
+    SEQUENCE {
+        ibPrimaryVlanID  IbVlanIndex,
+        ibSecondaryVlanlistLow   OCTET STRING,
+        ibSecondaryVlanlistHigh OCTET STRING
+        }
+
+    ibPrimaryVlanID OBJECT-TYPE
+        SYNTAX  IbVlanIndex
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Primary VLAN-ID."
+        ::= { ibPrivateVlanMappingEntry 1 }
+
+    ibSecondaryVlanlistLow OBJECT-TYPE
+        SYNTAX  OCTET STRING(SIZE(0..256))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Each octet within this value specifies a set of eight
+            VLANs, with the first octet specifying VLANs 1 through
+            8, the second octet specifying VLANs 9 through 16, etc.
+            Within each octet, the most significant bit represents
+            the highest numbered VLAN, and the least significant bit
+            represents the lowest numbered VLAN.  Thus, each secondary
+            VLAN of the primary VLAN is represented by a single bit
+            within the value of this object.  If that bit has a value
+            of '1' then that VLAN is secondary VLAN in the set of VLANs;
+            the VLAN is not secondary VLAN if its bit has a value of
+            '0'."
+        ::= { ibPrivateVlanMappingEntry 2 }
+
+    ibSecondaryVlanlistHigh OBJECT-TYPE
+        SYNTAX  OCTET STRING(SIZE(0..256))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Each octet within this value specifies a set of eight
+            VLANs, with the first octet specifying VLANs 2049 through
+            2056, the second octet specifying VLANs 2057 through 2064,
+            etc.  Within each octet, the most significant bit represents
+            the highest numbered VLAN, and the least significant bit
+            represents the lowest numbered VLAN.  Thus, each secondary
+            VLAN of the primary VLAN is represented by a single bit
+            within the value of this object.  If that bit has a value
+            of '1' then that VLAN is secondary VLAN in the set of VLANs;
+            the VLAN is not secondary VLAN if its bit has a value of
+            '0'."
+        ::= { ibPrivateVlanMappingEntry 3 }
+
+    ibLswVlanProtoObject OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION
+                "Description."
+            ::= { ibLswVlan 2 }
+
+     ibVLANMibGarpLeaveAllTime OBJECT-TYPE
+        SYNTAX      TimeInterval
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "The GARP LeaveAll time, in centiseconds."
+        DEFVAL      { 1000 }
+        ::= { ibLswVlanProtoObject 14 }
+
+     ibvLANMibSwitchCountTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF IbVLANMibSwitchCountEntry
+        MAX-ACCESS not-accessible
+        STATUS   current
+        DESCRIPTION
+            "A table containing the information various statistics of switch."
+        ::= {ibLswVlanProtoObject 15 }
+
+
+     ibvLANMibSwitchCountEntry OBJECT-TYPE
+        SYNTAX  IbVLANMibSwitchCountEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "A table containing the information various statistics of switch."
+        AUGMENTS    {ibifVLANTrunkStatusEntry  }
+        ::= {ibvLANMibSwitchCountTable 1}
+
+    IbVLANMibSwitchCountEntry   ::=
+    SEQUENCE {
+        ibVLANMibSwitchGMRPRXPkt    Counter32,
+        ibVLANMibSwitchGVRPRXPkt    Counter32,
+        ibVLANMibSwitchGMRPTXPkt    Counter32,
+        ibVLANMibSwitchGVRPTXPkt    Counter32,
+        ibVLANMibSwitchDiscardedPkt Counter32,
+        ibVLANMibSwitchGarpStatClear INTEGER
+        }
+
+
+
+     ibVLANMibSwitchGMRPRXPkt OBJECT-TYPE
+        SYNTAX  Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of GMRP frames received."
+        ::= { ibvLANMibSwitchCountEntry 1 }
+
+
+     ibVLANMibSwitchGVRPRXPkt OBJECT-TYPE
+        SYNTAX  Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of GVRP frames received."
+        ::= { ibvLANMibSwitchCountEntry 2 }
+
+
+     ibVLANMibSwitchGMRPTXPkt OBJECT-TYPE
+        SYNTAX  Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of GMRP frames transmitted."
+        ::= { ibvLANMibSwitchCountEntry 3 }
+
+
+     ibVLANMibSwitchGVRPTXPkt  OBJECT-TYPE
+         SYNTAX  Counter32
+         MAX-ACCESS read-only
+         STATUS current
+        DESCRIPTION
+            "Number of GVRP frames transmitted."
+         ::= { ibvLANMibSwitchCountEntry 4 }
+
+     ibVLANMibSwitchDiscardedPkt  OBJECT-TYPE
+         SYNTAX  Counter32
+         MAX-ACCESS read-only
+         STATUS current
+        DESCRIPTION
+            "Number of discarded frames."
+         ::= { ibvLANMibSwitchCountEntry 5 }
+
+
+     ibVLANMibSwitchGarpStatClear OBJECT-TYPE
+        SYNTAX  INTEGER {clear(1)}
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Clear various Statistics viz. read operation not supported."
+        ::= { ibvLANMibSwitchCountEntry 6 }
+
+
+     ibvLANMibHoldTimeTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF IbVLANMibHoldTimeEntry
+        MAX-ACCESS not-accessible
+        STATUS   current
+        DESCRIPTION
+            "A table for setting/getting the Hold Time for a particular port."
+        ::= {ibLswVlanProtoObject 16 }
+
+
+     ibvLANMibHoldTimeEntry OBJECT-TYPE
+        SYNTAX IbVLANMibHoldTimeEntry
+        MAX-ACCESS not-accessible
+        STATUS   current
+        DESCRIPTION
+            "A table for setting/getting the HoldTime of the port."
+         AUGMENTS    { ifEntry }
+        ::= {ibvLANMibHoldTimeTable 1 }
+
+
+    IbVLANMibHoldTimeEntry  ::=
+    SEQUENCE {
+        ibVLANMibHoldTime   INTEGER
+        }
+
+
+     ibVLANMibHoldTime OBJECT-TYPE
+        SYNTAX  INTEGER  (10..32765)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "HoldTime of the port."
+        DEFVAL  {10}
+        ::= { ibvLANMibHoldTimeEntry 1 }
+
+
+END

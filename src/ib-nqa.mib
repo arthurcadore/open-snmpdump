@@ -1,0 +1,3368 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:  Extended MIB File(extended from DISMAN-PING-MIB RFC2925)
+-- Reference:
+-- Version: V3.2
+-- History:
+-- V1.0  Lv zhenfeng, 2003.08, Initial Version
+-- V1.1 2004-10-12 updated by gaolong
+--      Import OBJECT-IDENTITY, Integer32, Counter32, Gauge32.
+-- V1.2 Add new column objects
+--      ibNqaResultsMaxDelaySD
+--      ibNqaResultsMaxDelayDS
+--      ibNqaResultsLostPacketRatio
+--      under ibNqaResultsTable table by zhaoyujin, 20041101
+--  Add new column objects
+--      ibNqaJitterStatsAvePositivesSD
+--      ibNqaJitterStatsAveNegativesSD
+--      ibNqaJitterStatsAvePositivesDS
+--      ibNqaJitterStatsAveNegativesDS
+--      ibNqaJitterStatsPktLossUnknown
+--  under ibNqaJitterStatsTable table by zhaoyujin, 20041101
+--      revise words errors
+-- V1.3 2004-12-25 updated by zhaoyujin and weixinzhe
+--      Objects description updated
+-- V1.4 2005-12-22 Modified by qiuchunxia and liqian
+--      add ibNqaCtlHistoryKeptTime
+--      add ibNqaCtlHistoryEnable
+--      add ibNqaStatisticsResultsTable
+--      add ibNqaGroupStatsJitterTable
+--      add ibNqaStatisticsCtlTable
+--      add ibNqaStatsMaxGroupNumber
+--      remove definition of InetAddress, and import from INET-ADDRESS-MIB
+-- V1.5 2006-03-03 Modified by jinyi and wangqingfeng
+--      modified the description of ibNqaStatResRttSequenceErrors
+--      modified the description of ibNqaResultsRttSequenceErrors
+--      modified UNITS of some objects by jinyi
+--      add ibNqaCtlICPIFAdvFactor, ibNqaCtlCodecType in ibNqaCtlTable
+--      add ibNqaResultsPacketLateArrival in ibNqaResultsTable
+--      add ibNqaJitterStatsOperOfICPIF and ibNqaJitterStatsOperOfMOS
+--      in ibNqaJitterStatsTable
+--      add ibNqaStatResPacketLateArrival in ibNqaStatisticsResultsTable
+--      add ibNqaStatJitterMaxOfICPIF, ibNqaStatJitterMinOfICPIF
+--      ibNqaStatJitterMaxOfMOS and ibNqaStatJitterMinOfMOS
+--      in ibNqaGroupStatsJitterTable
+--      rename subidentifier 5 of ibNqaStatisticsCtlEntry to
+--      ibNqaCtlLifeTime by wangqingfeng
+--      rename subidentifier 11 of ibNqaStatisticsResultsEntry to
+--      ibNqaStatResInterval by wangqingfeng
+-- V1.6 2006-05-12
+--      rewrite this MIB with prefix "ibNqa".
+-- V2.0 2006-08-14 Modified by zhangjun
+--      change the name of root from "ibDismanPing" to "ibNqa"
+--      modify some mistakes
+-- V2.1 2006-08-22 Modified by qiuchunxia, dupengfei and shenjuanjuan
+--      add ibNqaReactionTable and add ibNqaNotifications
+-- V2.2 2007-03-08 Modified by zhouwenming
+--      add ibNqaResultsRttSum, ibNqaResultsNumOfDelaySD, ibNqaResultsMinDelaySD,
+--       ibNqaResultsSumDelaySD, ibNqaResultsSum2DelaySD, ibNqaResultsNumOfDelayDS,
+--       ibNqaResultsMinDelayDS, ibNqaResultsSumDelayDS, ibNqaResultsSum2DelayDS
+--       in ibNqaResultsTable
+--      add ibNqaStatResRttSum, ibNqaStatResNumOfDelaySD, ibNqaStatResMinDelaySD,
+--       ibNqaStatResSumDelaySD, ibNqaStatResSum2DelaySD, ibNqaStatResNumOfDelayDS,
+--       ibNqaStatResMinDelayDS, ibNqaStatResSumDelayDS, ibNqaStatResSum2DelayDS,
+--       ibNqaStatResMaxDelaySD, ibNqaStatResMaxDelayDS
+--       in ibNqaStatisticsResultsTable
+--      add jitterOwdSD, jitterOwdDS to ibNqaReactCheckedElement
+--       in ibNqaReactionTable.
+--      add ibNqaReactCheckedNum, ibNqaReactThresholdNum in ibNqaReactionTable
+--      add ibNqaStatisticsReactionTable
+-- V2.3 2007-04-25 Modified by zhouxingyue and zhouhaifeng
+--      add icmpTimestamp in ibNqaCtlCodecType
+--      remove size limit and DEFVAL in definition of ibNqaCtlStatisticsInterval.
+--      modify type of below from  Unsigned32 to Gauge32:
+--       ibNqaStatResMinRtt, ibNqaStatResMaxRtt,ibNqaStatResAverageRtt,
+--       ibNqaStatResInterval, ibNqaStatResLostPacketRatio, ibNqaStatResMinDelaySD,
+--       ibNqaStatResMaxDelaySD,ibNqaStatResMinDelayDS, ibNqaStatResMaxDelayDS.
+--      modify type of below from  Unsigned32 to Counter32:
+--       ibNqaStatResProbeResponses, ibNqaStatResSentProbes, ibNqaStatResRttSumOfSquares,
+--       ibNqaStatResRttNumDisconnects, ibNqaStatResRttTimeouts, ibNqaStatResRttBusies,
+--       ibNqaStatResRttNoConnections, ibNqaStatResRttDrops, ibNqaStatResRttSequenceErrors,
+--       ibNqaStatResRttErrors, ibNqaStatResPacketLateArrival, ibNqaStatResRttSum,
+--       ibNqaStatResNumOfDelaySD, ibNqaStatResSumDelaySD, ibNqaStatResSum2DelaySD,
+--       ibNqaStatResNumOfDelayDS, ibNqaStatResSumDelayDS, ibNqaStatResSum2DelayDS,
+--       ibNqaStatReactCheckedNum, ibNqaStatReactThresholdNum.
+--      modify type of below from  Gauge32 to Counter32:
+--       ibNqaStatJitterNumOfPosSD, ibNqaStatJitterSumOfPosSD, ibNqaStatJitterSumOfSquarePosSD,
+--       ibNqaStatJitterNumOfNegSD, ibNqaStatJitterSumOfNegSD, ibNqaStatJitterSumOfSquareNegSD,
+--       ibNqaStatJitterNumOfPosDS, ibNqaStatJitterSumOfPosDS, ibNqaStatJitterSumOfSquarePosDS,
+--       ibNqaStatJitterNumOfNegDS, ibNqaStatJitterSumOfNegDS, ibNqaStatJitterSumOfSquareNegDS,
+--       ibNqaStatJitterPacketLossSD, ibNqaStatJitterPacketLossDS, ibNqaStatJitterPktLossUnknown.
+-- V2.4 2012-04-20 Modified by sunbiliang and wanghaidong
+--      add raw in ibNqaCtlHttpOperationType
+--      modifiy the range of ibNqaCtlHttpOperationString
+-- V2.5 2013-12-17 Modified by wangbo
+--      modify the descriptions of ibNqaCtlICPIFAdvFactor, ibNqaStatJitterNumOfNegSD,
+--       ibNqaStatJitterNumOfPosSD, ibNqaStatJitterNumOfPosDS, ibNqaStatJitterNumOfNegDS,
+--       ibNqaReactCurrentStatus
+-- V2.6 2017-07-03 Modified by zhanbaobin
+--      add ibNqaJitterStatsAveSD, ibNqaJitterStatsAveDS to ibNqaJitterStatsEntry,
+--      add ibNqaStatJitterAveSD, ibNqaStatJitterAveDS to ibNqaGroupStatsJitterEntry.
+--      add ibNqaTcpServerExtendTable
+--      add ibNqaUdpServerExtendEntry
+-- V2.7 2018-06-15 Modified by wangshen
+--      modify the range of ibNqaTcpServerExtDSField
+--      modify the range of ibNqaUdpServerExtDSField
+--      2018-11-01 Modified by zhanbaobin
+--      add ibNqaTwampLight
+--      add ibNqaJitterOverThreshold
+--      2018-12-20 Modified by wangshen
+--      modify the default value of ibNqaAgentEnable
+-- V2.8 2019-02-15 Modified by zhanbaobin
+--      add ibNqaArp
+--      2019-06-04 Modified by liuyi
+--      add ibNqaJitterStatsLostPacketPermillage to ibNqaJitterStatsEntry.
+--      add ibNqaStatResLostPacketPermillage to ibNqaStatisticsResultsEntry.
+-- V2.9 2020-03-25 Modified by zhanbaobin
+--      add ibNqaProbeTimeAboveThreshold to ibNqaNotifications.
+--      add ibNqaProbeTimeBelowThreshold to ibNqaNotifications.
+--      add ibNqaProbeFailAboveThreshold to ibNqaNotifications.
+--      add ibNqaProbeFailBelowThreshold to ibNqaNotifications.
+-- V3.0 2022-09-01 Modified by duwei
+--      add ibNqaJitterOwdDSOverThreshold to ibNqaNotifications.
+--      add ibNqaJitterOwdSDOverThreshold to ibNqaNotifications.
+--      add ibNqaTestFailure to ibNqaNotifications.
+--      add ibNqaTestResultChange to ibNqaNotifications.
+-- V3.1 2022-12-01 Modified by duwei
+--      add ibNqaScheduleFailure for trap.
+--      add ibNqaServerFailure for trap.
+-- V3.2 2023-01-10 Modified by zhujialin
+--      add ibNqaHttp2
+-- =================================================================
+IB-NQA-MIB DEFINITIONS ::= BEGIN
+
+        IMPORTS
+            MODULE-IDENTITY, OBJECT-TYPE, Unsigned32,
+            OBJECT-IDENTITY, NOTIFICATION-TYPE, Integer32, Counter32, Gauge32
+                FROM SNMPv2-SMI
+            DateAndTime, DisplayString, RowStatus, TEXTUAL-CONVENTION
+                FROM SNMPv2-TC
+            InetAddressType, InetAddress
+                FROM INET-ADDRESS-MIB
+            ibRhw
+                FROM IB-OID-MIB
+            pingCtlEntry, pingCtlOwnerIndex, pingCtlTestName, pingCtlType,
+            pingCtlTargetAddress, pingCtlTargetAddressType, pingCtlDescr
+                FROM DISMAN-PING-MIB
+            SnmpAdminString
+                FROM SNMP-FRAMEWORK-MIB;          -- RFC2571
+
+    ibNqa MODULE-IDENTITY
+        LAST-UPDATED "202301100000Z"
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+            DESCRIPTION
+                "The private MIB file includes the test information of the
+                device. It is supplementary for rfc2925.txt."
+            REVISION "202301100000Z"
+            DESCRIPTION
+                "Add ibNqaHttp2"
+            REVISION "202212010000Z"
+            DESCRIPTION
+                "Add ibNqaScheduleFailure for trap.
+                 Add ibNqaServerFailure for trap."
+            REVISION "202209010000Z"
+            DESCRIPTION
+                "Add ibNqaJitterOwdDSOverThreshold to ibNqaNotifications.
+                 Add ibNqaJitterOwdSDOverThreshold to ibNqaNotifications.
+                 Add ibNqaTestFailure to ibNqaNotifications.
+                 Add ibNqaTestResultChange to ibNqaNotifications."
+            REVISION "202003250000Z"
+            DESCRIPTION
+                "Add ibNqaProbeTimeAboveThreshold to ibNqaNotifications.
+                 Add ibNqaProbeTimeBelowThreshold to ibNqaNotifications.
+                 Add ibNqaProbeFailAboveThreshold to ibNqaNotifications.
+                 Add ibNqaProbeFailBelowThreshold to ibNqaNotifications."
+        ::= { ibRhw 3 }
+
+ -- Textual Conventions
+VpnInstanceType ::= TEXTUAL-CONVENTION
+     STATUS      current
+     DESCRIPTION
+         "A value that represents a type of VPN instance.
+          public(1)   Public network.
+          vpn(2)      Private network."
+     SYNTAX      INTEGER {
+                     public(1),
+                     vpn(2)
+                 }
+
+    ibNqaObjects OBJECT IDENTIFIER ::= { ibNqa 1 }
+
+ -- The registration node (point) for remote NQA(Network Quality Analysis) test
+ -- implementation types
+
+ibNqaImplementationTypeDomains  OBJECT IDENTIFIER ::= { ibNqa 2 }
+
+ibNqaUdpEcho OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "Indicates that an implementation is using the UDP based echo server.
+        Notes: The ibNqaCtlTargetPort and ibNqaCtlSourcePort need to be set,
+        while in the pingUdpEcho Node, ibNqaCtlTargetPort must be set to the
+        default value."
+    ::= { ibNqaImplementationTypeDomains 1 }
+
+ibNqaTcpconnect OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "Indicates that an implementation is attempting to
+        connect to a TCP port in order to calculate a round
+        trip time.
+        Notes: The ibNqaCtlTargetPort and ibNqaCtlSourcePort need to be set,
+        while in the pingTcpConnectionAttempt Node, ibNqaCtlTargetPort must
+        be set to the default value."
+    ::= { ibNqaImplementationTypeDomains 2 }
+
+ibNqajitter OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "Indicates that an implementation is using udp for packet transfers.
+        'jitter' will cause the NQA(Network Quality Analysis) application
+        to perform delay variance analysis."
+    ::= { ibNqaImplementationTypeDomains 3 }
+
+ibNqaHttp OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "Indicates that an implementation is using udp for name resolution,
+        tcp connect and tcp data transfer mechanisms for HTTP data download
+        from a particular HTTP Server.
+        It causes the NQA application to perform a download of the object
+        specified in the URL."
+    ::= { ibNqaImplementationTypeDomains 4 }
+
+
+ibNqadlsw OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "Indicates that an implementation is using tcp for sending keepalives.
+        'dlsw' will cause the NQA application to perform a keepalive operation
+        to measure the response time of a DLSw peer."
+    ::= { ibNqaImplementationTypeDomains 5 }
+
+ibNqadhcp OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "Indicates that an implementation is using udp for sending dhcp
+        requests. 'dhcp' will cause the NQA application
+        to perform an IP Address lease request/teardown operation."
+    ::= { ibNqaImplementationTypeDomains 6 }
+
+ibNqaftp OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "Indicates that an implementation is using tcp packet for ftp connect
+         and data transfer."
+    ::= { ibNqaImplementationTypeDomains 7 }
+
+ibNqaTwampLight OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "Indicates that a measurement for two-way network quality through UDP
+         packets. The type only supports sending traps."
+    ::= { ibNqaImplementationTypeDomains 8 }
+
+ibNqaArp OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "Indicates that an implementation is using the Address
+         Resolution Protocol (ARP) test facility.
+         The type only supports IPv4 network."
+    ::= { ibNqaImplementationTypeDomains 9 }
+
+ibNqaHttp2 OBJECT-IDENTITY
+    STATUS      current
+    DESCRIPTION
+        "Indicates that an implementation is using udp for name resolution,
+        tcp connect and tcp data transfer mechanisms for HTTP2 data download
+        from a particular HTTP Server.
+        It causes the NQA application to perform a download of the object
+        specified in the URL."
+    ::= { ibNqaImplementationTypeDomains 10 }
+
+-- MIB contains 3 groups
+
+ibNqaMIBVersion OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Version string of this MIB.
+        The format will be: 'Version.Release.Patch: Description'
+        An instance likes: '1.0.0: Initial NQA MIB'
+        "
+    ::= { ibNqaObjects 1 }
+
+ibNqaCtlTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbNqaCtlEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines the NQA Control Extend Table for providing, via SNMP,
+        the capability of performing network analysis operations at a
+        remote host."
+   ::= { ibNqaObjects 2 }
+
+ibNqaCtlEntry OBJECT-TYPE
+    SYNTAX      IbNqaCtlEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines an entry in the ibNqaCtlTable. The operation of this
+        table is same as that of pingResultsTable."
+    AUGMENTS    { pingCtlEntry }
+    ::= { ibNqaCtlTable 1 }
+
+IbNqaCtlEntry ::=
+    SEQUENCE {
+    ibNqaCtlTargetPort               Integer32,
+    ibNqaCtlSourcePort               Integer32,
+    ibNqaCtlTTL                      Integer32,
+    ibNqaCtlJitterAdminInterval      Integer32,
+    ibNqaCtlJitterAdminNumPackets    Integer32,
+    ibNqaCtlHttpOperationType        INTEGER,
+    ibNqaCtlHttpOperationString      DisplayString,
+    ibNqaCtlFtpOperationType         INTEGER,
+    ibNqaCtlFtpUsername              DisplayString,
+    ibNqaCtlFtpPassword              DisplayString,
+    ibNqaCtlFtpOperationString       DisplayString,
+    ibNqaCtlVPNInstance              DisplayString,
+    ibNqaCtlHistoryKeptTime          Integer32,
+    ibNqaCtlHistoryEnable            INTEGER,
+    ibNqaCtlICPIFAdvFactor           Integer32,
+    ibNqaCtlCodecType                INTEGER
+    }
+
+ibNqaCtlTargetPort          OBJECT-TYPE
+    SYNTAX      Integer32 (0..65536)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The destination port that may be used by udpEcho,
+        tcpConnect and jitter probes."
+    DEFVAL      { 0 }
+    ::= { ibNqaCtlEntry 1 }
+
+ibNqaCtlSourcePort          OBJECT-TYPE
+    SYNTAX      Integer32 (0..65536)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The source port that may be used by all tests except
+        for dns and dlsw.
+        If no source port is specified, system will create
+        a random port as source port."
+    DEFVAL      { 0 }
+    ::= { ibNqaCtlEntry 2 }
+
+ibNqaCtlTTL OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specifies the value to store in the TTL Field in the IP packet used to
+        encapsulate the NQA probe."
+    DEFVAL      { 20 }
+    ::= { ibNqaCtlEntry 3 }
+
+ibNqaCtlJitterAdminInterval OBJECT-TYPE
+    SYNTAX      Integer32 (0..60000)
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Time value in milliseconds that is an interval between two continuous
+        probes in jitter test.
+
+        This object is only used by jitter test."
+    DEFVAL      { 20 }
+    ::= { ibNqaCtlEntry 4 }
+
+ibNqaCtlJitterAdminNumPackets OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Packet number that specifies how many packets will be sent in
+        one jitter test.
+
+        This object is only used by jitter test."
+    DEFVAL      { 10 }
+    ::= { ibNqaCtlEntry 5 }
+
+ibNqaCtlHttpOperationType OBJECT-TYPE
+    SYNTAX      INTEGER{
+                get(1),
+                post(2),
+                raw(3)
+                }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Http operation type: get, post or raw."
+    DEFVAL      { get }
+    ::= { ibNqaCtlEntry 6 }
+
+ibNqaCtlHttpOperationString OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..1023))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Http operation string. For example, if the http operation type is get,
+        the string will be url, home page and http version."
+    DEFVAL      { "" }
+    ::= { ibNqaCtlEntry 7 }
+
+ibNqaCtlFtpOperationType OBJECT-TYPE
+    SYNTAX      INTEGER{
+                get(1),
+                put(2)
+                }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Ftp operation type."
+    DEFVAL      { get }
+    ::= {ibNqaCtlEntry 8 }
+
+ibNqaCtlFtpUsername OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..32))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Ftp username."
+    DEFVAL      { "" }
+    ::= { ibNqaCtlEntry 9 }
+
+ibNqaCtlFtpPassword OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..32))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Ftp password."
+    DEFVAL      { "" }
+    ::= { ibNqaCtlEntry 10 }
+
+ibNqaCtlFtpOperationString OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..255))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Ftp operation string. If the ftp operation type is get,
+        the string must be the file name which will be gotten from ftp server."
+    DEFVAL      { "" }
+    ::= { ibNqaCtlEntry 11 }
+
+ibNqaCtlVPNInstance OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..255))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "VPN name by which system finds route in the specified VPN
+        to send NQA probe packets."
+    DEFVAL      { "" }
+    ::= { ibNqaCtlEntry 12 }
+
+ibNqaCtlHistoryKeptTime OBJECT-TYPE
+    SYNTAX     Integer32(1..1440)
+    UNITS      "minutes"
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "To indicate how long the history records will be saved
+        in the pingProbeHistoryTable table after the test stopped."
+    DEFVAL     { 120 }
+    ::= { ibNqaCtlEntry 13 }
+
+ibNqaCtlHistoryEnable OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            enabled(1),  --history will be recorded
+            disabled(2)  --history will not be recorded
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "To indicate whether the history should be recorded in the
+        PingProbeHistoryTable or not.
+            enabled(1)   --history will be recorded
+            disabled(2)  --history will not be recorded."
+    DEFVAL      { disabled }
+    ::= {ibNqaCtlEntry 14 }
+
+ibNqaCtlICPIFAdvFactor OBJECT-TYPE
+    SYNTAX  Integer32
+    MAX-ACCESS read-create
+    STATUS  current
+    DESCRIPTION
+        "The advantage factor depends on the type of access and how the service
+        is to be used. This object will be used while calculating the ICPIF
+        (Calculated Planning Impairment Factor) values.  This is applicable
+        only for the jitter probe.
+
+        Suggestion values:
+
+        |-----------------------------------|-------|
+        |          Service                  |factor |
+        |-----------------------------------|-------|
+        |conventional wire-line             |  0    |
+        |-----------------------------------|-------|
+        |mobility within Building           |  5    |
+        |-----------------------------------|-------|
+        |mobility within geographical area  |  10   |
+        |-----------------------------------|-------|
+        |access to hard-to-reach location   |  20   |
+        |-----------------------------------|-------|
+        "
+    DEFVAL  {0}
+    ::= { ibNqaCtlEntry 15 }
+
+ibNqaCtlCodecType OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            notDefined(1),     -- no codec type is defined or codec is unknown
+            g711Alaw(2),       -- uses G.711 A-Law
+            g711Ulaw(3),       -- uses G.711 muHmm-Law
+            g729A(4),          -- uses G.729A
+            icmpTimestamp(5)   -- uses icmp timestamp packet type
+        }
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "To indicate the codec type to be used with jitter probe. This is
+        applicable only for the jitter probe."
+    DEFVAL     { notDefined }
+    ::= { ibNqaCtlEntry 16 }
+
+-- NQA Test Results Table
+
+ibNqaResultsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbNqaResultsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines the NQA Results Extend Table for providing
+        the capability of performing NQA operations at a remote
+        host. The results of these operations are stored in the
+        ibNqaResultsTable. The operation of this table is same
+        as that of pingResultsTable."
+   ::= { ibNqaObjects 3 }
+
+ibNqaResultsEntry OBJECT-TYPE
+    SYNTAX      IbNqaResultsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The operation of this table is same as that of pingResultsTable."
+    INDEX {
+             pingCtlOwnerIndex,
+             pingCtlTestName
+          }
+    ::= { ibNqaResultsTable 1 }
+
+IbNqaResultsEntry ::=
+    SEQUENCE {
+        ibNqaResultsRttNumDisconnects   Unsigned32,
+        ibNqaResultsRttTimeouts         Unsigned32,
+        ibNqaResultsRttBusies           Unsigned32,
+        ibNqaResultsRttNoConnections    Unsigned32,
+        ibNqaResultsRttDrops            Unsigned32,
+        ibNqaResultsRttSequenceErrors   Unsigned32,
+        ibNqaResultsRttStatsErrors      Unsigned32,
+        ibNqaResultsMaxDelaySD          Unsigned32,
+        ibNqaResultsMaxDelayDS          Unsigned32,
+        ibNqaResultsLostPacketRatio     Unsigned32,
+        ibNqaResultsPacketLateArrival   Unsigned32,
+        ibNqaResultsRttSum              Unsigned32,
+        ibNqaResultsNumOfDelaySD        Unsigned32,
+        ibNqaResultsMinDelaySD          Unsigned32,
+        ibNqaResultsSumDelaySD          Unsigned32,
+        ibNqaResultsSum2DelaySD         Unsigned32,
+        ibNqaResultsNumOfDelayDS        Unsigned32,
+        ibNqaResultsMinDelayDS          Unsigned32,
+        ibNqaResultsSumDelayDS          Unsigned32,
+        ibNqaResultsSum2DelayDS         Unsigned32
+    }
+
+ibNqaResultsRttNumDisconnects OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times that a NQA probe failed because
+        the destination became disconnected.
+
+        For connectionless protocol pingCtlTypes, this number should be
+        zero."
+    ::= { ibNqaResultsEntry 1 }
+
+
+ibNqaResultsRttTimeouts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times that a NQA probe failed because the
+        probe timed out."
+    ::= { ibNqaResultsEntry 2 }
+
+
+ibNqaResultsRttBusies OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times that a NQA probe failed because all
+         NQA tasks have been running.
+
+        If a new probe fails to start, the value of this object
+        is incremented. The next test will not start until the
+        next Frequency."
+   ::= { ibNqaResultsEntry 3 }
+
+
+ibNqaResultsRttNoConnections OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times that a NQA probe failed because the probe
+        destination is unavailable.
+
+        For connectionless protocol pingCtlTypes, this number should be
+        zero."
+    ::= { ibNqaResultsEntry 4 }
+
+
+ibNqaResultsRttDrops OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times that a NQA operation failed to initiated
+        for unavailibility of necessary internal resources."
+    ::= { ibNqaResultsEntry 5 }
+
+
+ibNqaResultsRttSequenceErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets arrived out of sequence."
+   ::= { ibNqaResultsEntry 6 }
+
+ibNqaResultsRttStatsErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of some other errors."
+    ::= { ibNqaResultsEntry 7 }
+
+ibNqaResultsMaxDelaySD OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximal delay from source device to destination device.
+         Currently this value is only used for jitter test, and this
+         value must be 0 in other type test. In jitter test, if
+         destination system time is not valid, the SD delay may be set 0."
+    ::= { ibNqaResultsEntry 8 }
+
+ibNqaResultsMaxDelayDS OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximal delay from destination device to source device.
+         Currently this value is only used for jitter test, and this
+         value is 0 in other type test. In jitter test, if destination
+         system time is not valid, the DS delay may be set 0."
+    ::= { ibNqaResultsEntry 9 }
+
+ibNqaResultsLostPacketRatio OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of this object reflects the drop rate of NQA test.
+         For example, this value is 30 that means source device only
+         had received 70% packets of total sent packets."
+    ::= { ibNqaResultsEntry 10 }
+
+ibNqaResultsPacketLateArrival OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of this object indicates the number of the packets that
+        arrived after the timeout."
+    ::= { ibNqaResultsEntry 11 }
+
+ibNqaResultsRttSum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The sum of round trip time."
+    ::= { ibNqaResultsEntry 12 }
+
+ibNqaResultsNumOfDelaySD OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of delay from source to destination that are
+        successfully measured."
+    ::= { ibNqaResultsEntry 13 }
+
+ibNqaResultsMinDelaySD OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum of all one way times from source to destination."
+    ::= { ibNqaResultsEntry 14 }
+
+ibNqaResultsSumDelaySD OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The sum of one way times from source to destination."
+    ::= { ibNqaResultsEntry 15 }
+
+ibNqaResultsSum2DelaySD OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The sum of squares of one way times from source to  destination."
+    ::= { ibNqaResultsEntry 16 }
+
+ibNqaResultsNumOfDelayDS OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of delay from destination to source that are
+        successfully measured."
+    ::= { ibNqaResultsEntry 17 }
+
+ibNqaResultsMinDelayDS OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum of all one way times from destination to source."
+    ::= { ibNqaResultsEntry 18 }
+
+ibNqaResultsSumDelayDS OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The sum of one way times from destination to source."
+    ::= { ibNqaResultsEntry 19 }
+
+ibNqaResultsSum2DelayDS OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The sum of squares of one way times from destination to source."
+    ::= { ibNqaResultsEntry 20 }
+
+-- =================================================================
+--    Jitter Statistics Table
+-- =================================================================
+
+
+ibNqaJitterStatsTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbNqaJitterStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Statistics table for latest jitter activity."
+    ::= { ibNqaObjects 4 }
+
+ibNqaJitterStatsEntry OBJECT-TYPE
+    SYNTAX      IbNqaJitterStatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry contains the statistics for the latest jitter activity.
+        This entry is created only if the pingCtlType is ibNqajitter."
+    INDEX {
+            pingCtlOwnerIndex,
+            pingCtlTestName
+          }
+    ::= { ibNqaJitterStatsTable 1 }
+
+IbNqaJitterStatsEntry  ::= SEQUENCE
+{
+    ibNqaJitterStatsNumOfRTT                Counter32,
+    ibNqaJitterStatsMinOfPositivesSD        Gauge32,
+    ibNqaJitterStatsMaxOfPositivesSD        Gauge32,
+    ibNqaJitterStatsNumOfPositivesSD        Gauge32,
+    ibNqaJitterStatsSumOfPositivesSD        Gauge32,
+    ibNqaJitterStatsSum2PositivesSD         Gauge32,
+    ibNqaJitterStatsMinOfNegativesSD        Gauge32,
+    ibNqaJitterStatsMaxOfNegativesSD        Gauge32,
+    ibNqaJitterStatsNumOfNegativesSD        Gauge32,
+    ibNqaJitterStatsSumOfNegativesSD        Gauge32,
+    ibNqaJitterStatsSum2NegativesSD         Gauge32,
+    ibNqaJitterStatsMinOfPositivesDS        Gauge32,
+    ibNqaJitterStatsMaxOfPositivesDS        Gauge32,
+    ibNqaJitterStatsNumOfPositivesDS        Gauge32,
+    ibNqaJitterStatsSumOfPositivesDS        Gauge32,
+    ibNqaJitterStatsSum2PositivesDS         Gauge32,
+    ibNqaJitterStatsMinOfNegativesDS        Gauge32,
+    ibNqaJitterStatsMaxOfNegativesDS        Gauge32,
+    ibNqaJitterStatsNumOfNegativesDS        Gauge32,
+    ibNqaJitterStatsSumOfNegativesDS        Gauge32,
+    ibNqaJitterStatsSum2NegativesDS         Gauge32,
+    ibNqaJitterStatsPacketLossSD            Gauge32,
+    ibNqaJitterStatsPacketLossDS            Gauge32,
+    ibNqaJitterStatsAvePositivesSD          Gauge32,
+    ibNqaJitterStatsAveNegativesSD          Gauge32,
+    ibNqaJitterStatsAvePositivesDS          Gauge32,
+    ibNqaJitterStatsAveNegativesDS          Gauge32,
+    ibNqaJitterStatsPktLossUnknown          Gauge32,
+    ibNqaJitterStatsOperOfICPIF             Gauge32,
+    ibNqaJitterStatsOperOfMOS               Gauge32,
+    ibNqaJitterStatsAveSD                   Gauge32,
+    ibNqaJitterStatsAveDS                   Gauge32,
+    ibNqaJitterStatsLostPacketPermillage    Gauge32
+}
+
+ibNqaJitterStatsNumOfRTT OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of received destination device responses with which
+        jitter test can reach round-trip time."
+    ::= { ibNqaJitterStatsEntry 1 }
+
+
+ibNqaJitterStatsMinOfPositivesSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the minimal positive jitter value from
+        source to destination in the jitter test."
+    ::= { ibNqaJitterStatsEntry 2 }
+
+ibNqaJitterStatsMaxOfPositivesSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the maximal positive jitter value from
+        source to destination in the jitter test."
+   ::= { ibNqaJitterStatsEntry 3 }
+
+ibNqaJitterStatsNumOfPositivesSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number that records positive jitter times from source to
+        destination in the jitter test.
+        The total number of the value of all positive jitters in packets
+        sent from source to destination."
+    ::= { ibNqaJitterStatsEntry 4 }
+
+ibNqaJitterStatsSumOfPositivesSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the sum of positive jitter values from
+        source to destination in the jitter test."
+    ::= { ibNqaJitterStatsEntry 5 }
+
+ibNqaJitterStatsSum2PositivesSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the sum of square of positive jitter
+        values from source to destination in the jitter test."
+    ::= { ibNqaJitterStatsEntry 6 }
+
+ibNqaJitterStatsMinOfNegativesSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the minimal absolute values of
+        negative jitter value from source to destination in the jitter test."
+    ::= { ibNqaJitterStatsEntry 7 }
+
+ibNqaJitterStatsMaxOfNegativesSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the maximal absolute values of negative
+        jitter value from source to destination in the jitter test."
+    ::= { ibNqaJitterStatsEntry 8 }
+
+ibNqaJitterStatsNumOfNegativesSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number that records negative jitter times from source to
+        destination in the jitter test.
+        The total number of all negative jitter values in packets
+        sent from source to destination."
+    ::= { ibNqaJitterStatsEntry 9 }
+
+ibNqaJitterStatsSumOfNegativesSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the sum of negative jitter values from
+        source to destination in the jitter test.
+        The total number of the value of all negative jitters in packets
+        sent from source to destination."
+    ::= { ibNqaJitterStatsEntry 10 }
+
+ibNqaJitterStatsSum2NegativesSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the sum of square of negative jitter
+        values from source to destination in the jitter test."
+    ::= { ibNqaJitterStatsEntry 11 }
+
+ibNqaJitterStatsMinOfPositivesDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the minimal positive jitter value from
+        destination to source in the jitter test."
+    ::= { ibNqaJitterStatsEntry 12 }
+
+ibNqaJitterStatsMaxOfPositivesDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the maximal positive jitter value from
+        destination to source in the jitter test."
+    ::= { ibNqaJitterStatsEntry 13 }
+
+ibNqaJitterStatsNumOfPositivesDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number that records positive jitter times from destination to
+        source in the jitter test."
+    ::= { ibNqaJitterStatsEntry 14 }
+
+ibNqaJitterStatsSumOfPositivesDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the sum of positive jitter values from
+        destination to source in the jitter test."
+    ::= { ibNqaJitterStatsEntry 15 }
+
+ibNqaJitterStatsSum2PositivesDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the sum of square of positive jitter
+        values from destination to source in the jitter test."
+    ::= { ibNqaJitterStatsEntry 16 }
+
+ibNqaJitterStatsMinOfNegativesDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the minimal absolute values of negative
+        jitter value from destination to source in the jitter test."
+    ::= { ibNqaJitterStatsEntry 17 }
+
+ibNqaJitterStatsMaxOfNegativesDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the maximal absolute values of negative
+        jitter value from destination to source in the jitter test."
+    ::= { ibNqaJitterStatsEntry 18 }
+
+ibNqaJitterStatsNumOfNegativesDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number that records negative jitter times from destination to source
+        in the jitter test."
+    ::= { ibNqaJitterStatsEntry 19 }
+
+ibNqaJitterStatsSumOfNegativesDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the sum of negative jitter values from
+        destination to source in the jitter test."
+    ::= { ibNqaJitterStatsEntry 20 }
+
+ibNqaJitterStatsSum2NegativesDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the sum of square of negative jitter
+        values from destination to source in the jitter test."
+    ::= { ibNqaJitterStatsEntry 21 }
+
+ibNqaJitterStatsPacketLossSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The lost packets number sent from source to destination."
+    ::= { ibNqaJitterStatsEntry 22 }
+
+ibNqaJitterStatsPacketLossDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The lost packets number sent from destination to source."
+    ::= { ibNqaJitterStatsEntry 23 }
+
+ibNqaJitterStatsAvePositivesSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the average positive jitter value
+        from source to destination."
+    ::= { ibNqaJitterStatsEntry 24 }
+
+ibNqaJitterStatsAveNegativesSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the average negative jitter value
+        from source to destination."
+    ::= { ibNqaJitterStatsEntry 25 }
+
+ibNqaJitterStatsAvePositivesDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the average positive jitter value
+        from destination to source."
+    ::= { ibNqaJitterStatsEntry 26 }
+
+ibNqaJitterStatsAveNegativesDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the average negative jitter value
+        from destination to source."
+    ::= { ibNqaJitterStatsEntry 27 }
+
+ibNqaJitterStatsPktLossUnknown OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets which is lost with unknown reason."
+    ::= { ibNqaJitterStatsEntry 28 }
+
+ibNqaJitterStatsOperOfICPIF OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ICPIF (Calculated Planning Impairment Factor) value for the latest
+        jitter test."
+    ::= { ibNqaJitterStatsEntry 29 }
+
+ibNqaJitterStatsOperOfMOS OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The MOS (Mean Opinion Score) value for the latest jitter test."
+    ::= { ibNqaJitterStatsEntry 30 }
+
+ibNqaJitterStatsAveSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the average jitter value
+        from source to destination."
+    ::= { ibNqaJitterStatsEntry 31 }
+
+ibNqaJitterStatsAveDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the average jitter value
+        from destination to source."
+    ::= { ibNqaJitterStatsEntry 32 }
+
+ibNqaJitterStatsLostPacketPermillage OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of this object reflects the drop rate of NQA
+        test packet.
+        For example, if the value is 100, that means source device
+        only had received 900 packets per thousand."
+    ::= { ibNqaJitterStatsEntry 33 }
+
+ibNqaAgentEnable OBJECT-TYPE
+    SYNTAX      INTEGER{
+                enable(1),
+                disable(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable NQA agent function."
+    DEFVAL { enable }
+    ::= { ibNqaObjects 5 }
+
+-- =================================================================
+--   Tcp server configuration information Statistics Table
+-- =================================================================
+
+
+ibNqaTcpServerTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbNqaTcpServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table which contains the status of NQA tcp server
+        configuration information."
+    ::= { ibNqaObjects 6 }
+
+ibNqaTcpServerEntry OBJECT-TYPE
+    SYNTAX      IbNqaTcpServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table which contains the status of NQA tcp server
+        configuration information.
+
+        This entry includes not only the tcp server ip address
+        but also the tcp server port."
+    INDEX {
+            ibNqaTcpServerIpAddress,
+            ibNqaTcpServerPort
+          }
+    ::= { ibNqaTcpServerTable 1 }
+
+IbNqaTcpServerEntry  ::= SEQUENCE
+{
+    ibNqaTcpServerIpAddress                InetAddress,
+    ibNqaTcpServerPort                     Integer32,
+    ibNqaTcpServerRowStatus                RowStatus
+}
+
+ibNqaTcpServerIpAddress          OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Tcp server's ip address."
+    ::= { ibNqaTcpServerEntry 1 }
+
+ibNqaTcpServerPort          OBJECT-TYPE
+    SYNTAX      Integer32 (0..65536)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Tcp server's port number."
+    ::= { ibNqaTcpServerEntry 2 }
+
+ibNqaTcpServerRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "ibNqaTcpServerIpAddress and ibNqaTcpServerPort
+        must be set during a creation operation."
+    REFERENCE
+        "RFC 2579"
+    ::= { ibNqaTcpServerEntry 3 }
+
+ibNqaUdpServerTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbNqaUdpServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Status of NQA udp server configuration information."
+    ::= { ibNqaObjects 7 }
+
+ibNqaUdpServerEntry OBJECT-TYPE
+    SYNTAX      IbNqaUdpServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This entry includes not only the udp server ip address
+        but also the udp server udp port."
+    INDEX {
+            ibNqaUdpServerIpAddress,
+            ibNqaUdpServerPort
+          }
+    ::= { ibNqaUdpServerTable 1 }
+
+IbNqaUdpServerEntry  ::= SEQUENCE
+{
+    ibNqaUdpServerIpAddress                InetAddress,
+    ibNqaUdpServerPort                     Integer32,
+    ibNqaUdpServerRowStatus                RowStatus
+}
+
+ibNqaUdpServerIpAddress          OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Udp server's ip address."
+    ::= { ibNqaUdpServerEntry 1 }
+
+ibNqaUdpServerPort          OBJECT-TYPE
+    SYNTAX      Integer32 (0..65536)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Udp server's port number."
+    ::= { ibNqaUdpServerEntry 2 }
+
+ibNqaUdpServerRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "ibNqaUdpServerIpAddress and ibNqaUdpServerPort
+        must be set during a creation operation."
+    REFERENCE
+        "RFC 2579"
+    ::= { ibNqaUdpServerEntry 3 }
+
+ibNqaServerEnable OBJECT-TYPE
+    SYNTAX      INTEGER{
+                enable(1),
+                disable(2)
+                }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable NQA server function."
+    DEFVAL { disable }
+    ::= { ibNqaObjects 8 }
+
+ibNqaStatsMaxGroupNumber OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The maximum number saved per group. The maximum value of
+        ibNqaCtlStatisticsGroupNumber can not exceed the value of
+        this object."
+    ::= { ibNqaObjects 9 }
+
+
+ibNqaStatisticsCtlTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbNqaStatisticsCtlEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines the NQA statistics control table for providing, via SNMP,
+        the capability of performing NQA operations at a remote host.
+        The results of these operations are stored in the
+        ibNqaStatisticsResultsTable and the ibNqaGroupStatsJitterTable."
+    ::= { ibNqaObjects 10 }
+
+ibNqaStatisticsCtlEntry OBJECT-TYPE
+    SYNTAX      IbNqaStatisticsCtlEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines an entry in the ibNqaStatisticsCtlTable.
+        The ibNqaStatisticsCtlTable has the same index as the
+        pingCtlTable in order for a ibNqaStatisticsCtlTable to
+        correspond to the pingCtlEntry."
+    AUGMENTS    { pingCtlEntry }
+    ::= { ibNqaStatisticsCtlTable 1 }
+
+IbNqaStatisticsCtlEntry ::=
+    SEQUENCE
+        {
+            ibNqaCtlStatisticsInterval       Unsigned32,
+            ibNqaCtlStatisticsGroupNumber    Unsigned32,
+            ibNqaCtlStatisticsKeptTime       Unsigned32,
+            ibNqaCtlBeginTime                DateAndTime,
+            ibNqaCtlLifeTime                 Unsigned32
+        }
+
+ibNqaCtlStatisticsInterval OBJECT-TYPE
+    SYNTAX     Unsigned32
+    UNITS      "minutes"
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "Statistic information will be calculated after the time that is
+        the value of ibNqaCtlStatisticsInterval."
+    ::= { ibNqaStatisticsCtlEntry 1 }
+
+ibNqaCtlStatisticsGroupNumber OBJECT-TYPE
+    SYNTAX     Unsigned32
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "The value of this object indicates the number of group saved.
+        The length of this object is from 1 to ibNqaStatsMaxGroupNumber."
+    DEFVAL     { 2 }
+    ::= { ibNqaStatisticsCtlEntry 2 }
+
+ibNqaCtlStatisticsKeptTime OBJECT-TYPE
+    SYNTAX     Unsigned32(1..1440)
+    UNITS      "minutes"
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "To indicate how long the statistic information will be saved after
+        the test stops."
+    DEFVAL     { 120 }
+    ::= { ibNqaStatisticsCtlEntry 3 }
+
+ibNqaCtlBeginTime OBJECT-TYPE
+    SYNTAX     DateAndTime
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "Time at which the type-specified test will start."
+    ::= { ibNqaStatisticsCtlEntry 4 }
+
+ibNqaCtlLifeTime OBJECT-TYPE
+    SYNTAX     Unsigned32
+    UNITS      "seconds"
+    MAX-ACCESS read-create
+    STATUS     current
+    DESCRIPTION
+        "To indicate how long the type-specified test will last."
+    DEFVAL     { 0 }
+    ::= { ibNqaStatisticsCtlEntry 5 }
+
+ibNqaStatisticsResultsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbNqaStatisticsResultsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines the NQA statistics results table for providing
+        the capability of performing NQA operations at a remote
+        host. The statistics results of these operations in a statistic cycle
+        are stored in the ibNqaStatisticsResultsTable. The statistic cycle is
+        the value of ibNqaCtlStatisticsInterval.
+        The first two index identify the pingCtlEntry that the probe statistics
+        result (IbNqaStatisticsResultsEntry) belongs to."
+
+    ::= { ibNqaObjects 11 }
+
+
+ibNqaStatisticsResultsEntry OBJECT-TYPE
+    SYNTAX       IbNqaStatisticsResultsEntry
+    MAX-ACCESS   not-accessible
+    STATUS       current
+    DESCRIPTION
+        "Defines an entry in the ibNqaStatisticsResultsTable. The
+        ibNqaStatisticsResultsTable has the same index as the
+        pingCtlTable in order for a ibNqaStatisticsResultsEntry to
+        correspond to the pingCtlEntry that caused it to be created."
+    INDEX
+        {
+            pingCtlOwnerIndex,
+            pingCtlTestName,
+            ibNqaStatResIndex
+        }
+    ::= { ibNqaStatisticsResultsTable 1 }
+
+IbNqaStatisticsResultsEntry ::=
+    SEQUENCE
+        {
+            ibNqaStatResIndex                  Unsigned32,
+            ibNqaStatResIpTargetAddressType    InetAddressType,
+            ibNqaStatResIpTargetAddress        InetAddress,
+            ibNqaStatResMinRtt                 Gauge32,
+            ibNqaStatResMaxRtt                 Gauge32,
+            ibNqaStatResAverageRtt             Gauge32,
+            ibNqaStatResProbeResponses         Counter32,
+            ibNqaStatResSentProbes             Counter32,
+            ibNqaStatResRttSumOfSquares        Counter32,
+            ibNqaStatResStartTime              DateAndTime,
+            ibNqaStatResInterval               Gauge32,
+            ibNqaStatResRttNumDisconnects      Counter32,
+            ibNqaStatResRttTimeouts            Counter32,
+            ibNqaStatResRttBusies              Counter32,
+            ibNqaStatResRttNoConnections       Counter32,
+            ibNqaStatResRttDrops               Counter32,
+            ibNqaStatResRttSequenceErrors      Counter32,
+            ibNqaStatResRttErrors              Counter32,
+            ibNqaStatResLostPacketRatio        Gauge32,
+            ibNqaStatResPacketLateArrival      Counter32,
+            ibNqaStatResRttSum                 Counter32,
+            ibNqaStatResNumOfDelaySD           Counter32,
+            ibNqaStatResMinDelaySD             Gauge32,
+            ibNqaStatResMaxDelaySD             Gauge32,
+            ibNqaStatResSumDelaySD             Counter32,
+            ibNqaStatResSum2DelaySD            Counter32,
+            ibNqaStatResNumOfDelayDS           Counter32,
+            ibNqaStatResMinDelayDS             Gauge32,
+            ibNqaStatResMaxDelayDS             Gauge32,
+            ibNqaStatResSumDelayDS             Counter32,
+            ibNqaStatResSum2DelayDS            Counter32,
+            ibNqaStatResLostPacketPermillage   Gauge32
+        }
+
+ibNqaStatResIndex OBJECT-TYPE
+    SYNTAX      Unsigned32(1..'ffffffff'h)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry in this table is created when the statistics
+        result of a NQA probe is determined.
+
+        An implementation MUST start assigning
+        ibNqaStatResIndex values at 1 and wrap after
+        exceeding the maximum possible value as defined by
+        the limit of this object ('ffffffff'h)."
+    ::= { ibNqaStatisticsResultsEntry 1 }
+
+ibNqaStatResIpTargetAddressType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object indicates the type of address stored
+        in the corresponding ibNqaStatResIpTargetAddress
+        object."
+    DEFVAL { unknown }
+    ::= { ibNqaStatisticsResultsEntry 2 }
+
+ibNqaStatResIpTargetAddress OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object represent the host address to be used at a remote host for
+        performing a network analysis operation."
+    DEFVAL { ''H }
+    ::= { ibNqaStatisticsResultsEntry 3 }
+
+ibNqaStatResMinRtt  OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum NQA probe round-trip-time (RTT) received. The value
+        of 0 for this object implies that no RTT has been received."
+    ::= { ibNqaStatisticsResultsEntry 4 }
+
+ibNqaStatResMaxRtt OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum NQA probe round-trip-time (RTT) received. The value
+        of 0 for this object implies that no RTT has been received."
+    ::= { ibNqaStatisticsResultsEntry 5 }
+
+ibNqaStatResAverageRtt OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The average NQA probe round-trip-time (RTT)."
+    ::= { ibNqaStatisticsResultsEntry 6 }
+
+ibNqaStatResProbeResponses OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of responses received. The value of this object
+        MUST be reported as 0 when no probe responses have been
+        received."
+    ::= { ibNqaStatisticsResultsEntry 7 }
+
+ibNqaStatResSentProbes OBJECT-TYPE
+    SYNTAX      Counter32
+    UNITS       "probes"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of this object reflects the number of probes sent.
+        The value of this object MUST be reported as 0 when no probes
+        have been sent."
+    ::= { ibNqaStatisticsResultsEntry 8 }
+
+ibNqaStatResRttSumOfSquares OBJECT-TYPE
+    SYNTAX      Counter32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object contains the sum of the squares for all NQA
+        responses received. The value of this object MUST
+        be reported as 0 when no NQA responses have been
+        received."
+    ::= { ibNqaStatisticsResultsEntry 9 }
+
+ibNqaStatResStartTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object contains the start time of the statistic."
+    ::= { ibNqaStatisticsResultsEntry 10 }
+
+ibNqaStatResInterval OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "seconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object contains the interval between two times of statistic."
+    ::= { ibNqaStatisticsResultsEntry 11 }
+
+ibNqaStatResRttNumDisconnects OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times that a NQA probe failed because the destination
+        became disconnected.
+        For connectionless protocol pingCtlTypes, this number should be
+        zero."
+    ::= { ibNqaStatisticsResultsEntry 12 }
+
+ibNqaStatResRttTimeouts OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+       "The number of times that a probe failed because the probe timed out."
+    ::= { ibNqaStatisticsResultsEntry 13 }
+
+ibNqaStatResRttBusies OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times that a NQA probe failed because
+        errors related to sockets."
+    ::= { ibNqaStatisticsResultsEntry 14 }
+
+ibNqaStatResRttNoConnections OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times that a NQA probe failed because the
+        probe destination is unavailable.
+        For connectionless protocol pingCtlTypes, this number should be
+        zero."
+    ::= { ibNqaStatisticsResultsEntry 15 }
+
+ibNqaStatResRttDrops OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times that a NQA operation failed to initiate
+        for unavailibility of necessary internal resources."
+    ::= { ibNqaStatisticsResultsEntry 16 }
+
+ibNqaStatResRttSequenceErrors OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets arrived out of sequence."
+    ::= { ibNqaStatisticsResultsEntry 17 }
+
+ibNqaStatResRttErrors OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of other errors."
+    ::= { ibNqaStatisticsResultsEntry 18 }
+
+ibNqaStatResLostPacketRatio OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of this object reflects the drop rate of NQA
+        test packet.
+        For example, if the value is 30, that means source device
+        only had received 70 percent packets of total sent packets."
+    ::= { ibNqaStatisticsResultsEntry 19 }
+
+ibNqaStatResPacketLateArrival OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of this object reflects the number of the packets that
+        arrived after the timeout."
+    ::= { ibNqaStatisticsResultsEntry 20 }
+
+ibNqaStatResRttSum OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object contains the sum for all NQA responses received
+         during the test lifetime.  The value of this object MUST be
+         reported as 0 when no NQA responses have been received."
+    ::= { ibNqaStatisticsResultsEntry 21 }
+
+ibNqaStatResNumOfDelaySD OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of one way times from source to destination that are
+        successfully measured."
+    ::= { ibNqaStatisticsResultsEntry 22 }
+
+ibNqaStatResMinDelaySD OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum one way times from source to destination."
+    ::= { ibNqaStatisticsResultsEntry 23 }
+
+ibNqaStatResMaxDelaySD OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum one way times from source to destination."
+    ::= { ibNqaStatisticsResultsEntry 24 }
+
+ibNqaStatResSumDelaySD OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The sum of one way times from source to destination."
+    ::= { ibNqaStatisticsResultsEntry 25 }
+
+ibNqaStatResSum2DelaySD OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The sum of squares of one way times from source to destination."
+    ::= { ibNqaStatisticsResultsEntry 26 }
+
+ibNqaStatResNumOfDelayDS OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of one way times from destination to source that are
+        successfully measured."
+    ::= { ibNqaStatisticsResultsEntry 27 }
+
+ibNqaStatResMinDelayDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum one way times from destination to source."
+    ::= { ibNqaStatisticsResultsEntry 28 }
+
+ibNqaStatResMaxDelayDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum one way times from destination to source."
+    ::= { ibNqaStatisticsResultsEntry 29 }
+
+ibNqaStatResSumDelayDS OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The sum of one way times from destination to source."
+    ::= { ibNqaStatisticsResultsEntry 30 }
+
+ibNqaStatResSum2DelayDS OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The sum of squares of one way times from destination to source."
+    ::= { ibNqaStatisticsResultsEntry 31 }
+
+ibNqaStatResLostPacketPermillage OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of this object reflects the drop rate of NQA
+        test packet.
+        For example, if the value is 100, that means source device
+        only had received 900 packets per thousand."
+    ::= { ibNqaStatisticsResultsEntry 32 }
+
+
+
+-- =================================================================
+--    ibNqaGroupStatsJitterTable
+-- =================================================================
+
+ibNqaGroupStatsJitterTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbNqaGroupStatsJitterEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Test Group Statistic table for jitter activity in a statistic cycle.
+        The statistic cycle is the value of ibNqaCtlStatisticsInterval.
+        The first two index identify the pingCtlEntry that a probe statistics
+        result (IbNqaStatisticsResultsEntry) belongs to."
+    ::= { ibNqaObjects 12 }
+
+ibNqaGroupStatsJitterEntry OBJECT-TYPE
+    SYNTAX      IbNqaGroupStatsJitterEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry contains the group statistic information for jitter activity.
+        This entry is created only if the pingCtlType is ibNqajitter."
+    INDEX
+        {
+            pingCtlOwnerIndex,
+            pingCtlTestName,
+            ibNqaStatJitterIndex
+        }
+    ::= { ibNqaGroupStatsJitterTable 1 }
+
+IbNqaGroupStatsJitterEntry ::=
+    SEQUENCE
+        {
+            ibNqaStatJitterIndex               Unsigned32,
+            ibNqaStatJitterMinOfPosSD          Gauge32,
+            ibNqaStatJitterMaxOfPosSD          Gauge32,
+            ibNqaStatJitterNumOfPosSD          Counter32,
+            ibNqaStatJitterSumOfPosSD          Counter32,
+            ibNqaStatJitterSumOfSquarePosSD    Counter32,
+            ibNqaStatJitterMinOfNegSD          Gauge32,
+            ibNqaStatJitterMaxOfNegSD          Gauge32,
+            ibNqaStatJitterNumOfNegSD          Counter32,
+            ibNqaStatJitterSumOfNegSD          Counter32,
+            ibNqaStatJitterSumOfSquareNegSD    Counter32,
+            ibNqaStatJitterMinOfPosDS          Gauge32,
+            ibNqaStatJitterMaxOfPosDS          Gauge32,
+            ibNqaStatJitterNumOfPosDS          Counter32,
+            ibNqaStatJitterSumOfPosDS          Counter32,
+            ibNqaStatJitterSumOfSquarePosDS    Counter32,
+            ibNqaStatJitterMinOfNegDS          Gauge32,
+            ibNqaStatJitterMaxOfNegDS          Gauge32,
+            ibNqaStatJitterNumOfNegDS          Counter32,
+            ibNqaStatJitterSumOfNegDS          Counter32,
+            ibNqaStatJitterSumOfSquareNegDS    Counter32,
+            ibNqaStatJitterPacketLossSD        Counter32,
+            ibNqaStatJitterPacketLossDS        Counter32,
+            ibNqaStatJitterAvePosSD            Gauge32,
+            ibNqaStatJitterAveNegSD            Gauge32,
+            ibNqaStatJitterAvePosDS            Gauge32,
+            ibNqaStatJitterAveNegDS            Gauge32,
+            ibNqaStatJitterPktLossUnknown      Counter32,
+            ibNqaStatJitterMaxOfICPIF          Gauge32,
+            ibNqaStatJitterMinOfICPIF          Gauge32,
+            ibNqaStatJitterMaxOfMOS            Gauge32,
+            ibNqaStatJitterMinOfMOS            Gauge32,
+            ibNqaStatJitterAveSD               Gauge32,
+            ibNqaStatJitterAveDS               Gauge32
+        }
+
+ibNqaStatJitterIndex OBJECT-TYPE
+    SYNTAX      Unsigned32(1..'ffffffff'h)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry in this table is created when the statistic
+        result of a NQA probe in a statistic cycle is determined.
+
+        An implementation MUST start assigning ibNqaStatJitterIndex
+        values at 1 and wrap after exceeding the maximum possible
+        value as defined by the limit of this object ('ffffffff'h)."
+    ::= { ibNqaGroupStatsJitterEntry 1 }
+
+ibNqaStatJitterMinOfPosSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the minimal positive jitter value
+        from source to destination in jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 2 }
+
+ibNqaStatJitterMaxOfPosSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the maximal positive jitter value
+        from source to destination in the jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 3 }
+
+ibNqaStatJitterNumOfPosSD OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of positive jitters from source to destination in the
+        jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 4 }
+
+ibNqaStatJitterSumOfPosSD OBJECT-TYPE
+    SYNTAX      Counter32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the sum of positive jitter values
+        from source to destination in the jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 5 }
+
+ibNqaStatJitterSumOfSquarePosSD OBJECT-TYPE
+    SYNTAX      Counter32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the sum of square of positive jitter
+        values from source to destination in the jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 6 }
+
+ibNqaStatJitterMinOfNegSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the minimal absolute values of
+        negative jitter value from source to destination in the jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 7 }
+
+ibNqaStatJitterMaxOfNegSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the maximal absolute values of negative
+        jitter value from source to destination in the jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 8 }
+
+ibNqaStatJitterNumOfNegSD OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of negative jitters from source to destination in the
+        jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 9 }
+
+ibNqaStatJitterSumOfNegSD OBJECT-TYPE
+    SYNTAX      Counter32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the sum of negative jitter values
+        from source to destination in the jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 10 }
+
+ibNqaStatJitterSumOfSquareNegSD OBJECT-TYPE
+    SYNTAX      Counter32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the sum of square of negative jitter
+        values from source to destination in the jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 11 }
+
+ibNqaStatJitterMinOfPosDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the minimal positive jitter value
+        from destination to source in the jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 12 }
+
+ibNqaStatJitterMaxOfPosDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the maximal positive jitter value
+        from destination to source in the jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 13 }
+
+ibNqaStatJitterNumOfPosDS OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of positive jitters from destination to source in the
+        jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 14 }
+
+ibNqaStatJitterSumOfPosDS OBJECT-TYPE
+    SYNTAX      Counter32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the sum of positive jitter values
+        from destination to source in the jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 15 }
+
+ibNqaStatJitterSumOfSquarePosDS OBJECT-TYPE
+    SYNTAX      Counter32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the sum of square of positive jitter
+        values destination to source in the jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 16 }
+
+ibNqaStatJitterMinOfNegDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the minimal absolute values of negative
+        jitter value from destination to source in the jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 17 }
+
+ibNqaStatJitterMaxOfNegDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the maximal absolute values of negative
+        jitter value from destination to source in the jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 18 }
+
+ibNqaStatJitterNumOfNegDS OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of negative jitters from destination to source in the
+        jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 19 }
+
+ibNqaStatJitterSumOfNegDS OBJECT-TYPE
+    SYNTAX      Counter32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the sum of negative jitter values
+        from destination to source in the jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 20 }
+
+ibNqaStatJitterSumOfSquareNegDS OBJECT-TYPE
+    SYNTAX      Counter32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the sum of square of negative jitter
+        values from destination to source in the jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 21 }
+
+ibNqaStatJitterPacketLossSD OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The lost packets number sent from source to destination."
+    ::= { ibNqaGroupStatsJitterEntry 22 }
+
+ibNqaStatJitterPacketLossDS OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The lost packets number sent from destination to source."
+    ::= { ibNqaGroupStatsJitterEntry 23 }
+
+ibNqaStatJitterAvePosSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the average positive jitter value
+        from source to destination."
+    ::= { ibNqaGroupStatsJitterEntry 24 }
+
+ibNqaStatJitterAveNegSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the average negative jitter value
+        from source to destination."
+    ::= { ibNqaGroupStatsJitterEntry 25 }
+
+ibNqaStatJitterAvePosDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the average positive jitter value
+        from destination to source."
+    ::= { ibNqaGroupStatsJitterEntry 26 }
+
+ibNqaStatJitterAveNegDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the average negative jitter value
+        from destination to source."
+    ::= { ibNqaGroupStatsJitterEntry 27 }
+
+ibNqaStatJitterPktLossUnknown OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets which is lost with unknown reason."
+    ::= { ibNqaGroupStatsJitterEntry 28 }
+
+ibNqaStatJitterMaxOfICPIF OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum of all ICPIF values in a statistic cycle for jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 29 }
+
+ibNqaStatJitterMinOfICPIF OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum of all ICPIF values in a statistic cycle for jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 30 }
+
+ibNqaStatJitterMaxOfMOS OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum of all MOS values in a statistic cycle for jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 31 }
+
+ibNqaStatJitterMinOfMOS OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum of all MOS values in a statistic cycle for jitter test."
+    ::= { ibNqaGroupStatsJitterEntry 32 }
+
+ibNqaStatJitterAveSD OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the average jitter value
+        from source to destination."
+    ::= { ibNqaGroupStatsJitterEntry 33 }
+
+ibNqaStatJitterAveDS OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "milliseconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of time that records the average jitter value
+        from destination to source."
+    ::= { ibNqaGroupStatsJitterEntry 34 }
+
+-- Reaction Table
+ibNqaReactionTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbNqaReactionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table of NQA test monitoring notification and
+        reaction configuration definitions.
+
+        An entry is removed from this table when its
+        corresponding pingCtlEntry is deleted.
+
+         When PingCtlType of the test is ibNqaTwampLight,
+         it does not support the table."
+  ::= { ibNqaObjects 13 }
+
+ibNqaReactionEntry OBJECT-TYPE
+    SYNTAX      IbNqaReactionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines an entry in the ibNqaReactionTable. The first two index
+        elements identify the pingCtlEntry that a ibNqaReactItemIndex
+        belongs to. The third index element selects a single reaction."
+    INDEX
+        {
+            ibNqaReactOwnerIndex,
+            ibNqaReactTestName,
+            ibNqaReactItemIndex
+        }
+    ::= { ibNqaReactionTable 1 }
+
+IbNqaReactionEntry ::=
+    SEQUENCE
+        {
+            ibNqaReactOwnerIndex                   SnmpAdminString,
+            ibNqaReactTestName                     SnmpAdminString,
+            ibNqaReactItemIndex                    Unsigned32,
+            ibNqaReactCheckedElement               INTEGER,
+            ibNqaReactThresholdUpperLimit          Unsigned32,
+            ibNqaReactThresholdLowerLimit          Unsigned32,
+            ibNqaReactThresholdType                INTEGER,
+            ibNqaReactThresholdConsecNum           Unsigned32,
+            ibNqaReactThresholdAccumNum            Unsigned32,
+            ibNqaReactActionType                   INTEGER,
+            ibNqaReactCurrentStatus                INTEGER,
+            ibNqaReactRowStatus                    RowStatus,
+            ibNqaReactCheckedNum                   Unsigned32,
+            ibNqaReactThresholdNum                 Unsigned32
+        }
+
+ibNqaReactOwnerIndex OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The first index of ibNqaReactionTable, it is the same as
+        pingCtlOwnerIndex in pingCtlTable. ibNqaReactOwnerIndex and
+        ibNqaReactTestName identify an existed test."
+    ::= { ibNqaReactionEntry 1 }
+
+ibNqaReactTestName OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The second index of ibNqaReactionTable, it is the same as
+        pingCtlTestName in pingCtlTable. ibNqaReactOwnerIndex and
+        ibNqaReactTestName identify an existed test."
+    ::= { ibNqaReactionEntry 2 }
+
+ibNqaReactItemIndex OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..10)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The third index of ibNqaReactionTable, it definitely
+        identifies one of the reaction configurations for a test."
+    ::= { ibNqaReactionEntry 3 }
+
+ibNqaReactCheckedElement OBJECT-TYPE
+    SYNTAX      INTEGER {
+                          probetime(1),
+                          probefailure(2),
+                          jitterrtt(3),
+                          jitterpacketloss(4),
+                          jittersd(5),
+                          jitterds(6),
+                          icpif(7),
+                          mos(8),
+                          jitterOwdSD(9),
+                          jitterOwdDS(10),
+                          testfailure(11),
+                          testresultchange(12)
+                        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "A list of reaction condition type.
+        'probetime' and 'probefailure' are valid when pingCtlType of
+        the test is not ibNqajitter.
+
+        'jitterOwdSD': one way delay from source to destination in
+                       jitter test.
+        'jitterOwdDS': one way delay from destination to source in
+                       jitter test.
+
+        'jitterrtt', 'jitterpacketloss', 'jittersd', 'jitterds',
+        'jitterOwdSD' and 'jitterOwdDS' are valid when pingCtlType
+        of the test is ibNqajitter.
+
+        'icpif' and 'mos' are valid when pingCtlType of the test is
+        ibNqajitter and ibNqaCtlCodecType is 'g711Alaw' or 'g711Ulaw'
+        or 'g729A'."
+     ::= { ibNqaReactionEntry 4 }
+
+ibNqaReactThresholdUpperLimit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object defines an administrative upper-threshold value for
+        ibNqaReactCheckedElement.
+
+        The value of this object is zero if ibNqaReactCheckedElement is
+        specified as 'jitterpacketloss' and 'probefailure'."
+    DEFVAL { 0 }
+    ::= { ibNqaReactionEntry 5 }
+
+ibNqaReactThresholdLowerLimit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object defines an administrative lower-threshold value for
+        ibNqaReactCheckedElement.
+
+        The value of ibNqaReactThresholdLowerLimit should be equal or less
+        than the value of ibNqaReactThresholdUpperLimit.
+
+        The value of this object is zero if ibNqaReactCheckedElement is
+        specified as 'jitterpacketloss' and 'probefailure'."
+    DEFVAL { 0 }
+    ::= { ibNqaReactionEntry 6 }
+
+ibNqaReactThresholdType OBJECT-TYPE
+    SYNTAX      INTEGER {
+                           invalid(0),
+                           average(1),
+                           consecutive(2),
+                           accumulative(3)
+                       }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object defines the reaction threshold types.
+
+        invalid(0):     Invalid value.
+
+        average(1):     If reaction threshold type is average and the average
+                        value of watched operation exceeds threshold limit,
+                        an action specified in ibNqaReactActionType is
+                        generated when ibNqaReactCurrentStatus changes.
+
+        consecutive(2): If reaction threshold type is consecutive and
+                        the times of watched operation consecutively exceeds
+                        the limit specified by ibNqaReactThresholdConsecNum,
+                        an action specified in ibNqaReactActionType is
+                        generated when ibNqaReactCurrentStatus changes.
+
+        accumulative(3): If reaction threshold type is accumulative and
+                        the times of watched operation accumulatively exceeds
+                        the limit specified by ibNqaReactThresholdAccumNum,
+                        an action specified in ibNqaReactActionType is
+                        generated when ibNqaReactCurrentStatus changes.
+
+        If reaction threshold type is not configured, the value of this
+        object is 'invalid'."
+    ::= { ibNqaReactionEntry 7 }
+
+ibNqaReactThresholdConsecNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object defines a consecutive threshold limit.
+
+        The value is zero when ibNqaReactThresholdType
+        is not 'consecutive'."
+    DEFVAL { 0 }
+    ::= { ibNqaReactionEntry 8 }
+
+ibNqaReactThresholdAccumNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object defines an accumulative threshold limit.
+
+        The value is zero when the ibNqaReactThresholdType
+        is not 'accumulative'."
+    DEFVAL { 0 }
+    ::= { ibNqaReactionEntry 9 }
+
+ibNqaReactActionType OBJECT-TYPE
+    SYNTAX      INTEGER {
+                           none(0),
+                           trapOnly(1),
+                           triggerOnly(2),
+                           trapAndTrigger(3)
+                        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specifies the type of reaction to generate if the specified
+        violation type occurs for the monitored element:
+
+        none               - No reaction is generated
+        trapOnly           - A trap is generated
+        triggerOnly        - All trigger actions defined for this
+                             entry are generated
+        trapAndTrigger     - Both a trap and all trigger actions
+                             are generated "
+    DEFVAL { none }
+    ::= { ibNqaReactionEntry 10 }
+
+ibNqaReactCurrentStatus OBJECT-TYPE
+    SYNTAX      INTEGER {
+                            invalid(1),
+                            overThreshold(2),
+                            belowThreshold(3),
+                            overUpperThreshold(4),
+                            belowLowerThreshold(5)
+                        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the current status of this reaction entry:
+
+        invalid  - The status of the reaction entry is unknown.
+
+        overThreshold       - The status of the reaction entry is overThreshold
+                              when the monitored result exceeds the threshold
+                              value for the ibNqaReactThresholdType.
+
+        belowThreshold      - The status of the reaction entry is belowThreshold
+                              when the monitored result is under the threshold
+                              value for the ibNqaReactThresholdType.
+
+        overUpperThreshold  - The status of the reaction entry is overThreshold
+                              when the monitored result is exceeds the
+                              upper-threshold value for the
+                              ibNqaReactThresholdType.
+
+        belowLowerThreshold - The status of the reaction entry is belowThreshold
+                              when the monitored result is under the
+                              lower-threshold value for
+                              ibNqaReactThresholdType."
+
+    ::= { ibNqaReactionEntry 11 }
+
+ibNqaReactRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object allows entries to be created and deleted
+        in the ibNqaReactionTable.
+
+        Creation of an entry in this table results in a new set of reaction
+        configurations which take effect immediately.
+
+        Deletion of an entry in this table results in corresponding reaction
+        configurations are being deleted and stop taking effect."
+    REFERENCE
+        "See definition of RowStatus in RFC 2579, 'Textual
+        Conventions for SMIv2.'"
+    ::= { ibNqaReactionEntry 12 }
+
+ibNqaReactCheckedNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of checked element samples that are monitored."
+    DEFVAL { 0 }
+    ::= { ibNqaReactionEntry 13 }
+
+ibNqaReactThresholdNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of checked element samples that are over threshold."
+    DEFVAL { 0 }
+    ::= { ibNqaReactionEntry 14 }
+
+-- Statistics Reaction Table
+ibNqaStatisticsReactionTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbNqaStatisticsReactionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table of NQA test monitoring notification and
+        reaction configuration definitions.
+
+        An entry is removed from this table when its
+        corresponding pingCtlEntry is deleted."
+  ::= { ibNqaObjects 14 }
+
+ibNqaStatisticsReactionEntry OBJECT-TYPE
+    SYNTAX      IbNqaStatisticsReactionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Defines an entry in the ibNqaStatisticsReactionTable. The
+        first two index elements identify the pingCtlEntry that a
+        ibNqaReactItemIndex belongs to. The third index element
+        identifies an entry in the ibNqaStatisticsResultsTable.
+        The forth index element selects a single reaction."
+    INDEX
+        {
+            ibNqaStatReactOwnerIndex,
+            ibNqaStatReactTestName,
+            ibNqaStatReactIndex,
+            ibNqaStatReactItemIndex
+        }
+    ::= { ibNqaStatisticsReactionTable 1 }
+
+IbNqaStatisticsReactionEntry ::=
+    SEQUENCE
+        {
+            ibNqaStatReactOwnerIndex               SnmpAdminString,
+            ibNqaStatReactTestName                 SnmpAdminString,
+            ibNqaStatReactIndex                    Unsigned32,
+            ibNqaStatReactItemIndex                Unsigned32,
+            ibNqaStatReactCheckedNum               Counter32,
+            ibNqaStatReactThresholdNum             Counter32
+        }
+
+ibNqaStatReactOwnerIndex OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..32))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The first index of ibNqaStatisticsReactionTable, it is the same
+        as pingCtlOwnerIndex in pingCtlTable."
+    ::= { ibNqaStatisticsReactionEntry 1 }
+
+ibNqaStatReactTestName OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..32))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The second index of ibNqaStatisticsReactionTable, it is the same
+        as pingCtlTestName in pingCtlTable."
+    ::= { ibNqaStatisticsReactionEntry 2 }
+
+ibNqaStatReactIndex OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..10)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The third index of ibNqaStatisticsReactionTable. An entry in
+        this table is created when the statistics result of a NQA probe
+        is determined.
+
+        An implementation MUST start assigning ibNqaStatResIndex values
+        at 1 and wrap after exceeding the maximum possible value as
+        defined by the limit of this object ('ffffffff'h)."
+    ::= { ibNqaStatisticsReactionEntry 3 }
+
+ibNqaStatReactItemIndex OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..'ffffffff'h)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The forth index of ibNqaStatisticsReactionTable, it definitely
+        identifies one of the reaction configurations for a test"
+    ::= { ibNqaStatisticsReactionEntry 4 }
+
+ibNqaStatReactCheckedNum OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of checked element samples that are monitored."
+    ::= { ibNqaStatisticsReactionEntry 5 }
+
+ibNqaStatReactThresholdNum OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of checked element samples that are over threshold."
+    ::= { ibNqaStatisticsReactionEntry 6 }
+
+-- =================================================================
+--   NQA server configuration extended information
+-- =================================================================
+
+ibNqaTcpServerExtendTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbNqaTcpServerExtendEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table which contains the status of extended NQA TCP server
+        configuration information."
+    ::= { ibNqaObjects 15 }
+
+ibNqaTcpServerExtendEntry OBJECT-TYPE
+    SYNTAX      IbNqaTcpServerExtendEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table which contains the status of extended NQA TCP server
+        configuration information.
+        This entry includes the TCP server IP address, port,
+        VPN name and DSField."
+    INDEX {
+            ibNqaTcpServerExtIpAddress,
+            ibNqaTcpServerExtPort,
+            ibNqaTcpServerExtVPNType,
+            ibNqaTcpServerExtVPNInstance
+          }
+    ::= { ibNqaTcpServerExtendTable 1 }
+
+IbNqaTcpServerExtendEntry  ::= SEQUENCE
+{
+    ibNqaTcpServerExtIpAddress                InetAddress,
+    ibNqaTcpServerExtPort                     Integer32,
+    ibNqaTcpServerExtVPNType                  VpnInstanceType,
+    ibNqaTcpServerExtVPNInstance              OCTET STRING,
+    ibNqaTcpServerExtDSField                  Unsigned32,
+    ibNqaTcpServerExtRowStatus                RowStatus
+}
+
+ibNqaTcpServerExtIpAddress          OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "TCP server's IP address."
+    ::= { ibNqaTcpServerExtendEntry 1 }
+
+ibNqaTcpServerExtPort          OBJECT-TYPE
+    SYNTAX      Integer32 (0..65536)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "TCP server's port number."
+    ::= { ibNqaTcpServerExtendEntry 2 }
+
+ibNqaTcpServerExtVPNType OBJECT-TYPE
+    SYNTAX      VpnInstanceType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "TCP server's VPN instance type."
+    ::= { ibNqaTcpServerExtendEntry 3 }
+
+ibNqaTcpServerExtVPNInstance OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..31))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "TCP server's VPN name.If the NQA server listens on the public network,
+        the value of ibNqaTcpServerExtVPNType must be public(1) and the value
+        of this object can be set to any non-printable character string.If the
+        NQA server listens on the private network, the value of ibNqaTcpServerExtVPNType
+        must be vpn(2) and the value of this object can be set to any non-printable
+        character string."
+    ::= { ibNqaTcpServerExtendEntry 4 }
+
+ibNqaTcpServerExtDSField OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..256)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specifies the value to store in the Differentiated
+        Services (DS) Field in the IP packet used to
+        encapsulate the probe.  The DS Field is defined
+        as the Type of Service (TOS) octet in a IPv4 header
+        or as the Traffic Class octet in a IPv6 header.
+
+        The value of this object must be a decimal integer
+        in the range of 0 to 255.  Not all values are legal or
+        meaningful.  A value of 0 means that the function
+        represented by this option is not supported.  The value
+        of 256 indicates that TOS is not configured, and this
+        value is not supported by IP implementations.  DS Field
+        usage is often not supported by IP implementations and
+        not all values are supported.  Refer to RFC 2474 for
+        guidance on usage of this field."
+    REFERENCE
+        "Refer to RFC 2474 for the definition of the
+        Differentiated Services Field and to RFC 1812
+        Section 5.3.2 for Type of Service (TOS)."
+    ::= { ibNqaTcpServerExtendEntry 5 }
+
+ibNqaTcpServerExtRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "ibNqaTcpServerIpAddress, ibNqaTcpServerPort, ibNqaTcpServerExtVPNType
+        and ibNqaTcpServerVPNInstance must be set during a creation operation."
+    REFERENCE
+        "RFC 2579"
+    ::= { ibNqaTcpServerExtendEntry 6 }
+
+ibNqaUdpServerExtendTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbNqaUdpServerExtendEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Status of extended NQA UDP server configuration information."
+    ::= { ibNqaObjects 16 }
+
+ibNqaUdpServerExtendEntry OBJECT-TYPE
+    SYNTAX      IbNqaUdpServerExtendEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table which contains the status of extended NQA UDP server
+        configuration information.
+        This entry includes the UDP server IP address, port,
+        VPN name and DSField."
+    INDEX {
+            ibNqaUdpServerExtIpAddress,
+            ibNqaUdpServerExtPort,
+            ibNqaUdpServerExtVPNType,
+            ibNqaUdpServerExtVPNInstance
+          }
+    ::= { ibNqaUdpServerExtendTable 1 }
+
+IbNqaUdpServerExtendEntry  ::= SEQUENCE
+{
+    ibNqaUdpServerExtIpAddress                InetAddress,
+    ibNqaUdpServerExtPort                     Integer32,
+    ibNqaUdpServerExtVPNType                  VpnInstanceType,
+    ibNqaUdpServerExtVPNInstance              OCTET STRING,
+    ibNqaUdpServerExtDSField                  Unsigned32,
+    ibNqaUdpServerExtRowStatus                RowStatus
+}
+
+ibNqaUdpServerExtIpAddress          OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "UDP server's IP address."
+    ::= { ibNqaUdpServerExtendEntry 1 }
+
+ibNqaUdpServerExtPort          OBJECT-TYPE
+    SYNTAX      Integer32 (0..65536)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "UDP server's port number."
+    ::= { ibNqaUdpServerExtendEntry 2 }
+
+ibNqaUdpServerExtVPNType OBJECT-TYPE
+    SYNTAX      VpnInstanceType
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "UDP server's VPN instance type."
+    ::= { ibNqaUdpServerExtendEntry 3 }
+
+ibNqaUdpServerExtVPNInstance OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..31))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "UDP server's VPN name.If the NQA server listens on the public network,
+        the value of ibNqaUdpServerExtVPNType must be public(1) and the value
+        of this object can be set to any non-printable character string.If the
+        NQA server listens on the private network, the value of ibNqaUdpServerExtVPNType
+        must be vpn(2) and the value of this object can be set to any non-printable
+        character string."
+    ::= { ibNqaUdpServerExtendEntry 4 }
+
+ibNqaUdpServerExtDSField OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..256)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specifies the value to store in the Differentiated
+        Services (DS) Field in the IP packet used to
+        encapsulate the probe.  The DS Field is defined
+        as the Type of Service (TOS) octet in a IPv4 header
+        or as the Traffic Class octet in a IPv6 header.
+
+        The value of this object must be a decimal integer
+        in the range of 0 to 255.  Not all values are legal or
+        meaningful.  A value of 0 means that the function
+        represented by this option is not supported.  The value
+        of 256 indicates that TOS is not configured, and this
+        value is not supported by IP implementations.  DS Field
+        usage is often not supported by IP implementations and
+        not all values are supported.  Refer to RFC 2474 for
+        guidance on usage of this field."
+    REFERENCE
+        "Refer to RFC 2474 for the definition of the
+        Differentiated Services Field and to RFC 1812
+        Section 5.3.2 for Type of Service (TOS)."
+    ::= { ibNqaUdpServerExtendEntry 5 }
+
+ibNqaUdpServerExtRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "ibNqaUdpServerIpAddress, ibNqaUdpServerPort, ibNqaUdpServerExtVPNType
+        and ibNqaUdpServerVPNInstance must be set during a creation operation."
+    REFERENCE
+        "RFC 2579"
+    ::= { ibNqaUdpServerExtendEntry 6 }
+
+-- Notification Definition section
+ibNqaNotifications  OBJECT IDENTIFIER ::= { ibNqa 3 }
+ibNqaProbeTimeOverThreshold NOTIFICATION-TYPE
+    OBJECTS {
+            ibNqaReactOwnerIndex,
+            ibNqaReactTestName,
+            ibNqaReactItemIndex,
+            pingCtlTargetAddressType,
+            pingCtlTargetAddress,
+            pingCtlType,
+            pingCtlDescr,
+            ibNqaReactThresholdType,
+            ibNqaReactCurrentStatus
+        }
+    STATUS  current
+    DESCRIPTION
+        "It is generated when the value of ibNqaReactCurrentStatus
+        changes.
+        The change may occur when the watched condition is over threshold
+        or below threshold.
+
+        The over threshold situations is specified as below.
+          1. Probe time(equals to RTT for some type of tests) is not in
+             the range ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit.
+          2. The probe time is accumulatively not in the range
+             ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit for a number of times
+             specified in ibNqaReactThresholdAccumNum.
+          3. The probe time is consecutively in the range
+             ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit for a number of times
+             specified in ibNqaReactThresholdConsecNum.
+
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly' or 'trapAndTrigger' and pingCtlType of the test
+        is not ibNqajitter."
+    ::= { ibNqaNotifications 1 }
+
+ibNqaJitterRTTOverThreshold NOTIFICATION-TYPE
+    OBJECTS {
+            ibNqaReactOwnerIndex,
+            ibNqaReactTestName,
+            ibNqaReactItemIndex,
+            pingCtlTargetAddressType,
+            pingCtlTargetAddress,
+            pingCtlType,
+            pingCtlDescr,
+            ibNqaReactThresholdType,
+            ibNqaReactCurrentStatus
+        }
+    STATUS  current
+    DESCRIPTION
+        "It is generated when the value of ibNqaReactCurrentStatus
+        changes.
+        The change may occur when the watched condition is over threshold
+        or below threshold.
+
+        The over threshold situations is specified as below.
+          1. The average NQA round-trip-time (RTT) of jitter packets
+             is not in the range ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit.
+          2. The RTT of jitter packets is accumulatively not in the range
+             ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit for a number of times specified
+             in ibNqaReactThresholdAccumNum in one test.
+
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly' or 'trapAndTrigger' and pingCtlType of the test
+        is ibNqajitter or ibNqaTwampLight."
+    ::= { ibNqaNotifications 2 }
+
+ibNqaProbeFailure NOTIFICATION-TYPE
+    OBJECTS {
+            ibNqaReactOwnerIndex,
+            ibNqaReactTestName,
+            ibNqaReactItemIndex,
+            pingCtlTargetAddressType,
+            pingCtlTargetAddress,
+            pingCtlType,
+            pingCtlDescr,
+            ibNqaReactThresholdType,
+            ibNqaReactCurrentStatus
+        }
+    STATUS  current
+    DESCRIPTION
+        "It is generated when the value of ibNqaReactCurrentStatus
+        changes.
+        The change may occur when the watched condition is over threshold
+        or below threshold.
+
+        The over threshold situations is specified as below.
+          1. When the probe test accumulatively failed for a
+             number of times specified in ibNqaReactThresholdAccumNum in one
+             test while the value of ibNqaReactThresholdType is 'accumulative'.
+          2. When the probe test consecutively failed for
+             a number of times specified in ibNqaReactThresholdConsecNum in one
+             test while the value of ibNqaReactThresholdType is 'consecutive'.
+
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly' or 'trapAndTrigger' and pingCtlType of the test
+        is not ibNqajitter."
+    ::= { ibNqaNotifications 3 }
+
+ibNqaJitterPacketLoss NOTIFICATION-TYPE
+    OBJECTS {
+            ibNqaReactOwnerIndex,
+            ibNqaReactTestName,
+            ibNqaReactItemIndex,
+            pingCtlTargetAddressType,
+            pingCtlTargetAddress,
+            pingCtlType,
+            pingCtlDescr,
+            ibNqaReactThresholdType,
+            ibNqaReactCurrentStatus
+        }
+    STATUS  current
+    DESCRIPTION
+        "It is generated when the value of ibNqaReactCurrentStatus
+        changes.
+        The change may occur when the watched condition is over threshold
+        or below threshold.
+
+        The over threshold situations is specified as below.
+          1. When the jitter packets accumulatively lost for a
+             number of times specified in ibNqaReactThresholdAccumNum in one
+             test while the value of ibNqaReactThresholdType is 'accumulative'.
+
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly' or 'trapAndTrigger' and pingCtlType of the test
+        is ibNqajitter or ibNqaTwampLight."
+    ::= { ibNqaNotifications 4 }
+
+ibNqaJitterSDOverThreshold NOTIFICATION-TYPE
+    OBJECTS {
+            ibNqaReactOwnerIndex,
+            ibNqaReactTestName,
+            ibNqaReactItemIndex,
+            pingCtlTargetAddressType,
+            pingCtlTargetAddress,
+            pingCtlType,
+            pingCtlDescr,
+            ibNqaReactThresholdType,
+            ibNqaReactCurrentStatus
+        }
+    STATUS  current
+    DESCRIPTION
+        "The SD means the jitter values from source to destination.
+
+        It is generated when the value of ibNqaReactCurrentStatus
+        changes.
+        The change may occur when the watched condition is over threshold
+        or below threshold.
+
+        The over threshold situations is specified as below.
+          1. The average of SD in one jitter test is not in the range
+             ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit and the
+             ibNqaReactThresholdType is specified as 'average' type.
+          2. The average of SD in one jitter test is accumulatively
+             not in the range ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit for a number of times specified
+             in ibNqaReactThresholdAccumNum and the
+             ibNqaReactThresholdType is specified as 'accumulative' type.
+
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly' or 'trapAndTrigger' and pingCtlType of the test
+        is ibNqajitter."
+    ::= { ibNqaNotifications 5 }
+
+ibNqaJitterDSOverThreshold NOTIFICATION-TYPE
+    OBJECTS {
+            ibNqaReactOwnerIndex,
+            ibNqaReactTestName,
+            ibNqaReactItemIndex,
+            pingCtlTargetAddressType,
+            pingCtlTargetAddress,
+            pingCtlType,
+            pingCtlDescr,
+            ibNqaReactThresholdType,
+            ibNqaReactCurrentStatus
+        }
+    STATUS  current
+    DESCRIPTION
+        "The DS means the jitter values from destination to source.
+
+        It is generated when the value of ibNqaReactCurrentStatus
+        changes.
+        The change may occur when the watched condition is over threshold
+        or below threshold.
+
+        The over threshold situations is specified as below.
+          1. The average of DS in one jitter test is not in the range
+             ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit and the
+             ibNqaReactThresholdType is specified as 'average' type.
+          2. The average of DS in one jitter test is accumulatively not
+             in the range ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit for a number of times specified
+             in ibNqaReactThresholdAccumNum and the
+             ibNqaReactThresholdType is specified as 'accumulative' type.
+
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly' or 'trapAndTrigger' and pingCtlType of the test
+        is ibNqajitter."
+    ::= { ibNqaNotifications 6 }
+
+ibNqaICPIFOverThreshold NOTIFICATION-TYPE
+    OBJECTS {
+            ibNqaReactOwnerIndex,
+            ibNqaReactTestName,
+            ibNqaReactItemIndex,
+            pingCtlTargetAddressType,
+            pingCtlTargetAddress,
+            pingCtlType,
+            pingCtlDescr,
+            ibNqaReactCurrentStatus
+        }
+    STATUS  current
+    DESCRIPTION
+        "It is generated when the value of ibNqaReactCurrentStatus
+        changes.
+        The change may occur when the watched condition is over threshold
+        or below threshold.
+
+        The over threshold situations is specified as below.
+          1. When the ICPIF value in one jitter test is not in
+             the range ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit.
+
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly' or 'trapAndTrigger', pingCtlType of the test
+        is ibNqajitter and ibNqaCtlCodecType is 'g711Alaw' or 'g711Ulaw'
+        or 'g729A'."
+    ::= { ibNqaNotifications 7 }
+
+ibNqaMOSOverThreshold NOTIFICATION-TYPE
+    OBJECTS {
+            ibNqaReactOwnerIndex,
+            ibNqaReactTestName,
+            ibNqaReactItemIndex,
+            pingCtlTargetAddressType,
+            pingCtlTargetAddress,
+            pingCtlType,
+            pingCtlDescr,
+            ibNqaReactCurrentStatus
+        }
+    STATUS  current
+    DESCRIPTION
+        "It is generated when the value of ibNqaReactCurrentStatus
+        changes.
+        The change may occur when the watched condition is over threshold
+        or below threshold.
+
+        The over threshold situations is specified as below.
+          1. When the MOS value in one jitter test is not in
+             the range ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit.
+
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly' or 'trapAndTrigger', pingCtlType of the test
+        is ibNqajitter and ibNqaCtlCodecType is 'g711Alaw' or 'g711Ulaw'
+        or 'g729A'."
+    ::= { ibNqaNotifications 8 }
+
+ibNqaJitterOverThreshold NOTIFICATION-TYPE
+    OBJECTS {
+            ibNqaReactOwnerIndex,
+            ibNqaReactTestName,
+            ibNqaReactItemIndex,
+            pingCtlTargetAddressType,
+            pingCtlTargetAddress,
+            pingCtlType,
+            pingCtlDescr,
+            ibNqaReactThresholdType,
+            ibNqaReactCurrentStatus
+        }
+    STATUS  current
+    DESCRIPTION
+        "It is generated when the value of ibNqaReactCurrentStatus
+        changes.
+        The change may occur when the watched condition is above threshold
+        or below threshold.
+
+          1. The average jitter value is not in the range of
+             ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit and the
+             ibNqaReactThresholdType is specified as 'average' type.
+          2. The total number of times that the average jitter value is not
+             in the range of ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit reaches or exceeds
+             the value specified in ibNqaReactThresholdAccumNum and the
+             ibNqaReactThresholdType is specified as 'accumulative' type.
+
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly' or 'trapAndTrigger' and pingCtlType of the test
+        is ibNqajitter or ibNqaTwampLight."
+    ::= { ibNqaNotifications 9 }
+
+ibNqaProbeTimeAboveThreshold NOTIFICATION-TYPE
+    OBJECTS {
+            ibNqaReactOwnerIndex,
+            ibNqaReactTestName,
+            ibNqaReactItemIndex,
+            pingCtlTargetAddressType,
+            pingCtlTargetAddress,
+            pingCtlType,
+            pingCtlDescr,
+            ibNqaReactThresholdType
+        }
+    STATUS  current
+    DESCRIPTION
+        "It is generated when the value of ibNqaReactCurrentStatus
+        changes to 'overThreshold', 'invalid' or 'overUpperThreshold'.
+        The change may occur when the monitored condition exceeds the
+        threshold (or upper threshold) or When NQA operation is stopped.
+
+        The above threshold situations are specified as below.
+          1. Probe time is not in the range ibNqaReactThresholdLowerLimit
+             through ibNqaReactThresholdUpperLimit.
+          2. The probe time is accumulatively not in the range
+             ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit for a number of times
+             specified in ibNqaReactThresholdAccumNum.
+          3. The probe time is consecutively not in the range
+             ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit for a number of times
+             specified in ibNqaReactThresholdConsecNum.
+          4. When NQA operation is stopped.
+
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly' or 'trapAndTrigger' and pingCtlType of the test
+        is not ibNqajitter."
+    ::= { ibNqaNotifications 10 }
+
+ibNqaProbeTimeBelowThreshold NOTIFICATION-TYPE
+    OBJECTS {
+            ibNqaReactOwnerIndex,
+            ibNqaReactTestName,
+            ibNqaReactItemIndex,
+            pingCtlTargetAddressType,
+            pingCtlTargetAddress,
+            pingCtlType,
+            pingCtlDescr,
+            ibNqaReactThresholdType
+        }
+    STATUS  current
+    DESCRIPTION
+        "It is generated when the value of ibNqaReactCurrentStatus
+        changes to 'belowThreshold' or 'belowLowerThreshold' from a
+        threshold-crossing state.
+
+        The below threshold situations are specified as below.
+          1. Probe time is in the range ibNqaReactThresholdLowerLimit
+             through ibNqaReactThresholdUpperLimit.
+          2. The probe time is accumulatively in the range
+             ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit for a number of times
+             specified in ibNqaReactThresholdAccumNum.
+          3. The probe time is consecutively in the range
+             ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit for a number of times
+             specified in ibNqaReactThresholdConsecNum.
+
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly' or 'trapAndTrigger' and pingCtlType of the test
+        is not ibNqajitter."
+    ::= { ibNqaNotifications 11 }
+
+ibNqaProbeFailAboveThreshold NOTIFICATION-TYPE
+    OBJECTS {
+            ibNqaReactOwnerIndex,
+            ibNqaReactTestName,
+            ibNqaReactItemIndex,
+            pingCtlTargetAddressType,
+            pingCtlTargetAddress,
+            pingCtlType,
+            pingCtlDescr,
+            ibNqaReactThresholdType
+        }
+    STATUS  current
+    DESCRIPTION
+        "It is generated when the value of ibNqaReactCurrentStatus
+        changes to 'overThreshold', 'invalid' or 'overUpperThreshold'.
+        The change may occur when the monitored condition exceeds the
+        threshold (or upper threshold) or When NQA operation is stopped.
+
+        The threshold-crossing situations are specified as below.
+          1. When the number of accumulative failed probes reaches the specified
+             value in ibNqaReactThresholdAccumNum in one test while the value
+             of ibNqaReactThresholdType is 'accumulative'.
+          2. When the number of consecutive failed probes reaches the specified
+             value in ibNqaReactThresholdConsecNum in one test while the value
+             of ibNqaReactThresholdType is 'consecutive'.
+          3. When NQA operation is stopped.
+
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly' or 'trapAndTrigger' and pingCtlType of the test
+        is not ibNqajitter."
+    ::= { ibNqaNotifications 12 }
+
+ibNqaProbeFailBelowThreshold NOTIFICATION-TYPE
+    OBJECTS {
+            ibNqaReactOwnerIndex,
+            ibNqaReactTestName,
+            ibNqaReactItemIndex,
+            pingCtlTargetAddressType,
+            pingCtlTargetAddress,
+            pingCtlType,
+            pingCtlDescr,
+            ibNqaReactThresholdType
+        }
+    STATUS  current
+    DESCRIPTION
+        "It is generated when the value of ibNqaReactCurrentStatus
+        changes to 'belowThreshold' or 'belowLowerThreshold' from a
+        threshold-crossing state.
+
+        The below threshold situations are specified as below.
+          1. When the number of accumulative successful probes reaches the specified
+             value in ibNqaReactThresholdAccumNum in one test while the value
+             of ibNqaReactThresholdType is 'accumulative'.
+          2. When the number of consecutive successful probes reaches the specified
+             value in ibNqaReactThresholdConsecNum in one test while the value
+             of ibNqaReactThresholdType is 'consecutive'.
+
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly' or 'trapAndTrigger' and pingCtlType of the test
+        is not ibNqajitter."
+    ::= { ibNqaNotifications 13 }
+
+ibNqaJitterOwdSDNotification NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibNqaReactOwnerIndex,
+        ibNqaReactTestName,
+        ibNqaReactItemIndex,
+        pingCtlTargetAddressType,
+        pingCtlTargetAddress,
+        pingCtlType,
+        pingCtlDescr,
+        ibNqaReactThresholdType,
+        ibNqaReactCurrentStatus
+    }
+    STATUS current
+    DESCRIPTION
+        "The SD means the delay values from source to destination.
+        It is generated when the value of ibNqaReactCurrentStatus
+        changes.
+        The change may occur when the watched condition is over threshold
+        or below threshold.
+
+        The over threshold situations is specified as below.
+          1. The average of SD in one jitter test is not in the range
+             ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit.
+
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly' and pingCtlType of the test is ibNqajitter."
+    ::= { ibNqaNotifications 14 }
+
+ibNqaJitterOwdDSNotification NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibNqaReactOwnerIndex,
+        ibNqaReactTestName,
+        ibNqaReactItemIndex,
+        pingCtlTargetAddressType,
+        pingCtlTargetAddress,
+        pingCtlType,
+        pingCtlDescr,
+        ibNqaReactThresholdType,
+        ibNqaReactCurrentStatus
+    }
+    STATUS current
+    DESCRIPTION
+        "The DS means the delay values from destination to source.
+        It is generated when the value of ibNqaReactCurrentStatus
+        changes.
+        The change may occur when the watched condition is over threshold
+        or below threshold.
+
+        The over threshold situations is specified as below.
+          1. The average of DS in one jitter test is not in the range
+             ibNqaReactThresholdLowerLimit through
+             ibNqaReactThresholdUpperLimit.
+
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly' and pingCtlType of the test is ibNqajitter."
+    ::= { ibNqaNotifications 15 }
+
+ibNqaTestFailure NOTIFICATION-TYPE
+    OBJECTS {
+            ibNqaReactOwnerIndex,
+            ibNqaReactTestName,
+            ibNqaReactItemIndex,
+            pingCtlTargetAddressType,
+            pingCtlTargetAddress,
+            pingCtlType,
+            pingCtlDescr,
+            ibNqaReactThresholdType,
+            ibNqaReactCurrentStatus
+        }
+    STATUS current
+    DESCRIPTION
+        "It is generated when the value of ibNqaReactCurrentStatus
+        changes.
+        The change may occur when the watched condition is over threshold.
+
+        The over threshold situations is specified as below.
+          1. When the test consecutively failed for a number of times specified
+          in ibNqaReactThresholdConsecNum while the value of
+          ibNqaReactThresholdType is 'consecutive'.
+
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly'."
+    ::= { ibNqaNotifications 16 }
+
+ibNqaTestResultChange NOTIFICATION-TYPE
+    OBJECTS {
+            ibNqaReactOwnerIndex,
+            ibNqaReactTestName,
+            ibNqaReactItemIndex,
+            pingCtlTargetAddressType,
+            pingCtlTargetAddress,
+            pingCtlType,
+            pingCtlDescr
+        }
+    STATUS current
+    DESCRIPTION
+        "It is generated when the test result changed.
+        This notification is valid only when ibNqaReactActionType
+        is 'trapOnly'and pingCtlType of the test is pingIcmpEcho."
+    ::= { ibNqaNotifications 17 }
+
+-- NotificationV2 Definition section
+ibNqaNotificationsV2 OBJECT IDENTIFIER ::= { ibNqa 4 }
+
+ibNqaNotification OBJECT IDENTIFIER ::= { ibNqaNotificationsV2 0 }
+
+ibNqaScheduleFailure NOTIFICATION-TYPE
+    OBJECTS { ibNqaOwnerIndex, ibNqaTestName }
+    STATUS current
+    DESCRIPTION
+        "It is generated upon failure to start the scheduled NQA operation."
+    ::= { ibNqaNotification 1 }
+
+ibNqaServerFailure NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+        "It is generated upon failure to enable the NQA server."
+    ::= { ibNqaNotification 2 }
+
+ibNqaNotificationObjects OBJECT IDENTIFIER ::= { ibNqaNotificationsV2 1 }
+
+ibNqaOwnerIndex OBJECT-TYPE
+    SYNTAX SnmpAdminString (SIZE (0..32))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The owner of the test. ibNqaOwnerIndex and
+        ibNqaTestName identify an existing test."
+    ::= { ibNqaNotificationObjects 1 }
+
+ibNqaTestName OBJECT-TYPE
+    SYNTAX SnmpAdminString (SIZE (0..32))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The name of the test.ibNqaOwnerIndex and
+        ibNqaTestName identify an existing test."
+    ::= { ibNqaNotificationObjects 2 }
+
+END
+

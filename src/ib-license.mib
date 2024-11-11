@@ -1,0 +1,978 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: License management
+-- Reference:
+-- Version: V1.5
+-- History:
+--   V1.0 2013-09-18 Initial version by Song Hao and Deng Kai.
+--   V1.1 2019-01-14 Modified version by Song Hao and Deng Shuhua.
+--      Add ibLicenseServerIp and ibLicenseServerPort to IbLicenseDevInfoEntry
+--      Add notification objects:
+--          ibLicenseReconnectWithServer
+--          ibLicenseDisconnectWithServer
+--   V1.2 2019-11-07 Modified version by Deng Shuhua.
+--      Add serverLicense to ibLicenseFeatureState
+--   V1.3 2020-07-27 Modified version by Lu Xiang.
+--      Add Add ibLicenseLowerUsageThreshold, ibLicenseUpperUsageThreshold
+--          and ibLicenseCurrentUsageRate to ibLicenseNotificationBindings
+--      Add notification objects:
+--          ibLicenseBelowUsageThreshold
+--          ibLicenseOverUsageThreshold
+--   V1.4 2021-01-13 Modified version by Liu Xiaohong.
+--      Add preLicense to ibLicenseFeatureState
+--   V1.5 2023-08-18 Modified version by Wang Wei.
+--      Add ibLicenseActivationFile to ibLicenseExpireWarning
+--      and ibLicenseExpired
+-- =================================================================
+IB-LICENSE-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, IpAddress, Unsigned32, TimeTicks
+        FROM SNMPv2-SMI
+    RowStatus, DateAndTime, TruthValue
+        FROM SNMPv2-TC
+    SnmpAdminString
+        FROM SNMP-FRAMEWORK-MIB
+    PhysicalIndex, PhysicalIndexOrZero
+        FROM ENTITY-MIB;
+
+ibLicense MODULE-IDENTITY
+    LAST-UPDATED "202308181000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB is used to manage license, including license key,
+        activation key and activation file."
+    REVISION "202308181000Z"
+    DESCRIPTION
+        "Add ibLicenseActivationFile to ibLicenseExpireWarning
+         and ibLicenseExpired"
+    REVISION "202101131000Z"
+    DESCRIPTION
+        "Add preLicense to ibLicenseFeatureState."
+    REVISION "202007271000Z"
+    DESCRIPTION
+        "Add Add ibLicenseLowerUsageThreshold, ibLicenseUpperUsageThreshold
+         and ibLicenseCurrentUsageRate to ibLicenseNotificationBindings
+         Add notification objects:
+         ibLicenseBelowUsageThreshold and ibLicenseOverUsageThreshold."
+    REVISION "201911121000Z"
+    DESCRIPTION
+        "Add serverLicense to ibLicenseFeatureState."
+    REVISION "201901141000Z"
+    DESCRIPTION
+        "Add ibLicenseServerIp and ibLicenseServerPort to
+         IbLicenseDevInfoEntry.  Add notification objects:
+         ibLicenseReconnectWithServer and ibLicenseDisconnectWithServer."
+    REVISION "201309181000Z"
+    DESCRIPTION
+        "Initial version of this MIB module."
+    ::= { ibCommon 145 }
+
+-- Defined the framework
+ibLicenseScalarObjects OBJECT IDENTIFIER ::= { ibLicense 1 }
+ibLicenseTables OBJECT IDENTIFIER ::= { ibLicense 2 }
+ibLicenseNotifications OBJECT IDENTIFIER ::= { ibLicense 3 }
+
+-- Begin of scalar objects
+ibLicenseNotifyEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object indicates whether the notifications of license should be
+        generated."
+    DEFVAL { true }
+    ::= { ibLicenseScalarObjects 1 }
+
+ibLicenseOpEntryMaxNum OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..20)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object indicates the maximum number of entries
+        that may be held in ibLicenseOpEntry.
+
+        When the number of entries in ibLicenseOpEntry reached the value
+        of this object, the oldest entry would be destroyed automatic after
+        executing a new operation."
+    DEFVAL { 10 }
+    ::= { ibLicenseScalarObjects 2 }
+
+ibLicenseNextFreeOpIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object indicates the appropriate value for ibLicenseOpIndex
+        that can be used to create an entry in ibLicenseOpTable."
+    ::= { ibLicenseScalarObjects 3 }
+-- End of scalar objects
+
+-- Begin of device information
+ibLicenseDevInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbLicenseDevInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table that displays device information which use to apply license."
+    ::= { ibLicenseTables 1 }
+
+ibLicenseDevInfoEntry OBJECT-TYPE
+    SYNTAX      IbLicenseDevInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A set of objects that displays device information of license."
+    INDEX
+        {
+            ibLicensePhysicalIndex
+        }
+    ::= { ibLicenseDevInfoTable 1 }
+
+IbLicenseDevInfoEntry ::= SEQUENCE
+    {
+        ibLicensePhysicalIndex       PhysicalIndex,
+        ibLicenseSN                  SnmpAdminString,
+        ibLicenseDeviceIDType        INTEGER,
+        ibLicenseDeviceID            SnmpAdminString,
+        ibLicenseHardwareInfo        SnmpAdminString,
+        ibLicenseMaxNum              Unsigned32,
+        ibLicenseUsedNum             Unsigned32,
+        ibLicenseRecyclableNum       Unsigned32,
+        ibLicenseInstallType         INTEGER,
+        ibLicenseFileStoragePath     SnmpAdminString,
+        ibLicenseServerIp            IpAddress,
+        ibLicenseServerPort          Unsigned32
+    }
+
+ibLicensePhysicalIndex OBJECT-TYPE
+    SYNTAX      PhysicalIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The entPhysicalIndex of the device.
+
+        The meaning of this object is associated with the management state
+        which from ibLicenseInstallType.
+
+        Note that:
+        1) ibLicenseInstallType is installInChassis.
+           This object represents the entPhysicalIndex of the local active MPU.
+
+        2) ibLicenseInstallType is installInSlot.
+           This object represents the entPhysicalIndex of MPU boards.
+
+        3) ibLicenseInstallType is installInCPU.
+           This object represents the entPhysicalIndex of the CPUs on an MPU board.
+        "
+    ::= { ibLicenseDevInfoEntry 1 }
+
+ibLicenseSN OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The serial number of the device."
+    ::= { ibLicenseDevInfoEntry 2 }
+
+ibLicenseDeviceIDType   OBJECT-TYPE
+    SYNTAX      INTEGER {
+                  invalid(1),
+                  keyString(2),
+                  file(3)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The types of device ID.
+
+        invalid - The device ID is invalid.
+        keyString - The device ID is a string.
+        file - The device ID is a file."
+    ::= { ibLicenseDevInfoEntry 3 }
+
+ibLicenseDeviceID OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A string represents the device ID.
+
+        For example:
+        Device ID: XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX
+
+        This object can not be read when ibLicenseDeviceIDType is invalid,
+        and a file name with full path while ibLicenseDeviceIDType is file.
+
+        For example:
+        Device ID: flash:/xxx.did"
+    ::= { ibLicenseDevInfoEntry 4 }
+
+ibLicenseHardwareInfo OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The information of the device hardware."
+    ::= { ibLicenseDevInfoEntry 5 }
+
+ibLicenseMaxNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The max number of licenses that can be installed in device."
+    ::= { ibLicenseDevInfoEntry 6 }
+
+ibLicenseUsedNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of installed licenses."
+    ::= { ibLicenseDevInfoEntry 7 }
+
+ibLicenseRecyclableNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of recyclable storage for licenses."
+    ::= { ibLicenseDevInfoEntry 8 }
+
+ibLicenseInstallType OBJECT-TYPE
+    SYNTAX      INTEGER {
+                  invalid(1),
+                  installInChassis(2),
+                  installInSlot(3),
+                  installInCPU(4)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The state of license management.
+        This object determines the instance of
+        ibLicensePhysicalIndex and ibLicenseOpPhysicalIndex.
+
+        invalid - The state is invalid as driver fault.
+
+        installInChassis - License is chassis locked.
+
+        installInSlot - License is MPU locked.
+
+        installInCPU - License is CPU locked."
+    ::= { ibLicenseDevInfoEntry 9 }
+
+ibLicenseFileStoragePath   OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The storage path of the installed license files."
+    ::= { ibLicenseDevInfoEntry 10 }
+
+ibLicenseServerIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The IP address of the license server."
+    ::= { ibLicenseDevInfoEntry 11 }
+
+ibLicenseServerPort OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..65535)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port number of the license server."
+    ::= { ibLicenseDevInfoEntry 12 }
+-- End of device information
+
+-- Begin of general information
+ibLicenseGeneralTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbLicenseGeneralEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table that displays general information of installed license."
+    ::= { ibLicenseTables 2 }
+
+ibLicenseGeneralEntry OBJECT-TYPE
+    SYNTAX      IbLicenseGeneralEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A set of objects that displays general information of
+        installed license."
+    INDEX
+        {
+            ibLicensePhysicalIndex,
+            ibLicenseIndex
+        }
+    ::= { ibLicenseGeneralTable 1 }
+
+IbLicenseGeneralEntry ::= SEQUENCE
+    {
+        ibLicenseIndex                Unsigned32,
+        ibLicenseFeature              SnmpAdminString,
+        ibLicenseProductDescr         OCTET STRING,
+        ibLicenseFileDescr            SnmpAdminString,
+        ibLicenseState                INTEGER,
+        ibLicenseActivationFile       SnmpAdminString,
+        ibLicenseActivationKey        SnmpAdminString,
+        ibLicenseLicenseKey           SnmpAdminString,
+        ibLicenseUninstActivationFile SnmpAdminString,
+        ibLicenseUninstActivationKey  SnmpAdminString,
+        ibLicenseType                 INTEGER,
+        ibLicenseInstalledTime        DateAndTime,
+        ibLicenseUninstalledTime      DateAndTime,
+        ibLicenseDaysLeft             Unsigned32,
+        ibLicenseValidityStart        DateAndTime,
+        ibLicenseValidityEnd          DateAndTime,
+        ibLicenseExpiredDays          Unsigned32,
+        ibLicenseCount                Unsigned32
+    }
+
+ibLicenseIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "ID that can be used to uniquely identify a license.
+        It may use a stable storage index."
+    ::= { ibLicenseGeneralEntry 1 }
+
+ibLicenseFeature OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..1024))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the licensed feature.
+
+        When there multiple features, this object will display with space
+        as delimiter."
+    ::= { ibLicenseGeneralEntry 2 }
+
+ibLicenseProductDescr OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..1024))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The product description in a license."
+    ::= { ibLicenseGeneralEntry 3 }
+
+ibLicenseFileDescr OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..1024))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The file description in activation file."
+    ::= { ibLicenseGeneralEntry 4 }
+
+ibLicenseState OBJECT-TYPE
+    SYNTAX      INTEGER {
+                  invalid(1),
+                  inuse(2),
+                  usable(3),
+                  expired(4),
+                  uninstalled(5),
+                  unusable(6)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The state of an installed license.
+
+        invalid - The license is invalid and cannot be used.
+        inuse - The license is being used.
+        usable - The license is available for use.
+                 1. If multiple days-restricted licenses for one feature
+                    are installed, only one license is in 'inuse' state and
+                    the rest licenses are in 'usable' state.
+                 2. A date-restricted license is in this state if its
+                    start date is not reached.
+        expired - The license has expired.
+        uninstalled - The license has been uninstalled.
+        unusable - The license cannot be used."
+    ::= { ibLicenseGeneralEntry 5 }
+
+ibLicenseActivationFile OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of an installed activation file, with device name and
+        file name.
+
+        For example:
+        flash:/license/210231A1V0A1290000012013032718261184345.ak
+        "
+    ::= { ibLicenseGeneralEntry 6 }
+
+ibLicenseActivationKey OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The activation key that has been installed.
+
+        For example:
+        Activation Key: dyKT-x3vc-W@Ca-n4gn-Yo83-rVY3-C8:7-e3pg"
+    ::= { ibLicenseGeneralEntry 7 }
+
+ibLicenseLicenseKey OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The license key that has been installed."
+    ::= { ibLicenseGeneralEntry 8 }
+
+ibLicenseUninstActivationFile OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If an activation file is uninstalled, the system creates an
+        uninstall file.  Use this file together with the SN and DID of the
+        transfer destination to register the license for the transfer
+        destination."
+    ::= { ibLicenseGeneralEntry 9 }
+
+ibLicenseUninstActivationKey OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If an activation key is uninstalled, the system creates an
+        uninstall key.  Use this key together with the SN and DID of the
+        transfer destination to register the license for the transfer
+        destination."
+    ::= { ibLicenseGeneralEntry 10 }
+
+ibLicenseType OBJECT-TYPE
+    SYNTAX      INTEGER {
+                  unknown(1),
+                  permanent(2),
+                  daysRestricted(3),
+                  trialDaysRestricted(4),
+                  dateRestricted(5),
+                  trialDateRestricted(6),
+                  countRestricted(7),
+                  trialCountRestricted(8)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "License type by validity period.
+
+        unknown - The system cannot obtain the license type.
+
+        permanent - Purchased license that never expires and is always valid.
+
+        daysRestricted - Purchased license that is valid for a period in days.
+        trialDaysRestricted - Free trial license that is valid for
+                              a period in days.
+
+        dateRestricted - Purchased license that is valid for an
+                         absolute date range.
+        trialDateRestricted - Free trial license that is valid for
+                              an absolute date range.
+
+        countRestricted - Purchased license that is valid for
+                          several useing times.
+        trialCountRestricted - Free trial license that is valid for
+                               several useing times.
+        "
+    ::= { ibLicenseGeneralEntry 11 }
+
+ibLicenseInstalledTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Time when the license was installed.
+
+        For example, it would be displayed as:
+        2013-9-20,13:30:15.0
+        "
+    ::= { ibLicenseGeneralEntry 12 }
+
+ibLicenseUninstalledTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The time when the license was uninstalled.
+
+        For example, it would be displayed as:
+        2013-9-26,15:12:20.0
+        "
+    ::= { ibLicenseGeneralEntry 13 }
+
+ibLicenseDaysLeft OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Remaining days of the license.
+        This object is available for a days-restricted license."
+    ::= { ibLicenseGeneralEntry 14 }
+
+ibLicenseValidityStart OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Start date for a date-restricted license.
+        This object is available for a date-restricted license.
+        But if the start date is not limited, this object is unavailable.
+
+        For example, it would be displayed as:
+        2013-9-26,15:12:20.0
+        "
+    ::= { ibLicenseGeneralEntry 15 }
+
+ibLicenseValidityEnd OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "End date for a date-restricted license.
+        This object is available for a date-restricted license.
+        But if the end date is not limited, this object is unavailable.
+
+        For example, it would be displayed as:
+        2014-9-26,15:12:20.0
+        "
+    ::= { ibLicenseGeneralEntry 16 }
+
+ibLicenseExpiredDays OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Passed days after a license has been expired."
+    ::= { ibLicenseGeneralEntry 17 }
+
+ibLicenseCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The effective number of license.
+        This object is available for a count-restricted license."
+    ::= { ibLicenseGeneralEntry 18 }
+-- End of general information
+
+-- Begin of feature information
+ibLicenseFeatureTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbLicenseFeatureEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table that displays installed licenses for features."
+    ::= { ibLicenseTables 3 }
+
+ibLicenseFeatureEntry OBJECT-TYPE
+    SYNTAX      IbLicenseFeatureEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A set of objects that displays installed licenses for features."
+    INDEX
+        {
+            ibLicensePhysicalIndex,
+            IMPLIED ibLicenseFeatureName
+        }
+    ::= { ibLicenseFeatureTable 1 }
+
+IbLicenseFeatureEntry ::= SEQUENCE
+    {
+        ibLicenseFeatureName      SnmpAdminString,
+        ibLicenseFeatureState     INTEGER
+    }
+
+ibLicenseFeatureName OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(1..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Feature that must be licensed before being used."
+    ::= { ibLicenseFeatureEntry 1 }
+
+ibLicenseFeatureState OBJECT-TYPE
+    SYNTAX      INTEGER {
+                  notLicensed(1),
+                  trialLicense(2),
+                  formalLicense(3),
+                  serverLicense(4),
+                  preLicense(5)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "License type by purchasing state.
+
+        notLicensed - The feature is not licensed.
+        trialLicense - The feature is using trial license.
+        formalLicense - The feature is using purchased license.
+        serverLicense - The feature is using license authorized by license server.
+        preLicense - The feature is using pre-installed license."
+    ::= { ibLicenseFeatureEntry 2 }
+-- End of feature information
+
+-- Begin of operation table
+ibLicenseOpTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbLicenseOpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table that used to install or uninstall license."
+    ::= { ibLicenseTables 4 }
+
+ibLicenseOpEntry OBJECT-TYPE
+    SYNTAX      IbLicenseOpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A set of objects used to install or uninstall license."
+    INDEX
+        {
+            ibLicenseOpIndex
+        }
+    ::= { ibLicenseOpTable 1 }
+
+IbLicenseOpEntry ::= SEQUENCE
+    {
+        ibLicenseOpIndex          Unsigned32,
+        ibLicenseOpPhysicalIndex  PhysicalIndexOrZero,
+        ibLicenseOpType           INTEGER,
+        ibLicenseOpString         SnmpAdminString,
+        ibLicenseOpNotifyEnable   TruthValue,
+        ibLicenseOpRowStatus      RowStatus,
+        ibLicenseOpState          INTEGER,
+        ibLicenseOpFailedReason   SnmpAdminString,
+        ibLicenseOpEndTime        TimeTicks
+    }
+
+ibLicenseOpIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "ID that can be used to uniquely identify an operation."
+    ::= { ibLicenseOpEntry 1 }
+
+ibLicenseOpPhysicalIndex OBJECT-TYPE
+    SYNTAX      PhysicalIndexOrZero
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object indicates that the entPhysicalIndex of the device
+        where the operation is being executed.
+
+        The meaning of this object is associated with the management state
+        from ibLicenseInstallType.
+
+        Note that:
+        1) ibLicenseInstallType is installInChassis.
+           This object represents the entPhysicalIndex of chassis local master.
+
+        2) ibLicenseInstallType is installInSlot.
+           This object represents the entPhysicalIndex of MPU boards.
+
+        3) ibLicenseInstallType is installInCPU.
+           This object represents the entPhysicalIndex of CPUs.
+
+        This object must be set and can not be set to zero when
+        executing an operation.
+        "
+    ::= { ibLicenseOpEntry 2 }
+
+ibLicenseOpType OBJECT-TYPE
+    SYNTAX      INTEGER {
+                  compress(1),
+                  delete(2),
+                  installActivationFile(3),
+                  installActivationKey(4),
+                  installLicenseKey(5),
+                  uninstallActivationFile(6),
+                  uninstallActivationKey(7),
+                  uninstallLicenseKey(8)
+                }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The type of this operation.
+
+        compress - Compress the license storage if the free license storage
+                   is not sufficient.
+        Note that:
+        1) After compressing, the expired licenses and uninstalled licenses
+           in the storage area will be cleared.
+        2) The DID changes each time the license storage is compressed.
+        3) Before performing a compression, make sure all activation files
+           generated based on the old DID have been installed.
+           They cannot be installed after the compression.
+
+        delete - Compress one license storage only.
+
+        installActivationFile   -  Install an activation file.
+
+        installActivationKey    -  Install an activation key.
+
+        installLicenseKey       -  Install a license key.
+
+        uninstallActivationFile -  Uninstall an activation file.
+
+        uninstallActivationKey  -  Uninstall an activation key.
+
+        uninstallLicenseKey     -  Uninstall a license key."
+    ::= { ibLicenseOpEntry 3 }
+
+ibLicenseOpString OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..255))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object might be an activation file name, an activation key or
+        a license key that is to be installed, uninstalled or deleted.
+
+        The operation type is specified in ibLicenseOpType.
+
+        For compressing, this object must not be bound when creating a row.
+
+        For deletion, this object could be an activation file, an activation
+        key or a license key.
+
+        For installActivationFile and uninstallActivationFile,
+        this object must be a name of an activation file, with full path.
+        Such as: flash:/license/210231A1V0A1290000012013032718261184345.ak
+
+        For installActivationKey and uninstallActivationKey,
+        this object must be an activation key.
+
+        For installLicenseKey and uninstallLicenseKey,
+        this object must be a license key."
+    ::= { ibLicenseOpEntry 4 }
+
+ibLicenseOpNotifyEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object indicates whether 'ibLicenseOpCompletion' notifications
+        will be generated after this operation is completed.
+
+        Note that, this object is meaningless if the value of
+        'ibLicenseNotifyEnable' is 'false'."
+    DEFVAL { false }
+    ::= { ibLicenseOpEntry 5 }
+
+ibLicenseOpRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The status of this conceptual row.
+
+        When an entry was in active status, values of any object in this entry
+        are forbidden to be changed."
+    ::= { ibLicenseOpEntry 6 }
+
+ibLicenseOpState OBJECT-TYPE
+    SYNTAX      INTEGER {
+                  opInProgress(1),
+                  opSuccessful(2),
+                  opFailed(3)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The state of this operation.
+
+        opInProgress - This operation is in progress.
+        opSuccessful - Successful to execute this operation.
+        opFailed - Failed to execute this operation,
+                   and 'ibLicenseOpFailedReason' will indicate the detailed
+                   cause of the failure."
+    ::= { ibLicenseOpEntry 7 }
+
+ibLicenseOpFailedReason OBJECT-TYPE
+    SYNTAX      SnmpAdminString (SIZE(0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object indicates the detailed cause of the failure when this
+        operation failed."
+    ::= { ibLicenseOpEntry 8 }
+
+ibLicenseOpEndTime OBJECT-TYPE
+    SYNTAX      TimeTicks
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of sysUpTime when the operation is done."
+    ::= { ibLicenseOpEntry 9 }
+-- End of operation table
+
+-- Begin of notifications
+ibLicenseNotificationPrefix OBJECT IDENTIFIER ::= { ibLicenseNotifications 0 }
+
+ibLicenseOpCompletion NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLicenseOpIndex,
+            ibLicenseOpPhysicalIndex,
+            ibLicenseOpType,
+            ibLicenseOpString,
+            ibLicenseOpState,
+            ibLicenseOpFailedReason
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when a license operation completed."
+    ::= { ibLicenseNotificationPrefix 1 }
+
+ibLicenseActivationFileLost NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLicensePhysicalIndex,
+            ibLicenseActivationFile
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the activation file
+        has been lost."
+    ::= { ibLicenseNotificationPrefix 2 }
+
+ibLicenseActivationFileRestored NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLicensePhysicalIndex,
+            ibLicenseActivationFile
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the activation file
+        restored successfully."
+    ::= { ibLicenseNotificationPrefix 3 }
+
+ibLicenseExpired NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLicenseFeatureName,
+            ibLicenseFeatureState,
+            ibLicenseActivationFile
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the license expires."
+    ::= { ibLicenseNotificationPrefix 4 }
+
+ibLicenseExpireWarning NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLicenseFeatureName,
+            ibLicenseFeatureState,
+            ibLicenseBindValidityPeriodRemaining,
+            ibLicenseActivationFile
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when is about to expire."
+    ::= { ibLicenseNotificationPrefix 5 }
+
+ibLicenseReconnectWithServer NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLicensePhysicalIndex,
+            ibLicenseServerIp,
+            ibLicenseServerPort
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the license client is reconnected to the license server."
+    ::= { ibLicenseNotificationPrefix 6 }
+
+ibLicenseDisconnectWithServer NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLicensePhysicalIndex,
+            ibLicenseServerIp,
+            ibLicenseServerPort
+        }
+    STATUS      current
+    DESCRIPTION
+        " This notification is generated when the license client is disconnected from the license server."
+    ::= { ibLicenseNotificationPrefix 7 }
+
+ibLicenseBelowUsageThreshold NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLicenseFeatureName,
+            ibLicenseLowerUsageThreshold,
+            ibLicenseUpperUsageThreshold,
+            ibLicenseCurrentUsageRate
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the license usage drops below warning threshold."
+    ::= { ibLicenseNotificationPrefix 8 }
+
+ibLicenseOverUsageThreshold NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibLicenseFeatureName,
+            ibLicenseLowerUsageThreshold,
+            ibLicenseUpperUsageThreshold,
+            ibLicenseCurrentUsageRate
+        }
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the license usage is over warning threshold."
+    ::= { ibLicenseNotificationPrefix 9 }
+-- End of notifications
+
+-- Begin of notification bindings
+ibLicenseNotificationBindings OBJECT IDENTIFIER ::= { ibLicenseNotifications 1 }
+
+ibLicenseBindValidityPeriodRemaining OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "days"
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "This object indicates the remaining days before
+        the feature's license expires."
+    ::= { ibLicenseNotificationBindings 1 }
+ibLicenseLowerUsageThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "This object indicates the lower warning threshold of usage."
+    ::= { ibLicenseNotificationBindings 2 }
+ibLicenseUpperUsageThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "This object indicates the upper warning threshold of usage."
+    ::= { ibLicenseNotificationBindings 3 }
+ibLicenseCurrentUsageRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "This object indicates the license current usage rate."
+    ::= { ibLicenseNotificationBindings 4 }
+-- End of notification bindings
+
+END

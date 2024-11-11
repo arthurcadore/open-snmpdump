@@ -1,0 +1,103 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: This MIB is used for configuration of SECP (security policy).
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 created by jinzheyuan.
+-- ============================================================================
+IB-SECP-V9-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM  IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY,
+    Unsigned32, Counter64
+        FROM SNMPv2-SMI
+    CounterBasedGauge64
+        FROM HCNUM-TC;
+
+--
+-- Node definitions
+--
+
+ibSecpV9 MODULE-IDENTITY
+    LAST-UPDATED "202205091725Z"        -- May 09, 2022 at 17:25 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Security policy management information base for managing devices
+        that support security policy.
+        "
+    REVISION "202205091725Z"             -- May 09, 2022 at 17:25 GMT
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 224 }
+
+--
+-- Nodes of ibSecpV9Objects
+--
+ibSecpV9Objects OBJECT IDENTIFIER ::= { ibSecpV9 1 }
+
+--
+-- Nodes of ibSecpV9RunningInfoTable
+--
+ibSecpV9RunningInfoTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbSecpV9RunningInfoEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Security policy running information base."
+    ::= { ibSecpV9Objects 1 }
+
+ibSecpV9RunningInfoEntry OBJECT-TYPE
+    SYNTAX IbSecpV9RunningInfoEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Security policy running information entry."
+    INDEX
+    {
+        ibSecpV9RuleID
+    }
+    ::= { ibSecpV9RunningInfoTable 1 }
+
+IbSecpV9RunningInfoEntry ::=
+    SEQUENCE
+    {
+        ibSecpV9RuleID
+            Unsigned32,
+        ibSecpV9MatchPacketCount
+            Counter64,
+        ibSecpV9LastMatchTime
+            CounterBasedGauge64
+    }
+
+ibSecpV9RuleID OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Rule ID of security policy."
+    ::= { ibSecpV9RunningInfoEntry 1 }
+
+ibSecpV9MatchPacketCount OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Number of packets matching the rule."
+    ::= { ibSecpV9RunningInfoEntry 2 }
+
+ibSecpV9LastMatchTime OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Time elapsed since 1970/1/1 00:00:00 to the most recent match."
+    ::= { ibSecpV9RunningInfoEntry 3 }
+
+END

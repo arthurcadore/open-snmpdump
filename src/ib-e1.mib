@@ -1,0 +1,445 @@
+-- =============================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:
+-- Reference: Extension of RFC 1213 and RFC 2233
+-- Version: V1.3
+-- History:
+--   V1.0 2004-12-01
+--        Initial Version  by lizhiyong and fangmin
+--   V1.1 2009-06-08 modified by TONGWEI
+--        Added ibe1Table and ibe1InterfaceTable
+--   V1.2 2010-04-08 modified by Tong Wei
+--        Modified ibe1Table
+--        Added ibe1TimeSlotSetTable
+--   V1.3 2012-07-16 modified SYNTAX of ibe1Clock by shuaixiaojuan
+-- =============================================================
+IB-E1-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        MODULE-IDENTITY,
+        OBJECT-TYPE,
+        Integer32,
+        Counter32
+                FROM SNMPv2-SMI
+        TEXTUAL-CONVENTION, RowStatus
+                FROM SNMPv2-TC
+        MODULE-COMPLIANCE,
+        OBJECT-GROUP
+                FROM SNMPv2-CONF
+        ifIndex
+                FROM RFC1213-MIB
+        ibCommon
+                FROM IB-OID-MIB;
+
+
+ibE1  MODULE-IDENTITY
+        LAST-UPDATED    "201207161741Z"
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+             "This MIB provides E1 interface information that are
+             excluded by RFC 1213 and RFC 2233"
+        REVISION        "201207161741Z"
+        DESCRIPTION
+                "To fix bugs in the MIB file."
+        REVISION        "201004081855Z"
+        DESCRIPTION
+                "To fix bugs in the MIB file."
+        REVISION        "200906081741Z"
+        DESCRIPTION
+                "To fix bugs in the MIB file."
+        REVISION        "200412011436Z"
+        DESCRIPTION
+                "Initial version of this MIB module."
+        ::= { ibCommon 28 }
+
+
+ibe1InterfaceStatusTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbE1InterfaceStatusEntry
+        MAX-ACCESS   not-accessible
+        STATUS       current
+        DESCRIPTION
+         "This  table contains E1 interface packet statistics  "
+        ::= { ibE1 1 }
+
+ibe1InterfaceStatusEntry OBJECT-TYPE
+        SYNTAX         IbE1InterfaceStatusEntry
+        MAX-ACCESS     not-accessible
+        STATUS         current
+        DESCRIPTION
+         "This entry contains E1 interface packet statistics.
+         The index of this Entry is ifIndex defined in ifTable
+         of RFC1213-MIB"
+        INDEX { ifIndex }
+        ::= { ibe1InterfaceStatusTable 1 }
+
+IbE1InterfaceStatusEntry ::= SEQUENCE  {
+        ibe1InterfaceInErrs            Counter32,
+        ibe1InterfaceInRuntsErrs       Counter32,
+        ibe1InterfaceInGiantsErrs      Counter32,
+        ibe1InterfaceInCrcErrs         Counter32,
+        ibe1InterfaceInAlignErrs       Counter32,
+        ibe1InterfaceInOverRunsErrs    Counter32,
+        ibe1InterfaceInDribblesErrs    Counter32,
+        ibe1InterfaceInAbortedSeqErrs  Counter32,
+        ibe1InterfaceInNoBufferErrs    Counter32,
+        ibe1InterfaceInFramingErrs     Counter32,
+        ibe1InterfaceOutputErrs        Counter32,
+        ibe1InterfaceOutUnderRunErrs   Counter32,
+        ibe1InterfaceOutCollisonsErrs  Counter32,
+        ibe1InterfaceOutDeferedErrs    Counter32
+        }
+
+ibe1InterfaceInErrs        OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION
+         "The total number of error received on this interface"
+        ::= { ibe1InterfaceStatusEntry 1 }
+
+ibe1InterfaceInRuntsErrs   OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION
+         "The number of Runts Error(too short packet) received on this interface"
+        ::= { ibe1InterfaceStatusEntry 2 }
+
+ibe1InterfaceInGiantsErrs OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION
+         "The number of Giants Error(too long packet) received on this interface"
+        ::= { ibe1InterfaceStatusEntry 3 }
+
+ibe1InterfaceInCrcErrs     OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION
+         "The number of CRC Error received on this interface"
+        ::= { ibe1InterfaceStatusEntry 4 }
+
+ibe1InterfaceInAlignErrs   OBJECT-TYPE
+        SYNTAX          Counter32
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION
+         "The number of Align Error received on this interface"
+        ::= { ibe1InterfaceStatusEntry 5 }
+
+ibe1InterfaceInOverRunsErrs OBJECT-TYPE
+        SYNTAX           Counter32
+        MAX-ACCESS       read-only
+        STATUS          current
+        DESCRIPTION
+         "The number of Over Runs Error received on this interface"
+        ::= { ibe1InterfaceStatusEntry 6 }
+
+ibe1InterfaceInDribblesErrs  OBJECT-TYPE
+        SYNTAX            Counter32
+        MAX-ACCESS        read-only
+        STATUS            current
+        DESCRIPTION
+         "The number of dribble packets received"
+        ::= { ibe1InterfaceStatusEntry 7 }
+
+ibe1InterfaceInAbortedSeqErrs    OBJECT-TYPE
+        SYNTAX                Counter32
+        MAX-ACCESS            read-only
+        STATUS                current
+        DESCRIPTION
+         "The number of AbortedSeq Error received on this interface"
+        ::= { ibe1InterfaceStatusEntry 8 }
+
+ibe1InterfaceInNoBufferErrs      OBJECT-TYPE
+        SYNTAX                Counter32
+        MAX-ACCESS            read-only
+        STATUS                current
+        DESCRIPTION
+         "The number of Error (no buffer available)"
+        ::= { ibe1InterfaceStatusEntry 9 }
+
+ibe1InterfaceInFramingErrs      OBJECT-TYPE
+        SYNTAX                Counter32
+        MAX-ACCESS            read-only
+        STATUS                current
+        DESCRIPTION
+         "The number of framing Errors"
+        ::= { ibe1InterfaceStatusEntry 10 }
+
+ibe1InterfaceOutputErrs          OBJECT-TYPE
+        SYNTAX                Counter32
+        MAX-ACCESS            read-only
+        STATUS                current
+        DESCRIPTION
+         "The number of total Error transmited on this interface"
+        ::= { ibe1InterfaceStatusEntry 11 }
+
+ibe1InterfaceOutUnderRunErrs     OBJECT-TYPE
+        SYNTAX                Counter32
+        MAX-ACCESS            read-only
+        STATUS                current
+        DESCRIPTION
+         "The number of UnderRun Error transmited on this interface"
+        ::= { ibe1InterfaceStatusEntry 12 }
+
+ibe1InterfaceOutCollisonsErrs    OBJECT-TYPE
+        SYNTAX                Counter32
+        MAX-ACCESS            read-only
+        STATUS                current
+        DESCRIPTION
+         "The number of Collisions Error transmited on this interface"
+        ::= { ibe1InterfaceStatusEntry 13 }
+
+ibe1InterfaceOutDeferedErrs      OBJECT-TYPE
+        SYNTAX                Counter32
+        MAX-ACCESS            read-only
+        STATUS                current
+        DESCRIPTION
+         "The number of Deferred Error transmited on this interface"
+        ::= { ibe1InterfaceStatusEntry 14 }
+
+ibe1Table OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbE1Entry
+        MAX-ACCESS   not-accessible
+        STATUS       current
+        DESCRIPTION
+         "A list of E1 interface entries."
+        ::= { ibE1 2 }
+
+ibe1Entry OBJECT-TYPE
+        SYNTAX         IbE1Entry
+        MAX-ACCESS     not-accessible
+        STATUS         current
+        DESCRIPTION
+         "This entry contains E1 interface management information."
+        INDEX { ifIndex }
+        ::= { ibe1Table 1 }
+
+IbE1TimeSlot ::= TEXTUAL-CONVENTION
+        STATUS      current
+        DESCRIPTION
+            "Each octet within this value specifies a set of time
+            slots, with the first octet specifying time slot 1 through
+            8, the second octet specifying time slots 9 through 16, etc.
+            Within each octet, the most significant bit represents
+            the highest numbered time slot, and the least significant bit
+            represents the lowest numbered time slot.  Thus, each time slot
+            of the E1 is represented by a single bit within the
+            value of this object.  If that bit has a value of '1'
+            then that time slot is included in the set of time slots;
+            the time slot is not included if its bit has a value of '0'."
+        SYNTAX      OCTET STRING(SIZE (4))
+
+IbE1Entry ::= SEQUENCE  {
+        ibe1Type              BITS,
+        ibe1Clock             INTEGER,
+        ibe1FrameFormat       INTEGER,
+        ibe1LineCode          INTEGER,
+        ibe1PriSetTimeSlot    IbE1TimeSlot,
+        ibe1DChannelIndex     Integer32,
+        ibe1SubScribLineChannelIndex Integer32,
+        ibe1FcmChannelIndex Integer32
+        }
+
+ibe1Type              OBJECT-TYPE
+        SYNTAX  BITS {
+                    voice(0),
+                    pos(1)
+                }
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION
+         "Specifies the type of the E1 interface.
+          Now it supports types as follow:
+          voice  voice type
+          pos    POS type"
+        ::= { ibe1Entry 1 }
+
+ibe1Clock             OBJECT-TYPE
+        SYNTAX  INTEGER {
+                    slave(1),
+                    master(2),
+                    internal(3),
+                    line(4),
+                    linePri(5)
+                }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION
+         "Specifies the clock type used on the E1 interface."
+        ::= { ibe1Entry 2 }
+
+ibe1FrameFormat       OBJECT-TYPE
+        SYNTAX   INTEGER {
+                    crc4(1),
+                    nocrc4(2)
+                }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION
+         "Specifies the frame format used on the E1 interface."
+        DEFVAL { crc4 }
+        ::= { ibe1Entry 3 }
+
+ibe1LineCode          OBJECT-TYPE
+        SYNTAX  INTEGER {
+                    ami(1),
+                    hdb3(3)
+                }
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION
+         "Specifies the line code type used on the E1 interface."
+        DEFVAL { hdb3 }
+        ::= { ibe1Entry 4 }
+
+ibe1PriSetTimeSlot    OBJECT-TYPE
+        SYNTAX          IbE1TimeSlot
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION
+         "This is a bit-map of PRI time slots used on the E1 interface.
+         It needs to administratively shut down the D channel of
+         the E1 interface before cancelling PRI time slots."
+        ::= { ibe1Entry 5 }
+
+ibe1DChannelIndex      OBJECT-TYPE
+        SYNTAX                Integer32
+        MAX-ACCESS            read-only
+        STATUS                current
+        DESCRIPTION
+         "This is the ifIndex of the D channel of the E1 interface."
+        ::= { ibe1Entry 6 }
+
+ibe1SubScribLineChannelIndex      OBJECT-TYPE
+        SYNTAX                Integer32
+        MAX-ACCESS            read-only
+        STATUS                current
+        DESCRIPTION
+         "This is the ifIndex of the subscriber-line channel of the E1
+         interface."
+        ::= { ibe1Entry 7 }
+
+ibe1FcmChannelIndex      OBJECT-TYPE
+        SYNTAX                Integer32
+        MAX-ACCESS            read-only
+        STATUS                current
+        DESCRIPTION
+         "This is the ifIndex of the FCM (Fast Connection Modem) channel
+          of the E1 interface."
+        ::= { ibe1Entry 8 }
+
+ibe1InterfaceTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbE1InterfaceEntry
+        MAX-ACCESS   not-accessible
+        STATUS       current
+        DESCRIPTION
+         "A list of channels of E1 interface entries.
+         Including D channels and subscriber-line channels."
+        ::= { ibE1 3 }
+
+ibe1InterfaceEntry OBJECT-TYPE
+        SYNTAX         IbE1InterfaceEntry
+        MAX-ACCESS     not-accessible
+        STATUS         current
+        DESCRIPTION
+         "This entry contains channels of E1 interface management information.
+         Including D channels and subscriber-line channels."
+        INDEX { ifIndex }
+        ::= { ibe1InterfaceTable 1 }
+
+IbE1InterfaceEntry ::= SEQUENCE  {
+        ibe1ControllerIndex        Integer32
+        }
+
+ibe1ControllerIndex      OBJECT-TYPE
+        SYNTAX                Integer32
+        MAX-ACCESS            read-only
+        STATUS                current
+        DESCRIPTION
+         "Which E1 interface is this channel belonged to."
+        ::= { ibe1InterfaceEntry 1 }
+
+ibe1TimeSlotSetTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbE1TimeSlotSetEntry
+        MAX-ACCESS   not-accessible
+        STATUS       current
+        DESCRIPTION
+         "A list of time slot set information of E1 interface entries."
+        ::= { ibE1 4 }
+
+ibe1TimeSlotSetEntry OBJECT-TYPE
+        SYNTAX         IbE1TimeSlotSetEntry
+        MAX-ACCESS     not-accessible
+        STATUS         current
+        DESCRIPTION
+         "This entry contains time slot set information of E1 interface."
+        INDEX { ifIndex }
+        ::= { ibe1TimeSlotSetTable 1 }
+
+IbE1TimeSlotSetEntry ::= SEQUENCE  {
+        ibe1TimeSlotSetGroupId     Integer32,
+        ibe1TimeSlotSetSignalType  INTEGER,
+        ibe1TimeSlotSetList        IbE1TimeSlot,
+        ibe1TimeSlotSetRowStatus   RowStatus
+        }
+
+ibe1TimeSlotSetGroupId             OBJECT-TYPE
+        SYNTAX  Integer32(0..30)
+        MAX-ACCESS      read-create
+        STATUS          current
+        DESCRIPTION
+         "Group ID."
+        ::= { ibe1TimeSlotSetEntry 1 }
+
+ibe1TimeSlotSetSignalType       OBJECT-TYPE
+        SYNTAX   INTEGER {
+                    unkown(1),
+                    em-delay(2),
+                    em-immediate(3),
+                    em-wink(4),
+                    fxo-ground(5),
+                    fxo-loop(6),
+                    fxs-ground(7),
+                    fxs-loop(8),
+                    r2(9)
+                }
+        MAX-ACCESS      read-create
+        STATUS          current
+        DESCRIPTION
+           "Signal type. Now it supports types as follow:
+            unkown,      unkown
+            em-delay     E&M Delay Dial
+            em-immediate E&M Immediate Start
+            em-wink      E&M Wink Start
+            fxo-ground   FXO Ground Start
+            fxo-loop     FXO Loop Start
+            fxs-ground   FXS Ground Start
+            fxs-loop     FXS Loop Start
+            r2           R2 ITU Q421"
+        ::= { ibe1TimeSlotSetEntry 2 }
+
+ibe1TimeSlotSetList    OBJECT-TYPE
+        SYNTAX          IbE1TimeSlot
+        MAX-ACCESS      read-create
+        STATUS          current
+        DESCRIPTION
+         "Time slot bit map."
+        ::= { ibe1TimeSlotSetEntry 3 }
+
+ibe1TimeSlotSetRowStatus OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+         "Operation status."
+        ::= { ibe1TimeSlotSetEntry 4 }
+
+END

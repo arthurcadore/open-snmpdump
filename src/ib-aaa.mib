@@ -1,0 +1,256 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: AAA MIB
+-- Reference:
+-- Version: V1.4
+-- History:
+-- V1.0 2019.03.11 The initial version, created by Yuhua
+-- V1.1 2020.01.13 updated by liubo
+--      Added ibAAATables, ibAAASlotStatTable, ibAAAChassisId,
+--      ibAAASlotId, and ibAAASlotSessionResourceNum
+-- V1.2 2021.05.19 updated by zhanghang
+--      Added ibAAASlotDualStackUserNum
+-- V1.3 2022.02.26 updated by liubo
+--      Added ibAAAUserCpu, ibAAAUserCpuMaxNumThreshold,
+--      ibAAAUserCpuMaxNum, and ibAAAUserCpuMaxNumResume
+-- V1.4 2022.07.08 updated by zhanghang
+--      Added ibAAALoginFailedTimes, ibAAAStatisticPeriod,
+--      ibAAAAdminLoginFailed, and ibAAAAdminLoginFailedClear
+-- ==================================================================
+IB-AAA-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Integer32, Unsigned32, OBJECT-TYPE, NOTIFICATION-TYPE, MODULE-IDENTITY
+        FROM SNMPv2-SMI;
+
+ibAAA MODULE-IDENTITY
+    LAST-UPDATED "202207080000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB module is used for managing AAA."
+
+--  Revision history
+    REVISION     "202207080000Z"          -- July 08, 2022 at 00:00 GMT
+    DESCRIPTION
+        "
+        Added ibAAALoginFailedTimes, ibAAAStatisticPeriod,
+        ibAAAAdminLoginFailed, and ibAAAAdminLoginFailedClear.
+        "
+
+    REVISION     "202202260000Z"          -- February 26, 2022 at 00:00 GMT
+    DESCRIPTION
+        "
+        Added ibAAAUserCpu, ibAAAUserCpuMaxNumThreshold,
+        ibAAAUserCpuMaxNum, and ibAAAUserCpuMaxNumResume.
+        "
+
+    REVISION     "202105190000Z"          -- May 19, 2021 at 00:00 GMT
+    DESCRIPTION  "ibAAASlotDualStackUserNum"
+
+    REVISION     "201903110000Z"
+    DESCRIPTION  "The initial version."
+
+::= { ibCommon 181 }
+
+-- ----------------------------------------------------------------------
+-- ibAAAMibTrapOid Table
+-- ----------------------------------------------------------------------
+ibAAAMibTrap OBJECT IDENTIFIER ::= { ibAAA 1 }
+
+ibAAAMibTrapOid OBJECT IDENTIFIER ::= { ibAAAMibTrap 1 }
+ibAAATrapOidDefine OBJECT IDENTIFIER ::= { ibAAAMibTrapOid 1 }
+
+ibAAAUserChassis OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Chassis that online users access."
+    ::= { ibAAATrapOidDefine 1 }
+
+ibAAAUserSlot OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Slot that online users access."
+    ::= { ibAAATrapOidDefine 2 }
+
+ibAAAUserSlotMaxNumThreshold OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Threshold for the maximum number of online users on this slot."
+    ::= { ibAAATrapOidDefine 3 }
+
+ibAAAUserCpu OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Number of the CPU that online users access."
+    ::= { ibAAATrapOidDefine 4 }
+
+ibAAAUserCpuMaxNumThreshold OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Threshold for the maximum number of online users on this CPU."
+    ::= { ibAAATrapOidDefine 5 }
+
+ibAAALoginFailedTimes OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Number of login failures."
+    ::= { ibAAATrapOidDefine 6 }
+
+ibAAAStatisticPeriod OBJECT-TYPE
+    SYNTAX Integer32
+    UNITS "minute"
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Reference period for login failure statistics collection."
+    ::= { ibAAATrapOidDefine 7 }
+
+-- ----------------------------------------------------------------------
+-- ibAAATraps Table
+-- ----------------------------------------------------------------------
+ibAAATraps      OBJECT IDENTIFIER ::= { ibAAAMibTrap 2 }
+ibAAATrapsDefine      OBJECT IDENTIFIER ::= { ibAAATraps 0 }
+
+ibAAAUserSlotMaxNum NOTIFICATION-TYPE
+    OBJECTS { ibAAAUserChassis,
+              ibAAAUserSlot,
+              ibAAAUserSlotMaxNumThreshold }
+    STATUS current
+    DESCRIPTION
+        "This trap is generated when the number of online users on the slot
+         reaches the maximum user threshold.  Subsequent users are recommended
+         to access the device through another slot."
+    ::= { ibAAATrapsDefine 1 }
+
+ibAAAUserSlotMaxNumResume NOTIFICATION-TYPE
+    OBJECTS { ibAAAUserChassis,
+              ibAAAUserSlot,
+              ibAAAUserSlotMaxNumThreshold }
+    STATUS current
+    DESCRIPTION
+        "This trap is generated when the number of online users on the slot
+         falls below 90% of the maximum user threshold."
+    ::= { ibAAATrapsDefine 2 }
+
+ibAAAUserCpuMaxNum NOTIFICATION-TYPE
+    OBJECTS { ibAAAUserChassis,
+              ibAAAUserSlot,
+              ibAAAUserCpu,
+              ibAAAUserCpuMaxNumThreshold }
+    STATUS current
+    DESCRIPTION
+        "This trap is generated when the number of online users on the CPU
+         reaches the threshold.  Subsequent users are recommended to access
+         the device through another CPU."
+    ::= { ibAAATrapsDefine 3 }
+
+ibAAAUserCpuMaxNumResume NOTIFICATION-TYPE
+    OBJECTS { ibAAAUserChassis,
+              ibAAAUserSlot,
+              ibAAAUserCpu,
+              ibAAAUserCpuMaxNumThreshold }
+    STATUS current
+    DESCRIPTION
+        "This trap is generated when the number of online users on the CPU
+         falls below 90% of the threshold."
+    ::= { ibAAATrapsDefine 4 }
+
+ibAAAAdminLoginFailed NOTIFICATION-TYPE
+    OBJECTS { ibAAALoginFailedTimes,
+              ibAAAStatisticPeriod }
+    STATUS current
+    DESCRIPTION
+        "This trap is generated when an administrator user failed to
+         log in frequently."
+    ::= { ibAAATrapsDefine 5 }
+
+ibAAAAdminLoginFailedClear NOTIFICATION-TYPE
+    OBJECTS { ibAAALoginFailedTimes,
+              ibAAAStatisticPeriod }
+    STATUS current
+    DESCRIPTION
+        "This trap is generated when an administrator user failed to
+         log in but the failure does not occur frequently."
+    ::= { ibAAATrapsDefine 6 }
+
+-- ----------------------------------------------------------------------
+-- ibAAATables Definition
+-- ----------------------------------------------------------------------
+ibAAATables OBJECT IDENTIFIER ::= { ibAAA 2 }
+
+-- ----------------------------------------------------------------------
+-- ibAAASlotStatTable Table
+-- ----------------------------------------------------------------------
+ibAAASlotStatTable OBJECT-TYPE
+    SYNTAX  SEQUENCE OF IbAAASlotStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+        "Slot-based AAA statistics."
+    ::= { ibAAATables 1 }
+
+ibAAASlotStatEntry OBJECT-TYPE
+    SYNTAX  IbAAASlotStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS  current
+    DESCRIPTION
+        "An entry (conceptual row) represents AAA statistics for a slot."
+        INDEX { ibAAAChassisId, ibAAASlotId }
+    ::= { ibAAASlotStatTable 1 }
+
+IbAAASlotStatEntry ::= SEQUENCE {
+    ibAAAChassisId           Unsigned32,
+    ibAAASlotId              Unsigned32,
+    ibAAASlotSessionResourceNum      Unsigned32,
+    ibAAASlotDualStackUserNum        Unsigned32}
+
+ibAAAChassisId   OBJECT-TYPE
+    SYNTAX   Unsigned32 (0..65535)
+    MAX-ACCESS not-accessible
+    STATUS   current
+    DESCRIPTION
+        "ID of the member device where the statistics are collected."
+    ::= { ibAAASlotStatEntry 1 }
+
+ibAAASlotId   OBJECT-TYPE
+    SYNTAX   Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS   current
+    DESCRIPTION
+        "Slot ID of the statistics."
+    ::= { ibAAASlotStatEntry 2 }
+
+ibAAASlotSessionResourceNum   OBJECT-TYPE
+    SYNTAX   Unsigned32
+    MAX-ACCESS  read-only
+    STATUS   current
+    DESCRIPTION
+        "Number of used session resource on this slot."
+    ::= { ibAAASlotStatEntry 3 }
+
+ibAAASlotDualStackUserNum   OBJECT-TYPE
+    SYNTAX   Unsigned32
+    MAX-ACCESS  read-only
+    STATUS   current
+    DESCRIPTION
+        "Number of dual-stack users on this slot."
+    ::= { ibAAASlotStatEntry 4 }
+
+END

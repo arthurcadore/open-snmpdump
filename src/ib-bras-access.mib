@@ -1,0 +1,689 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: BRAS(Broadband Remote Access Server) access MIB File
+-- Reference:
+-- Version: V1.2
+-- History:
+-- V1.0 2020-11-10 created by wangzhenjun
+-- V1.1 2021-11-1 add ibBrasAccOnlineMibTrapOid
+--                add ibBrasAccOnlineTrap  by fengshuxiang
+-- V1.2 2022-03-6 add ibBrasAccCUTrapCpuID ibBrasAccCUTrapCpuThreshold
+--                add ibBrasAccCUCpuWarning  ibBrasAccCUCpuWarningResume
+--                by guoxiaopeng
+--      2023-08-15 Change value range of ibBrasAccUPSlotID. by xiahongfei
+-- =================================================================
+IB-BRAS-ACCESS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, Integer32
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC;
+
+ibBrasAcc MODULE-IDENTITY
+    LAST-UPDATED
+        "202308150900Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB contains objects that manage the information
+        of BRAS access.
+        "
+    REVISION     "202308150900Z"
+    DESCRIPTION
+        "Change value range of ibBrasAccUPSlotID."
+    REVISION     "202203060900Z"
+    DESCRIPTION
+        "
+        Added ibBrasAccCUTrapCpuID, ibBrasAccCUTrapCpuThreshold,
+        ibBrasAccCUCpuWarning, and ibBrasAccCUCpuWarningResume.
+        "
+    REVISION
+        "202111010927Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 200 }
+
+ibBrasAccTotalStat OBJECT IDENTIFIER ::= { ibBrasAcc 1 }
+
+ibBrasAccTotalUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of BRAS access users on the device."
+    ::= { ibBrasAccTotalStat 1 }
+
+ibBrasAccTotalPPPoEUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of PPPoE users on the device."
+    ::= { ibBrasAccTotalStat 2 }
+
+ibBrasAccTotalIPoEUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of IPoE users on the device."
+    ::= { ibBrasAccTotalStat 3 }
+
+ibBrasAccTotalLNSUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of LNS users on the device."
+    ::= { ibBrasAccTotalStat 4 }
+
+ibBrasAccTotalLACUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of LAC users on the device."
+    ::= { ibBrasAccTotalStat 5 }
+
+ibBrasAccTotalIPv4UserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of IPv4 users on the device."
+    ::= { ibBrasAccTotalStat 6 }
+
+ibBrasAccTotalIPv6UserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of IPv6 users on the device."
+    ::= { ibBrasAccTotalStat 7 }
+
+ibBrasAccTotalDSUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of dual-stack users on the device."
+    ::= { ibBrasAccTotalStat 8 }
+
+ibBrasAccUPStatTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbBrasAccCUStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "A table for BRAS CU(C: control plane, U: user plane)
+                 user statistics."
+    ::= { ibBrasAcc 2 }
+
+ibBrasAccUPStatEntry  OBJECT-TYPE
+    SYNTAX      IbBrasAccCUStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "An entry for BRAS CU user statistics."
+    INDEX
+    {
+            ibBrasAccUPID
+    }
+    ::= { ibBrasAccUPStatTable 1 }
+
+IbBrasAccCUStatEntry ::=
+    SEQUENCE
+    {
+            ibBrasAccUPID                          Integer32,
+            ibBrasAccUPUserNum                     Integer32,
+            ibBrasAccUPPPPoEUserNum                Integer32,
+            ibBrasAccUPIPoEUserNum                 Integer32,
+            ibBrasAccUPLNSUserNum                  Integer32,
+            ibBrasAccUPLACUserNum                  Integer32,
+            ibBrasAccUPIPv4UserNum                 Integer32,
+            ibBrasAccUPIPv6UserNum                 Integer32,
+            ibBrasAccUPDSUserNum                   Integer32
+    }
+
+ibBrasAccUPID OBJECT-TYPE
+    SYNTAX      Integer32 (1024..2047)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The value is UP (user plane) ID."
+    ::= { ibBrasAccUPStatEntry 1 }
+
+ibBrasAccUPUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of BRAS access users on the
+         specified UP."
+    ::= { ibBrasAccUPStatEntry 2 }
+
+ibBrasAccUPPPPoEUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of PPPoE users on the specified UP."
+    ::= { ibBrasAccUPStatEntry 3 }
+
+ibBrasAccUPIPoEUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of IPoE users on the specified UP."
+    ::= { ibBrasAccUPStatEntry 4 }
+
+ibBrasAccUPLNSUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of LNS users on the specified UP."
+    ::= { ibBrasAccUPStatEntry 5 }
+
+ibBrasAccUPLACUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of LAC users on the specified UP."
+    ::= { ibBrasAccUPStatEntry 6 }
+
+ibBrasAccUPIPv4UserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of IPv4 users on the specified UP."
+    ::= { ibBrasAccUPStatEntry 7 }
+
+ibBrasAccUPIPv6UserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of IPv6 users on the specified UP."
+    ::= { ibBrasAccUPStatEntry 8 }
+
+ibBrasAccUPDSUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of dual-stack users on the specified UP."
+    ::= { ibBrasAccUPStatEntry 9 }
+
+ibBrasAccUPSlotStatTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbBrasAccUPSlotStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "A table for BRAS CU user statistics on the specific slot."
+    ::= { ibBrasAcc 3 }
+
+ibBrasAccUPSlotStatEntry  OBJECT-TYPE
+    SYNTAX      IbBrasAccUPSlotStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "An entry for BRAS CU user statistics."
+    INDEX
+    {
+            ibBrasAccUPSlotUPID,
+            ibBrasAccUPSlotID
+    }
+    ::= { ibBrasAccUPSlotStatTable 1 }
+
+IbBrasAccUPSlotStatEntry ::=
+    SEQUENCE
+    {
+            ibBrasAccUPSlotUPID                        Integer32,
+            ibBrasAccUPSlotID                          Integer32,
+            ibBrasAccUPSlotUserNum                     Integer32,
+            ibBrasAccUPSlotPPPoEUserNum                Integer32,
+            ibBrasAccUPSlotIPoEUserNum                 Integer32,
+            ibBrasAccUPSlotLNSUserNum                  Integer32,
+            ibBrasAccUPSlotLACUserNum                  Integer32,
+            ibBrasAccUPSlotIPv4UserNum                 Integer32,
+            ibBrasAccUPSlotIPv6UserNum                 Integer32,
+            ibBrasAccUPSlotDSUserNum                   Integer32
+    }
+
+ibBrasAccUPSlotUPID OBJECT-TYPE
+    SYNTAX      Integer32 (1024..2047)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The value is UP ID."
+    ::= { ibBrasAccUPSlotStatEntry 1 }
+
+ibBrasAccUPSlotID OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The value is the slot ID of a UP."
+    ::= { ibBrasAccUPSlotStatEntry 2 }
+
+ibBrasAccUPSlotUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of BRAS access users on the specified
+         slot of the specified UP."
+    ::= { ibBrasAccUPSlotStatEntry 3 }
+
+ibBrasAccUPSlotPPPoEUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of PPPoE users on the specified slot of
+         the specified UP."
+    ::= { ibBrasAccUPSlotStatEntry 4 }
+
+ibBrasAccUPSlotIPoEUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of IPoE users on the specified slot of
+         the specified UP."
+    ::= { ibBrasAccUPSlotStatEntry 5 }
+
+ibBrasAccUPSlotLNSUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of LNS users on the specified slot of
+         the specified UP."
+    ::= { ibBrasAccUPSlotStatEntry 6 }
+
+ibBrasAccUPSlotLACUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of LAC users on the specified slot of
+         the specified UP."
+    ::= { ibBrasAccUPSlotStatEntry 7 }
+
+ibBrasAccUPSlotIPv4UserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of IPv4 users on the specified slot of
+         the specified UP."
+    ::= { ibBrasAccUPSlotStatEntry 8 }
+
+ibBrasAccUPSlotIPv6UserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of IPv6 users on the specified slot of
+         the specified UP."
+    ::= { ibBrasAccUPSlotStatEntry 9 }
+
+ibBrasAccUPSlotDSUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of dual-stack users on the specified
+         slot of the specified UP."
+    ::= { ibBrasAccUPSlotStatEntry 10 }
+
+ibBrasAccIfStatTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbBrasAccIfStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "A table for BRAS CU user statistics on the specified
+                 interface."
+    ::= { ibBrasAcc 4 }
+
+ibBrasAccIfStatEntry  OBJECT-TYPE
+    SYNTAX      IbBrasAccIfStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "An entry for BRAS CU user statistics."
+    INDEX
+    {
+            ibBrasAccIfName
+    }
+    ::= { ibBrasAccIfStatTable 1 }
+
+IbBrasAccIfStatEntry ::=
+    SEQUENCE
+    {
+            ibBrasAccIfName                        DisplayString,
+            ibBrasAccIfUserNum                     Integer32,
+            ibBrasAccIfPPPoEUserNum                Integer32,
+            ibBrasAccIfIPoEUserNum                 Integer32,
+            ibBrasAccIfLNSUserNum                  Integer32,
+            ibBrasAccIfLACUserNum                  Integer32,
+            ibBrasAccIfIPv4UserNum                 Integer32,
+            ibBrasAccIfIPv6UserNum                 Integer32,
+            ibBrasAccIfDSUserNum                   Integer32
+    }
+
+ibBrasAccIfName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (1..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is an interface name. The interface name must be valid
+         or not specified on the getnext operation."
+    ::= { ibBrasAccIfStatEntry 1 }
+
+ibBrasAccIfUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of BRAS access users on the specified
+         interface."
+    ::= { ibBrasAccIfStatEntry 2 }
+
+ibBrasAccIfPPPoEUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of PPPoE users on the
+         specified interface."
+    ::= { ibBrasAccIfStatEntry 3 }
+
+ibBrasAccIfIPoEUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of IPoE users on the
+         specified interface."
+    ::= { ibBrasAccIfStatEntry 4 }
+
+ibBrasAccIfLNSUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of LNS users on the
+         specified interface."
+    ::= { ibBrasAccIfStatEntry 5 }
+
+ibBrasAccIfLACUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of LAC users on the
+         specified interface."
+    ::= { ibBrasAccIfStatEntry 6 }
+
+ibBrasAccIfIPv4UserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of IPv4 users on the
+         specified interface."
+    ::= { ibBrasAccIfStatEntry 7 }
+
+ibBrasAccIfIPv6UserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of IPv6 users on the
+         specified interface."
+    ::= { ibBrasAccIfStatEntry 8 }
+
+ibBrasAccIfDSUserNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value is the total number of dual-stack users on the
+         specified interface."
+    ::= { ibBrasAccIfStatEntry 9 }
+
+ibBrasAccCUMibTrapOid OBJECT IDENTIFIER ::= { ibBrasAcc 5 }
+
+ibBrasAccCUTrapUPID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved UP of trap information."
+    ::= { ibBrasAccCUMibTrapOid 1 }
+
+ibBrasAccCUTrapSlotID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved slot of trap information."
+    ::= { ibBrasAccCUMibTrapOid 2 }
+
+ibBrasAccCUTrapThreshold OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved threshold (percentage of online users) of
+         trap information."
+    ::= { ibBrasAccCUMibTrapOid 3 }
+
+ibBrasAccCUTrapCpuID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved CPU of trap information."
+    ::= { ibBrasAccCUMibTrapOid 4 }
+
+ibBrasAccCUTrapCpuThreshold OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved CPU threshold (percentage of online users) of
+         trap information."
+    ::= { ibBrasAccCUMibTrapOid 5 }
+
+ibBrasAccCUTrap OBJECT IDENTIFIER  ::= { ibBrasAcc 6 }
+
+ibBrasAccCUTrapPrefix OBJECT IDENTIFIER  ::= { ibBrasAccCUTrap 0 }
+
+ibBrasAccCUUPWarning NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibBrasAccCUTrapUPID,
+        ibBrasAccCUTrapThreshold
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the number of online users on the UP
+         reaches the maximum user threshold. Subsequent users are recommended
+         to access the device through another UP."
+    ::= { ibBrasAccCUTrapPrefix 1 }
+
+ibBrasAccCUUPWarningResume NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibBrasAccCUTrapUPID,
+        ibBrasAccCUTrapThreshold
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the number of online users on the UP
+         falls below the maximum user threshold."
+    ::= { ibBrasAccCUTrapPrefix 2 }
+
+ibBrasAccCUSlotWarning NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibBrasAccCUTrapUPID,
+        ibBrasAccCUTrapSlotID,
+        ibBrasAccCUTrapThreshold
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the number of online users on the slot of
+         the specified UP reaches the maximum user threshold. Subsequent users
+         are recommended to access the device through another slot of
+         the specified UP."
+    ::= { ibBrasAccCUTrapPrefix 3 }
+
+ibBrasAccCUSlotWarningResume NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibBrasAccCUTrapUPID,
+        ibBrasAccCUTrapSlotID,
+        ibBrasAccCUTrapThreshold
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the number of online users on the slot
+         of the specified UP falls below the maximum user threshold."
+    ::= { ibBrasAccCUTrapPrefix 4 }
+
+ibBrasAccCUCpuWarning NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibBrasAccCUTrapUPID,
+        ibBrasAccCUTrapSlotID,
+        ibBrasAccCUTrapCpuID,
+        ibBrasAccCUTrapCpuThreshold
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the number of online users on the CPU
+        of the specified slot and UP reaches the maximum user threshold."
+    ::= { ibBrasAccCUTrapPrefix 5 }
+
+ibBrasAccCUCpuWarningResume NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibBrasAccCUTrapUPID,
+        ibBrasAccCUTrapSlotID,
+        ibBrasAccCUTrapCpuID,
+        ibBrasAccCUTrapCpuThreshold
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the number of online users on the CPU
+         of the specified slot and UP falls below the maximum user threshold."
+    ::= { ibBrasAccCUTrapPrefix 6 }
+
+ibBrasAccOnlineMibTrapOid OBJECT IDENTIFIER ::= { ibBrasAcc 7 }
+
+ibBrasAccOnlineTrapType OBJECT-TYPE
+    SYNTAX      INTEGER {
+                        all(1),
+                        ipoe(2),
+                        ppp(3),
+                        l2tpv2(4)
+                        }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved type of trap information."
+    ::= { ibBrasAccOnlineMibTrapOid 1 }
+
+ibBrasAccOnlineTrapSlot OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved CP slot of trap information."
+    ::= { ibBrasAccOnlineMibTrapOid 2 }
+
+ibBrasAccOnlineTrapThreshold OBJECT-TYPE
+    SYNTAX      Integer32(0..100)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved threshold (percentage of online users) of
+         trap information."
+    ::= { ibBrasAccOnlineMibTrapOid 3 }
+
+ibBrasAccOnlineTrap OBJECT IDENTIFIER  ::= { ibBrasAcc 8 }
+
+ibBrasAccOnlineTrapPrefix OBJECT IDENTIFIER  ::= { ibBrasAccOnlineTrap 0 }
+
+ibBrasAccOnlineULimitAlarm NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibBrasAccOnlineTrapType,
+        ibBrasAccOnlineTrapSlot,
+        ibBrasAccOnlineTrapThreshold
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the number of online users reaches the maximum
+         user threshold. Subsequent users are recommended to access the device"
+    ::= { ibBrasAccOnlineTrapPrefix 1 }
+
+ibBrasAccOnlineULimitResume NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibBrasAccOnlineTrapType,
+        ibBrasAccOnlineTrapSlot,
+        ibBrasAccOnlineTrapThreshold
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the number of online users falls below
+         the maximum user threshold."
+    ::= { ibBrasAccOnlineTrapPrefix 2 }
+
+ibBrasAccOnlineLLimitAlarm NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibBrasAccOnlineTrapType,
+        ibBrasAccOnlineTrapSlot,
+        ibBrasAccOnlineTrapThreshold
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the number of online users reaches the minimum
+         user threshold. Subsequent users are recommended to access the device"
+    ::= { ibBrasAccOnlineTrapPrefix 3 }
+
+ibBrasAccOnlineLLimitResume NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibBrasAccOnlineTrapType,
+        ibBrasAccOnlineTrapSlot,
+        ibBrasAccOnlineTrapThreshold
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the number of online users higher the minimum
+         user threshold."
+    ::= { ibBrasAccOnlineTrapPrefix 4 }
+
+ibBrasAccOnlineFailEvent NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibBrasAccOnlineTrapSlot,
+        ibBrasAccOnlineTrapThreshold
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the number of failed online users on the
+         device reaches the threshold. "
+    ::= { ibBrasAccOnlineTrapPrefix 5 }
+
+END

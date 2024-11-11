@@ -1,0 +1,145 @@
+-- ==========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Private MIB File For SSL VPN
+-- Reference:
+-- Version: V1.1
+-- History:
+-- V1.0  2017-07-05 Initial Version created by wuqingchun 11459.
+-- V1.1  2022-06-23 Updated by wangyun 19368
+--                  Add ibSslvpnUserNumOverSpec, ibSslvpnUserNumBelowSpec
+-- ==========================================================================
+IB-SSLVPN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    MODULE-IDENTITY, OBJECT-TYPE, Counter64, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI         -- [RFC2578]
+    DisplayString
+        FROM SNMPv2-TC;         -- [RFC2578]
+
+ibSslvpn MODULE-IDENTITY
+    LAST-UPDATED "202206231150Z"  -- June 23, 2022 at 11:50 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The private MIB file includes the SSL VPN information of
+         a device."
+    -- Revision History
+    REVISION      "202206231150Z"  -- June 23, 2022
+    DESCRIPTION
+        "Add ibSslvpnUserNumOverSpec, ibSslvpnUserNumBelowSpec"
+    REVISION      "201707051920Z"
+    DESCRIPTION
+        "Initial revision of this MIB module."
+    ::= { ibCommon 170 }
+
+
+--
+-- Node definitions
+--
+ibSslvpnMibObjects OBJECT IDENTIFIER ::= { ibSslvpn 1 }
+
+ibSslvpnInfomation OBJECT IDENTIFIER ::= { ibSslvpnMibObjects 1 }
+
+--
+-- SSL VPN context IP-access packet statistics table definitions
+--
+ibSslvpnCtxIpacStatTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSslvpnCtxIpacStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "This table contains SSL VPN context configuration."
+    ::= { ibSslvpnInfomation 1 }
+
+ibSslvpnCtxIpacStatEntry OBJECT-TYPE
+    SYNTAX      IbSslvpnCtxIpacStatEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "An entry (conceptual row) in the SSL VPN context IP-access packet
+             statistics table."
+    INDEX   { ibSslvpnCtxName }
+    ::= { ibSslvpnCtxIpacStatTable 1 }
+
+IbSslvpnCtxIpacStatEntry ::=
+    SEQUENCE {
+        ibSslvpnCtxName                DisplayString,
+        ibSslvpnCtxIpacClientInBytes   Counter64,
+        ibSslvpnCtxIpacClientOutBytes  Counter64,
+        ibSslvpnCtxIpacServerInBytes   Counter64,
+        ibSslvpnCtxIpacServerOutBytes  Counter64
+    }
+
+ibSslvpnCtxName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE(1..31))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "Name of the SSL VPN context, which is case insensitive and
+             must be unique.  The string can contain only letters, digits, and
+             underscores (_)."
+    ::= { ibSslvpnCtxIpacStatEntry 1 }
+
+ibSslvpnCtxIpacClientInBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Number of IP-access packet bytes that the SSL VPN context
+             received from client."
+    ::= { ibSslvpnCtxIpacStatEntry 2 }
+
+ibSslvpnCtxIpacClientOutBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Number of IP-access packet bytes that the SSL VPN context
+             sent to client."
+    ::= { ibSslvpnCtxIpacStatEntry 3 }
+
+ibSslvpnCtxIpacServerInBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Number of IP-access packet bytes that the SSL VPN context
+             received from server."
+    ::= { ibSslvpnCtxIpacStatEntry 4 }
+
+ibSslvpnCtxIpacServerOutBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Number of IP-access packet bytes that the SSL VPN
+             context sent to server."
+    ::= { ibSslvpnCtxIpacStatEntry 5 }
+
+
+ibSslvpnTrapObjects OBJECT IDENTIFIER ::= { ibSslvpn 2 }
+
+ibSslvpnTrap OBJECT IDENTIFIER ::= { ibSslvpnTrapObjects 1 }
+
+ibSslvpnTrapPrefix OBJECT IDENTIFIER ::= { ibSslvpnTrap 0 }
+
+ibSslvpnUserNumOverSpec NOTIFICATION-TYPE
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the whole on-line user number
+        exceed specification."
+    ::= { ibSslvpnTrapPrefix 1 }
+
+ibSslvpnUserNumBelowSpec NOTIFICATION-TYPE
+    STATUS      current
+    DESCRIPTION
+        "This notification is generated when the whole on-line user number
+        below specification."
+    ::= { ibSslvpnTrapPrefix 2 }
+
+END

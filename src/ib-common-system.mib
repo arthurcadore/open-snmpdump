@@ -1,0 +1,574 @@
+-- =========================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: This file describes common MIB objects implemented by both
+--              Routers and Switches.
+-- Reference:
+-- Version: V2.9
+-- History:
+-- V1.0 2004-6-30 Created by MIB Standard Group
+-- V1.1 16th Aug 2004
+--      Added the trap node 'ibRebootSendTrap' into ibSystemNotification
+-- V2.0 2004-10-12 updated by gaolong
+--      Imported from SNMPv2-SMI and SNMPv2-TC instead of RFC1212 and RFC1155-SMI
+--      Changed ACCESS clauses to MAX-ACCESS
+--      Changed STATUS clauses from mandatory to current
+-- V2.1 2008-11-11 added node ibSysBootType by lifengguang
+-- V2.2 2009-05-05 added ibSysStatisticPeriod, ibSysSamplePeriod,
+--      ibSysTrapResendPeriod, ibSysTrapCollectionPeriod, ibSysColdStartTrap,
+--      ibSysWarmStartTrap, ibSysSnmpPort, ibSysSnmpTrapPort, ibSysNetID,
+--      ibSysLastSampleTime by jinyi
+-- V2.3 2012-01-07 added node ibSysTrapSendNum and ibSysFirstTrapTime by duyanbing
+-- V2.4 2012-06-06 added node ibSysBannerMOTD by jixugang
+-- V2.5 2013-05-28 added trap node ibSysLoghostUnreachableTrap by duyanbing
+-- V2.6 2013-09-13 added normal(0) to node ibReboot by duyanbing
+-- V2.7 2014-08-07 added ibSystemDiagInfoTable by SongHao
+--      2015-03-25 Added the trap node ibSysDyingGaspTrap into ibSystemNotification
+--      by gaoyanping
+-- V2.8 2015-05-05 added ibSystemWorkingMode, ibSystemWorkingModeTable,
+--      ibSystemWorkingModeDefault, ibSystemWorkingModeCurrent,
+--      ibSystemWorkingModeNext by lifuxia
+-- V2.9 2023-05-11 added node ibSystemCurrentEnergySavingMode ,
+--      ibSystemEnergySavingModeTable,ibSystemEnergySavingModeName,
+--      ibSystemEnergySavingPolicy, ibSystemEnergySavingPolicyStatus by zhaomangyu
+-- =========================================================================
+IB-COMMON-SYSTEM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, TimeTicks, Integer32
+        FROM SNMPv2-SMI
+    DisplayString, DateAndTime, TimeStamp, RowStatus, TruthValue
+        FROM SNMPv2-TC
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB
+    intelbras
+        FROM IB-OID-MIB;
+
+ibSystem MODULE-IDENTITY
+    LAST-UPDATED "202305110000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION  "added node ibSystemCurrentEnergySavingMode ,
+                  ibSystemEnergySavingModeTable,ibSystemEnergySavingModeName,
+                  ibSystemEnergySavingPolicy, ibSystemEnergySavingPolicyStatus."
+    REVISION     "202305110000Z"
+    DESCRIPTION
+        "This file describes common MIB objects implemented by
+        both Routers and Switches."
+    REVISION     "201505050000Z"
+    DESCRIPTION  "Added ibSystemWorkingMode, ibSystemWorkingModeTable,
+                  ibSystemWorkingModeDefault, ibSystemWorkingModeCurrent,
+                  ibSystemWorkingModeNext."
+    REVISION     "201503250000Z"
+    DESCRIPTION  "Added the trap node ibSysDyingGaspTrap into ibSystemNotification."
+    REVISION     "201408071710Z"
+    DESCRIPTION  "Added ibSystemDiagInfoTable."
+    REVISION     "201309130000Z"
+    DESCRIPTION  "Added normal(0) to node ibReboot."
+    REVISION     "201305280000Z"
+    DESCRIPTION  "Added trap node ibSysLoghostUnreachableTrap."
+    REVISION     "201206060000Z"
+    DESCRIPTION  "Added node ibSysBannerMOTD."
+    REVISION     "201201070000Z"
+    DESCRIPTION  "Added node ibSysTrapSendNum and ibSysFirstTrapTime."
+    REVISION     "200905050000Z"
+    DESCRIPTION  "Added ibSysStatisticPeriod, ibSysSamplePeriod,
+                  ibSysTrapResendPeriod, ibSysTrapCollectionPeriod,
+                  ibSysColdStartTrap, ibSysWarmStartTrap, ibSysSnmpPort,
+                  ibSysSnmpTrapPort, ibSysNetID, ibSysLastSampleTime."
+    REVISION     "200811110000Z"
+    DESCRIPTION  "added node ibSysBootType."
+    REVISION     "200410120000Z"
+    DESCRIPTION  "Imported from SNMPv2-SMI and SNMPv2-TC instead of
+                  RFC1212 and RFC1155-SMI.
+                  Changed ACCESS clauses to MAX-ACCESS.
+                  Changed STATUS clauses from mandatory to current."
+    REVISION     "200408160000Z"
+    DESCRIPTION  "Added the trap node 'ibRebootSendTrap' into ibSystemNotification."
+    REVISION     "200406300000Z"
+    DESCRIPTION  "Initial revision of this MIB module."
+    ::= { intelbras 6 }
+
+-- ==============================
+-- Begin define of ibmHostName
+-- ==============================
+
+    ibWriteConfig OBJECT-TYPE
+        SYNTAX INTEGER{
+                       save(1)
+                      }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Write config to router."
+        ::= { ibSystem 5 }
+
+    ibStartFtpServer OBJECT-TYPE
+        SYNTAX INTEGER{
+                       enable(1),
+                       disable(2)
+                       }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Decide whether start ftp-server.enable(1) indicates to start ftp-server;
+            disable(2) indicates to stop ftp-server."
+        ::= { ibSystem 6 }
+
+    ibReboot OBJECT-TYPE
+        SYNTAX INTEGER{
+                       normal(0),
+                       reboot(1)
+                       }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "normal: do nothing.
+            reboot: reboot the device.
+            'normal' will be returned when getting."
+        ::= { ibSystem 7 }
+
+    ibSystemNotification OBJECT IDENTIFIER ::= { ibSystem 8 }
+
+    ibWriteSuccessTrap NOTIFICATION-TYPE
+        STATUS current
+        DESCRIPTION
+            "Send a trap about write success."
+        ::= { ibSystemNotification 1 }
+
+    ibWriteFailureTrap NOTIFICATION-TYPE
+        STATUS current
+        DESCRIPTION
+            "Send a trap about write failure."
+        ::= { ibSystemNotification 2 }
+
+    ibRebootSendTrap NOTIFICATION-TYPE
+        STATUS current
+        DESCRIPTION
+            "If a user restarts the device with command
+            'reboot', this trap will be sent two seconds
+             before the device reboots."
+        ::= { ibSystemNotification 3 }
+
+    ibSysColdStartTrap NOTIFICATION-TYPE
+        OBJECTS
+            {
+                ibSysFirstTrapTime
+            }
+        STATUS current
+        DESCRIPTION
+            "System cold start trap."
+        ::= { ibSystemNotification 4 }
+
+    ibSysWarmStartTrap NOTIFICATION-TYPE
+        OBJECTS
+            {
+                ibSysFirstTrapTime
+            }
+        STATUS current
+        DESCRIPTION
+            "System warm start trap."
+        ::= { ibSystemNotification 5 }
+
+    ibSysLoghostUnreachableTrap NOTIFICATION-TYPE
+        OBJECTS
+        {
+            ibSysLoghostIndex,
+            ibSysLoghostIpaddressType,
+            ibSysLoghostIpaddress,
+            ibSysLoghostTrapVpnName
+        }
+        STATUS      current
+        DESCRIPTION
+            "This notification will be sent when a loghost becomes unreachable."
+        ::= { ibSystemNotification 6}
+
+    ibSysDyingGaspTrap NOTIFICATION-TYPE
+        STATUS      current
+        DESCRIPTION
+            "This notification will be sent upon loss of power."
+        ::= { ibSystemNotification 7}
+
+    ibSoftwareVersion OBJECT-TYPE
+        SYNTAX DisplayString
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Software version."
+        ::= { ibSystem 9 }
+
+    ibSysBootType OBJECT-TYPE
+        SYNTAX INTEGER
+        {
+            coldStart(1),           -- Cold start
+            warmStart(2)            -- Warm start
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Boot type of the system, indicates whether the last device reboot was by
+            CLI (warm start) or power off (cold start)."
+        ::= { ibSystem 10 }
+
+    ibSystemInfo OBJECT IDENTIFIER ::= { ibSystem 11 }
+
+    ibSysStatisticPeriod OBJECT-TYPE
+        SYNTAX      Integer32(0..900)
+        UNITS       "seconds"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Statistic period.  The device collects statistics
+             within the period."
+        DEFVAL { 0 }
+        ::= { ibSystemInfo 1 }
+
+    ibSysSamplePeriod OBJECT-TYPE
+        SYNTAX      Integer32(0..300)
+        UNITS       "seconds"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Sampling period.  The device takes samples periodically
+             for statistics collection."
+        DEFVAL { 0 }
+        ::= { ibSystemInfo 2 }
+
+    ibSysTrapResendPeriod OBJECT-TYPE
+        SYNTAX      Integer32(0..3600)
+        UNITS       "seconds"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Trap resending period.  If the value is zero, the trap
+             will not be re-sent."
+        DEFVAL { 0 }
+        ::= { ibSystemInfo 3 }
+
+    ibSysTrapCollectionPeriod OBJECT-TYPE
+        SYNTAX      Integer32(0..60)
+        UNITS       "seconds"
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Trap collecting period.  If the value is zero, the trap
+             will not be re-sent."
+        DEFVAL { 0 }
+        ::= { ibSystemInfo 4 }
+
+    ibSysSnmpPort OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "UDP port for SNMP protocol entity to receive messages except Trap-PDU."
+        ::= { ibSystemInfo 5 }
+
+    ibSysSnmpTrapPort OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "UDP port for Trap-PDU to receive messages."
+        ::= { ibSystemInfo 6 }
+
+    ibSysNetID OBJECT-TYPE
+        SYNTAX      OCTET STRING(SIZE(0..127))
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "System Net ID."
+        ::= { ibSystemInfo 7 }
+
+    ibSysLastSampleTime OBJECT-TYPE
+        SYNTAX      DateAndTime
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "Last sampling time of the system."
+        ::= { ibSystemInfo 8 }
+
+    ibSysTrapSendNum OBJECT-TYPE
+        SYNTAX      Integer32(0..24)
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+            "Maximum number of times for sending a trap.  If the value is zero,
+            a trap will be sent at an interval continually."
+        ::= { ibSystemInfo 9 }
+
+    ibSysFirstTrapTime OBJECT-TYPE
+        SYNTAX      TimeTicks
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Time when the first trap is sent."
+        ::= { ibSystemInfo 10 }
+
+    ibSysBannerMOTD OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..2000))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "An administratively configured message that is displayed
+             to the user when the user logs in to the device through
+             the console port or Web interface."
+        ::= { ibSystemInfo 11 }
+
+    ibSystemNotificationInfo OBJECT IDENTIFIER ::= { ibSystem 12 }
+
+    ibSysLoghostIndex OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "Index of loghost."
+        ::= { ibSystemNotificationInfo 1 }
+
+    ibSysLoghostIpaddressType OBJECT-TYPE
+        SYNTAX InetAddressType
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "IP address type of the loghost."
+        ::= { ibSystemNotificationInfo 2 }
+
+    ibSysLoghostIpaddress OBJECT-TYPE
+        SYNTAX InetAddress
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "IP address of the loghost."
+        ::= { ibSystemNotificationInfo 3 }
+
+    ibSysLoghostTrapVpnName OBJECT-TYPE
+        SYNTAX      DisplayString(SIZE(0..31))
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "VPN name of the loghost."
+        ::= { ibSystemNotificationInfo 4 }
+
+-- ibSystemDiagInfoTable
+    ibSystemDiagInfoTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbSystemDiagInfoEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "This table is used to write diagnosis-information file."
+        ::= { ibSystem 13 }
+    ibSystemDiagInfoEntry OBJECT-TYPE
+        SYNTAX          IbSystemDiagInfoEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "The entry of ibSystemDiagInfoTable.
+                        The maximum number of entries of this table is 10.
+                        When creating a new entry if there are already
+                        10 entries in this table, the oldest entry will be
+                        deleted automatically."
+        INDEX { ibSystemDiagInfoIndex }
+        ::= { ibSystemDiagInfoTable 1 }
+    IbSystemDiagInfoEntry ::= SEQUENCE {
+        ibSystemDiagInfoIndex             Integer32,
+        ibSystemDiagInfoFilename          DisplayString,
+        ibSystemDiagInfoRowStatus         RowStatus,
+        ibSystemDiagInfoOperEndTime       TimeStamp,
+        ibSystemDiagInfoOperState         INTEGER,
+        ibSystemDiagInfoOperFailReason    DisplayString
+     }
+    ibSystemDiagInfoIndex OBJECT-TYPE
+        SYNTAX          Integer32 (1..2147483647)
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Specifies the index of an entry."
+        ::= { ibSystemDiagInfoEntry 1 }
+    ibSystemDiagInfoFilename OBJECT-TYPE
+        SYNTAX          DisplayString (SIZE (0..255))
+        MAX-ACCESS      read-create
+        STATUS          current
+        DESCRIPTION     "Specifies the name of diagnosis-information file.
+                        When creating a row without this column, the system
+                        will generate a default filename instead."
+        ::= { ibSystemDiagInfoEntry 2 }
+    ibSystemDiagInfoRowStatus OBJECT-TYPE
+        SYNTAX          RowStatus
+        MAX-ACCESS      read-create
+        STATUS          current
+        DESCRIPTION     "The row status of this entry.
+                        Only active, createAndGo, and destroy are supported."
+        ::= { ibSystemDiagInfoEntry 3 }
+    ibSystemDiagInfoOperEndTime OBJECT-TYPE
+        SYNTAX          TimeStamp
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The time when this operation was completed."
+        ::= { ibSystemDiagInfoEntry 4 }
+    ibSystemDiagInfoOperState OBJECT-TYPE
+        SYNTAX          INTEGER
+                        {
+                            opInProgress(1),
+                            opSuccess(2),
+                            opFailure(3)
+                        }
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The state of this operation.
+                        If the state of this operation is opFailure, the detailed
+                        information can be read by ibSystemDiagInfoOperFailReason."
+        ::= { ibSystemDiagInfoEntry 5 }
+    ibSystemDiagInfoOperFailReason OBJECT-TYPE
+        SYNTAX          DisplayString (SIZE (0..255))
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The failure reasons of this operation."
+        ::= { ibSystemDiagInfoEntry 6 }
+
+    ibSystemWorkingMode OBJECT IDENTIFIER ::= { ibSystem 14 }
+
+-- ibSystemWorkingModeTable
+    ibSystemWorkingModeTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbSystemWorkingModeEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "This table is used to show the system operating mode information.
+                        The supported features and the specifications of the
+                        supported features vary by system operating mode.
+                        The mode will take effect on the entire device."
+        ::= { ibSystemWorkingMode 1 }
+    ibSystemWorkingModeEntry OBJECT-TYPE
+        SYNTAX          IbSystemWorkingModeEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "The entry of ibSystemtemWorkingModeTable."
+        INDEX { ibSystemWorkingModeIndex }
+        ::= { ibSystemWorkingModeTable 1 }
+    IbSystemWorkingModeEntry ::= SEQUENCE {
+        ibSystemWorkingModeIndex             Integer32,
+        ibSystemWorkingModeName              DisplayString,
+        ibSystemWorkingModeDescr       DisplayString
+     }
+    ibSystemWorkingModeIndex OBJECT-TYPE
+        SYNTAX          Integer32 (1..2147483647)
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "The unique index of ibSystemWorkingModeTable.
+                        The value should be a a small-incremental integer.
+                        An index value uniquely identifies a system operating mode."
+        ::= { ibSystemWorkingModeEntry 1 }
+    ibSystemWorkingModeName OBJECT-TYPE
+        SYNTAX          DisplayString (SIZE (1..32))
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The name that uniquely identifies the system operating mode.
+                        The value should not contain blank spaces."
+        ::= { ibSystemWorkingModeEntry 2 }
+    ibSystemWorkingModeDescr OBJECT-TYPE
+        SYNTAX          DisplayString (SIZE (1..128))
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "Description of the system operating mode."
+        ::= { ibSystemWorkingModeEntry 3 }
+
+     ibSystemWorkingModeDefault OBJECT-TYPE
+        SYNTAX          Integer32 (1..2147483647)
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The default system operating mode.
+                        Different device devices might have different
+                        default system operating modes.
+                        The value is from ibSystemWorkingModeIndex."
+        ::= { ibSystemWorkingMode 2 }
+
+    ibSystemWorkingModeCurrent OBJECT-TYPE
+        SYNTAX          Integer32 (1..2147483647)
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION     "The current system operating mode.
+                        The value is from ibSystemWorkingModeIndex."
+        ::= { ibSystemWorkingMode 3 }
+
+    ibSystemWorkingModeNext OBJECT-TYPE
+        SYNTAX          Integer32 (1..2147483647)
+        MAX-ACCESS      read-write
+        STATUS          current
+        DESCRIPTION     "The system operating mode to be used at next startup.
+                        A mode change takes effect after the running
+                        configuration is saved and the device is rebooted.
+                        The value is from ibSystemWorkingModeIndex."
+        ::= { ibSystemWorkingMode 4 }
+
+    -- ibSystemEnergySavingModeTable
+    ibSystemEnergySavingModeTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbSystemEnergySavingModeEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Energy-saving modes supported by the device."
+        ::= { ibSystem 15 }
+    ibSystemEnergySavingModeEntry OBJECT-TYPE
+        SYNTAX          IbSystemEnergySavingModeEntry
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Entry of ibSystemEnergySavingModeTable."
+        INDEX { ibSystemEnergySavingModeName,
+                ibSystemEnergySavingPolicy }
+        ::= { ibSystemEnergySavingModeTable 1 }
+    IbSystemEnergySavingModeEntry ::= SEQUENCE {
+        ibSystemEnergySavingModeName             OCTET STRING,
+        ibSystemEnergySavingPolicy               INTEGER,
+        ibSystemEnergySavingPolicyStatus         TruthValue
+    }
+    ibSystemEnergySavingModeName OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..16))
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "Name of system energy-saving mode.
+                        Current represents the current energy-saving mode.
+                        Values include:standard,basic."
+        ::= { ibSystemEnergySavingModeEntry 1 }
+
+    ibSystemEnergySavingPolicy OBJECT-TYPE
+        SYNTAX    INTEGER
+        {
+            fanAuto (1),
+            serdesDown (2),
+            interfaceAutoSleep (3),
+            redundantPowerSuppliesSleep (4),
+            powerAutoDown (5),
+            halftoneWarmDown (6),
+            automaticTransceiverLaserShutdown (7),
+            sliceAutoSleep (8)
+        }
+        MAX-ACCESS      not-accessible
+        STATUS          current
+        DESCRIPTION     "System energy-saving mode policy.
+        fanAuto,
+        serdesDown,
+        interfaceAutoSleep,
+        redundantPowerSuppliesSleep,
+        powerAutoDown,
+        halftoneWarmDown,
+        automaticTransceiverLaserShutdown,
+        sliceAutoSleep
+        "
+        ::= { ibSystemEnergySavingModeEntry 2 }
+
+    ibSystemEnergySavingPolicyStatus OBJECT-TYPE
+        SYNTAX    TruthValue
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION
+        "Enabling status of system energy-saving mode strategy."
+        DEFVAL { false }
+        ::= { ibSystemEnergySavingModeEntry 3 }
+
+        ibSystemCurrentEnergySavingMode OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..16))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The current energy-saving mode of the system.
+            A zero-length string indicates that no energy-saving mode is enabled on the device."
+        ::= { ibSystem 16 }
+
+END

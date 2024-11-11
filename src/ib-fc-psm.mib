@@ -1,0 +1,806 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: FC PSM(Fabric Port Security Management) MIB
+-- Reference:
+-- Version: V1.1
+-- History:
+-- V1.0 Initial version 2013-10-17
+-- V1.1 Modified by Chen Yajun 2014-06-20
+--    2014-06-20 1.All "learnt" descriptions changed into "learned".
+--               2.Added the description of the value range for
+--                 ibFcPsmEnableVsanIndex.
+--               3.Added the description of read value of ibFcPsmClearIntf.
+--               4.Changed the syntax of ibFcPsmLoginTime from
+--                 "TimeStamp" into "DateAndTime".
+--=================================================================
+IB-FC-PSM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    Unsigned32, Counter32,
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE
+            FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION, RowStatus, TruthValue, DateAndTime
+            FROM    SNMPv2-TC
+    InterfaceIndexOrZero, InterfaceIndex, ifDescr
+            FROM    IF-MIB
+    ibSan
+            FROM    IB-VSAN-MIB
+    IbFcNameIdOrZero
+            FROM    IB-FC-TC-MIB
+    ;
+
+-- ==================================================================
+--
+-- ======================= Definition Begin =========================
+--
+-- ==================================================================
+
+ibFcPsm MODULE-IDENTITY
+    LAST-UPDATED "201310170000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB contains the objects for FC port security."
+    REVISION "201310170000Z"      -- October 17, 2013 at 09:30 GMT
+    DESCRIPTION
+        "IB-FC-PSM-MIB module is for managing the implementation of
+         FC port security."
+    ::= { ibSan 8 }
+
+
+-- =================================================================
+-- Subtrees in the FC PSM MIB
+-- =================================================================
+
+ibFcPsmNotifications  OBJECT IDENTIFIER ::= { ibFcPsm 0 }
+ibFcPsmObjects        OBJECT IDENTIFIER ::= { ibFcPsm 1 }
+
+ibFcPsmScalarObjects  OBJECT IDENTIFIER ::= { ibFcPsmObjects 1 }
+ibFcPsmConfiguration  OBJECT IDENTIFIER ::= { ibFcPsmObjects 2 }
+ibFcPsmStats          OBJECT IDENTIFIER ::= { ibFcPsmObjects 3 }
+
+
+-- =================================================================
+-- Type definitions
+-- =================================================================
+
+IbFcPsmPortBindDevType ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "The types of the instance of ibFcPsmLoginDev, including
+         nWWN(Node World Wide Name), pWWN(Port World Wide Name),
+         sWWN(Switch World Wide Name), and wildCard."
+    SYNTAX INTEGER
+        {
+            nWWN(1),
+            pWWN(2),
+            sWWN(3),
+            wildCard(4)
+        }
+
+
+IbFcPsmClearEntryType ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "This object when set to clearStatic, results in port bind static
+         entries being cleared on this VSAN(Virtual Storage Area Networks).
+         This object when set to clearAutoLearn, results in port bind
+         auto-learned entries being cleared on this VSAN.  This object when
+         set to clearAll, results in all of the port bind entries being
+         cleared on this VSAN.  No action is taken if this object is set
+         to noop.
+         The value of this object when read is always noop."
+    SYNTAX INTEGER
+        {
+            clearStatic(1),
+            clearAutoLearn(2),
+            clearAll(3),
+            noop(4)
+        }
+
+
+--
+-- The ibFcPsmScalarObjects subtree
+--
+
+-- =================================================================
+-- The FC Port Security Management Notification control object
+-- =================================================================
+
+ibFcPsmNotifyEnable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Whether to generate the notification or not depends on the object."
+    DEFVAL      { false }
+    ::= { ibFcPsmScalarObjects 1 }
+
+
+--
+-- The ibFcPsmConfiguration subtree
+--
+-- Implementation of the ibFcPsmConfiguration subtree is for
+-- the operation of FC port security.
+--
+
+-- =================================================================
+-- The FC Port Security Management Enable Table
+-- =================================================================
+
+ibFcPsmEnableTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcPsmEnableEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Enable or disable the port security feature on a specified VSAN."
+    ::= { ibFcPsmConfiguration 1 }
+
+ibFcPsmEnableEntry OBJECT-TYPE
+    SYNTAX IbFcPsmEnableEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Detailed information about the port security."
+    INDEX  {
+             ibFcPsmEnableVsanIndex
+           }
+    ::= { ibFcPsmEnableTable 1 }
+
+IbFcPsmEnableEntry ::=
+    SEQUENCE {
+        ibFcPsmEnableVsanIndex     Unsigned32,
+        ibFcPsmEnable              INTEGER,
+        ibFcPsmEnableState         TruthValue
+             }
+
+ibFcPsmEnableVsanIndex OBJECT-TYPE
+    SYNTAX Unsigned32 (1..4095)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The ID of VSAN on this entry."
+    ::= { ibFcPsmEnableEntry 1 }
+
+
+ibFcPsmEnable OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+            enable(1),
+            enableWithAutoLearn(2),
+            disable(3),
+            noop(4)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "When set to enable, the port security is on, the value of
+         ibFcPsmEnableState will be true.
+         When set to enableWithAutoLearn, the port security is on
+         with auto-learning, the value of ibFcPsmEnableState will
+         be true.
+         When set to disable, the port security is off, the value of
+         ibFcPsmEnableState will be false.
+         The noop means no action.
+         The value of this object when read is always noop."
+    DEFVAL      { noop }
+    ::= { ibFcPsmEnableEntry 2 }
+
+
+ibFcPsmEnableState OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The state of the port security.  When the value is true, it
+         means the port security is on, while the false means the port
+         security is off."
+    DEFVAL      { false }
+    ::= { ibFcPsmEnableEntry 3 }
+
+
+
+-- =================================================================
+-- The FC Port Security Management Config Table
+-- =================================================================
+
+ibFcPsmConfigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcPsmConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A table that contains the configured entries."
+    ::= { ibFcPsmConfiguration 2 }
+
+
+ibFcPsmConfigEntry OBJECT-TYPE
+    SYNTAX IbFcPsmConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Detailed information about each configuration."
+    INDEX  {
+             ibFcPsmEnableVsanIndex,
+             ibFcPsmIndex
+           }
+    ::= { ibFcPsmConfigTable 1 }
+
+
+IbFcPsmConfigEntry ::=
+    SEQUENCE {
+        ibFcPsmIndex
+            Unsigned32,
+        ibFcPsmLoginDevType
+            IbFcPsmPortBindDevType,
+        ibFcPsmLoginDev
+            IbFcNameIdOrZero,
+        ibFcPsmLoginPoint
+            InterfaceIndexOrZero,
+        ibFcPsmRowStatus
+            RowStatus
+             }
+
+
+ibFcPsmIndex OBJECT-TYPE
+    SYNTAX Unsigned32 (1..32768)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The index of this entry."
+    ::= { ibFcPsmConfigEntry 1 }
+
+
+ibFcPsmLoginDevType OBJECT-TYPE
+    SYNTAX IbFcPsmPortBindDevType
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "This represents the type of the instance of ibFcPsmLoginDev,
+         which includes nWWN, pWWN, sWWN, and wildCard."
+    ::= { ibFcPsmConfigEntry 2 }
+
+
+ibFcPsmLoginDev OBJECT-TYPE
+    SYNTAX IbFcNameIdOrZero
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The logging-in device name, which is decided by the
+         ibFcPsmLoginDevType object.  It represents node
+         WWN when the value of ibFcPsmLoginDevType is nWWN.
+         It represents port WWN when the value of ibFcPsmLoginDevType
+         is pWWN.  It represents switch WWN when the value of
+         ibFcPsmLoginDevType is sWWN.  It represents any device
+         when the value of ibFcPsmLoginDevType is wildCard, and
+         the value of the instance of this object should be
+         zero-length string.
+         The value of this object should not be invalid when
+         ibFcPsmRowStatus is set to createAndGo or active."
+    ::= { ibFcPsmConfigEntry 3 }
+
+ibFcPsmLoginPoint OBJECT-TYPE
+    SYNTAX InterfaceIndexOrZero
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "The address of the port on the local switch through which
+         the instance of ibFcPsmLoginDev can log in.  It represents
+         ifindex when the value is not zero.  It represents any port
+         when the value is zero."
+    ::= { ibFcPsmConfigEntry 4 }
+
+
+ibFcPsmRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "Entry status.  When creating a new instance of this table,
+         the following objects should be set simultaneously:
+         ibFcPsmLoginDevType, ibFcPsmLoginDev, ibFcPsmLoginPoint,
+         ibFcPsmRowStatus.  If ibFcPsmLoginDevType is set to wildCard,
+         the value of the instance of ibFcPsmLoginDev should be
+         zero-length string.  The value of ibFcPsmLoginDevType and
+         ibFcPsmLoginPoint cannot be set to wildCard and zero at
+         the same time."
+    ::= { ibFcPsmConfigEntry 5 }
+
+
+
+-- =================================================================
+-- The FC Port Security Management Enforced Table
+-- =================================================================
+ibFcPsmEnfTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcPsmEnfEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The FC port security enforced table.  It contains not only the
+         configured policies, but also the learning ones learned by the
+         switch itself."
+    ::= { ibFcPsmConfiguration 3 }
+
+
+
+ibFcPsmEnfEntry OBJECT-TYPE
+    SYNTAX IbFcPsmEnfEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Detailed information about the FC port security enforced policy."
+    INDEX  {
+             ibFcPsmEnableVsanIndex,
+             ibFcPsmEnfIndex
+           }
+    ::= { ibFcPsmEnfTable 1 }
+
+
+IbFcPsmEnfEntry ::=
+    SEQUENCE {
+        ibFcPsmEnfIndex
+            Unsigned32,
+        ibFcPsmEnfLoginDevType
+            IbFcPsmPortBindDevType,
+        ibFcPsmEnfLoginDev
+            IbFcNameIdOrZero,
+        ibFcPsmEnfLoginPoint
+            InterfaceIndexOrZero,
+        ibFcPsmEnfEntryType
+            INTEGER
+             }
+
+
+ibFcPsmEnfIndex OBJECT-TYPE
+    SYNTAX Unsigned32 (1..32768)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The index of this entry."
+    ::= { ibFcPsmEnfEntry 1 }
+
+
+ibFcPsmEnfLoginDevType OBJECT-TYPE
+    SYNTAX IbFcPsmPortBindDevType
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This represents the type of the instance of ibFcPsmEnfLoginDev,
+         which includes nWWN, pWWN, sWWN, and wildCard."
+    ::= { ibFcPsmEnfEntry 2 }
+
+
+ibFcPsmEnfLoginDev OBJECT-TYPE
+    SYNTAX IbFcNameIdOrZero
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The logging-in device name, which is decided by the
+         ibFcPsmEnfLoginDevType object.  It represents node WWN
+         when the value of ibFcPsmEnfLoginDevType is nWWN.  It
+         represents port WWN when the value of ibFcPsmEnfLoginDevType
+         is pWWN.  It represents switch WWN when the value of
+         ibFcPsmEnfLoginDevType is sWWN.  It represents any device when
+         the value of ibFcPsmEnfLoginDevType is wildCard, and the value
+         of the instance of this object should be zero-length string."
+    ::= { ibFcPsmEnfEntry 3 }
+
+
+ibFcPsmEnfLoginPoint OBJECT-TYPE
+    SYNTAX InterfaceIndexOrZero
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+         "The address of the port on the local switch through which
+          the instance of ibFcPsmEnfLoginDev can log in.  It represents
+          ifindex when the value is not zero.  It represents any port
+          when the value is zero."
+    ::= { ibFcPsmEnfEntry 4 }
+
+
+ibFcPsmEnfEntryType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+            learning(1),
+            learned(2),
+            static(3)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "When the value is learning, it represents the entry is learned
+         by the switch itself temporarily and will be deleted when the
+         device log out.  When the value is learned, it represents the
+         entry is learned by the switch permanently.  When the value is
+         static, it represents the entry is configured."
+    ::= { ibFcPsmEnfEntry 5 }
+
+
+-- =================================================================
+-- The FC Port Security Management Copy To Config Table
+-- =================================================================
+
+ibFcPsmCopyToConfigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcPsmCopyToConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Specifies whether to copy the entries from enforced table
+         to the ones on configured table."
+    ::= { ibFcPsmConfiguration 4 }
+
+
+ibFcPsmCopyToConfigEntry OBJECT-TYPE
+    SYNTAX IbFcPsmCopyToConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Detailed information about the operation."
+    INDEX  {
+             ibFcPsmEnableVsanIndex
+           }
+    ::= { ibFcPsmCopyToConfigTable 1 }
+
+
+IbFcPsmCopyToConfigEntry ::=
+    SEQUENCE {
+        ibFcPsmCopyToConfig
+            INTEGER
+             }
+
+
+ibFcPsmCopyToConfig OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+            copy(1),
+            noop(2)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "When the object is set to copy, the learned entries will be
+         copied on to the configured table on this VSAN, while the noop
+         means no operation.
+         The value of this object when read is always noop."
+    DEFVAL      { noop }
+    ::= { ibFcPsmCopyToConfigEntry 1 }
+
+
+-- =================================================================
+-- The FC Port Security Management Auto Learn Table
+-- =================================================================
+
+ibFcPsmAutoLearnTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcPsmAutoLearnEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table shows whether the auto-learning is enabled or
+         not on specific VSANs."
+    ::= { ibFcPsmConfiguration 5 }
+
+
+ibFcPsmAutoLearnEntry OBJECT-TYPE
+    SYNTAX IbFcPsmAutoLearnEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Detailed information about the auto-learning."
+    INDEX { ibFcPsmEnableVsanIndex }
+    ::= { ibFcPsmAutoLearnTable 1 }
+
+
+IbFcPsmAutoLearnEntry ::=
+    SEQUENCE {
+        ibFcPsmAutoLearnEnable
+            TruthValue
+             }
+
+
+
+ibFcPsmAutoLearnEnable OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "This object is set to true to enable, or false to disable
+         auto-learning on the local switch.  When set to true, the
+         switch can learn the devices that have already logged in
+         as learning entries on the enforced table, while the false
+         can stop the learning operation with the learning entries
+         transformed to learned ones."
+    DEFVAL      { false }
+    ::= { ibFcPsmAutoLearnEntry 1 }
+
+
+
+-- =================================================================
+-- The FC Port Security Management Clear Table
+-- =================================================================
+
+ibFcPsmClearTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcPsmClearEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table is used for cleaning specific entries in enforced table."
+    ::= { ibFcPsmConfiguration 6 }
+
+
+ibFcPsmClearEntry OBJECT-TYPE
+    SYNTAX IbFcPsmClearEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Detailed information about the cleaning options."
+    INDEX { ibFcPsmEnableVsanIndex }
+    ::= { ibFcPsmClearTable 1 }
+
+
+IbFcPsmClearEntry ::=
+    SEQUENCE {
+        ibFcPsmClearType
+            IbFcPsmClearEntryType,
+        ibFcPsmClearIntf
+            InterfaceIndexOrZero
+             }
+
+
+ibFcPsmClearType OBJECT-TYPE
+    SYNTAX IbFcPsmClearEntryType
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "This object when set to clearStatic, results in port bind
+         static entries being cleared on this VSAN.  This object when
+         set to clearAutoLearn, results in auto-learned entries being
+         cleared on this VSAN.  This object when set to clearAll,
+         results in all of the port bind entries being cleared on
+         this VSAN.  No action is taken if this object is set to noop.
+         The value of this object when read is always noop."
+    DEFVAL      { noop }
+    ::= { ibFcPsmClearEntry 1 }
+
+
+ibFcPsmClearIntf OBJECT-TYPE
+    SYNTAX InterfaceIndexOrZero
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The object specifies the interface on which the entries will be
+         cleared.  If the object is zero or not set, it means the specified
+         entries on all interfaces will be cleared.
+         The value of this object when read is always zero."
+    ::= { ibFcPsmClearEntry 2 }
+
+
+--
+-- The ibFcPsmStats subtree
+--
+-- Implementation of the ibFcPsmStats subtree is for
+-- the show of statistics about FC port security.
+--
+
+-- =================================================================
+-- The FC Port Security Management Stats Table
+-- =================================================================
+
+ibFcPsmStatsTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcPsmStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table contains statistics of devices, which had been
+         allowed or denied to log into the switch."
+    ::= { ibFcPsmStats 1 }
+
+
+ibFcPsmStatsEntry OBJECT-TYPE
+    SYNTAX IbFcPsmStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Detailed information about the statistics."
+    INDEX { ibFcPsmEnableVsanIndex }
+    ::= { ibFcPsmStatsTable 1 }
+
+
+IbFcPsmStatsEntry ::=
+    SEQUENCE {
+        ibFcPsmAllowedLogins
+            Counter32,
+        ibFcPsmDeniedLogins
+            Counter32,
+        ibFcPsmStatsClear
+            INTEGER
+             }
+
+
+
+ibFcPsmAllowedLogins OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of requests that have been allowed on the
+         specified VSAN."
+    ::= { ibFcPsmStatsEntry 1 }
+
+
+ibFcPsmDeniedLogins OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of requests that have been denied on the
+         specified VSAN."
+    ::= { ibFcPsmStatsEntry 2 }
+
+
+ibFcPsmStatsClear OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+            clear(1),
+            noop(2)
+        }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The statistics on this VSAN will be cleared if this object
+         is set to clear.  No action is taken if this object is
+         set to noop.
+         The value of this object when read is always noop."
+    DEFVAL      { noop }
+    ::= { ibFcPsmStatsEntry 3 }
+
+
+-- =================================================================
+-- The FC Port Security Management Violation Table
+-- =================================================================
+
+ibFcPsmViolationTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbFcPsmViolationEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table maintains the information about the violations happened,
+         containing at most 1024 items.
+         When the number exceeds 1024, the earliest item will be over-written."
+    ::= { ibFcPsmStats 2 }
+
+
+ibFcPsmViolationEntry OBJECT-TYPE
+    SYNTAX IbFcPsmViolationEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Detailed information about the violation."
+    INDEX  {
+             ibFcPsmEnableVsanIndex,
+             ibFcPsmViolationIndex
+           }
+    ::= { ibFcPsmViolationTable 1 }
+
+
+IbFcPsmViolationEntry ::=
+    SEQUENCE {
+        ibFcPsmViolationIndex
+            Unsigned32,
+        ibFcPsmLoginPWWN
+            IbFcNameIdOrZero,
+        ibFcPsmLoginNWWN
+            IbFcNameIdOrZero,
+        ibFcPsmLoginSWWN
+            IbFcNameIdOrZero,
+        ibFcPsmLoginIntf
+            InterfaceIndex,
+        ibFcPsmLoginTime
+            DateAndTime,
+        ibFcPsmLoginCount
+            Counter32
+             }
+
+
+ibFcPsmViolationIndex OBJECT-TYPE
+    SYNTAX Unsigned32 (1..1024)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The index of this entry.  The entry is uniquely distinguished by WWN,
+         WWN type and ifindex where the login was denied."
+    ::= { ibFcPsmViolationEntry 1 }
+
+
+ibFcPsmLoginPWWN OBJECT-TYPE
+    SYNTAX IbFcNameIdOrZero
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The pWWN of the device whose FLOGI(Fabric Login) request had
+        been denied.  If the device is an n-node, the value of the instance
+        of ibFcPsmLoginSWWN should be zero-length string."
+    ::= { ibFcPsmViolationEntry 2 }
+
+
+ibFcPsmLoginNWWN OBJECT-TYPE
+    SYNTAX IbFcNameIdOrZero
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The nWWN of the device whose FLOGI request had been denied.
+         If the device is an n-node, the value of the instance of
+         ibFcPsmLoginSWWN should be zero-length string."
+    ::= { ibFcPsmViolationEntry 3 }
+
+
+ibFcPsmLoginSWWN OBJECT-TYPE
+    SYNTAX IbFcNameIdOrZero
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The sWWN of the device whose FLOGI request had been denied.
+         If the device is a switch, the values of the instance of
+         ibFcPsmLoginPWWN and ibFcPsmLoginNWWN should be zero-length
+         string."
+    ::= { ibFcPsmViolationEntry 4 }
+
+ibFcPsmLoginIntf OBJECT-TYPE
+    SYNTAX InterfaceIndex
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The ifindex of the port where the login was denied."
+    ::= { ibFcPsmViolationEntry 5 }
+
+
+ibFcPsmLoginTime OBJECT-TYPE
+    SYNTAX DateAndTime
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Specifies the date and time when the last denied login
+         happened."
+    ::= { ibFcPsmViolationEntry 6 }
+
+
+ibFcPsmLoginCount OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of times for a certain nWWN/pWWN or sWWN had
+         been denied to log into an interface of the local device."
+    ::= { ibFcPsmViolationEntry 7 }
+
+-- =================================================================
+-- Notifications
+-- =================================================================
+
+ibFcPsmFPortDenyNotify NOTIFICATION-TYPE
+    OBJECTS  {
+               ifDescr,
+               ibFcPsmLoginPWWN,
+               ibFcPsmLoginIntf,
+               ibFcPsmLoginTime
+             }
+    STATUS current
+    DESCRIPTION
+        "Notifies that a FLOGI is denied on an F port of the local device."
+    ::= { ibFcPsmNotifications 1 }
+
+
+ibFcPsmEPortDenyNotify NOTIFICATION-TYPE
+    OBJECTS  {
+               ifDescr,
+               ibFcPsmLoginSWWN,
+               ibFcPsmLoginIntf,
+               ibFcPsmLoginTime
+             }
+    STATUS current
+    DESCRIPTION
+        "Notifies that a switch is denied on an E port of the local device."
+    ::= { ibFcPsmNotifications 2 }
+
+END

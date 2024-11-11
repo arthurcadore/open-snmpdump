@@ -1,0 +1,801 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:This MIB file is used for management of userlog
+--             information.
+-- Reference:
+-- Version: V1.1
+-- History:
+--   V1.0
+--   31st Mar 2003
+--   tianli, initial version
+--   V1.1 2005-07-05
+--     Modify value range of ibUserlogNatAclNumber and ibUserlogFlowAclNumber
+--     by tanbo02122.
+--     Update file format by gaolong.
+-- =================================================================
+IB-USERLOG-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+            ibRhw
+                    FROM IB-OID-MIB
+            OBJECT-GROUP, MODULE-COMPLIANCE
+                    FROM SNMPv2-CONF
+            IpAddress, Integer32, Counter32, OBJECT-TYPE,
+            MODULE-IDENTITY
+                    FROM SNMPv2-SMI;
+
+
+    ibUserLogMIB MODULE-IDENTITY
+            LAST-UPDATED "200304100000Z"          -- April 10, 2003 at 00:00 GMT
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION
+                    "The IB-USERLOG-MIB contains objects to
+                    Manage configuration and Monitor running state
+                    for userlog feature."
+            ::= { ibRhw 18 }
+
+
+    ibUserlogObjects OBJECT IDENTIFIER ::= { ibUserLogMIB 1 }
+
+
+    ibUserlogNatObjects OBJECT IDENTIFIER ::= { ibUserlogObjects 1 }
+
+
+    ibUserlogNatVersion OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "NAT LOG version. Currently only version 1 is developed."
+            ::= { ibUserlogNatObjects 1 }
+
+
+    ibUserlogNatSyslog OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "
+                    NAT LOG format.
+                    If 1, LOG format is sysLog.
+                    If 0, LOG format is UDP packet.
+                    UDP packet is the default format, and is recommended.
+                    "
+            ::= { ibUserlogNatObjects 2 }
+
+
+    ibUserlogNatSourceIP OBJECT-TYPE
+            SYNTAX IpAddress
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "The Source IP address of NAT LOG UDP packet."
+            ::= { ibUserlogNatObjects 3 }
+
+
+    ibUserlogNatFlowBegin OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "
+                    Log the NAT flow when it is created.
+                    If 1, this function is enabled.
+                    If 0, this function is disabled.
+                    This function will be used when real-time monitor required.
+                    "
+            ::= { ibUserlogNatObjects 4 }
+
+
+    ibUserlogNatActiveTime OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "
+                    The active time for long-time existed NAT flow.
+                    Unit: minute. Range: 10 minutes ~ 120 minutes.
+                    When setting it, NAT flow can be logged after an interval of
+                    active time.
+                    This function will be used when real-time monitor required.
+                    The default value 0 means real-time monitor function is disabled.
+                    "
+            ::= { ibUserlogNatObjects 5 }
+
+
+    ibUserlogNatSlotCfgInfoTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbUserlogNatSlotCfgInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                    "A table of NAT LOG configuration information for the
+                    specified slot."
+            ::= { ibUserlogNatObjects 6 }
+
+
+    ibUserlogNatSlotCfgInfoEntry OBJECT-TYPE
+            SYNTAX IbUserlogNatSlotCfgInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                    "NAT LOG Configuration Information Entry for a slot."
+            INDEX { ibUserlogNatCfgSlotNumber }
+            ::= { ibUserlogNatSlotCfgInfoTable 1 }
+
+
+    IbUserlogNatSlotCfgInfoEntry ::=
+            SEQUENCE {
+                    ibUserlogNatCfgSlotNumber
+                            Integer32,
+                    ibUserlogNatEnable
+                            Integer32,
+                    ibUserlogNatAclNumber
+                            Integer32,
+                    ibUserlogNatHostAddress
+                            IpAddress,
+                    ibUserlogNatUdpPort
+                            Integer32
+             }
+
+    ibUserlogNatCfgSlotNumber OBJECT-TYPE
+            SYNTAX Integer32 (0..15)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "Slot number. Specify which slot is configured with NAT LOG. "
+            ::= { ibUserlogNatSlotCfgInfoEntry 1 }
+
+
+    ibUserlogNatEnable OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "
+                    The NAT LOG feature Enable status.
+                    If 1, NAT LOG is enbled.
+                    If 0, NAT LOG is disabled.
+                    "
+            ::= { ibUserlogNatSlotCfgInfoEntry 2 }
+
+
+    ibUserlogNatAclNumber OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "
+                    Access-list number.
+                    The value 0 means no ACL is specified.
+                    Only when NAT LOG is enabled, can ACL be configured.
+                    Only NAT flow which match the ACL will be logged.
+                    "
+            ::= { ibUserlogNatSlotCfgInfoEntry 3 }
+
+
+    ibUserlogNatHostAddress OBJECT-TYPE
+            SYNTAX IpAddress
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "The IP address of NAT LOG server. "
+            ::= { ibUserlogNatSlotCfgInfoEntry 4 }
+
+
+    ibUserlogNatUdpPort OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "The UDP Port Number of NAT LOG UDP packet."
+            ::= { ibUserlogNatSlotCfgInfoEntry 5 }
+
+
+    ibUserlogNatSlotRunInfoTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbUserlogNatSlotRunInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                    "A table of NAT LOG running information for the specified slot."
+            ::= { ibUserlogNatObjects 7 }
+
+
+    ibUserlogNatSlotRunInfoEntry OBJECT-TYPE
+            SYNTAX IbUserlogNatSlotRunInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                    "NAT LOG Running Information Entry for a slot."
+            INDEX { ibUserlogNatRunSlotNumber }
+            ::= { ibUserlogNatSlotRunInfoTable 1 }
+
+
+    IbUserlogNatSlotRunInfoEntry ::=
+            SEQUENCE {
+                    ibUserlogNatRunSlotNumber
+                            Integer32,
+                    ibUserlogNatTotalEntries
+                            Counter32,
+                    ibUserlogNatTotalPackets
+                            Counter32,
+                    ibUserlogNatFailedEntries
+                            Counter32,
+                    ibUserlogNatFailedPackets
+                            Counter32,
+                    ibUserlogNatClearRunStat
+                            Integer32
+             }
+
+    ibUserlogNatRunSlotNumber OBJECT-TYPE
+            SYNTAX Integer32 (0..15)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "Slot number. Specify on which slot the NAT LOG statistics
+                    displayed."
+            ::= { ibUserlogNatSlotRunInfoEntry 1 }
+
+
+    ibUserlogNatTotalEntries OBJECT-TYPE
+            SYNTAX Counter32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "The total number of NAT flow entries which are logged."
+            ::= { ibUserlogNatSlotRunInfoEntry 2 }
+
+
+    ibUserlogNatTotalPackets OBJECT-TYPE
+            SYNTAX Counter32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "The total number of NAT LOG UDP packets generated by the router."
+            ::= { ibUserlogNatSlotRunInfoEntry 3 }
+
+
+    ibUserlogNatFailedEntries OBJECT-TYPE
+            SYNTAX Counter32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "The total number of NAT flow entries failed in outputting."
+            ::= { ibUserlogNatSlotRunInfoEntry 4 }
+
+
+    ibUserlogNatFailedPackets OBJECT-TYPE
+            SYNTAX Counter32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "The total number of NAT LOG UDP packets failed in outputting."
+            ::= { ibUserlogNatSlotRunInfoEntry 5 }
+
+
+    ibUserlogNatClearRunStat OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "
+                    Clear the running statistics for NAT LOG. Write-only.
+                    If 1, the running statistics for NAT LOG is resetted.
+                    Other value is invalid.
+                    "
+            ::= { ibUserlogNatSlotRunInfoEntry 6 }
+
+
+    ibUserlogFlowObjects OBJECT IDENTIFIER ::= { ibUserlogObjects 2 }
+
+
+    ibUserlogFlowVersion OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "BAS FLOW LOG version. Currently only version 1 is developed."
+            ::= { ibUserlogFlowObjects 1 }
+
+
+    ibUserlogFlowSyslog OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "
+                    BAS FLOW LOG format.
+                    If 1, LOG format is sysLog.
+                    If 0, LOG format is UDP packet.
+                    UDP packet is the default format, and is recommended.
+                    "
+            ::= { ibUserlogFlowObjects 2 }
+
+
+    ibUserlogFlowSourceIP OBJECT-TYPE
+            SYNTAX IpAddress
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "The Source IP address of BAS FLOW LOG UDP packet."
+            ::= { ibUserlogFlowObjects 3 }
+
+
+    ibUserlogFlowFlowBegin OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "
+                    Log the BAS flow when it is created.
+                    If 1, this function is enabled.
+                    If 0, this function is disabled.
+                    This function will be used when real-time monitor required.
+                    "
+            ::= { ibUserlogFlowObjects 4 }
+
+
+    ibUserlogFlowActiveTime OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "
+                    The active time for long-time existed BAS flow.
+                    Unit: minute. Range: 10 minutes ~ 120 minutes.
+                    When setting it, BAS flow can be logged after an internal of
+                    active time.
+                    This function will be used when real-time monitor required.
+                    The default value 0 means real-time monitor function is disabled.
+                    "
+            ::= { ibUserlogFlowObjects 5 }
+
+
+    ibUserlogFlowSlotCfgInfoTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbUserlogFlowSlotCfgInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                    "A table of BAS FLOW LOG configuration information for the
+                    specified slot."
+            ::= { ibUserlogFlowObjects 6 }
+
+
+    ibUserlogFlowSlotCfgInfoEntry OBJECT-TYPE
+            SYNTAX IbUserlogFlowSlotCfgInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                    "BAS FLOW LOG Configuration Information Entry for a slot."
+            INDEX { ibUserlogFlowCfgSlotNumber }
+            ::= { ibUserlogFlowSlotCfgInfoTable 1 }
+
+
+    IbUserlogFlowSlotCfgInfoEntry ::=
+            SEQUENCE {
+                    ibUserlogFlowCfgSlotNumber
+                            Integer32,
+                    ibUserlogFlowEnable
+                            Integer32,
+                    ibUserlogFlowAclNumber
+                            Integer32,
+                    ibUserlogFlowHostAddress
+                            IpAddress,
+                    ibUserlogFlowUdpPort
+                            Integer32
+             }
+
+    ibUserlogFlowCfgSlotNumber OBJECT-TYPE
+            SYNTAX Integer32 (0..15)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "Slot number. Specify which slot is configured with BAS FLOW LOG."
+            ::= { ibUserlogFlowSlotCfgInfoEntry 1 }
+
+
+    ibUserlogFlowEnable OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "
+                    The BAS FLOW LOG feature Enable status.
+                    If 1, BAS FLOW LOG is enbled.
+                    If 0, BAS FLOW LOG is disabled.
+                    "
+            ::= { ibUserlogFlowSlotCfgInfoEntry 2 }
+
+
+    ibUserlogFlowAclNumber OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "
+                    Access-list number.
+                    The value 0 means no ACL is specified.
+                    Only when BAS FLOW LOG is enabled, can ACL be configured.
+                    Only BAS flow which match the ACL will be logged.
+                    "
+            ::= { ibUserlogFlowSlotCfgInfoEntry 3 }
+
+
+    ibUserlogFlowHostAddress OBJECT-TYPE
+            SYNTAX IpAddress
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "The IP address of BAS FLOW LOG server. "
+            ::= { ibUserlogFlowSlotCfgInfoEntry 4 }
+
+
+    ibUserlogFlowUdpPort OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "The UDP Port Number of BAS FLOW LOG UDP packet."
+            ::= { ibUserlogFlowSlotCfgInfoEntry 5 }
+
+
+    ibUserlogFlowSlotRunInfoTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbUserlogFlowSlotRunInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                    "A table of BAS FLOW LOG running information for the specified slot."
+            ::= { ibUserlogFlowObjects 7 }
+
+
+    ibUserlogFlowSlotRunInfoEntry OBJECT-TYPE
+            SYNTAX IbUserlogFlowSlotRunInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                    "Running Information Entry for a slot."
+            INDEX { ibUserlogFlowRunSlotNumber }
+            ::= { ibUserlogFlowSlotRunInfoTable 1 }
+
+
+    IbUserlogFlowSlotRunInfoEntry ::=
+            SEQUENCE {
+                    ibUserlogFlowRunSlotNumber
+                            Integer32,
+                    ibUserlogFlowTotalEntries
+                            Counter32,
+                    ibUserlogFlowTotalPackets
+                            Counter32,
+                    ibUserlogFlowFailedEntries
+                            Counter32,
+                    ibUserlogFlowFailedPackets
+                            Counter32,
+                    ibUserlogFlowClearRunStat
+                            Integer32
+             }
+
+    ibUserlogFlowRunSlotNumber OBJECT-TYPE
+            SYNTAX Integer32 (0..15)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "Slot number. Specify on which slot the BAS FLOW LOG
+                    statistics displayed."
+            ::= { ibUserlogFlowSlotRunInfoEntry 1 }
+
+
+    ibUserlogFlowTotalEntries OBJECT-TYPE
+            SYNTAX Counter32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "The total number of BAS FLOW Entries which are logged."
+            ::= { ibUserlogFlowSlotRunInfoEntry 2 }
+
+
+    ibUserlogFlowTotalPackets OBJECT-TYPE
+            SYNTAX Counter32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "The total number of FLOW LOG UDP packet generated by the router."
+            ::= { ibUserlogFlowSlotRunInfoEntry 3 }
+
+
+    ibUserlogFlowFailedEntries OBJECT-TYPE
+            SYNTAX Counter32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "The total number of BAS FLOW  entries failed in outputting. "
+            ::= { ibUserlogFlowSlotRunInfoEntry 4 }
+
+
+    ibUserlogFlowFailedPackets OBJECT-TYPE
+            SYNTAX Counter32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "The total number of BAS FLOW LOG UDP packet failed in outputting."
+            ::= { ibUserlogFlowSlotRunInfoEntry 5 }
+
+
+    ibUserlogFlowClearRunStat OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "
+                    Clear the running statistics for FLOW LOG. Write-only.
+                    If 1, the running statistics for FLOW LOG is resetted.
+                    Other value is invalid.
+                    "
+            ::= { ibUserlogFlowSlotRunInfoEntry 6 }
+
+
+    ibUserlogAccessObjects OBJECT IDENTIFIER ::= { ibUserlogObjects 3 }
+
+
+    ibUserlogAccessVersion OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "BAS ACCESS LOG version. Currently only version 1 is developed."
+            ::= { ibUserlogAccessObjects 1 }
+
+
+    ibUserlogAccessSyslog OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "
+                    BAS ACCESS LOG format.
+                    If 1, LOG format is sysLog;
+                    If 0, LOG format is UDP packet.
+                    UDP packet is the default format, and is recommended.
+                    "
+            ::= { ibUserlogAccessObjects 2 }
+
+
+    ibUserlogAccessSourceIP OBJECT-TYPE
+            SYNTAX IpAddress
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "The Source IP address of BAS ACCESS LOG UDP packet."
+            ::= { ibUserlogAccessObjects 3 }
+
+
+    ibUserlogAccessSlotCfgInfoTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbUserlogAccessSlotCfgInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                    "A table of BAS ACCESS LOG configuration information for the specified slot."
+            ::= { ibUserlogAccessObjects 4 }
+
+
+    ibUserlogAccessSlotCfgInfoEntry OBJECT-TYPE
+            SYNTAX IbUserlogAccessSlotCfgInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                    "BAS ACCESS LOG Configuration Information Entry for a slot."
+            INDEX { ibUserlogAccessCfgSlotNumber }
+            ::= { ibUserlogAccessSlotCfgInfoTable 1 }
+
+
+    IbUserlogAccessSlotCfgInfoEntry ::=
+            SEQUENCE {
+                    ibUserlogAccessCfgSlotNumber
+                            Integer32,
+                    ibUserlogAccessEnable
+                            Integer32,
+                    ibUserlogAccessHostAddress
+                            IpAddress,
+                    ibUserlogAccessUdpPort
+                            Integer32
+             }
+
+    ibUserlogAccessCfgSlotNumber OBJECT-TYPE
+            SYNTAX Integer32 (0..15)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "Slot number. Specify which slot is configured with BAS ACCESS LOG."
+            ::= { ibUserlogAccessSlotCfgInfoEntry 1 }
+
+
+    ibUserlogAccessEnable OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "
+                    The BAS ACCESS LOG feature Enable status.
+                    If 1, BAS ACCESS LOG is enbled.
+                    If 0, BAS ACCESS LOG is disabled.
+                    "
+            ::= { ibUserlogAccessSlotCfgInfoEntry 2 }
+
+
+    ibUserlogAccessHostAddress OBJECT-TYPE
+            SYNTAX IpAddress
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "The IP address of BAS ACCESS LOG server."
+            ::= { ibUserlogAccessSlotCfgInfoEntry 3 }
+
+
+    ibUserlogAccessUdpPort OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "The UDP Port Number of BAS ACCESS LOG UDP packet."
+            ::= { ibUserlogAccessSlotCfgInfoEntry 4 }
+
+
+    ibUserlogAccessSlotRunInfoTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbUserlogAccessSlotRunInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                    "A table of BAS ACCESS LOG running information for the specified slot."
+            ::= { ibUserlogAccessObjects 5 }
+
+
+    ibUserlogAccessSlotRunInfoEntry OBJECT-TYPE
+            SYNTAX IbUserlogAccessSlotRunInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                    "Running Information Entry for a slot."
+            INDEX { ibUserlogAccessRunSlotNumber }
+            ::= { ibUserlogAccessSlotRunInfoTable 1 }
+
+
+    IbUserlogAccessSlotRunInfoEntry ::=
+            SEQUENCE {
+                    ibUserlogAccessRunSlotNumber
+                            Integer32,
+                    ibUserlogAccessTotalEntries
+                            Counter32,
+                    ibUserlogAccessTotalPackets
+                            Counter32,
+                    ibUserlogAccessFailedEntries
+                            Counter32,
+                    ibUserlogAccessFailedPackets
+                            Counter32,
+                    ibUserlogAccessClearRunStat
+                            Integer32
+             }
+
+    ibUserlogAccessRunSlotNumber OBJECT-TYPE
+            SYNTAX Integer32 (0..15)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "Slot number. Specify on which slot the BAS ACCESS LOG statistics displayed."
+            ::= { ibUserlogAccessSlotRunInfoEntry 1 }
+
+
+    ibUserlogAccessTotalEntries OBJECT-TYPE
+            SYNTAX Counter32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "The total number of BAS ACCESS Records which are logged."
+            ::= { ibUserlogAccessSlotRunInfoEntry 2 }
+
+
+    ibUserlogAccessTotalPackets OBJECT-TYPE
+            SYNTAX Counter32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "The total number of ACCESS LOG UDP packet generated by the router."
+            ::= { ibUserlogAccessSlotRunInfoEntry 3 }
+
+
+    ibUserlogAccessFailedEntries OBJECT-TYPE
+            SYNTAX Counter32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "The total number of BAS ACCESS entries failed in outputting."
+            ::= { ibUserlogAccessSlotRunInfoEntry 4 }
+
+
+    ibUserlogAccessFailedPackets OBJECT-TYPE
+            SYNTAX Counter32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                    "The total number of BAS ACCESS LOG UDP packet failed in outputting."
+            ::= { ibUserlogAccessSlotRunInfoEntry 5 }
+
+
+    ibUserlogAccessClearRunStat OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                    "
+                    Clear the running statistics for ACCESS LOG. Write-only.
+                    If 1, the running statistics for ACCESS LOG is resetted.
+                    Other value is invalid.
+                    "
+            ::= { ibUserlogAccessSlotRunInfoEntry 6 }
+
+
+    ibUserlogNotifications OBJECT IDENTIFIER ::= { ibUserLogMIB 2 }
+
+
+    ibUserlogConformance OBJECT IDENTIFIER ::= { ibUserLogMIB 3 }
+
+
+    ibUserlogCompliances OBJECT IDENTIFIER ::= { ibUserlogConformance 1 }
+
+
+    ibUserlogCompliance MODULE-COMPLIANCE
+            STATUS current
+            DESCRIPTION
+                    "The compliance statement for entities which implement the
+                    Userlog mib."
+            MODULE -- this module
+                    MANDATORY-GROUPS { ibUserlogMandatoryGroup }
+            ::= { ibUserlogCompliances 1 }
+
+
+    ibUserlogGroups OBJECT IDENTIFIER ::= { ibUserlogConformance 2 }
+
+
+    ibUserlogMandatoryGroup OBJECT-GROUP
+            OBJECTS { ibUserlogNatEnable, ibUserlogNatHostAddress, ibUserlogNatUdpPort,
+                      ibUserlogFlowEnable, ibUserlogFlowHostAddress, ibUserlogFlowUdpPort,
+                      ibUserlogAccessEnable, ibUserlogAccessHostAddress, ibUserlogAccessUdpPort
+                    }
+            STATUS current
+            DESCRIPTION
+                    "A collection of objects providing mandatory Userlog information."
+            ::= { ibUserlogGroups 1 }
+
+
+    ibUserlogConfigGroup OBJECT-GROUP
+            OBJECTS { ibUserlogNatVersion, ibUserlogNatSyslog, ibUserlogNatSourceIP,
+                      ibUserlogNatFlowBegin, ibUserlogNatActiveTime, ibUserlogNatCfgSlotNumber,
+                      ibUserlogNatEnable, ibUserlogNatAclNumber, ibUserlogNatHostAddress,
+                      ibUserlogNatUdpPort, ibUserlogFlowVersion, ibUserlogFlowSyslog,
+                      ibUserlogFlowSourceIP, ibUserlogFlowFlowBegin, ibUserlogFlowActiveTime,
+                      ibUserlogFlowCfgSlotNumber, ibUserlogFlowEnable, ibUserlogFlowAclNumber,
+                      ibUserlogFlowHostAddress, ibUserlogFlowUdpPort, ibUserlogAccessVersion,
+                      ibUserlogAccessSyslog, ibUserlogAccessSourceIP, ibUserlogAccessCfgSlotNumber,
+                      ibUserlogAccessEnable, ibUserlogAccessHostAddress, ibUserlogAccessUdpPort
+                    }
+            STATUS current
+            DESCRIPTION
+                    "All configurable parameters of Userlog feature."
+            ::= { ibUserlogGroups 2 }
+
+
+    ibUserlogInfoGroup OBJECT-GROUP
+            OBJECTS { ibUserlogNatTotalEntries, ibUserlogNatTotalPackets,
+                      ibUserlogNatFailedEntries, ibUserlogNatFailedPackets,
+                      ibUserlogFlowTotalEntries, ibUserlogFlowTotalPackets,
+                      ibUserlogFlowFailedEntries, ibUserlogFlowFailedPackets,
+                      ibUserlogAccessTotalEntries, ibUserlogAccessTotalPackets,
+                      ibUserlogAccessFailedEntries, ibUserlogAccessFailedPackets
+                    }
+            STATUS current
+            DESCRIPTION
+                    "All running information of Userlog feature."
+            ::= { ibUserlogGroups 3 }
+
+END

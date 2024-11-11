@@ -1,0 +1,158 @@
+-- ===================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Per-VLAN spanning tree (PVST) MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2014-05-27 Created by wangmingjun.
+-- ===================================================================
+-- ===================================================================
+--
+-- Imported variables and types
+--
+-- ===================================================================
+
+IB-PVST-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibPvst MODULE-IDENTITY
+    LAST-UPDATED "201405270000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB defines objects for managing Per-VLAN spanning tree (PVST)."
+    REVISION "201405270000Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon  131 }
+
+-- =========================
+-- Subtrees in the PVST MIB
+-- =========================
+
+ibPvstObjects
+    OBJECT IDENTIFIER ::= { ibPvst 1 }
+
+ibPvstNotifications
+    OBJECT IDENTIFIER ::= { ibPvst 2 }
+
+--  ==================================================================
+--  PVST objects table
+--  ==================================================================
+
+--  ===============================
+--  PVST VLAN table
+--  ===============================
+
+ibPvstVlanConfigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbPvstVlanConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "PVST VLAN configuration table."
+    ::= { ibPvstObjects 1 }
+
+ibPvstVlanConfigEntry OBJECT-TYPE
+    SYNTAX      IbPvstVlanConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "PVST VLAN configuration table entry."
+    INDEX {
+              ibPvstVlanID
+          }
+    ::= { ibPvstVlanConfigTable 1 }
+
+IbPvstVlanConfigEntry ::=
+    SEQUENCE
+    {
+        ibPvstVlanID      Integer32
+    }
+
+ibPvstVlanID OBJECT-TYPE
+    SYNTAX      Integer32(1..4094)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index of the VLAN configuration table."
+    ::= { ibPvstVlanConfigEntry 1 }
+
+--  ===============================
+--  PVST VLAN port table
+--  ===============================
+
+ibPvstVlanPortConfigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbPvstVlanPortConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "PVST VLAN port configuration table."
+        ::= { ibPvstObjects 2 }
+
+ibPvstVlanPortConfigEntry OBJECT-TYPE
+    SYNTAX      IbPvstVlanPortConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "PVST VLAN port configuration table entry."
+    INDEX {
+              ibPvstPortVlanID,
+              ibPvstPortIndex
+          }
+    ::= { ibPvstVlanPortConfigTable 1 }
+
+IbPvstVlanPortConfigEntry ::=
+    SEQUENCE
+    {
+        ibPvstPortVlanID     Integer32,
+        ibPvstPortIndex      Integer32
+    }
+
+ibPvstPortVlanID       OBJECT-TYPE
+    SYNTAX      Integer32(1..4094)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index of the VLAN."
+    ::={ ibPvstVlanPortConfigEntry 1 }
+
+ibPvstPortIndex OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483647)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index of the bridge port."
+    ::={ ibPvstVlanPortConfigEntry 2 }
+
+--  ==================================================================
+--  PVST notification table
+--  ==================================================================
+
+ibPvstEvents
+    OBJECT IDENTIFIER ::= { ibPvstNotifications 0 }
+
+ibPvstVlanPortDetectedTc NOTIFICATION-TYPE
+    OBJECTS  { ibPvstPortVlanID , ibPvstPortIndex }
+    STATUS   current
+    DESCRIPTION
+        "The SNMP trap is generated when a port detects
+         a topology change in a VLAN."
+    ::= { ibPvstEvents 1 }
+
+ibPvstVlanPortRcvdTc NOTIFICATION-TYPE
+    OBJECTS  { ibPvstPortVlanID , ibPvstPortIndex }
+    STATUS   current
+    DESCRIPTION
+        "The SNMP trap is generated when a port receives
+         a topology change in a VLAN."
+    ::= { ibPvstEvents 2 }
+
+END

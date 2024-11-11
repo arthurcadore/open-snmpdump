@@ -1,0 +1,116 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- Description: The purpose of this MIB file is to provide the definition of
+--              the DIM(Deep Inspect Management) trap.
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2022/07/15 created by suncao
+--      The initial revision of this MIB module.
+--      Add ibDimTrapSigUpdateSuccess,
+--      ibDimTrapSigUpdateFailed.
+-- ============================================================================
+IB-DIM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI;
+
+ibDim MODULE-IDENTITY
+    LAST-UPDATED "202207151711Z"             -- July 15, 2022 at 17:11 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Add ibDimTrapSigUpdateSuccess,
+        ibDimTrapSigUpdateFailed"
+    REVISION "202207151711Z"                -- July 15, 2022 at 17:11 GMT
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 236 }
+
+--
+-- Node definitions
+--
+
+-- Global Variants
+ibDimSignatureTraps OBJECT IDENTIFIER ::= { ibDim 1 }
+
+--                     **************Global Variants***************
+-- Describe objects for dim trap
+ibDimTrapsSigUpdatePrefix OBJECT IDENTIFIER ::= { ibDimSignatureTraps 0 }
+ibDimTrapSigUpdateSuccess NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDimSigUpdateFeatureId,
+            ibDimSigUpdateType,
+            ibDimSigUpdateLastVersion,
+            ibDimSigUpdateCurrentVersion
+        }
+    STATUS    current
+    DESCRIPTION
+        "Send trap when the signature update success."
+    ::= { ibDimTrapsSigUpdatePrefix 1 }
+ibDimTrapSigUpdateFailed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibDimSigUpdateFeatureId,
+            ibDimSigUpdateType,
+            ibDimSigUpdateFailedReason
+        }
+    STATUS    current
+    DESCRIPTION
+        "Send trap when the signature update failed."
+    ::= { ibDimTrapsSigUpdatePrefix 2 }
+
+ibDimTrapsSigUpdateObjects OBJECT IDENTIFIER ::= { ibDimSignatureTraps 1 }
+ibDimSigUpdateFeatureId OBJECT-TYPE
+    SYNTAX    Unsigned32(1..8)
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "The signature feature identification.
+        1-APR.
+        2-IPS.
+        3-AV.
+        4-UFLT.
+        5-IP-REPUTATION.
+        6-WAF.
+        7-URL-REPUTATION.
+        8-DNS-REPUTATION."
+    ::= { ibDimTrapsSigUpdateObjects 1 }
+ibDimSigUpdateType OBJECT-TYPE
+    SYNTAX    Unsigned32(1..2)
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "The signature update type,automatic upgrade or manual upgrade.
+        1-Manual upgrade.
+        2-Automatic upgrade."
+    ::= { ibDimTrapsSigUpdateObjects 2 }
+ibDimSigUpdateLastVersion OBJECT-TYPE
+    SYNTAX    OCTET STRING(SIZE(0..255))
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "The last signature version."
+    ::= { ibDimTrapsSigUpdateObjects 3 }
+ibDimSigUpdateCurrentVersion OBJECT-TYPE
+    SYNTAX    OCTET STRING(SIZE(0..255))
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "The current signature version."
+    ::= { ibDimTrapsSigUpdateObjects 4 }
+ibDimSigUpdateFailedReason OBJECT-TYPE
+    SYNTAX    OCTET STRING(SIZE(0..255))
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "The reason of failure feature library upgrade."
+    ::= { ibDimTrapsSigUpdateObjects 5 }
+
+END

@@ -1,0 +1,1904 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Interface Management MIB
+-- Reference:
+-- Version: V4.1
+-- History:
+--      V1.0 (1) Created by Zhangshilin, 2001.06.29
+--           (2) Revised by Qizhenglin, 2002.01.08
+--      V1.1 2004/7/20 Add PortList and VlanIndex define
+--      V1.2 2004/8/05 Add ibifEthernetIsolate and ibIsolateGroupMax
+--                     by Chenshixing
+--      V1.3 2004/9/08 add fabric value to ibifVLANType object and
+--                     change the DESCRIPTION by chenshixing
+--           2004/9/08 1.change the DESCRIPTION and the range of
+--                       SYNTAX  INTEGER  from (5..100) to (1..100)
+--                       in ibifMcastControl object by wangyingxia
+--                     2.add the ibifPpsMcastControl object
+--                       by wangyingxia
+--                     3.change the status  in ibLswVlanMngObject
+--                       to current by gaolong
+--      V1.4 2004-10-12 updated by gaolong
+--           Import TEXTUAL-CONVENTION, OBJECT-IDENTITY, Unsigned32.
+--           Relocate ibLswL2InfMib MODULE-IDENTITY clause.
+--           Change SYNTAX clause type of VlanIndex from INTEGER to Unsigned32.
+--           Change MAX-ACCESS clause vlaue of ibifClearStat and ibifEthernetTest
+--           from write-only to read-write.
+--           Change value of ibifAggregateModel, ibdot1qVlanType, ibVlanInterfaceFrameType
+--           and ibifEthernetMdi from underscores to hyphens.
+--           Change value of ibifMacAddrLearnMode, beginning with lowercase.
+--      V1.5 2004-11-15
+--           Add the object ibdot1qVlanBcastSuppressionPPS by lihaijun
+--           Adjust the format of the description of ibdot1qVlanBroadcastSuppression
+--      V1.6 2004-12-2
+--           Add the object ibGlobalBroadcastMaxPps by zhanggang
+--           Add the object ibGlobalBroadcastMaxRatio by zhanggang
+--           Add ibifVlanVPNStatus and ibBpduTunnelStatus by caiqiang
+--           Add ibVlanInterfaceIpMethod by wangchao
+--      V1.7 2005-01-22
+--           Remove the content of ibLswVlan from this MIB to IB-LswVLAN-MIB
+--           Remove SnmpAdminString
+--      V1.8 2005-2-2
+--           Add the object ibifPpsBcastDisValControl by zhangjianwei
+--      V1.9 2005-03-08
+--           Add ibifUniSuppressionStep, ibifPpsUniSuppressionMax, ibifMulSuppressionStep,
+--           ibifPpsMulSuppressionMax, ibifUniSuppression, ibifPpsUniSuppression,
+--           ibifMulSuppression, ibifPpsMulSuppression by wanghaisheng
+--      V2.0 2005-06-14
+--           Add the object ibifComboActivePort by majun and adjust format
+--      V2.1 2005-06-30
+--           Add the object ibifVlanVPNUplinkStatus, ibifVlanVPNTPID,
+--           ibVlanVPNTPIDMode and ibVlanVPNTPID by hejunwei
+--           Add ibifUnknownPacketDropMul, ibifUnknownPacketDropUni by wangyupeng
+--           Add ibifBMbpsMulSuppressionMax, ibifBMbpsMulSuppression,
+--           ibifBKbpsMulSuppressionMax, ibifBKbpsMulSuppressionStep
+--           and ibifBKbpsMulSuppression by lichunyan
+--           Update decription of MIB objects by gaolong
+--      V2.2 2005-09-05
+--           Add the object ibifIsolateGroupID, ibifisUplinkPort,
+--           ibPortIsolateGroupTable, ibPortIsolateGroupEntry,
+--           ibPortIsolateGroupIndex, ibPortIsolateUplinkIfIndex,
+--           ibPortIsolateGroupRowStatus by huzinan
+--      V2.3 2005-10-13
+--           Add the object ibPortIsolateGroupDescription by hejunwei
+--      V2.4 2005-11-15
+--           Add the value 24000M to ibifEthernetSpeed by wanglirong
+--      V2.5 2006-01-16
+--           Add ibMaxMacLearnRange by zhangyinfei
+--           Change the DESCRIPTION and the range of ibMaxMacLearn by zhangyinfei
+--      V2.6 2006-01-03
+--           Remove the value range from the definition of ibifXXBasePortIndex
+--           by wangzhaoyan
+--      V2.7 2006-02-11
+--           Modify description of ibifXXBasePortIndex and ibifXXDevPortIndex
+--           Modify description of ibifHybridTaggedVlanListLow, ibifHybridTaggedVlanListHigh,
+--           ibifHybridUnTaggedVlanListLow and ibifHybridUnTaggedVlanListHigh
+--           Modify some wrong format of the description
+--      V2.8 2006-03-14
+--           Add ibifEthernetAutoSpeedMask, ibifEthernetAutoSpeed in
+--           ibethernetTable and SpeedModeFlag definition by Jin Yongfeng.
+--      V2.9 2006-04-24
+--           Remove value range of ibifEthernetMTU by Chenxi.
+--      V3.0 2006-04-30
+--           Add ibifBMbpsUniSuppressionMax, ibifBMbpsUniSuppression,
+--           ibifBKbpsUniSuppressionMax, ibifBKbpsUniSuppressionStep
+--           and ibifBKbpsUniSuppression by lichunyan.
+--      V3.1 2006-09-27
+--           ibifComboActivePort is obsoleted in ibifXXTable.
+--           ibifComboPortTable is added for combo interface.
+--           ibifComboActivePort is replaced with ibifComboPortCurActive.
+--      V3.2 2009-04-11
+--           Add ibifOutPayloadOctets, ibifInPayloadOctets, ibifInErrorPktsRate,
+--           ibifInPkts, ibifInNormalPkts, ibifOutPkts by lisong.
+--      V3.3 2011-11-08
+--           Add the value s40000M and s100000M to SpeedModeFlag and
+--           ibifEthernetSpeed by xiedong.
+--      V3.4 2012-09-29
+--           Modify description of ibifClearStat by xiedong.
+--           2012-11-03
+--           Add ibifPktBufTable, ibifPktBufEntry, ibifPktBufFree,
+--           ibifPktBufInit, ibifPktBufMin, ibifPktBufMiss by chenkaiping
+--      V3.5 2013-08-17
+--           Add ibifPortProtocolStatTable by yangxiaoren.
+--      V3.6 2014-02-08
+--           Modify description of ibifUniSuppression, ibifMulSuppression and
+--           ibifMcastControl, modify value list of ibifMcastControl by huhonghui,
+--           for supporting value 0.
+--      V3.7 2015-10-14
+--           Add ibifMulSuppressionFlag by chenzhouhui.
+--           Modify description of ibifMulSuppression and ibifPpsMulSuppression by chenzhouhui.
+--           Add ibifPktBufInDrop and ibifPktBufEgDrop to ibifPktBufTable,
+--           add ibifQueuePktBufTable by zhangji.
+--      V3.8 2016-07-02
+--           Add the values s2500M, s5000M, s20000M, s25000M and s50000M to SpeedModeFlag
+--           and ibifEthernetSpeed by yuhaiyan.
+--      V3.9 2018-10-09
+--           Modify description of ibifComboPortCurActive,
+--           modify value list of ibifComboPortCurActive by jinyiting,
+--           for supporting value 4.
+--      V4.0 2019-06-13
+--           Add ibifQueueBufUsageIn5Seconds, ibifQueueBufUsageIn1Minute, ibifQueueBufUsageIn5Minutes
+--           to ibifQueuePktBufTable by mazhixing.
+--      V4.1 2019-08-03
+--           Add the values s200000M, s400000M to SpeedModeFlag
+--           and ibifEthernetSpeed by mazhixing.
+
+-- ==================================================================
+--
+-- Variables and types be imported
+--
+-- ==================================================================
+IB-LswINF-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    RowStatus, DisplayString, TruthValue, TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter64, Unsigned32, Counter32
+        FROM SNMPv2-SMI
+    ifIndex, InterfaceIndex
+        FROM IF-MIB
+    iblswCommon
+        FROM IB-OID-MIB;
+
+    ibLswL2InfMib MODULE-IDENTITY
+            LAST-UPDATED "201908030000Z"
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION
+            ""
+            REVISION "201908030000Z"
+            DESCRIPTION
+                "Add the values s200000M and s400000M to SpeedModeFlag and ibifEthernetSpeed"
+            REVISION "201906130000Z"
+            DESCRIPTION
+                "Add ibifQueueBufUsageIn5Seconds, ibifQueueBufUsageIn1Minute, ibifQueueBufUsageIn5Minutes to ibifQueuePktBufTable"
+            REVISION "201607020000Z"
+            DESCRIPTION
+                "Add the values s2500M, s5000M, s20000M, s25000M and s50000M to SpeedModeFlag and ibifEthernetSpeed"
+            REVISION "201510140000Z"
+            DESCRIPTION
+                "Add ibifPktBufInDrop and ibifPktBufEgDrop to ibifPktBufTable,
+                 ibifMulSuppressionFlag, and ibifQueuePktBufTable, modify description of ibifMulSuppression and ibifPpsMulSuppression"
+            REVISION "200106290000Z"
+            DESCRIPTION
+            "Initial version."
+            ::= { iblswCommon 5 }
+
+
+-- =============================================================
+-- Textual Conventions
+-- =============================================================
+
+    PortList ::= TEXTUAL-CONVENTION
+        STATUS      current
+        DESCRIPTION
+            "Each octet within this value specifies a set of eight
+            ports, with the first octet specifying ports 1 through
+            8, the second octet specifying ports 9 through 16, etc.
+            Within each octet, the most significant bit represents
+            the lowest numbered port, and the least significant bit
+            represents the highest numbered port.  Thus, each port
+            of the bridge is represented by a single bit within the
+            value of this object.  If that bit has a value of '1'
+            then that port is included in the set of ports; the port
+            is not included if its bit has a value of '0'."
+        SYNTAX      OCTET STRING
+
+
+    VlanIndex ::= TEXTUAL-CONVENTION
+        STATUS      current
+        DESCRIPTION
+            "A value used to index per-VLAN tables: values of 0 and
+            4095 are not permitted; if the value is between 1 and
+            4094 inclusive, it represents an IEEE 802.1Q VLAN-ID with
+            global scope within a given bridged domain (see VlanId
+            textual convention).  If the value is greater than 4095
+            then it represents a VLAN with scope local to the
+            particular agent, i.e. one without a global VLAN-ID
+            assigned to it. Such VLANs are outside the scope of
+            IEEE 802.1Q but it is convenient to be able to manage them
+            in the same way using this MIB."
+        SYNTAX      Unsigned32 (0..4294967295)
+
+    DropDirection ::= TEXTUAL-CONVENTION
+       STATUS  current
+       DESCRIPTION
+          "Representing the direction of dropping packets, if applicable."
+       SYNTAX  INTEGER  {
+                   disable        (1),
+                   enableInbound  (2),
+                   enableOutbound (3),
+                   enableBoth     (4)
+               }
+
+    SpeedModeFlag ::= TEXTUAL-CONVENTION
+        STATUS current
+        DESCRIPTION
+            "Type of Negotiable Speed mode."
+        SYNTAX BITS
+            {
+                s10M(0),       -- 10M speed
+                s100M(1),      -- 100M speed
+                s1000M(2),     -- 1000M speed
+                s10000M(3),    -- 10000M speed
+                s24000M(4),    -- 24000M speed
+                s40000M(5),    -- 40000M speed
+                s100000M(6),   -- 100000M speed
+                s2500M(7),     -- 2500M speed
+                s5000M(8),     -- 5000M speed
+                s20000M(9),    -- 20000M speed
+                s25000M(10),   -- 25000M speed
+                s50000M(11),   -- 50000M speed
+                s200000M(12),  -- 200000M speed
+                s400000M(13)   -- 400000M speed
+            }
+
+
+-- ==================================================================
+--
+-- ======================= definition begin =========================
+--
+-- ==================================================================
+    ibLswExtInterface OBJECT IDENTIFIER ::= { iblswCommon 1 }
+
+    ibifXXTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbIfXXEntry
+        MAX-ACCESS not-accessible
+        STATUS   current
+        DESCRIPTION "Extended interface information table."
+        ::= { ibLswExtInterface  1 }
+
+
+    ibifXXEntry  OBJECT-TYPE
+        SYNTAX IbIfXXEntry
+        MAX-ACCESS not-accessible
+        STATUS   current
+        DESCRIPTION "Entries of extended interface information table."
+        INDEX { ifIndex }
+        ::= { ibifXXTable 1}
+
+    IbIfXXEntry ::=
+    SEQUENCE {
+        ibifUnBoundPort     TruthValue  ,
+        ibifISPhyPort       TruthValue  ,
+        ibifAggregatePort   TruthValue  ,
+        ibifMirrorPort      TruthValue  ,
+        ibifVLANType        INTEGER     ,
+        ibifMcastControl    INTEGER     ,
+        ibifFlowControl     TruthValue  ,
+        ibifSrcMacControl   TruthValue  ,
+        ibifClearStat       INTEGER,
+        ibifXXBasePortIndex INTEGER,
+        ibifXXDevPortIndex  INTEGER,
+        ibifPpsMcastControl  Integer32,
+        ibifPpsBcastDisValControl INTEGER,
+        ibifUniSuppressionStep Integer32,
+        ibifPpsUniSuppressionMax Integer32,
+        ibifMulSuppressionStep Integer32,
+        ibifPpsMulSuppressionMax Integer32,
+        ibifUniSuppression   Integer32,
+        ibifPpsUniSuppression Integer32,
+        ibifMulSuppression    Integer32,
+        ibifPpsMulSuppression Integer32,
+        ibifComboActivePort   INTEGER,
+        ibifBMbpsMulSuppressionMax Integer32,
+        ibifBMbpsMulSuppression Integer32,
+        ibifBKbpsMulSuppressionMax Integer32,
+        ibifBKbpsMulSuppressionStep Integer32,
+        ibifBKbpsMulSuppression Integer32,
+        ibifUnknownPacketDropMul DropDirection,
+        ibifUnknownPacketDropUni DropDirection,
+        ibifBMbpsUniSuppressionMax Integer32,
+        ibifBMbpsUniSuppression Integer32,
+        ibifBKbpsUniSuppressionMax Integer32,
+        ibifBKbpsUniSuppressionStep Integer32,
+        ibifBKbpsUniSuppression Integer32,
+        ibifOutPayloadOctets Counter64,
+        ibifInPayloadOctets Counter64,
+        ibifInErrorPktsRate Integer32,
+        ibifInPkts Counter64,
+        ibifInNormalPkts  Counter64,
+        ibifOutPkts Counter64,
+        ibifMulSuppressionFlag  INTEGER
+        }
+
+
+   ibifUnBoundPort  OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Whether it is the unbound port. (true indicates that the port is
+            the main port of the aggregation or the port does not participate
+            in the aggregation.)"
+        ::= { ibifXXEntry 1 }
+
+
+    ibifISPhyPort  OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Whether it is a physical interface."
+        ::= { ibifXXEntry 2 }
+
+
+    ibifAggregatePort OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Whether it is the aggregated port. (if the port participates
+                    in the aggregation, this value is true.)"
+        ::= { ibifXXEntry 3 }
+
+
+    ibifMirrorPort  OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Whether it is a mirror port."
+        ::= { ibifXXEntry 4 }
+
+
+    ibifVLANType  OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        vLANTrunk  (1),
+        access   (2),
+        hybrid    (3),
+        fabric   (4)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "port vlan types.
+            hybrid (3) port can carry multiple VLANs.
+            If fabric function is supported, fabric(4) means the port is
+            a fabric port."
+        ::= { ibifXXEntry 5 }
+
+
+    ibifMcastControl OBJECT-TYPE
+        SYNTAX  INTEGER (0..100)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Broadcast storm suppression with the step length of 1,
+            ranging from 0 to 100 percent.
+            In some products the step is 5, ranging from 0 to 100."
+        ::= { ibifXXEntry 6 }
+
+    ibifFlowControl  OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Flow control status."
+        ::= { ibifXXEntry 7 }
+
+
+    ibifSrcMacControl OBJECT-TYPE
+        SYNTAX  TruthValue
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Whether to filter by source MAC address."
+        ::= { ibifXXEntry 8 }
+
+
+    ibifClearStat  OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+            clear(1)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Clear specify port statistics.  Operation read is not supported."
+        ::= { ibifXXEntry 9 }
+
+    ibifXXBasePortIndex OBJECT-TYPE
+        SYNTAX  INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Index number of the port and the first port index of the
+                    device is 1."
+        ::= { ibifXXEntry 10 }
+
+    ibifXXDevPortIndex OBJECT-TYPE
+        SYNTAX  INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Device index of the port."
+        ::= { ibifXXEntry 11 }
+
+   ibifPpsMcastControl OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The broadcast suppression with pps(packet per second) type.
+            The max value is determined by the port type and product."
+        ::= { ibifXXEntry 12 }
+
+   ibifPpsBcastDisValControl OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+          enable(1),
+          disable(2)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Control the port's pps(packet per second) broadcast suppression.
+            When the port is enabled, its pps broadcast suppression value is the
+            global disperse value, and when disabled, it doesn't suppress broadcast."
+        ::= { ibifXXEntry 13 }
+
+   ibifUniSuppressionStep OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "The step of unicast suppression in ratio mode."
+        ::= { ibifXXEntry 14 }
+
+   ibifPpsUniSuppressionMax OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "The max pps(packet per second) value of unicast suppression
+                    in pps mode."
+        ::= { ibifXXEntry 15 }
+
+   ibifMulSuppressionStep OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "The step of multicast suppression in ratio mode."
+        ::= { ibifXXEntry 16 }
+
+   ibifPpsMulSuppressionMax OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "The max pps(packet per second) value of multicast suppression
+                    in pps mode."
+        ::= { ibifXXEntry 17 }
+
+   ibifUniSuppression OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The unicast suppression with the ranging from 0 to 100 percent
+            in ratio mode.
+            The step is determined by ibifUniSuppressionStep."
+        ::= { ibifXXEntry 18 }
+
+   ibifPpsUniSuppression OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The unicast suppression in pps(packet per second) mode.
+            The max value is determined by ibifPpsUniSuppressionMax."
+        ::= { ibifXXEntry 19 }
+
+   ibifMulSuppression OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The multicast suppression with ranging from 0 to 100 percent
+            in ratio mode.
+            The step is determined by ibifMulSuppressionStep.
+            If ibifMulSuppressionFlag is 2 it means only unknown
+            traffic suppression."
+        ::= { ibifXXEntry 20 }
+
+   ibifPpsMulSuppression OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The multicast suppression in pps(packet per second) mode.
+            The max pps value is determined by ibifPpsMulSuppressionMax.
+            If ibifMulSuppressionFlag is 2 it means only unknown
+            traffic suppression."
+        ::= { ibifXXEntry 21 }
+
+   ibifComboActivePort OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+            fiber   (1),    -- Optical port
+            copper  (2),    -- Electrical port
+            na      (3)     -- Not applicable
+        }
+        MAX-ACCESS read-write
+        STATUS obsolete
+        DESCRIPTION "Active port on combo interface."
+        ::= { ibifXXEntry 22 }
+
+    ibifBMbpsMulSuppressionMax OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+                "The maximum value of the multicast suppression with bandwidth-based(Mbps)
+                that a port can be configured."
+        ::= { ibifXXEntry 23 }
+
+    ibifBMbpsMulSuppression OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+                "With bandwidth-based multicast suppression, the bandwidth is measured
+                in Mbps.
+                The upper limit of the multicast suppession with bandwidth-based(Mbps)
+                is the value of ibifBMbpsMulSuppressionMax in the entry.
+                The default value of ibifBMbpsMulSuppression is the value of
+                ibifBMbpsMulSuppressionMax."
+        ::= { ibifXXEntry 24 }
+
+    ibifBKbpsMulSuppressionMax OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+                "The maximum value of the multicast suppression with bandwidth-based(Kbps)
+                that a port can be configured."
+        ::= { ibifXXEntry 25 }
+
+    ibifBKbpsMulSuppressionStep OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+                "The step of multicast suppression with bandwidth-based(Kbps)."
+        ::= { ibifXXEntry 26 }
+
+    ibifBKbpsMulSuppression OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+                "With bandwidth-based multicast suppression, the bandwidth
+                is measured in Kbps.
+                The upper limit of the multicast suppession with bandwidth-based(Kbps)
+                is the value of ibifBKbpsMulSuppressionMax in the entry.
+                The value of ibifBKbpsMulSuppression must be multiple of the
+                value of ibifBKbpsMulSuppressionStep.
+                The default value of ibifBKbpsMulSuppression is the value of
+                ibifBKbpsMulSuppressionMax."
+        ::= { ibifXXEntry 27 }
+
+   ibifUnknownPacketDropMul OBJECT-TYPE
+        SYNTAX  DropDirection
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Control the port's unknown-multicast packets drop. When
+                     inbound direction is enabled on this port, the port will
+                     drop unknown-multicast packets in inbound direction. When
+                     outbound direction is enabled on this port, the port will
+                     drop unknown-multicast packets in outbound direction. When
+                     both directions are enabled on this port, the port will
+                     drop unknown-multicast packets in both inbound and outbound
+                     directions."
+        DEFVAL { disable }
+        ::= { ibifXXEntry 28 }
+
+   ibifUnknownPacketDropUni OBJECT-TYPE
+        SYNTAX  DropDirection
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Control the port's unknown-unicast packets drop. When
+                     inbound direction is enabled on this port, the port will
+                     drop unknown-unicast packets in inbound direction. When
+                     outbound direction is enabled on this port, the port will
+                     drop unknown-unicast packets in outbound direction. When
+                     both directions are enabled on this port, the port will
+                     drop unknown-unicast packets in both inbound and outbound
+                     directions."
+        DEFVAL { disable }
+        ::= { ibifXXEntry 29 }
+
+    ibifBMbpsUniSuppressionMax OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "
+            The maximum value of the unicast suppression with bandwidth-based
+            (Mbps) that a port can be configured."
+        ::= { ibifXXEntry 30 }
+
+    ibifBMbpsUniSuppression OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "
+            With bandwidth-based Unicast suppression, the bandwidth is measured
+            in Mbps.
+            The upper limit of the unicast suppession with bandwidth-based(Mbps)
+            is the value of ibifBMbpsUniSuppressionMax in the entry.
+            The default value of ibifBMbpsUniSuppression is the value of
+            ibifBMbpsUniSuppressionMax."
+        ::= { ibifXXEntry 31 }
+
+    ibifBKbpsUniSuppressionMax OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "
+            The maximum value of the unicast suppression with bandwidth-based
+            (Kbps) that a port can be configured."
+        ::= { ibifXXEntry 32 }
+
+    ibifBKbpsUniSuppressionStep OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "
+            The step of unicast suppression with bandwidth-based(Kbps)."
+        ::= { ibifXXEntry 33 }
+
+    ibifBKbpsUniSuppression OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "
+            With bandwidth-based unicast suppression, the bandwidth
+            is measured in Kbps.
+            The upper limit of the unicast suppession with bandwidth-based(Kbps)
+            is the value of ibifBKbpsUniSuppressionMax in the entry.
+            The value of ibifBKbpsUniSuppression must be multiple of the
+            value of ibifBKbpsUniSuppressionStep.
+            The default value of ibifBKbpsUniSuppression is the value of
+            ibifBKbpsUniSuppressionMax."
+        ::= { ibifXXEntry 34 }
+
+    ibifOutPayloadOctets OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "
+            The actual output octets of the interface."
+        ::= { ibifXXEntry 35 }
+
+    ibifInPayloadOctets OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "
+            The actual input octets of the interface."
+        ::= { ibifXXEntry 36 }
+
+    ibifInErrorPktsRate OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "
+            The rate of inbound error packets on the interface."
+        ::= { ibifXXEntry 37 }
+
+    ibifInPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "
+            The number of packets received on the interface."
+        ::= { ibifXXEntry 38 }
+
+    ibifInNormalPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "
+            The number of normal packets received on the interface."
+        ::= { ibifXXEntry 39 }
+
+    ibifOutPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "
+            The number of packets sent on the interface."
+        ::= { ibifXXEntry 40 }
+
+   ibifMulSuppressionFlag OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+            all      (1),    -- known and unknown traffic
+            unknown  (2)    -- only unknown traffic
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "
+            The multicast suppression flag.  If only unknown multicast
+            traffic is suppressed, the value is unknown(2), and all(1) for suppression of all traffic (unknown and known)."
+        ::= { ibifXXEntry 41 }
+
+    ibifAggregateTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbIfAggregateEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "Port aggregation information table."
+        ::= { ibLswExtInterface  2 }
+
+
+    ibifAggregateEntry  OBJECT-TYPE
+        SYNTAX IbIfAggregateEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "Port aggregation information table."
+        INDEX   { ibifAggregatePortIndex }
+        ::= { ibifAggregateTable 1}
+
+    IbIfAggregateEntry  ::=
+    SEQUENCE {
+        ibifAggregatePortIndex      InterfaceIndex,
+        ibifAggregatePortName       OCTET STRING,
+        ibifAggregatePortListPorts  PortList,
+        ibifAggregateModel          INTEGER,
+        ibifAggregateOperStatus     RowStatus
+        }
+
+
+
+    ibifAggregatePortIndex  OBJECT-TYPE
+        SYNTAX  InterfaceIndex
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Index number of the main aggregated port."
+        ::= { ibifAggregateEntry 1 }
+
+
+    ibifAggregatePortName  OBJECT-TYPE
+        SYNTAX  OCTET STRING (SIZE(0..40))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Aggregation group name."
+        ::= { ibifAggregateEntry 2 }
+
+
+    ibifAggregatePortListPorts OBJECT-TYPE
+        SYNTAX  PortList
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION   "Portlist of a aggregating."
+        ::= { ibifAggregateEntry 3 }
+
+
+    ibifAggregateModel  OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        ingress     (1),
+        both        (2),
+        round-robin (3)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Load sharing mode for the port aggregation."
+        ::= { ibifAggregateEntry 4 }
+
+
+    ibifAggregateOperStatus  OBJECT-TYPE
+        SYNTAX  RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION "Current operation status of the row."
+        ::= { ibifAggregateEntry 5 }
+
+-- ==================================================================
+    ibifHybridPortTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbifHybridPortEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "Hybrid-port configuration table."
+        ::= { ibLswExtInterface  3 }
+
+
+    ibifHybridPortEntry  OBJECT-TYPE
+        SYNTAX IbifHybridPortEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "Hybrid-port configuration table."
+        INDEX   { ibifHybridPortIndex }
+        ::= { ibifHybridPortTable 1}
+
+    IbifHybridPortEntry  ::=
+    SEQUENCE {
+        ibifHybridPortIndex            INTEGER,
+        ibifHybridTaggedVlanListLow    OCTET STRING,
+        ibifHybridTaggedVlanListHigh   OCTET STRING,
+        ibifHybridUnTaggedVlanListLow  OCTET STRING,
+        ibifHybridUnTaggedVlanListHigh OCTET STRING
+        }
+
+
+
+    ibifHybridPortIndex  OBJECT-TYPE
+        SYNTAX  INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Index number of Hybrid-port."
+        ::= { ibifHybridPortEntry 1 }
+
+
+    ibifHybridTaggedVlanListLow  OBJECT-TYPE
+        SYNTAX  OCTET STRING (SIZE(0..256))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Each octet within this value specifies a set of eight
+                    VLANs, with the first octet specifying VLANs 1 through
+                    8, the second octet specifying VLANs 9 through 16, etc.
+                    Within each octet, the most significant bit represents
+                    the highest numbered VLAN, and the least significant bit
+                    represents the lowest numbered VLAN. Thus, each tagged VLAN
+                    of the hybrid port is represented by a single bit within
+                    the value of this object. If that bit has a value of '1'
+                    then that VLAN is tagged in the set of VLANs; the VLAN
+                    is not tagged if its bit has a value of '0'."
+        ::= { ibifHybridPortEntry 2 }
+
+
+    ibifHybridTaggedVlanListHigh OBJECT-TYPE
+        SYNTAX  OCTET STRING (SIZE(0..256))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Each octet within this value specifies a set of eight
+                    VLANs, with the first octet specifying VLANs 2049 through
+                    2056, the second octet specifying VLANs 2057 through 2064,
+                    etc. Within each octet, the most significant bit represents
+                    the highest numbered VLAN, and the least significant bit
+                    represents the lowest numbered VLAN. Thus, each tagged VLAN
+                    of the hybrid port is represented by a single bit within
+                    the value of this object. If that bit has a value of '1'
+                    then that VLAN is tagged in the set of VLANs; the VLAN
+                    is not tagged if its bit has a value of '0'."
+        ::= { ibifHybridPortEntry 3 }
+
+
+    ibifHybridUnTaggedVlanListLow  OBJECT-TYPE
+        SYNTAX  OCTET STRING (SIZE(0..256))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Each octet within this value specifies a set of eight
+                    VLANs, with the first octet specifying VLANs 1 through
+                    8, the second octet specifying VLANs 9 through 16, etc.
+                    Within each octet, the most significant bit represents
+                    the highest numbered VLAN, and the least significant bit
+                    represents the lowest numbered VLAN. Thus, each untagged
+                    VLAN of the hybrid port is represented by a single bit
+                    within the value of this object. If that bit has a value
+                    of '1' then that VLAN is untagged in the set of VLANs; the
+                    VLAN is not untagged if its bit has a value of '0'."
+        ::= { ibifHybridPortEntry 4 }
+
+
+    ibifHybridUnTaggedVlanListHigh OBJECT-TYPE
+        SYNTAX  OCTET STRING (SIZE(0..256))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Each octet within this value specifies a set of eight
+                    VLANs, with the first octet specifying VLANs 2049 through
+                    2056, the second octet specifying VLANs 2057 through 2064,
+                    etc. Within each octet, the most significant bit represents
+                    the highest numbered VLAN, and the least significant bit
+                    represents the lowest numbered VLAN. Thus, each untagged
+                    VLAN of the hybrid port is represented by a single bit
+                    within the value of this object. If that bit has a value of
+                    '1' then that VLAN is untagged in the set of VLANs; the VLAN
+                    is not untagged if its bit has a value of '0'."
+        ::= { ibifHybridPortEntry 5 }
+
+-- ==================== Combo port table ============================
+    ibifComboPortTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbifComboPortEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "Combo-port table."
+        ::= { ibLswExtInterface  4 }
+
+    ibifComboPortEntry  OBJECT-TYPE
+        SYNTAX IbifComboPortEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "The entry of ibifComboPortTable."
+        INDEX    { ibifComboPortIndex }
+        ::= { ibifComboPortTable 1}
+
+    IbifComboPortEntry  ::=
+    SEQUENCE {
+        ibifComboPortIndex       InterfaceIndex,
+        ibifComboPortCurActive   INTEGER
+        }
+
+    ibifComboPortIndex OBJECT-TYPE
+        SYNTAX  InterfaceIndex
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The combo-port interface index. Its value is the same as the value
+            of ifIndex in ifTable, but only includes indexes of the combo-port
+            interfaces."
+        ::= { ibifComboPortEntry 1 }
+
+    ibifComboPortCurActive OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+            fiber   (1),    -- Optical port
+            copper  (2),    -- Electrical port
+            na      (3),    -- Not applicable
+            auto    (4)     -- Identifing the optical/electrical port automatic
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Current active interface of combo interfaces. The value 'fiber'
+            means the interface with fiber connector of the pair of combo-port
+            interfaces is active. The value 'copper' means the interface with
+            copper connector of the pair is active. The value 'na' means not
+            supported. The value 'auto' means the interface identified
+            the copper or fiber port automatic."
+        ::= { ibifComboPortEntry 2 }
+
+-- ======================pkt buf table===============================
+    ibifPktBufTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbifPktBufEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "Packet buffer table."
+        ::= { ibLswExtInterface  5 }
+
+    ibifPktBufEntry  OBJECT-TYPE
+        SYNTAX IbifPktBufEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "The entry of ibifPktBufTable."
+        INDEX { ifIndex }
+        ::= { ibifPktBufTable 1}
+
+    IbifPktBufEntry  ::=
+        SEQUENCE {
+            ibifPktBufFree      Integer32,
+            ibifPktBufInit      Integer32,
+            ibifPktBufMin       Integer32,
+            ibifPktBufMiss      Counter64,
+            ibifPktBufInDrop    Counter64,
+            ibifPktBufEgDrop    Counter64
+            }
+
+    ibifPktBufFree OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The number of packet buffers available for the interface."
+        ::= { ibifPktBufEntry 1 }
+
+    ibifPktBufInit OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The number of packet buffers allocated when the interface was created."
+        ::= { ibifPktBufEntry 2 }
+
+    ibifPktBufMin OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The smallest number of packet buffers available for the interface."
+        ::= { ibifPktBufEntry 3 }
+
+    ibifPktBufMiss OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The number of times that the interface failed to obtain a packet
+             buffer.  Failure to obtain a buffer indicates that buffers were busy."
+        ::= { ibifPktBufEntry 4 }
+
+    ibifPktBufInDrop OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The number of ingress packets dropped by the interface
+             because of insufficient data buffer."
+        ::= { ibifPktBufEntry 5 }
+
+    ibifPktBufEgDrop OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The number of egress packets dropped by the interface
+             because of insufficient data buffer."
+        ::= { ibifPktBufEntry 6 }
+
+-- ======================if queue pkt buf table===============================
+    ibifQueuePktBufTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbifQueuePktBufEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "802.1p queue of the interface packet buffer table."
+        ::= { ibLswExtInterface  6 }
+
+    ibifQueuePktBufEntry  OBJECT-TYPE
+        SYNTAX IbifQueuePktBufEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "The entry of ibifQueuePktBufTable."
+        INDEX
+            {
+                ifIndex,
+                ibifQueueId
+            }
+        ::= { ibifQueuePktBufTable 1}
+
+    IbifQueuePktBufEntry  ::=
+        SEQUENCE {
+            ibifQueueId                  Integer32,
+            ibifQueuePktBufTotal         Unsigned32,
+            ibifQueueBufUsed             Unsigned32,
+            ibifQueueBufThreCount        Counter32,
+            ibifQueueBufUsageIn5Seconds  Integer32,
+            ibifQueueBufUsageIn1Minute   Integer32,
+            ibifQueueBufUsageIn5Minutes  Integer32
+            }
+
+    ibifQueueId OBJECT-TYPE
+        SYNTAX  Integer32(1..8)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The 802.1p queue ID of the interface. This value is
+             used to specify the queue ID of the interface
+             when the user wants to read one queue of the interface.
+             The index number 1-8 correspond with 802.1p queue ID 0-7."
+        ::= { ibifQueuePktBufEntry 1 }
+
+    ibifQueuePktBufTotal OBJECT-TYPE
+        SYNTAX  Unsigned32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The number of packet buffers available for the interface,
+             including fixed buffer and shared buffer."
+        ::= { ibifQueuePktBufEntry 2 }
+
+    ibifQueueBufUsed OBJECT-TYPE
+        SYNTAX  Unsigned32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The number of packet buffers that have been used for each
+             802.1p queue of the interface."
+        ::= { ibifQueuePktBufEntry 3 }
+
+    ibifQueueBufThreCount OBJECT-TYPE
+        SYNTAX  Counter32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The number of times that each 802.1p queue of the interface has
+             exceeded the buffer threshold. The threshold is configurated by user."
+        ::= { ibifQueuePktBufEntry 4 }
+
+    ibifQueueBufUsageIn5Seconds OBJECT-TYPE
+        SYNTAX  Integer32 (0..100)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The buffer usage in the last 5 seconds for each 802.1p queue of the interface."
+        ::= { ibifQueuePktBufEntry 5 }
+
+    ibifQueueBufUsageIn1Minute OBJECT-TYPE
+        SYNTAX  Integer32 (0..100)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The buffer usage in the last 1 minute for each 802.1p queue of the interface."
+        ::= { ibifQueuePktBufEntry 6 }
+
+    ibifQueueBufUsageIn5Minutes OBJECT-TYPE
+        SYNTAX  Integer32 (0..100)
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The buffer usage in the last 5 minutes for each 802.1p queue of the interface."
+        ::= { ibifQueuePktBufEntry 7 }
+
+-- ========================l2========================================
+    ibLswL2InfMibObject OBJECT IDENTIFIER ::= {  ibLswL2InfMib 1  }
+
+    ibSlotPortMax  OBJECT-TYPE
+        SYNTAX  INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Max ports of the slots."
+        ::= { ibLswL2InfMibObject  1 }
+
+    ibSwitchPortMax  OBJECT-TYPE
+        SYNTAX  INTEGER
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Max ports that this switch includes."
+        ::= { ibLswL2InfMibObject  2 }
+
+    ibifVLANTrunkStatusTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbIfVLANTrunkStatusEntry
+        MAX-ACCESS not-accessible STATUS   current
+        DESCRIPTION "Gvrp attributes on the VlanTrunk port."
+        ::= { ibLswL2InfMibObject  3 }
+
+    ibifVLANTrunkStatusEntry  OBJECT-TYPE
+        SYNTAX IbIfVLANTrunkStatusEntry
+        MAX-ACCESS not-accessible STATUS   current
+        DESCRIPTION "Gvrp attributes on the VlanTrunk port."
+        INDEX   { ibifVLANTrunkIndex }
+        ::= { ibifVLANTrunkStatusTable 1}
+
+    IbIfVLANTrunkStatusEntry    ::=
+    SEQUENCE {
+        ibifVLANTrunkIndex              InterfaceIndex,
+        ibifVLANTrunkGvrpRegistration   INTEGER,
+        ibifVLANTrunkPassListLow        OCTET STRING,
+        ibifVLANTrunkPassListHigh       OCTET STRING,
+        ibifVLANTrunkAllowListLow       OCTET STRING,
+        ibifVLANTrunkAllowListHigh      OCTET STRING
+        }
+
+
+
+    ibifVLANTrunkIndex  OBJECT-TYPE
+        SYNTAX  InterfaceIndex
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Index number of the VLANTrunk interface."
+        ::= { ibifVLANTrunkStatusEntry 1 }
+
+
+    ibifVLANTrunkGvrpRegistration OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        normal  (1),
+        fixed   (2),
+        forbidden   (3)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "GVRP registration information
+            normal:     This is the default configuration. Allow create, register
+                        and unregister vlans dynamiclly at this port.
+            fixed:      Aallow create and register vlan manually at this port.
+                        Prevent from unregistering vlans or registering known
+                        vlans of this port at another trunk port.
+            forbidden:  Unregister all vlans but vlan 1, forbid to create or
+                        register any other vlans at this port."
+        ::= { ibifVLANTrunkStatusEntry 2 }
+
+
+    ibifVLANTrunkPassListLow OBJECT-TYPE
+        SYNTAX  OCTET STRING
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Each octet within this value specifies a set of eight
+                    VLANs, with the first octet specifying VLANs 1 through
+                    8, the second octet specifying VLANs 9 through 16, etc.
+                    Within each octet, the most significant bit represents
+                    the highest numbered VLAN, and the least significant bit
+                    represents the lowest numbered VLAN. Thus, each actually
+                    passed VLAN of the trunk port is represented by a single
+                    bit within the value of this object. If that bit has a
+                    value of '1' then that VLAN is actually passed in the set
+                    of VLANs; the VLAN is not actually passed if its bit has
+                    a value of '0'."
+        ::= { ibifVLANTrunkStatusEntry 4 }
+
+    ibifVLANTrunkPassListHigh OBJECT-TYPE
+        SYNTAX  OCTET STRING
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Each octet within this value specifies a set of eight
+                    VLANs, with the first octet specifying VLANs 2049 through
+                    2056, the second octet specifying VLANs 2057 through 2064,
+                    etc. Within each octet, the most significant bit represents
+                    the highest numbered VLAN, and the least significant bit
+                    represents the lowest numbered VLAN. Thus, each actually
+                    passed VLAN of the trunk port is represented by a single
+                    bit within the value of this object. If that bit has a
+                    value of '1' then that VLAN is actually passed in the set
+                    of VLANs; the VLAN is not actually passed if its bit has
+                    a value of '0'."
+        ::= { ibifVLANTrunkStatusEntry 5 }
+
+    ibifVLANTrunkAllowListLow OBJECT-TYPE
+        SYNTAX  OCTET STRING
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Each octet within this value specifies a set of eight
+                    VLANs, with the first octet specifying VLANs 1 through
+                    8, the second octet specifying VLANs 9 through 16, etc.
+                    Within each octet, the most significant bit represents
+                    the highest numbered VLAN, and the least significant bit
+                    represents the lowest numbered VLAN. Thus, each allowed
+                    VLAN of the trunk port is represented by a single bit
+                    within the value of this object. If that bit has a value
+                    of '1' then that VLAN is allowed in the set of VLANs;
+                    the VLAN is not allowed if its bit has a value of '0'."
+        ::= { ibifVLANTrunkStatusEntry 6 }
+
+    ibifVLANTrunkAllowListHigh OBJECT-TYPE
+        SYNTAX  OCTET STRING
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Each octet within this value specifies a set of eight
+                    VLANs, with the first octet specifying VLANs 2049 through
+                    2056, the second octet specifying VLANs 2057 through 2064,
+                    etc. Within each octet, the most significant bit represents
+                    the highest numbered VLAN, and the least significant bit
+                    represents the lowest numbered VLAN. Thus, each allowed
+                    VLAN of the trunk port is represented by a single bit within
+                    the value of this object. If that bit has a value of '1'
+                    then that VLAN is allowed in the set of VLANs; the VLAN is
+                    not allowed if its bit has a value of '0'."
+        ::= { ibifVLANTrunkStatusEntry 7 }
+
+
+
+
+    ibethernetTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbEthernetEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "Ethernet port attribute table."
+        ::= { ibLswL2InfMibObject  4 }
+
+
+    ibethernetEntry  OBJECT-TYPE
+        SYNTAX IbEthernetEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "Entries of Ethernet port attribute table"
+        INDEX { ifIndex }
+        ::= { ibethernetTable 1}
+
+    IbEthernetEntry ::=
+    SEQUENCE {
+        ibifEthernetDuplex          INTEGER,
+        ibifEthernetMTU             INTEGER,
+        ibifEthernetSpeed           INTEGER,
+        ibifEthernetMdi             INTEGER,
+        ibMaxMacLearn               INTEGER,
+        ibifMacAddressLearn         INTEGER,
+        ibifEthernetTest            INTEGER,
+        ibifMacAddrLearnMode        INTEGER,
+        ibifEthernetFlowInterval    INTEGER,
+        ibifEthernetIsolate         OCTET STRING,
+        ibifVlanVPNStatus           INTEGER,
+        ibifVlanVPNUplinkStatus     INTEGER,
+        ibifVlanVPNTPID             Integer32,
+        ibifIsolateGroupID          Integer32,
+        ibifisUplinkPort            INTEGER,
+        ibifEthernetAutoSpeedMask   SpeedModeFlag,
+        ibifEthernetAutoSpeed       SpeedModeFlag
+        }
+
+    ibifEthernetDuplex OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        full    (1),
+        half    (2),
+        auto    (3)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Ethernet interface mode."
+        ::= { ibethernetEntry 3 }
+
+
+    ibifEthernetMTU  OBJECT-TYPE
+        SYNTAX  INTEGER
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "MTU on the Ethernet interface."
+        ::= { ibethernetEntry 4 }
+
+
+    ibifEthernetSpeed OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        auto    (0),
+        s10M    (10),
+        s100M   (100),
+        s1000M  (1000),
+        s2500M  (2500),
+        s5000M  (5000),
+        s10000M (10000),
+        s24000M (24000),
+        s40000M (40000),
+        s20000M (20000),
+        s25000M (25000),
+        s50000M (50000),
+        s100000M (100000),
+        s200000M (200000),
+        s400000M (400000)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Ethernet interface speed."
+        ::= { ibethernetEntry 5 }
+
+    ibifEthernetMdi OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+        mdi-ii   (1),
+        mdi-x   (2),
+        mdi-auto   (3)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Type of the line connected to the port.
+            MDI-II (straight-through cable): 1
+            MDI-X (crossover cable): 2
+            MDI-AUTO (auto-sensing): 3"
+        ::= { ibethernetEntry 7 }
+
+    ibMaxMacLearn OBJECT-TYPE
+        SYNTAX  INTEGER(-1..2147483647)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The maximum number of MAC addresses that the port can learn.
+            The value -1 means that the number of Mac addresses that the port
+            can learn is unlimited."
+        ::= { ibethernetEntry 8 }
+
+    ibifMacAddressLearn OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+            enabled(1),
+            disabled(2)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object indicates if the interface is allowed to learn mac address.
+            eanbled(1) means the interface can learn mac address, otherwise disabled(2)
+            can be set."
+        ::= { ibethernetEntry 9 }
+
+    ibifEthernetTest OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+            test(1)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Test this interface.
+            The actual testing will be different according to products.
+            Read operation not supported."
+        ::= { ibethernetEntry 10 }
+
+    ibifMacAddrLearnMode OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+            iVL(1),
+            sVL(2)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Status indicates mac address learn mode of the interface.
+            IVL(1) means independent VLAN learning.
+            SVL means shared VLAN learning."
+        ::= { ibethernetEntry 11 }
+
+    ibifEthernetFlowInterval OBJECT-TYPE
+        SYNTAX  INTEGER (5..300)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Set flow interval of the ethernet.
+            The NMS should set value to integer which is a multiple of 5."
+        ::= { ibethernetEntry 12 }
+
+    ibifEthernetIsolate  OBJECT-TYPE
+        SYNTAX  OCTET STRING
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Isolate group means that all ports in the same isolate group can not
+            send and receive packets each other.
+            Each octet within this value specifies a set of eight isolate groups,
+            with the first octet specifying isolate groups 1 through 8,  the second
+            octet specifying isolate groups 9 through 16, etc. Within each octet,
+            the leftmost bit is the first bit.
+            the first bit represents the lowest numbered isolate group, and the
+            last bit represents the highest numbered isolate group. one port can
+            belong to more than one isolate group.
+            Thus, each isolate group is represented by a single bit within the
+            value of this object.
+            If that bit has a value of '1', then that isolate group includes this port;
+            the port is not included if its bit has a value of '0'.
+            for example, the first octet is '10000100' means that the port is
+            included in the isolate group 1 and isolate group 6."
+        ::= { ibethernetEntry 13 }
+
+    ibifVlanVPNStatus OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+             enabled(1),
+             disabled(2)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Vlan VPN enable status."
+        ::= { ibethernetEntry 14 }
+
+    ibifVlanVPNUplinkStatus OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+             enabled(1),
+             disabled(2)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Vlan VPN uplink status."
+        ::= { ibethernetEntry 15 }
+
+    ibifVlanVPNTPID OBJECT-TYPE
+        SYNTAX  Integer32 (1..65535)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Port based Vlan VPN TPID(Tag Protocol Indentifier), default value
+            is 0x8100.
+            Please refer to ibVlanVPNTPIDMode to get more information."
+        ::= { ibethernetEntry 16 }
+
+    ibifIsolateGroupID OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Isolate group identifier. Value zero means this interface does not
+            belong to any isolate group."
+        ::= { ibethernetEntry 17 }
+
+    ibifisUplinkPort OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+             yes(1),
+             no(2)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Ethernet uplink status, default value is 2."
+        ::= { ibethernetEntry 18 }
+
+    ibifEthernetAutoSpeedMask OBJECT-TYPE
+        SYNTAX  SpeedModeFlag
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "This object specifies which kinds of speed mode can be negotiated.
+            Each bit corresponds to a kind of speed mode.
+
+            If the value of a bit is '1', it means the corresponding speed mode
+            is negotiable on the port. Otherwise the negotiation for that
+            kind of speed mode is not supported on this port. If there are
+            several negotiable speed modes, all bits for them  are '1'.
+            For example, if the speed mode 's10M' and 's1000M' can be negotiable,
+            the value of this object is 0xA0."
+        ::= { ibethernetEntry 19 }
+
+    ibifEthernetAutoSpeed OBJECT-TYPE
+        SYNTAX  SpeedModeFlag
+        MAX-ACCESS read-write
+        STATUS  current
+        DESCRIPTION
+            "This object indicates which kinds of speed mode are negotiable
+            on this port.
+
+            Only when a bit of ibifEthernetAutoSpeedMask is '1', the corresponding
+            bit of this object can be set to '1', indicating the corresponding
+            speed mode is negotiable.
+
+            For example, if the value of ibifEthernetAutoSpeedMask is 0xA0,
+            which indicates speed mode 's10M' and 's1000M' are negotiable,
+            the possible value of this object should be one of the four values
+            (0x00, 0x20, 0x80 and 0xA0).
+
+            If the value of ibifEthernetSpeed is not 'auto', the value of this
+            object is insignificant and should be ignored. The value length of
+            this object should be as long as that of ibifEthernetAutoSpeedMask."
+        ::= { ibethernetEntry 20 }
+
+    ibIsolateGroupMax  OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Max isolate group that this device support, the value is zero
+            means that the device does not support isolate group."
+        ::= { ibLswL2InfMibObject  5 }
+
+   ibGlobalBroadcastMaxPps   OBJECT-TYPE
+        SYNTAX INTEGER   (0..14881000)
+        MAX-ACCESS read-write
+        STATUS  current
+        DESCRIPTION
+            "The global max packets per second. When it is set, the value of
+            BroadcastMaxPps in all ports will be changed to that setting."
+        ::= { ibLswL2InfMibObject 6 }
+
+  ibGlobalBroadcastMaxRatio OBJECT-TYPE
+        SYNTAX INTEGER (0..100)
+        MAX-ACCESS read-write
+        STATUS  current
+        DESCRIPTION
+            "The global max-ratio of broadcast from 0 to 100 percent.
+            When it is set, the value of BroadcastMaxRatio in all ports
+            will be changed to that setting."
+        ::= { ibLswL2InfMibObject 7  }
+
+    ibBpduTunnelStatus  OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+             enabled(1),
+             disabled(2)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Bpdu tunnel enable status."
+        ::= { ibLswL2InfMibObject  8 }
+
+   ibVlanVPNTPIDMode OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+             port-based(1),
+             global(2)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Vlan VPN TPID mode.
+
+            The value 'port-based' means VLAN VPN TPID value would be set based
+            on port via ibifVlanVPNTPID. In this situation, ibVlanVPNTPID is
+            meaningless and always return 0x8100.
+
+            The value 'global' means VLAN VPN TPID value should be set globally
+            via ibVlanVPNTPID. In this situation, ibifVlanVPNTPID in ibethernetTable
+            has the same value with ibVlanVPNTPID."
+      ::= { ibLswL2InfMibObject  9 }
+
+   ibVlanVPNTPID OBJECT-TYPE
+        SYNTAX  Integer32 (1..65535)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Global Vlan VPN TPID(Tag Protocol Indentifier), default value
+            is 0x8100."
+        ::= { ibLswL2InfMibObject  10 }
+
+   ibPortIsolateGroupTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbPortIsolateGroupEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "Isolate Group attribute table."
+        ::= { ibLswL2InfMibObject  11 }
+
+
+   ibPortIsolateGroupEntry  OBJECT-TYPE
+        SYNTAX IbPortIsolateGroupEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "The entry of ibPortIsolateGroupTable."
+        INDEX    { ibPortIsolateGroupIndex }
+        ::= { ibPortIsolateGroupTable 1 }
+
+    IbPortIsolateGroupEntry ::=
+    SEQUENCE {
+        ibPortIsolateGroupIndex              Integer32,
+        ibPortIsolateUplinkIfIndex           InterfaceIndex,
+        ibPortIsolateGroupRowStatus          RowStatus,
+        ibPortIsolateGroupDescription        DisplayString
+        }
+
+   ibPortIsolateGroupIndex OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Port isolate group identifier.
+            The index of the ibPortIsolateGroupTable.
+            The value ranges from 1 to the limit of isolate group quantity."
+        ::= { ibPortIsolateGroupEntry 1 }
+
+   ibPortIsolateUplinkIfIndex  OBJECT-TYPE
+        SYNTAX  InterfaceIndex
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION "Index number of the uplink interface."
+        ::= { ibPortIsolateGroupEntry 2 }
+
+    ibPortIsolateGroupRowStatus OBJECT-TYPE
+        SYNTAX  RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "Current operation status of the row."
+        ::= { ibPortIsolateGroupEntry  3 }
+
+    ibPortIsolateGroupDescription OBJECT-TYPE
+        SYNTAX  DisplayString (SIZE(0..80))
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "Port isolate group description, default value is zero-length string."
+        ::= { ibPortIsolateGroupEntry 4 }
+
+    ibMaxMacLearnRange OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "The maximum number of MAC address that the port supports."
+        ::= { ibLswL2InfMibObject  12 }
+
+
+    ibifPortProtocolStatTable  OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbifPortProtocolStatEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This table contains objects of port statistics information based on
+            IPv4 and IPv6 protocols."
+        ::= { ibLswL2InfMibObject  13 }
+
+    ibifPortProtocolStatEntry  OBJECT-TYPE
+        SYNTAX IbifPortProtocolStatEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "The entry of ibifPortProtocolStatTable."
+        INDEX    { ifIndex }
+        ::= { ibifPortProtocolStatTable 1 }
+
+    IbifPortProtocolStatEntry ::=
+        SEQUENCE {
+            ibifIPv4InOctets                        Counter64,
+            ibifIPv4InUcastPkts                     Counter64,
+            ibifIPv4InMultiPkts                     Counter64,
+            ibifIPv4InBroadcastPkts                 Counter64,
+            ibifIPv4InDiscards                      Counter64,
+            ibifIPv4InErrors                        Counter64,
+            ibifIPv4OutOctets                       Counter64,
+            ibifIPv4OutUcastPkts                    Counter64,
+            ibifIPv4OutMultiPkts                    Counter64,
+            ibifIPv4OutBroadcastPkts                Counter64,
+            ibifIPv4OutDiscards                     Counter64,
+            ibifIPv4OutErrors                       Counter64,
+            ibifIPv6InOctets                        Counter64,
+            ibifIPv6InUcastPkts                     Counter64,
+            ibifIPv6InMultiPkts                     Counter64,
+            ibifIPv6InAnycastPkts                   Counter64,
+            ibifIPv6InDiscards                      Counter64,
+            ibifIPv6InErrors                        Counter64,
+            ibifIPv6OutOctets                       Counter64,
+            ibifIPv6OutUcastPkts                    Counter64,
+            ibifIPv6OutMultiPkts                    Counter64,
+            ibifIPv6OutAnycastPkts                  Counter64,
+            ibifIPv6OutDiscards                     Counter64,
+            ibifIPv6OutErrors                       Counter64
+        }
+    ibifIPv4InOctets OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of octets based on IPv4 received on the interface."
+        ::= { ibifPortProtocolStatEntry 1 }
+
+    ibifIPv4InUcastPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of unicast packets based on IPv4 received on the interface."
+        ::= { ibifPortProtocolStatEntry 2 }
+
+    ibifIPv4InMultiPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of multicast packets based on IPv4 received on the interface."
+        ::= { ibifPortProtocolStatEntry 3 }
+
+    ibifIPv4InBroadcastPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of broadcast packets based on IPv4 received on the interface."
+        ::= { ibifPortProtocolStatEntry 4 }
+
+    ibifIPv4InDiscards OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of discard packets based on IPv4 received on the interface."
+        ::= { ibifPortProtocolStatEntry 5 }
+
+    ibifIPv4InErrors OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of error packets based on IPv4 received on the interface."
+        ::= { ibifPortProtocolStatEntry 6 }
+
+    ibifIPv4OutOctets OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of octets based on IPv4 transmitted out of the interface."
+        ::= { ibifPortProtocolStatEntry  7 }
+
+    ibifIPv4OutUcastPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of unicast packets based on IPv4 transmitted out of the
+            interface."
+        ::= { ibifPortProtocolStatEntry  8 }
+
+    ibifIPv4OutMultiPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of multicast packets based on IPv4 transmitted out of the
+            interface."
+        ::= { ibifPortProtocolStatEntry 9 }
+
+    ibifIPv4OutBroadcastPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of broadcast packets based on IPv4 transmitted out of the
+            interface."
+        ::= { ibifPortProtocolStatEntry 10 }
+
+    ibifIPv4OutDiscards OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of discard packets based on IPv4 transmitted out of the
+            interface."
+        ::= { ibifPortProtocolStatEntry 11 }
+
+    ibifIPv4OutErrors OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of error packets based on IPv4 transmitted out of the
+            interface."
+        ::= { ibifPortProtocolStatEntry 12 }
+
+    ibifIPv6InOctets OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of octets based on IPv6 received on the interface."
+        ::= { ibifPortProtocolStatEntry 13 }
+
+    ibifIPv6InUcastPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of unicast packets based on IPv6 received on the interface."
+        ::= { ibifPortProtocolStatEntry 14 }
+
+    ibifIPv6InMultiPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of multicast packets based on IPv6 received on the interface."
+        ::= { ibifPortProtocolStatEntry 15 }
+
+    ibifIPv6InAnycastPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of anycast packets based on IPv6 received on the interface."
+        ::= { ibifPortProtocolStatEntry 16 }
+
+    ibifIPv6InDiscards OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of discard packets based on IPv6 received on the interface."
+        ::= { ibifPortProtocolStatEntry 17 }
+
+    ibifIPv6InErrors OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of error packets based on IPv6 received on the interface."
+        ::= { ibifPortProtocolStatEntry 18 }
+
+    ibifIPv6OutOctets OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of octets based on IPv6 transmitted of the interface."
+        ::= { ibifPortProtocolStatEntry  19 }
+
+    ibifIPv6OutUcastPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of unicast packets based on IPv6 transmitted out of the
+            interface."
+        ::= { ibifPortProtocolStatEntry  20 }
+
+    ibifIPv6OutMultiPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of multicast packets based on IPv6 transmitted out of the
+            interface."
+        ::= { ibifPortProtocolStatEntry 21 }
+
+    ibifIPv6OutAnycastPkts OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of anycast packets based on IPv6 transmitted out of the
+            interface."
+        ::= { ibifPortProtocolStatEntry 22 }
+
+    ibifIPv6OutDiscards OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of discard packets based on IPv6 transmitted out of the
+            interface."
+        ::= { ibifPortProtocolStatEntry 23 }
+
+    ibifIPv6OutErrors OBJECT-TYPE
+        SYNTAX  Counter64
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "Number of error packets based on IPv6 transmitted out of the
+            interface."
+        ::= { ibifPortProtocolStatEntry 24 }
+END

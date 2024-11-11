@@ -1,0 +1,195 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- Description: Multi-access Edge Computing MIB
+-- Reference: IF-MIB
+-- Version: V1.0
+-- History:
+-- V1.0 2019-06-24 created by zhanghaihong
+-- =================================================================
+IB-LTE-MEC-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    InterfaceIndex
+        FROM IF-MIB
+    MODULE-IDENTITY, NOTIFICATION-TYPE, OBJECT-TYPE, Integer32, Counter64
+        FROM SNMPv2-SMI;
+
+ibLTEMEC MODULE-IDENTITY
+    LAST-UPDATED
+        "201906240000Z"            -- Jun 24, 2019 at 00:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB is to provide the statistics of the MEC.
+        (Multi-access Edge Computing) system."
+    REVISION
+        "201906240000Z"            -- Jun 24, 2019 at 00:00 GMT
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 185 }
+
+ibLTEMECObjects OBJECT IDENTIFIER ::= { ibLTEMEC 1 }
+
+ibMecTables OBJECT IDENTIFIER ::= { ibLTEMECObjects 1 }
+
+ibMecIfStatsTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF IbMecIfStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "The table contains per-interface traffic statistics that MEC processed."
+    ::= { ibMecTables 1 }
+
+ibMecIfStatsEntry OBJECT-TYPE
+    SYNTAX     IbMecIfStatsEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "An interface statistics entry containing objects for a particular interface."
+    INDEX      { ibMecIfStatsIfIndex }
+    ::= { ibMecIfStatsTable 1 }
+
+IbMecIfStatsEntry ::= SEQUENCE {
+    ibMecIfStatsIfIndex        InterfaceIndex,
+    ibMecIfStatsGTPUReceive    Counter64,
+    ibMecIfStatsGTPUSend       Counter64,
+    ibMecIfStatsSCTPReceive    Counter64,
+    ibMecIfStatsSCTPSend       Counter64,
+    ibMecIfStatsDecap          Counter64,
+    ibMecIfStatsEncap          Counter64
+}
+
+ibMecIfStatsIfIndex OBJECT-TYPE
+    SYNTAX     InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "The index value that uniquely identifies the interface to
+         which this entry is applicable.  The interface identified by
+         a particular value of this index is the same interface as
+         identified by the same value of the IF-MIB's InterfaceIndex."
+    ::= { ibMecIfStatsEntry 1 }
+
+ibMecIfStatsGTPUReceive OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The number of GTP-U packets the interface received."
+    ::= { ibMecIfStatsEntry 2 }
+
+ibMecIfStatsGTPUSend OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The number of GTP-U packets the interface sent."
+    ::= { ibMecIfStatsEntry 3 }
+
+ibMecIfStatsSCTPReceive OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The number of SCTP packets the interface received."
+  ::= { ibMecIfStatsEntry 4 }
+
+ibMecIfStatsSCTPSend OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The number of SCTP packets the interface sent."
+    ::= { ibMecIfStatsEntry 5 }
+
+ibMecIfStatsDecap OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The number of GTP-U packets decapsulated."
+    ::= { ibMecIfStatsEntry 6 }
+
+ibMecIfStatsEncap OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The number of IP packets encapsulated in GTP-U."
+    ::= { ibMecIfStatsEntry 7 }
+
+ibMecErrStatsInfo OBJECT IDENTIFIER ::= { ibMecTables 2 }
+
+ibMecErrBadFormat OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of IP packets with the bad format."
+    ::= { ibMecErrStatsInfo 1 }
+
+ibMecErrSend OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of packets discarded due to physical transmit errors."
+    ::= { ibMecErrStatsInfo 2 }
+
+ibMecErrOutInterface OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of packets discarded due to invalid outgoing interfaces."
+    ::= { ibMecErrStatsInfo 3 }
+
+ibMecErrFraglimit OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of packets discarded due to fragment queue limit."
+    ::= { ibMecErrStatsInfo 4 }
+
+ibMecErrFragAttack OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of packets discarded due to fragment attacks."
+    ::= { ibMecErrStatsInfo 5 }
+
+ibLTEMECTrapObjects OBJECT IDENTIFIER ::= { ibLTEMEC 2 }
+
+ibMecTrapInfo OBJECT IDENTIFIER ::= { ibLTEMECTrapObjects 1 }
+
+ibMecTunnelCacheNumber OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The number of MEC tunnel tables."
+    ::= { ibMecTrapInfo 1 }
+
+ibMecTrap OBJECT IDENTIFIER ::= { ibLTEMECTrapObjects 0 }
+
+ibMecTunnelCacheFullTrap NOTIFICATION-TYPE
+    OBJECTS { ibMecTunnelCacheNumber }
+    STATUS current
+    DESCRIPTION
+        "Send this trap when the MEC tunnel table is full."
+    ::= { ibMecTrap 1 }
+
+ibMecTunnelCacheRecoverTrap NOTIFICATION-TYPE
+    OBJECTS { ibMecTunnelCacheNumber }
+    STATUS current
+    DESCRIPTION
+        "Send this trap when the MEC tunnel table entry falls below the normal value."
+    ::= { ibMecTrap 2 }
+
+END

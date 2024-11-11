@@ -1,0 +1,304 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: This MIB file is used for inquiring for PPP access user
+--              authentication information.
+-- Reference:
+-- Version:     V1.2
+-- History:
+--   V1.0 Initial version by hkf6733
+--   V1.1 2021-09-01 add ibPPPConfigTable by wangzhenjun
+--   V1.2 2022-06-16 add ibPPPTrapOid, ibPPPLcpNegoFailTrap
+--                   add ibPPPNcpNegoFailTrap
+--                   add ibPPPLoopbackDetectTrap by wangzhenjun
+-- =================================================================
+IB-PPP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, Integer32, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    InterfaceIndex
+        FROM IF-MIB
+    DisplayString
+        FROM SNMPv2-TC;
+
+
+
+ibPPP MODULE-IDENTITY
+    LAST-UPDATED "202206160000Z"            -- June 16th, 2022 at 00:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Supporting the trap for PPP."
+    REVISION    "202206160000Z"
+    DESCRIPTION
+        "PPP management information base for managing devices that support PPP
+        protocol."
+    REVISION    "202109010000Z"
+    DESCRIPTION
+        "Supporting the configuration for PPP on interface virtual template."
+    REVISION    "201802010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { ibCommon 175 }
+
+--
+-- Node definitions
+--
+
+ibPPPAuthObjects OBJECT IDENTIFIER ::= { ibPPP  1 }
+
+ibPPPAuthTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbPPPAuthEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table describes the authentication information for PPP access
+        users.  The index of this table is the interface and authentication
+        type."
+    ::= { ibPPPAuthObjects 1 }
+
+ibPPPAuthEntry OBJECT-TYPE
+    SYNTAX IbPPPAuthEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry in this table describes the authentication  information of
+        a PPP access user.  The available information includes: The index of
+        the interface on which the PPP authentication information are
+        configured, authentication type and username on the interface."
+    INDEX { ibPPPIfIndex, ibPPPAuthType }
+        ::= { ibPPPAuthTable 1 }
+
+IbPPPAuthEntry ::=
+    SEQUENCE {
+        ibPPPIfIndex
+            InterfaceIndex,
+        ibPPPAuthType
+            INTEGER,
+        ibPPPUserName
+            DisplayString
+        }
+
+ibPPPIfIndex OBJECT-TYPE
+    SYNTAX InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The index of the interface on the PPP authentication information are
+        configured."
+        ::= { ibPPPAuthEntry 1 }
+
+ibPPPAuthType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+            unknown(1),
+            pap(2),
+            chap(3)
+        }
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The type of authentication for the peer."
+    ::= { ibPPPAuthEntry 2 }
+
+ibPPPUserName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (1..80))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The username for access user."
+    ::= { ibPPPAuthEntry 3 }
+
+
+ibPPPConfigTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbPPPConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table describes the authentication information for PPP access
+        users.  The index of this table is the virtual template interface."
+    ::= { ibPPPAuthObjects 2 }
+
+ibPPPConfigEntry OBJECT-TYPE
+    SYNTAX IbPPPConfigEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry in this table describes the authentication information of
+        virtual template for PPP access users."
+    INDEX { ibPPPConfigIfIndex }
+        ::= { ibPPPConfigTable 1 }
+
+IbPPPConfigEntry ::=
+    SEQUENCE {
+        ibPPPConfigIfIndex        InterfaceIndex,
+        ibPPPConfigAuthMode       INTEGER,
+        ibPPPConfigNegTimeout     Integer32,
+        ibPPPConfigKeepInterval   Integer32,
+        ibPPPConfigKeepRetransmit Integer32
+        }
+
+ibPPPConfigIfIndex OBJECT-TYPE
+    SYNTAX InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The index of the virtual template interface on the PPP authentication
+        information are configured."
+    ::= { ibPPPConfigEntry 1 }
+
+ibPPPConfigAuthMode OBJECT-TYPE
+    SYNTAX INTEGER {
+                none(1),
+                pap(2),
+                chap(3),
+                msChap(4),
+                msChapV2(5)
+               }
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The value is type of authentication mode for the peer."
+    DEFVAL { none }
+    ::= { ibPPPConfigEntry 2 }
+
+ibPPPConfigNegTimeout OBJECT-TYPE
+    SYNTAX Integer32 (1..10)
+    UNITS "seconds"
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The timeout of the negotiation."
+    DEFVAL { 3 }
+    ::= { ibPPPConfigEntry 3 }
+
+ibPPPConfigKeepInterval OBJECT-TYPE
+    SYNTAX Integer32 (0..32767)
+    UNITS "seconds"
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The hold time value, the default value is dependent on device."
+    ::= { ibPPPConfigEntry 4 }
+
+ibPPPConfigKeepRetransmit OBJECT-TYPE
+    SYNTAX Integer32 (1..255)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The maximum number of attempts for transmitting a
+        keepalive message, the default value is dependent on device."
+    ::= { ibPPPConfigEntry 5 }
+
+ibPPPTrapOid OBJECT IDENTIFIER ::= { ibPPP 2 }
+
+ibPPPTrapIfName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (1..47))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved interface name of trap information."
+    ::= { ibPPPTrapOid 1 }
+
+ibPPPTrapNcpName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (1..31))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved reason string why LCP negotiation failed
+         of trap information."
+    ::= { ibPPPTrapOid 2 }
+
+ibPPPTrapNegoFailReason OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (1..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved reason string why LCP negotiation failed
+         of trap information."
+    ::= { ibPPPTrapOid 3 }
+
+ibPPPLcpNegoFailTrap OBJECT IDENTIFIER  ::= { ibPPP 3 }
+
+ibPPPLcpNegoFailTrapPrefix OBJECT IDENTIFIER  ::= { ibPPPLcpNegoFailTrap 0 }
+
+ibPPPLcpNegoFailed NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPPPTrapIfName,
+        ibPPPTrapNegoFailReason
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the LCP negotiation failed."
+    ::= { ibPPPLcpNegoFailTrapPrefix 1 }
+
+ibPPPLcpNegoResumed NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPPPTrapIfName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the LCP negotiation succeeded
+         after failure."
+    ::= { ibPPPLcpNegoFailTrapPrefix 2 }
+
+ibPPPNcpNegoFailTrap OBJECT IDENTIFIER  ::= { ibPPP 4 }
+
+ibPPPNcpNegoFailTrapPrefix OBJECT IDENTIFIER  ::= { ibPPPNcpNegoFailTrap 0 }
+
+ibPPPNcpNegoFailed NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPPPTrapIfName,
+        ibPPPTrapNcpName,
+        ibPPPTrapNegoFailReason
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the NCP negotiation failed."
+    ::= { ibPPPNcpNegoFailTrapPrefix 1 }
+
+ibPPPNcpNegoResumed NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPPPTrapIfName,
+        ibPPPTrapNcpName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the NCP negotiation succeeded
+         after failure."
+    ::= { ibPPPNcpNegoFailTrapPrefix 2 }
+
+ibPPPLoopbackDetectTrap OBJECT IDENTIFIER  ::= { ibPPP 5 }
+
+ibPPPLoopbackDetectTrapPrefix OBJECT IDENTIFIER  ::= { ibPPPLoopbackDetectTrap 0 }
+
+ibPPPLoopbackDetect NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPPPTrapIfName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when a loop is detected."
+    ::= { ibPPPLoopbackDetectTrapPrefix 1 }
+
+ibPPPLoopbackDetectResume NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPPPTrapIfName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the loop is removed."
+    ::= { ibPPPLoopbackDetectTrapPrefix 2 }
+
+END

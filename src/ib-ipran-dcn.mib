@@ -1,0 +1,315 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- Description: Ipran Data Communication Network(DCN) MIB.
+-- Reference:
+-- Version:     V1.2
+-- V1.0  2011-09-30 The initial version, created by Longgang
+--       2014-03-10 updated by wangguanglun
+--       Changed the format
+-- V1.1  2015-01-27 updated by fengxiaodong
+--       Added ibIpRanDcnMAC and ibIpRanDcnVendor nodes to ibIpRanDcnInfoObject
+--       Added ibIpRanDcnNeInfoMAC and ibIpRanDcnNeInfoVendor nodes to ibIpRanDcnNeInfoTable
+-- V1.2  2022-07-12 updated by pengqing
+--       Added ibIpRanDcnNeIdConflict, ibIpRanDcnNeIdConflictClear
+--       Added ibIpRanDcnNeIpConflict, ibIpRanDcnNeIpConflictClear
+-- ==================================================================
+IB-IPRAN-DCN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB
+    TEXTUAL-CONVENTION,  DisplayString, MacAddress
+        FROM SNMPv2-TC;
+
+ibIpRanDcn MODULE-IDENTITY
+    LAST-UPDATED "202207121654Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Added ibIpRanDcnNeIdConflict, ibIpRanDcnNeIdConflictClear,
+        Added ibIpRanDcnNeIpConflict, ibIpRanDcnNeIpConflictClear."
+    REVISION "202207121654Z"
+    DESCRIPTION
+        "This MIB provides mechanisms to monitor all network elements(NE)
+        in Ipran Data Communication Network."
+    REVISION "201501300000Z"
+    DESCRIPTION
+        "Add nodes to ibIpRanDcnInfoObject and ibIpRanDcnNeInfoTable."
+    REVISION "201307240000Z"
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 152 }
+
+IbIpRanNeId ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT "1d.1d.1d.1d"
+    STATUS current
+    DESCRIPTION
+        "Uniquely identifies the network entity ID.
+        The first 8 bits are 0 and the total number of valid bits is 24.
+        The high 8 bits represent the subnet number and the low 16 bits represent the base ID.
+        The IpRanNeId will be shown as 0.x.x.x."
+    SYNTAX OCTET STRING (SIZE (4))
+
+ibIpRanDcnMIB OBJECT IDENTIFIER ::= { ibIpRanDcn 1 }
+
+ibIpRanDcnObjects OBJECT IDENTIFIER ::= { ibIpRanDcnMIB 1 }
+
+ibIpRanDcnInfoObject OBJECT IDENTIFIER ::= { ibIpRanDcnObjects 1 }
+ibIpRanDcnNeId OBJECT-TYPE
+    SYNTAX      IbIpRanNeId
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object indicates the ID of the local network element."
+    ::= { ibIpRanDcnInfoObject 1 }
+
+ibIpRanDcnNeIpType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the IP address type of the local network element."
+    ::= { ibIpRanDcnInfoObject 2 }
+
+ibIpRanDcnNeIp OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the IP address of the local network element."
+    ::= { ibIpRanDcnInfoObject 3 }
+
+ibIpRanDcnMask OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the IP address mask of the local network element."
+::= { ibIpRanDcnInfoObject 4 }
+
+ibIpRanDcnMAC OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The bridge MAC address of the network element."
+    ::= { ibIpRanDcnInfoObject 5 }
+
+ibIpRanDcnVendor OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Company name."
+::= { ibIpRanDcnInfoObject 6 }
+
+ibIpRanDcnNeInfoTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbIpRanDcnNeInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table provides information about all network elements online."
+    ::= { ibIpRanDcnObjects 2 }
+
+ibIpRanDcnNeInfoEntry OBJECT-TYPE
+    SYNTAX      IbIpRanDcnNeInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A single network element information entry."
+    INDEX { ibIpRanDcnNeInfoNeId }
+    ::= { ibIpRanDcnNeInfoTable 1 }
+
+IbIpRanDcnNeInfoEntry ::=
+    SEQUENCE
+        {
+            ibIpRanDcnNeInfoNeId         IbIpRanNeId,
+            ibIpRanDcnNeInfoNeIpType     InetAddressType,
+            ibIpRanDcnNeInfoNeIp         InetAddress,
+            ibIpRanDcnNeInfoMetric       Integer32,
+            ibIpRanDcnNeInfoDeviceType   DisplayString,
+            ibIpRanDcnNeInfoMAC          MacAddress,
+            ibIpRanDcnNeInfoVendor       DisplayString
+        }
+
+ibIpRanDcnNeInfoNeId OBJECT-TYPE
+    SYNTAX      IbIpRanNeId
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the network element ID uniquely identifying
+        one network element in the routing domain."
+    ::= { ibIpRanDcnNeInfoEntry 1 }
+
+ibIpRanDcnNeInfoNeIpType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the IP address type of the network element."
+    ::= { ibIpRanDcnNeInfoEntry 2 }
+
+ibIpRanDcnNeInfoNeIp OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the IP address of the network element."
+    ::= { ibIpRanDcnNeInfoEntry 3 }
+
+ibIpRanDcnNeInfoMetric OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The metric from the local network element to the remote
+        network element."
+    ::= { ibIpRanDcnNeInfoEntry 4 }
+
+ibIpRanDcnNeInfoDeviceType OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the device type of the network element."
+    ::= { ibIpRanDcnNeInfoEntry 5 }
+
+ibIpRanDcnNeInfoMAC OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The bridge MAC address of the network element."
+    ::= { ibIpRanDcnNeInfoEntry 6 }
+
+ibIpRanDcnNeInfoVendor OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Company name."
+    ::= { ibIpRanDcnNeInfoEntry 7 }
+
+ibIpRanDcnTrapObjects OBJECT IDENTIFIER ::= { ibIpRanDcnMIB 2 }
+
+ibIpRanDcnNeNumber OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The overall number of network elements online."
+    ::= { ibIpRanDcnTrapObjects 1 }
+
+ibIpRanDcnNeChangeMode OBJECT-TYPE
+    SYNTAX  INTEGER
+        {
+            online (1),
+            offline (2)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The change mode of the last trap."
+    ::= { ibIpRanDcnTrapObjects 2 }
+
+ibIpRanDcnCompanyName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Company name."
+    ::= { ibIpRanDcnTrapObjects 3 }
+
+ibIpRanDcnDeviceType OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device type."
+    ::= { ibIpRanDcnTrapObjects 4 }
+
+ibIpRanDcnDeviceMac OBJECT-TYPE
+    SYNTAX MacAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+       "The bridge MAC address of the network element."
+    ::= { ibIpRanDcnTrapObjects 5 }
+
+ibIpRanDcnTraps OBJECT IDENTIFIER ::= { ibIpRanDcnMIB 3 }
+ibIpRanDcnTrapsPrefix OBJECT IDENTIFIER ::= { ibIpRanDcnTraps 0 }
+
+ibIpRanDcnNeOnline NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIpRanDcnNeInfoNeId,
+            ibIpRanDcnNeInfoNeIpType,
+            ibIpRanDcnNeInfoNeIp,
+            ibIpRanDcnCompanyName,
+            ibIpRanDcnDeviceType,
+            ibIpRanDcnDeviceMac
+        }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when a new network element is online."
+    ::= { ibIpRanDcnTrapsPrefix 1 }
+
+ibIpRanDcnNeOffline NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIpRanDcnNeInfoNeId,
+            ibIpRanDcnNeInfoNeIpType,
+            ibIpRanDcnNeInfoNeIp
+        }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when a network element is offline."
+    ::= { ibIpRanDcnTrapsPrefix 2 }
+
+ibIpRanDcnNeIdConflict NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIpRanDcnNeInfoNeId
+        }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when NE ID conflicted."
+    ::= { ibIpRanDcnTrapsPrefix 3 }
+
+ibIpRanDcnNeIdConflictClear NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIpRanDcnNeInfoNeId
+        }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when NE ID confliction is cleared."
+    ::= { ibIpRanDcnTrapsPrefix 4 }
+
+ibIpRanDcnNeIpConflict NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIpRanDcnNeInfoNeIp
+        }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when NE IP addresses conflicted."
+    ::= { ibIpRanDcnTrapsPrefix 5 }
+
+ibIpRanDcnNeIpConflictClear NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibIpRanDcnNeInfoNeIp
+        }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when NE IP confliction is cleared."
+    ::= { ibIpRanDcnTrapsPrefix 6 }
+
+END

@@ -1,0 +1,1135 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: description of Port Security
+-- Reference:
+-- Version: V1.9
+-- History:
+--   V1.0 2004-11-24, Created by lijian
+--   V1.1 2005-2-23,  Modified by Zhangmin
+--        Add objects:ibSecureRalmAuthDomain,ibSecureRalmAuthOfflineTime
+--                    ibSecureRalmAuthServerTimeoutTime,
+--                    ibSecureRalmLoginFailure,ibSecureRalmLogon
+--                    ibSecureRalmLogoff
+--   V1.2 2005-10-21, Modified the value range of 'ibSecureRalmAuthPassword'
+--                    from (0..16) to (0..63) by lijian
+--   V1.3 2006-01-21, Add TruthValue and ibSecureAssignTable by wangyingxia
+--   V1.4 2006-02-24, Modified the description of ibSecureBindingTable
+--                    Modified the range of ibSecureBindingIndex by xulei
+--   V1.5 2006-05-27, Add ibSecureMacControl by ludi
+--   V1.6 2006-11-16, Add macAddressAndUserLoginSecure
+--                    and macAddressAndUserLoginSecureExt for ibSecurePortMode
+--                    by huangyang
+--   V1.7 2012-04-11, Modified the range of ibSecureRalmAuthOfflineTime by xuyonggang
+--   V1.8 2014-06-05, Modified the range of ibSecureRalmAuthDomain by wuqiang
+--   V1.9 2023-04-12, Modified by yizhigao
+--        Add objects:ibSecureUserIPv4BeforeChange
+--                    ibSecureUserIPv4AftereChange
+--                    ibSecureUserIPv6BeforeChange
+--                    ibSecureUserIPv6AftereChange
+--                    ibSecureIPv4Change
+--                    ibSecureIPv6Change
+--                    ibSecureRalmIPv4Change
+--                    ibSecureRalmIPv6Change.
+--                    Modified the type of ibSecureOUIIndex,ibSecureRalmAuthServerTimeoutTime,
+--                    ibSecureRalmHoldoffTime and ibSecureRalmDefaultSessionTime by yizhigao
+--                    Modified the range of ibSecureNeedToKnowMode by luyu
+-- =================================================================
+IB-PORT-SECURITY-MIB DEFINITIONS ::= BEGIN
+
+
+IMPORTS
+    ibPortSecurity
+        FROM IB-OID-MIB
+    ifAdminStatus,ifIndex
+        FROM RFC1213-MIB
+    OBJECT-TYPE, NOTIFICATION-TYPE, MODULE-IDENTITY, Integer32, IpAddress
+        FROM SNMPv2-SMI
+    DisplayString, RowStatus, MacAddress, TruthValue
+        FROM SNMPv2-TC
+    dot1xAuthSessionUserName, dot1xAuthSessionAuthenticMethod,
+    dot1xAuthSessionTerminateCause, dot1xPaePortNumber
+        FROM IEEE8021-PAE-MIB
+    Ipv6Address
+        FROM IPV6-TC;
+
+ibPortSecurityMIB MODULE-IDENTITY
+    LAST-UPDATED "202304120000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB module is used for managing port security."
+
+    REVISION "202304120000Z"
+    DESCRIPTION
+        "Added ibUserIPv4BeforChange, ibUserIPv4AfterChange, ibUserIPv6BeforChange,
+         ibUserIPv6AfterChange, ibSecureIPv4Change, ibSecureIPv6Change, ibSecureRalmIPv4Change
+         and ibSecureRalmIPv6Change by yizhigao.
+         Modified the type of ibSecureOUIIndex, ibSecureRalmAuthServerTimeoutTime,
+         ibSecureRalmHoldoffTime and ibSecureRalmDefaultSessionTime by yizhigao.
+         Modified the range of ibSecureNeedToKnowMode by luyu"
+
+    REVISION "200411240000Z"
+    DESCRIPTION
+        "The Initial Version of ibPortSecurityMIB"
+    ::= { ibPortSecurity 1 }
+
+
+ibPortSecurityLeaf OBJECT IDENTIFIER ::= {ibPortSecurityMIB 1}
+
+--
+-- SECURITY ACCESS CONTROL OBJECT
+--
+
+ibSecurePortSecurityControl OBJECT-TYPE
+    SYNTAX      INTEGER{enabled(1),disabled(2)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This attribute controls the system wide operation of network
+        access control.  The configured port security options only become
+        operational when this attribute is set to enabled."
+    ::= {ibPortSecurityLeaf 1}
+
+
+
+--
+-- SECURITY TABLE 'VLAN membership list' OBJECT
+--
+
+ibSecurePortVlanMembershipList OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "This is a dummy MIB object referenced by the ibsecureLogon and
+        ibsecureLogoff traps.  This object contains a comma separated list of
+        the VLAN identifiers (0-4095) assigned to a port.  A tagged VLAN has a
+        'T' suffix after the VLAN number and an untagged VLAN may have an
+        optional 'U' suffix."
+    ::= {ibPortSecurityLeaf 2}
+
+--
+-- RADIUS Authenticated Login using MAC-address GROUP
+--
+
+ibSecureRalmObjects    OBJECT IDENTIFIER ::= { ibPortSecurityLeaf 4 }
+
+ibSecureRalmDefaultSessionTime OBJECT-TYPE
+    SYNTAX      Integer32(1..1000000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specifies the default session lifetime in seconds before
+        a forwarding MAC address is re-authenticated.
+        The default time is 1800 seconds."
+    ::= { ibSecureRalmObjects 1 }
+
+--
+-- SECURITY USER IPv4 before change
+--
+
+ibSecureUserIPv4BeforeChange OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The user IPv4 address before change."
+    ::= {ibPortSecurityLeaf 5}
+
+--
+-- SECURITY USER IPv4 after change
+--
+
+ibSecureUserIPv4AfterChange OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The user IPv4 address after change."
+    ::= {ibPortSecurityLeaf 6}
+
+--
+-- SECURITY USER IPv6 before change
+--
+
+ibSecureUserIPv6BeforeChange OBJECT-TYPE
+    SYNTAX      Ipv6Address
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The user IPv6 address before change."
+    ::= {ibPortSecurityLeaf 7}
+
+--
+-- SECURITY USER IPv6 after change
+--
+
+ibSecureUserIPv6AfterChange OBJECT-TYPE
+    SYNTAX      Ipv6Address
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The user IPv6 address after change."
+    ::= {ibPortSecurityLeaf 8}
+
+ibSecureRalmHoldoffTime OBJECT-TYPE
+    SYNTAX      Integer32(1..1000000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specifies the time in seconds before
+        a blocked (denied) MAC address can be re-authenticated.
+        The default time is 60 seconds."
+    ::= { ibSecureRalmObjects 2 }
+
+
+ibSecureRalmReauthenticate OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Writing a MAC address to this object causes an
+        immediate RALM re-authentication of this address (can be on
+        any port).  If the MAC address not currently known to RALM,
+        it silently ignores the write."
+    ::= { ibSecureRalmObjects 3 }
+
+ibSecureRalmAuthMode OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            papUsernameAsMacAddress(1),
+            papUsernameFixed(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This controls how MAC addresses are authenticated.
+
+        papUsernameAsMacAddress(1)
+            Authentication uses the RADIUS server by
+            sending a PAP request with Username and
+            Password both equal to the MAC address being
+            authenticated.  This is the default.
+
+        papUsernameFixed(2)
+            Authentication uses the RADIUS server by
+            sending a PAP request with Username and
+            Password coming from the ibSecureRalmAuthUsername and
+            ibSecureRalmAuthPassword MIB objects.  In this mode
+            the RADIUS server would normally take into account
+            the request's calling-station-id attribute, which is
+            the MAC address of the host being authenticated."
+    ::= { ibSecureRalmObjects 4 }
+
+ibSecureRalmAuthUsername OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..80))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is the username used for authentication requests
+        where ibSecureRalmAuthMode is papUsernameFixed.
+        Default shall be 'mac'."
+    ::= { ibSecureRalmObjects 5 }
+
+ibSecureRalmAuthPassword OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(0..63))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is the password used for authentication requests
+        where ibSecureRalmAuthMode is papUsernameFixed.
+        Default shall be a null string."
+    ::= { ibSecureRalmObjects 6 }
+
+ibSecureRalmAuthDomain OBJECT-TYPE
+    SYNTAX      DisplayString(SIZE(1..255))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "MAC-authentication users may be configured in a specific domain,
+        which excludes 802.1x and other authentication users. This
+        specifies the domain of all MAC-authentication users."
+    ::= {ibSecureRalmObjects 7}
+
+ibSecureRalmAuthOfflineTime OBJECT-TYPE
+    SYNTAX      Integer32 (60..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Switch isn't informed when online user is offline,
+        so switch should be able to detect offline and inform radius
+        server to stop accounting when there is no traffic of the user.
+        This attribute configures the timer interval of offline-detect.
+        The default time is 300 seconds."
+    DEFVAL { 300 }
+    ::= {ibSecureRalmObjects 8}
+
+ibSecureRalmAuthServerTimeoutTime OBJECT-TYPE
+    SYNTAX      Integer32(1..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When switch sends request packets (include connecting
+        request and offline request, etc) to radius server and
+        there is no response, switch will terminate the authentication
+        process. This attribute configures the timer interval of
+        server-timeout. The default time is 100 seconds."
+    DEFVAL { 100 }
+    ::= {ibSecureRalmObjects 9}
+
+ibSecureMacControl OBJECT-TYPE
+    SYNTAX      INTEGER{enabled(1),disabled(2)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This attribute controls the system wide operation of
+        mac-authentication.  The system-wide mac-authentication options
+        become non-operational when this attribute is set to disabled.
+        This is required for ibSecurePortSecurityControl to be enabled."
+    ::= { ibSecureRalmObjects 10 }
+
+ibPortSecurityTables OBJECT IDENTIFIER ::= {ibPortSecurityMIB 2}
+
+ibSecurePortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSecurePortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table defines the security status of each secure port.
+        Each port can have a number of authorised MAC addresses, and these are
+        stored in the ibSecureAddressTable."
+    ::= {ibPortSecurityTables 1}
+
+
+ibSecurePortEntry OBJECT-TYPE
+    SYNTAX      IbSecurePortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in this table for each secure port, and
+        allows repeater ports to be configured for security on a per port basis.
+        It is indexed using the object ifIndex in RFC1213-MIB."
+    INDEX
+        {
+            ifIndex
+        }
+    ::= {ibSecurePortTable 1}
+
+
+IbSecurePortEntry ::= SEQUENCE
+    {
+        ibSecurePortMode                 INTEGER,
+        ibSecureNeedToKnowMode           INTEGER,
+        ibSecureIntrusionAction          INTEGER,
+        ibSecureNumberAddresses          Integer32,
+        ibSecureNumberAddressesStored    Integer32,
+        ibSecureMaximumAddresses         Integer32
+    }
+
+ibSecurePortMode OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            noRestrictions(1),
+            continuousLearning(2),
+            autoLearn(3),
+            secure(4),
+            userLogin(5),
+            userLoginSecure(6),
+            userLoginWithOUI(7),
+            macAddressWithRadius(8),
+            macAddressOrUserLoginSecure(9),
+            macAddressElseUserLoginSecure(10),
+            userLoginSecureExt(11),
+            macAddressOrUserLoginSecureExt(12),
+            macAddressElseUserLoginSecureExt(13),
+            macAddressAndUserLoginSecure(14),
+            macAddressAndUserLoginSecureExt(15)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Determines the learning and security modes of the port.
+        See ibSecureNeedToKnowMode and ibSecureIntrusionAction to
+        configure Need To Know and Intrusion Action on each port.
+        (When in a learning mode, ibSecureNumberAddresses determines the maximum
+        number of addresses that can be learned on the port.  This is set
+        by the user.)
+
+        noRestrictions(1)    All of the security features are disabled.
+
+        continuousLearning(2)   Addresses are learned continually.  If more
+            addresses are learned than are permitted on the
+            port, then one of the older entries will be aged
+            out.  Need To Know and Intrusion Action depends on
+            ibSecureNeedToKnowMode and ibSecureIntrusionAction
+            respectively.
+
+        autoLearn(3)      All addresses for this port are deleted, and then
+            addresses are learned up to the number permitted.
+            ibSecurePortMode is then set to secure.  Need To
+            Know and Intrusion Action depends on
+            ibSecureNeedToKnowMode and ibSecureIntrusionAction
+            respectively.
+
+        secure(4)      Learning is disabled. Need To Know and Intrusion
+            Action depends on ibSecureNeedToKnowMode and
+            ibSecureIntrusionAction respectively.
+
+        userLogin(5)   Access to the port is denied until the port client is
+            authorised (by 802.1X or other authentication mechanism).
+            Once authorised, traffic will be accepted from any MAC
+            address.  The Need To Know and Intrusion Action are ignored.
+
+        userLoginSecure(6) Access to the port is denied until the port client
+            is authorised (by 802.1X or other authentication mechanism).
+            When the client is authorised, the MAC address is added to the
+            Secure Address Table.
+            The ibSecureMaximumAddresses is set to one automatically when
+            this mode is entered.  Any existing MAC addresses in the Secure
+            Address Table are deleted.  Need To Know and Intrusion Action
+            depends on ibSecureNeedToKnowMode and ibSecureIntrusionAction
+            respectively.  Learning is disabled.
+
+        userLoginWithOUI(7) This mode is similar to the userLoginSecure mode
+            except that a second MAC address may be placed in the Secure
+            Address Table.  This second address is authorised based on the
+            MAC address OUI value.
+            If a new device with an authorised OUI value is discovered,
+            the previous entry is deleted.  Traffic from the
+            OUI authorised device will be accepted even if the user has
+            not been authenticated.  Need To Know and Intrusion Action
+            depends on ibSecureNeedToKnowMode and ibSecureIntrusionAction
+            respectively.
+
+        macAddressWithRadius(8) This selects the RADIUS Authenticated Login using
+            MAC-address (RALM) security mode on the port.  This feature controls
+            network access of a host based on authenticating its MAC
+            address.  Once authorised, the host is allowed access to the
+            network.  If unauthorised, the port can be configured to deny
+            access to this MAC address or to allow some access depending
+            upon the port VLAN and QoS configuration.
+            Where access is allowed, the MAC address is added to the Secure
+            Address Table.
+
+        macAddressOrUserLoginSecure(9) This selects both the macAddressWithRadius and
+            userLoginSecure modes together such that either or both are allowed to
+            authorised access.  Where both authorised access, userLoginSecure takes
+            precedence.
+
+        macAddressElseUserLoginSecure(10) This selects both the macAddressWithRadius and
+            userLoginSecure modes together such that the MAC address is first
+            authenticated and only if this fails does the userLoginSecure then attempt
+            user authentication.
+
+        userLoginSecureExt(11) Access to the port is denied until the port client
+            is authorised (by 802.1X or other authentication mechanism).
+            When the client is authorised, the MAC address is added to the
+            Secure Address Table.
+            The ibSecureNumberAddresses is restricted by the value of ibSecureMaximumAddresses
+            automatically when this mode is entered.
+            Any existing MAC addresses in the Secure Address Table are deleted.
+            Need To Know and Intrusion Action depends on ibSecureNeedToKnowMode
+            and ibSecureIntrusionAction respectively.  Learning is disabled.
+
+        macAddressOrUserLoginSecureExt(12) This selects both the macAddressWithRadius and
+            userLoginSecureExt modes together such that either or both are allowed to
+            authorised access.  Where both authorised access, userLoginSecure takes
+            precedence.
+
+        macAddressElseUserLoginSecureExt(13) This selects both the macAddressWithRadius and
+            userLoginSecureExt modes together such that the MAC address is first
+            authenticated and only if this fails does the userLoginSecure then attempt
+            user authentication.
+
+        macAddressAndUserLoginSecure(14) This selects both the macAddressWithRadius and
+            userLoginSecure modes together such that the MAC address is first
+            authenticated and only if this succeeds does the userLoginSecure then attempt
+            user authentication.
+
+        macAddressAndUserLoginSecureExt(15) This selects both the macAddressWithRadius and
+            userLoginSecureExt modes together such that the MAC address is first
+            authenticated and only if this succeeds does the userLoginSecure then attempt
+            user authentication.
+        "
+    ::= {ibSecurePortEntry 1}
+
+
+ibSecureNeedToKnowMode OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            notAvailable(1),
+            disabled(2),
+            needToKnowOnly(3),
+            needToKnowWithBroadcastsAllowed(4),
+            needToKnowWithMulticastsAllowed(5),
+            permanentNeedToKnowOnly(6),
+            permanentNeedToKnowWithBroadcastsAllowed(7),
+            permanentNeedToKnowWithMulticastsAllowed(8),
+            needToKnowAuto(9)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Attribute to determine which frames are to be forwarded to
+        this port intact.
+
+        1 - Need To Know is not available.
+        2 - All frames.
+        3 - Frames addressed to the authorized devices only.
+        4 - Frames addressed to the authorized devices, plus all broadcast
+            frames.
+        5 - Frames addressed to the authorized devices, plus all broadcast
+            and multicast frames.
+        6 - As 3 and cannot be changed.
+        7 - As 4 and cannot be changed.
+        8 - As 5 and cannot be changed.
+        9 - Similar to needToKnowWithMulticastsAllowed, but no frames are allowed
+            when the port has no online users.
+
+        If this object returns 1,6,7 or 8, it means that the Need To Know
+        configuration cannot be changed, and any attempt to write to this object
+        will cause an error."
+    ::= {ibSecurePortEntry 2}
+
+
+ibSecureIntrusionAction OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            notAvailable(1),
+            noAction(2),
+            disablePort(3),
+            disablePortTemporarily(4),
+            allowDefaultAccess(5),
+            blockMacAddress(6)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Attribute to determine the action if an unauthorised device
+        transmits on this port."
+    ::= {ibSecurePortEntry 3}
+
+--
+-- The following 3 objects are used to allow multiple MAC addresses to be
+-- assigned to the port.
+
+ibSecureNumberAddresses OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The maximum number of addresses that the port can learn or
+        store. Reducing this number may cause some addresses to be deleted.
+        This value is set by the user and cannot be automatically changed by the
+        agent.  The maximum number will not include and limit the number of
+        static mac addresses that configured by manager.
+
+        The following relationship must be preserved.
+        ibSecureNumberAddressesStored <= ibSecureNumberAddresses <=
+        ibSecureMaximumAddresses
+        "
+    ::= {ibSecurePortEntry 4}
+
+
+ibSecureNumberAddressesStored OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of addresses that are currently in the
+        AddressTable for this port.  If this object has the same value as
+        ibSecureNumberAddresses, then no more addresses can be authorised on this
+        port.  The number will not include and limit the number of
+        static mac addresses that configured by manager.
+
+        Those objects are bound by the relationship:
+        ibSecureNumberAddressesStored <= ibSecureNumberAddresses <=
+        ibSecureMaximumAddresses
+        "
+    ::= {ibSecurePortEntry 5}
+
+
+ibSecureMaximumAddresses OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This indicates the maximum value that ibSecureNumberAddresses
+        can be set to.  It is dependent on the resources available so may change,
+        eg. if resources are shared between ports, then this value can both
+        increase and decrease.  This object must be read before setting
+        ibSecureNumberAddresses.
+
+        Those objects are bound by the relationship:
+        ibSecureNumberAddressesStored <= ibSecureNumberAddresses <=
+        ibSecureMaximumAddresses
+        "
+    ::= {ibSecurePortEntry 6}
+
+--
+-- SECURE ADDRESS TABLE
+--
+
+ibSecureAddressTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSecureAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table stores the MAC addresses assigned to each
+        port.  This table can be written to by the agent as well as the
+        management station."
+    ::= {ibPortSecurityTables 2}
+
+
+ibSecureAddressEntry OBJECT-TYPE
+    SYNTAX      IbSecureAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table allows multiple addresses to be assigned to each
+        secure port.  It is indexed using the objects ifIndex,
+        ibSecureAddrMAC and ibSecureVlanID."
+    INDEX
+        {
+            ifIndex,
+            ibSecureAddrMAC,
+            ibSecureAddrVlanID
+        }
+    ::= {ibSecureAddressTable 1}
+
+
+IbSecureAddressEntry ::= SEQUENCE
+    {
+        ibSecureAddrMAC          MacAddress,
+        ibSecureAddrVlanID       Integer32,
+        ibSecureAddrMACStatus    INTEGER,
+        ibSecureAddrRowStatus    RowStatus
+    }
+
+
+ibSecureAddrMAC OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The MAC address of a station assigned to this port.
+        This is the second index into the ibSecureAddressTable."
+    ::= {ibSecureAddressEntry 1}
+
+ibSecureAddrVlanID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The Vlan ID associate with the port and the MAC address.
+        This is the third index into the ibSecureAddressTable."
+    ::= {ibSecureAddressEntry 2}
+
+ibSecureAddrMACStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            addressBlackhole(1),
+            addressUserConfig(2),
+            addressDot1xAuth(3),
+            addressRALM(4)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The state of the mac address assigned to this port.
+
+        addressBlackhole (1) the mac address is a blackhole address,
+            Each packet whose source address is equal to this address will be
+            dropped by the agent.
+        addressUserConfig (2) the mac address configed by user with this state
+            are preserved across power cycles and resets.
+        addressDot1xAuth (3) the mac address is authorized by 802.1x authenticator,
+            User can not configure this mac address.  This value is used for GET
+            and GETNEXT operation.
+        addressRALM (4) the mac address is authorized by RALM authenticator,
+            User can not configure this mac address.  This value is used for GET
+            and GETNEXT operation.
+        "
+    ::= {ibSecureAddressEntry 3}
+
+
+ibSecureAddrRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This manages the creation and deletion or rows, and shows
+        the current status of the indexed MAC address.  This object has the
+        following values.
+
+        active(1)        The indexed MAC address is authorised on this port.
+        notInService(2)  Not Supported.
+        notReady(3)      Not Supported.
+        createAndGo(4)   Assign a new MAC address to the port and authorise
+                         immediately.
+        createAndWait(5) Not Supported.
+        destroy(6)       Delete this entry.
+
+        When creating a new entry, index a new row and use createAndGo(4).
+        When reading this object, only active(1) will be
+        returned.
+        "
+    ::= {ibSecureAddressEntry 4}
+
+
+--
+-- SECURE OUI TABLE
+--
+
+ibSecureOUITable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSecureOUIEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table stores the OUI values for OUI based
+        authentication."
+    ::= {ibPortSecurityTables 3}
+
+
+ibSecureOUIEntry OBJECT-TYPE
+    SYNTAX      IbSecureOUIEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a row in the ibSecureOUITable."
+    INDEX
+        {
+            ibSecureOUIIndex
+        }
+    ::= {ibSecureOUITable 1}
+
+
+IbSecureOUIEntry ::= SEQUENCE
+    {
+        ibSecureOUIIndex        Integer32,
+        ibSecureOUI             OCTET STRING,
+        ibSecureOUIRowStatus    RowStatus
+    }
+
+
+ibSecureOUIIndex OBJECT-TYPE
+    SYNTAX      Integer32(1..1024)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The index number.  This is the first index into the
+        ibSecureOUITable."
+    ::= {ibSecureOUIEntry 1}
+
+
+ibSecureOUI OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(3))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The OUI value for an authorised device."
+    ::= {ibSecureOUIEntry 2}
+
+
+ibSecureOUIRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This manages the creation and deletion of rows, and shows
+        the current status of the entry.
+
+        active(1)       The indexed OUI value is authorised.
+        notInService(2) Not Supported.
+        notReady(3)     Not Supported.
+        createAndGo(4)  Assign a new OUI to the unit and authorise
+                        immediately.
+        createAndWait(5) Not Supported.
+        destroy(6)      Delete this entry.
+
+        When creating a new entry, index a new row and use createAndGo(4) .
+        When reading this object, only active(1) will be returned.
+        "
+    ::= {ibSecureOUIEntry 3}
+
+--
+-- IP+MAC+PORT BINDING TABLE
+--
+
+ibSecureBindingTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSecureBindingEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table stores the elements of binding rules include the
+        MAC addresses, the IP address and the port.  Only the frame exactly
+        matching the binding rules can be forwarded.  This table can be
+        written to by the agent as well as the management station."
+    ::= {ibPortSecurityTables 4}
+
+
+ibSecureBindingEntry OBJECT-TYPE
+    SYNTAX      IbSecureBindingEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table allows multiple binding rules.  It is indexed using the object
+        ibSecureBindingIndex."
+    INDEX
+        {
+            ibSecureBindingIndex
+        }
+    ::= {ibSecureBindingTable 1}
+
+
+IbSecureBindingEntry ::= SEQUENCE
+    {
+        ibSecureBindingIndex        Integer32,
+        ibSecureBindingPort         Integer32,
+        ibSecureBindingAddrMAC      MacAddress,
+        ibSecureBindingAddrIp       IpAddress,
+        ibSecureBindingRowStatus    RowStatus
+    }
+
+ibSecureBindingIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The index number.  This is the first index into the
+        ibSecureBindingTable."
+    ::= {ibSecureBindingEntry 1}
+
+ibSecureBindingPort OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The port number of the port bound with the IP address
+        and the MAC address."
+    ::= {ibSecureBindingEntry 2}
+
+ibSecureBindingAddrMAC OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The MAC address bound with the port and the IP address."
+    ::= {ibSecureBindingEntry 3}
+
+ibSecureBindingAddrIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The IP address bound with the port and the MAC address."
+    ::= {ibSecureBindingEntry 4}
+
+ibSecureBindingRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This manages the creation and deletion or rows, and shows
+        status of the entry.  This object has the following values.
+
+        active(1)        The indexed MAC address is authorised on this port.
+        notInService(2)  Not Supported.
+        notReady(3)      Not Supported.
+        createAndGo(4)   Assign a new MAC address to the port and authorise
+                         immediately.
+        createAndWait(5) Not Supported.
+        destroy(6)       Delete this entry.
+
+        When creating a new entry, index a new row and use createAndGo(4).
+        When reading this object, only active(1) will be
+        returned.
+        "
+    ::= {ibSecureBindingEntry 5}
+--
+-- PORT ASSIGN TABLE
+--
+ibSecureAssignTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbSecureAssignEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of port assignment management information about authorised user."
+    ::= {ibPortSecurityTables 5}
+
+
+ibSecureAssignEntry OBJECT-TYPE
+    SYNTAX      IbSecureAssignEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry (conceptual row) representing information about port assignment
+        about authorised user."
+    INDEX
+        {
+            ifIndex
+        }
+    ::= {ibSecureAssignTable 1}
+
+
+IbSecureAssignEntry ::= SEQUENCE
+    {
+        ibSecureAssignEnable      TruthValue,
+        ibSecureVlanAssignment    OCTET STRING
+    }
+
+ibSecureAssignEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The user-based port configuration control. Setting this attribute
+        TRUE causes the port to be configured with any configuration
+        parameters supplied by the authentication server. Setting this
+        attribute to FALSE causes any configuration parameters supplied
+        by the authentication server to be ignored."
+    DEFVAL  {true}
+    ::= { ibSecureAssignEntry 1 }
+
+ibSecureVlanAssignment OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The VLAN membership assigned to the port for the authorised user.
+        This contains the actual value received from the authentication
+        server. This object will contain a null value if there is no user
+        authorised to access the port or if the authorised user was not
+        assigned a VLAN membership."
+    ::= { ibSecureAssignEntry 2 }
+
+-- **********************************************************************
+-- Define enterprise repeater traps. Rules for traps are that any
+-- varbind must be from a table in which the first qualifier on the
+-- object id is the service identifier of the 'thing' causing the trap.
+-- **********************************************************************
+ibPortSecurityNotifications OBJECT IDENTIFIER ::= {ibPortSecurityMIB 3}
+
+ibSecureAddressLearned NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ibSecureAddrMAC
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent when a new station has been learned.  The
+        port on which the address was received is the first object,
+        and the MAC address of the learned station is in the second object."
+    ::= {ibPortSecurityNotifications 1}
+
+
+ibSecureViolation NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ibSecureAddrMAC,
+            ifAdminStatus
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent whenever a security violation has occurred.
+        The port on which the violation occured is the first object,
+        and the MAC address of the offending station is in the second object.
+        ifAdminStatus indicates if the port has been disabled because of the violation.
+        The implementation may not send violation traps from the same port
+        at intervals of less than 5 seconds."
+    ::= {ibPortSecurityNotifications 2}
+
+
+ibSecureLoginFailure NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ibSecureAddrMAC,
+            dot1xAuthSessionUserName
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent whenever a user network access
+        authentication has failed.  The port on which the violation occured is
+        the first object, and the MAC address of the offending station is in
+        the second object.  The dot1xAuthSessionUserName is the identity supplied
+        during the user authentication."
+    ::= {ibPortSecurityNotifications 3}
+
+
+ibSecureLogon NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ibSecureAddrMAC,
+            dot1xAuthSessionUserName,
+            dot1xAuthSessionAuthenticMethod,
+            ibSecurePortVlanMembershipList
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent when a new session is started for
+        an authorised port user.  The port on which the violation occured is
+        the first object, and the MAC address of the offending station is in
+        the second object.
+        The dot1xAuthSessionUserName is the identity supplied during the user
+        authentication.  The dot1xAuthSessionAuthenticMethod indicates how the
+        user was authorised.  The ibSecurePortVlanMembershipList object
+        identifies the VLAN membership assigned to the port on session
+        activation."
+    ::= {ibPortSecurityNotifications 4}
+
+
+ibSecureLogoff NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ibSecureAddrMAC,
+            dot1xAuthSessionUserName,
+            dot1xAuthSessionTerminateCause,
+            ibSecurePortVlanMembershipList
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent when a user session is terminated.
+        The port on which the violation occured is the first object,
+        and the MAC address of the offending station is in the second object.
+        The dot1xAuthSessionUserName is the identity supplied during the user
+        authentication.  The dot1xAuthSessionTerminateCause indicates the
+        reason why the session was terminated.
+        The ibSecurePortVlanMembershipList object identifies the VLAN
+        membership assigned to the port on session termination."
+    ::= {ibPortSecurityNotifications 5}
+
+ibSecureRalmLoginFailure NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ibSecureAddrMAC,
+            ibSecureRalmAuthMode,
+            ibSecureRalmAuthUsername
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent whenever a user network access
+        authentication has failed.  The port on which the violation
+        occured is the first object, and the MAC address of the
+        offending station is in the second object. The authentication mode
+        indicates how the user was authorised. The ibSecureRalmAuthUsername
+        is the identity supplied during the user authentication."
+    ::= {ibPortSecurityNotifications 6}
+
+
+ibSecureRalmLogon NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ibSecureAddrMAC,
+            ibSecureRalmAuthMode,
+            ibSecureRalmAuthUsername,
+            ibSecurePortVlanMembershipList
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent when a new session is started for
+        an authorised port user.  The port on which the violation
+        occured is the first object, and the MAC address of
+        the offending station is in the second object. The authentication mode
+        indicates how the user was authorised. The ibSecureRalmAuthUsername is
+        the identity supplied during the user authentication. The
+        ibSecurePortVlanMembershipList object identifies the VLAN
+        membership assigned to the port on session activation."
+    ::= {ibPortSecurityNotifications 7}
+
+
+ibSecureRalmLogoff NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ibSecureAddrMAC,
+            ibSecureRalmAuthMode,
+            ibSecureRalmAuthUsername,
+            ibSecurePortVlanMembershipList
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent when a new session is started for
+        an authorised port user.  The port on which the violation
+        occured is the first object, and the MAC address of the
+        offending station is in the second object. The authentication mode
+        indicates how the user was authorised. The ibSecureRalmAuthUsername is
+        the identity supplied during the user authentication. The
+        ibSecurePortVlanMembershipList object identifies the VLAN
+        membership assigned to the port on session activation."
+    ::= {ibPortSecurityNotifications 8}
+
+-- **********************************************************************
+-- Define enterprise repeater new traps. Rules for traps are that any
+-- varbind must be from a table in which the first qualifier on the
+-- object id is the service identifier of the 'thing' causing the trap.
+-- **********************************************************************
+ibPortSecurityTrapsV2 OBJECT IDENTIFIER ::= {ibPortSecurityMIB 4}
+
+ibPortSecurityTrapsV2Prefix OBJECT IDENTIFIER ::= {ibPortSecurityTrapsV2 0}
+
+ibSecureIPv4Change NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ibSecureAddrMAC,
+            dot1xAuthSessionUserName,
+            ibSecureUserIPv4BeforeChange,
+            ibSecureUserIPv4AfterChange
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent when an 802.1X authentication user IPv4 address changes."
+    ::= {ibPortSecurityTrapsV2Prefix 1}
+
+ibSecureIPv6Change NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ibSecureAddrMAC,
+            dot1xAuthSessionUserName,
+            ibSecureUserIPv6BeforeChange,
+            ibSecureUserIPv6AfterChange
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent when an 802.1X authentication user IPv6 address changes."
+    ::= {ibPortSecurityTrapsV2Prefix 2}
+
+ibSecureRalmIPv4Change NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ibSecureAddrMAC,
+            ibSecureRalmAuthUsername,
+            ibSecureUserIPv4BeforeChange,
+            ibSecureUserIPv4AfterChange
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent when a MAC authentication user IPv4 address changes."
+    ::= {ibPortSecurityTrapsV2Prefix 3}
+
+ibSecureRalmIPv6Change NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ibSecureAddrMAC,
+            ibSecureRalmAuthUsername,
+            ibSecureUserIPv6BeforeChange,
+            ibSecureUserIPv6AfterChange
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is sent when a MAC authentication user IPv6 address changes."
+    ::= {ibPortSecurityTrapsV2Prefix 4}
+END

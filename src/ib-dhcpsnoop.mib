@@ -1,0 +1,301 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: DHCP Snooping MIB
+-- Reference:
+-- Version: V1.3
+-- History:
+-- V1.0 The initial version, created by FuJiajia, 2004.12.29
+-- V1.1 2006-03-08 updated by HeHangjun
+--      Added ibDhcpSnoopVlanTable
+-- V1.2 2007-06-18 updated by qizhenglin
+--      Added ibDhcpSnoopSpoofServerDetected
+--            ibDhcpSnoopSpoofServerMac
+--            ibDhcpSnoopSpoofServerIP
+-- V1.3 2013-10-16 updated by xuyufei
+--      Added ibDhcpSnoopNewBinding
+--            ibDhcpSnoopBindingIP
+--            ibDhcpSnoopBindingMac
+-- ==================================================================
+-- ==================================================================
+--
+-- Varibles and types be imported
+--
+-- ==================================================================
+IB-DHCPSNOOP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+
+    MacAddress
+        FROM SNMPv2-TC
+
+    MODULE-IDENTITY,OBJECT-TYPE,NOTIFICATION-TYPE,IpAddress,Integer32
+        FROM SNMPv2-SMI
+
+    ifIndex
+        FROM IF-MIB
+
+    ibdot1qVlanIndex
+        FROM IB-LswVLAN-MIB
+
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB
+
+    ibCommon
+        FROM IB-OID-MIB
+
+    TruthValue
+        FROM SNMPv2-TC;
+
+-- ==================================================================
+--
+-- ======================= definition begin =========================
+--
+-- ==================================================================
+ibDhcpSnoop MODULE-IDENTITY
+        LAST-UPDATED "200501140000Z"
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+            "The private MIB file includes the DHCP Snooping profile."
+        ::= { ibCommon  36 }
+
+    ibDhcpSnoopMibObject OBJECT IDENTIFIER ::= {  ibDhcpSnoop 1  }
+
+    ibDhcpSnoopEnable OBJECT-TYPE
+        SYNTAX INTEGER
+        {
+            enable(1),
+            disable(2)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "DHCP Snooping status (enable or disable)."
+        DEFVAL { disable }
+        ::= { ibDhcpSnoopMibObject 1 }
+
+    ibDhcpSnoopTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF IbDhcpSnoopEntry
+        MAX-ACCESS not-accessible
+        STATUS   current
+        DESCRIPTION "The table containing information of DHCP clients listened by
+                    DHCP snooping and it's enabled or disabled by setting
+                    ibDhcpSnoopEnable node."
+        ::= { ibDhcpSnoopMibObject 2 }
+
+
+    ibDhcpSnoopEntry OBJECT-TYPE
+        SYNTAX  IbDhcpSnoopEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "An entry containing information of DHCP clients."
+        INDEX   { ibDhcpSnoopClientIpAddressType, ibDhcpSnoopClientIpAddress }
+        ::= { ibDhcpSnoopTable 1 }
+
+    IbDhcpSnoopEntry   ::=
+    SEQUENCE {
+        ibDhcpSnoopClientIpAddressType InetAddressType,
+        ibDhcpSnoopClientIpAddress   InetAddress,
+        ibDhcpSnoopClientMacAddress  MacAddress,
+        ibDhcpSnoopClientProperty    INTEGER ,
+        ibDhcpSnoopClientUnitNum     Integer32
+        }
+
+    ibDhcpSnoopClientIpAddressType OBJECT-TYPE
+        SYNTAX  InetAddressType
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "DHCP clients' IP addresses type (IPv4 or IPv6)."
+        DEFVAL { ipv4 }
+        ::= { ibDhcpSnoopEntry 1 }
+
+    ibDhcpSnoopClientIpAddress OBJECT-TYPE
+        SYNTAX  InetAddress
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "DHCP clients' IP addresses collected by DHCP snooping."
+        ::= { ibDhcpSnoopEntry 2 }
+
+    ibDhcpSnoopClientMacAddress OBJECT-TYPE
+        SYNTAX  MacAddress
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "DHCP clients' MAC addresses collected by DHCP snooping."
+        ::= { ibDhcpSnoopEntry 3 }
+
+    ibDhcpSnoopClientProperty OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+            static(1),
+            dynamic(2)
+        }
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "Method of getting IP addresses collected by DHCP snooping."
+        ::= { ibDhcpSnoopEntry 4 }
+
+    ibDhcpSnoopClientUnitNum OBJECT-TYPE
+        SYNTAX  Integer32
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION "IRF (Intelligent Resilient Fabric) unit number via whom the clients
+                    get their IP addresses. The value 0 means this device does not support IRF."
+        ::= { ibDhcpSnoopEntry 5 }
+
+    ibDhcpSnoopTrustTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF IbDhcpSnoopTrustEntry
+        MAX-ACCESS not-accessible
+        STATUS   current
+        DESCRIPTION "A table is used to configure and monitor port trusted status."
+        ::= { ibDhcpSnoopMibObject 3 }
+
+    ibDhcpSnoopTrustEntry OBJECT-TYPE
+        SYNTAX  IbDhcpSnoopTrustEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION "An entry containing information about trusted status of ports."
+        INDEX   { ifIndex }
+        ::= { ibDhcpSnoopTrustTable 1 }
+
+    IbDhcpSnoopTrustEntry  ::=
+    SEQUENCE {
+        ibDhcpSnoopTrustStatus     INTEGER
+        }
+
+    ibDhcpSnoopTrustStatus OBJECT-TYPE
+        SYNTAX  INTEGER
+        {
+            untrusted(0),
+            trusted(1)
+        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION "Trusted status of current port which supports both get and
+                    set operation."
+        DEFVAL { untrusted }
+        ::= { ibDhcpSnoopTrustEntry 1 }
+
+    ibDhcpSnoopVlanTable   OBJECT-TYPE
+         SYNTAX          SEQUENCE OF IbDhcpSnoopVlanEntry
+         MAX-ACCESS      not-accessible
+         STATUS          current
+         DESCRIPTION     "A table is used to configure and monitor DHCP Snooping
+                         status of VLANs."
+         ::= { ibDhcpSnoopMibObject 4 }
+
+    ibDhcpSnoopVlanEntry  OBJECT-TYPE
+         SYNTAX          IbDhcpSnoopVlanEntry
+         MAX-ACCESS      not-accessible
+         STATUS          current
+         DESCRIPTION     "The entry information about ibDhcpSnoopVlanTable."
+         INDEX
+         {
+                ibDhcpSnoopVlanIndex
+         }
+         ::= { ibDhcpSnoopVlanTable 1 }
+
+    IbDhcpSnoopVlanEntry ::=
+         SEQUENCE
+         {
+                ibDhcpSnoopVlanIndex     Integer32,
+                ibDhcpSnoopVlanEnable    TruthValue
+         }
+
+    ibDhcpSnoopVlanIndex        OBJECT-TYPE
+         SYNTAX          Integer32(0..2147483647)
+         MAX-ACCESS      not-accessible
+         STATUS          current
+         DESCRIPTION     "Current VLAN index."
+         ::= { ibDhcpSnoopVlanEntry 1 }
+
+    ibDhcpSnoopVlanEnable        OBJECT-TYPE
+         SYNTAX          TruthValue
+         MAX-ACCESS      read-write
+         STATUS          current
+         DESCRIPTION     "DHCP Snooping status of current VLAN."
+         DEFVAL          { false }
+         ::= { ibDhcpSnoopVlanEntry 2 }
+
+-- ==================================================================
+--
+-- ======================= trap definition begin ====================
+--
+-- ==================================================================
+    ibDhcpSnoopTraps OBJECT IDENTIFIER ::= {  ibDhcpSnoop 2  }
+    ibDhcpSnoopTrapsPrefix OBJECT IDENTIFIER ::= {  ibDhcpSnoopTraps 0  }
+    ibDhcpSnoopTrapsObject OBJECT IDENTIFIER ::= {  ibDhcpSnoopTraps 1  }
+
+    ibDhcpSnoopSpoofServerMac OBJECT-TYPE
+      SYNTAX MacAddress
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION "MAC address of the spoofing server and it is derived from
+          link-layer header of offer packet. If the offer packet is relayed
+          by dhcp relay entity, it may be the MAC address of relay entity.
+          "
+      ::= { ibDhcpSnoopTrapsObject 1 }
+
+    ibDhcpSnoopSpoofServerIP OBJECT-TYPE
+      SYNTAX IpAddress
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION "IP address of the spoofing server and it is derived from
+          IP header of offer packet. A tricksy host may send offer packet use
+          other host's address, so this address can not always be  trust.
+          "
+      ::= { ibDhcpSnoopTrapsObject 2 }
+
+    ibDhcpSnoopBindingIP OBJECT-TYPE
+      SYNTAX IpAddress
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION "IP address of a new binding. "
+      ::= { ibDhcpSnoopTrapsObject 3 }
+
+
+    ibDhcpSnoopBindingMac OBJECT-TYPE
+      SYNTAX MacAddress
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION "MAC address of a new binding. "
+      ::= { ibDhcpSnoopTrapsObject 4 }
+
+
+    ibDhcpSnoopSpoofServerDetected NOTIFICATION-TYPE
+        OBJECTS
+        {
+            ifIndex,            -- The interface from which an
+                                -- illegal dhcp server accessed
+            ibdot1qVlanIndex,   -- The vlan from which an illegal
+                                -- dhcp server accessed
+            ibDhcpSnoopSpoofServerMac,
+            ibDhcpSnoopSpoofServerIP
+        }
+        STATUS         current
+        DESCRIPTION
+           "To detect unauthorized DHCP servers on a network, the DHCP snooping
+           device sends DHCP-DISCOVER messages through its downstream port
+           (which is connected to the DHCP clients).
+           If any response (DHCP-OFFER message) is received from the downstream port,
+           an unauthorized DHCP server is considered present, and then the device
+           sends a trap.
+           With unauthorized DHCP server detection enabled, the interface sends a
+           DHCP-DISCOVER message to detect unauthorized DHCP servers on the network.
+           If this interface receives a DHCP-OFFER  message,  the DHCP server which
+           sent it is considered unauthorized. "
+    ::= { ibDhcpSnoopTrapsPrefix 1 }
+
+    ibDhcpSnoopNewBinding NOTIFICATION-TYPE
+        OBJECTS
+        {
+            ibDhcpSnoopBindingIP,
+            ibDhcpSnoopBindingMac
+        }
+        STATUS current
+        DESCRIPTION
+           "The device sends a trap when adding a new binding."
+    ::= { ibDhcpSnoopTrapsPrefix 2 }
+
+END

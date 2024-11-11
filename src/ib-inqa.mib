@@ -1,0 +1,410 @@
+--  =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The MIB is designed to configure the Intelligent Network
+--              Quality Analyzer.
+-- Reference:
+-- Version: V1.1
+-- History:
+-- V1.0 2022-09-01, Du Wei, Initial version
+-- V1.1 2022-12-01, Du Wei,
+--      Added nodes ibInqaInstAttrMismatchReason for ibInqaInstAttrMismatch,
+--      ibInqaInstAttrMismatchRecover trap.
+-- =================================================================
+
+IB-INQA-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    CounterBasedGauge64
+        FROM HCNUM-TC;
+
+ibInqa MODULE-IDENTITY
+    LAST-UPDATED "202212010000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The private MIB file includes the network quality information of the
+        device. It is to describes notifications of the Intelligent Network Quality Analyzer."
+    REVISION "202212010000Z"
+    DESCRIPTION
+        "Added nodes ibInqaInstAttrMismatchReason for ibInqaInstAttrMismatch,
+         ibInqaInstAttrMismatchRecover trap."
+    REVISION "202209010000Z"
+    DESCRIPTION
+        "Initial revision of this MIB module."
+    ::= { ibCommon 252 }
+
+--
+-- Node definitions
+--
+ibInqaNotifications OBJECT IDENTIFIER ::= { ibInqa 1 }
+
+ibInqaNotification OBJECT IDENTIFIER ::= { ibInqaNotifications 0 }
+
+ibInqaLossRatioExceed NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibInqaAnalyzerInstID,
+        ibInqaAnalyzerInstDesc,
+        ibInqaAmsID,
+        ibInqaAmsFlowDir,
+        ibInqaForwardLossRatio,
+        ibInqaBackwardLossRatio,
+        ibInqaLossUpperLimit,
+        ibInqaLossLowerLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the packet loss ratio of a flow exceeds the upper limit for five consecutive periods."
+    ::= { ibInqaNotification 1 }
+
+ibInqaLossRatioRecover NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibInqaAnalyzerInstID,
+        ibInqaAnalyzerInstDesc,
+        ibInqaAmsID,
+        ibInqaAmsFlowDir,
+        ibInqaForwardLossRatio,
+        ibInqaBackwardLossRatio,
+        ibInqaLossUpperLimit,
+        ibInqaLossLowerLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the packet loss ratio of a flow drops below the lower limit for five consecutive periods."
+    ::= { ibInqaNotification 2 }
+
+ibInqaOnewayDelayExceed NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibInqaAnalyzerInstID,
+        ibInqaAnalyzerInstDesc,
+        ibInqaAmsID,
+        ibInqaAmsFlowDir,
+        ibInqaForwardDelay,
+        ibInqaBackwardDelay,
+        ibInqaDelayUpperLimit,
+        ibInqaDelayLowerLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the one-way delay of a flow exceeds the upper limit for five consecutive periods."
+    ::= { ibInqaNotification 3 }
+
+ibInqaOnewayDelayRecover NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibInqaAnalyzerInstID,
+        ibInqaAnalyzerInstDesc,
+        ibInqaAmsID,
+        ibInqaAmsFlowDir,
+        ibInqaForwardDelay,
+        ibInqaBackwardDelay,
+        ibInqaDelayUpperLimit,
+        ibInqaDelayLowerLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the one-way delay of a flow drops below the lower limit for five consecutive periods."
+    ::= { ibInqaNotification 4 }
+
+ibInqaTwowayDelayExceed NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibInqaAnalyzerInstID,
+        ibInqaAnalyzerInstDesc,
+        ibInqaAmsID,
+        ibInqaAmsFlowDir,
+        ibInqaTwowayDelay,
+        ibInqaDelayUpperLimit,
+        ibInqaDelayLowerLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the two-way delay of a flow exceeds the upper limit for five consecutive periods."
+    ::= { ibInqaNotification 5 }
+
+ibInqaTwowayDelayRecover NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibInqaAnalyzerInstID,
+        ibInqaAnalyzerInstDesc,
+        ibInqaAmsID,
+        ibInqaAmsFlowDir,
+        ibInqaTwowayDelay,
+        ibInqaDelayUpperLimit,
+        ibInqaDelayLowerLimit
+    }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the two- way delay of a flow drops below the lower limit for five consecutive periods."
+    ::= { ibInqaNotification 6 }
+
+ibInqaInstAttrMismatch NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibInqaAnalyzerInstID,
+        ibInqaAnalyzerInstDesc,
+        ibInqaInstAttrMismatchReason
+    }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the attributes of collectors bound to the analyzer instance are inconsistent.
+        "
+    ::= { ibInqaNotification 7 }
+
+ibInqaInstAttrMismatchRecover NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibInqaAnalyzerInstID,
+        ibInqaAnalyzerInstDesc,
+        ibInqaInstAttrMismatchReason
+    }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the attributes of collectors bound to the analyzer instance are consistent.
+        "
+    ::= { ibInqaNotification 8 }
+
+ibInqaNotificationObjects OBJECT IDENTIFIER ::= { ibInqaNotifications 1 }
+
+ibInqaForwardLossRatio OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1..10))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Packet loss ratio of the forward flow.
+         The value ranges from 0.000001 to 100, and the unit is percentage."
+    ::= { ibInqaNotificationObjects 1 }
+
+ibInqaBackwardLossRatio OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1..10))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Packet loss ratio of the backward flow.
+         The value ranges from 0.000001 to 100, and the unit is percentage."
+    ::= { ibInqaNotificationObjects 2 }
+
+ibInqaForwardDelay OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Packet transmission delay of the forward flow."
+    ::= { ibInqaNotificationObjects 3 }
+
+ibInqaBackwardDelay OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Packet transmission delay of the backward flow."
+    ::= { ibInqaNotificationObjects 4 }
+
+ibInqaTwowayDelay OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Two-way packet transmission delay."
+    ::= { ibInqaNotificationObjects 5 }
+
+ibInqaInstAttrMismatchReason OBJECT-TYPE
+    SYNTAX INTEGER
+    {
+        unspecified(0),
+        flag(1),
+        flow(2),
+        interval(3)
+    }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Attributes in which the collectors bound to the analyzer instance mismatch. The values include:
+        0, unspecified
+        1, flag
+        2, flow
+        3, interval
+        "
+    ::= { ibInqaNotificationObjects 6 }
+
+ibInqaObjects OBJECT IDENTIFIER ::= { ibInqa 2 }
+
+ibInqaAnalyzer OBJECT IDENTIFIER ::= { ibInqaObjects 1 }
+
+ibInqaAnalyzerInstTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbInqaAnalyzerInstEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table contains information about analyzer instances."
+    ::= { ibInqaAnalyzer 1 }
+
+ibInqaAnalyzerInstEntry OBJECT-TYPE
+    SYNTAX IbInqaAnalyzerInstEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Each entry provides analyzer instance configuration information."
+    INDEX { ibInqaAnalyzerInstID }
+    ::= { ibInqaAnalyzerInstTable 1 }
+
+IbInqaAnalyzerInstEntry ::=
+    SEQUENCE {
+        ibInqaAnalyzerInstID  Unsigned32,
+        ibInqaAnalyzerInstDesc  OCTET STRING
+     }
+
+ibInqaAnalyzerInstID OBJECT-TYPE
+    SYNTAX Unsigned32 (1..8355838)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Identifier of the Analyzer instances."
+    ::= { ibInqaAnalyzerInstEntry 1 }
+
+ibInqaAnalyzerInstDesc OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1..64))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Description for the analyzer instances."
+    ::= { ibInqaAnalyzerInstEntry 2 }
+
+ibInqaAnalyzerAmsTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbInqaAnalyzerAmsEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table contains AMS of the analyzer instances."
+    ::= { ibInqaAnalyzer 2 }
+
+ibInqaAnalyzerAmsEntry OBJECT-TYPE
+    SYNTAX IbInqaAnalyzerAmsEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This entry contains AMS of an analyzer instance."
+    INDEX { ibInqaAnalyzerInstID, ibInqaAmsID }
+    ::= { ibInqaAnalyzerAmsTable 1 }
+
+IbInqaAnalyzerAmsEntry ::=
+    SEQUENCE {
+        ibInqaAmsID       Unsigned32,
+        ibInqaAmsFlowDir  INTEGER
+     }
+
+ibInqaAmsID OBJECT-TYPE
+    SYNTAX Unsigned32 (1..2147483647)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "AMS ID."
+    ::= { ibInqaAnalyzerAmsEntry 1 }
+
+ibInqaAmsFlowDir OBJECT-TYPE
+    SYNTAX INTEGER
+    {
+        forward(1),
+        backward(2),
+        bidirection(3)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Flow direction to meature."
+    ::= { ibInqaAnalyzerAmsEntry 2 }
+
+ibInqaAnalyzerLossThresTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbInqaAnalyzerLossThresEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table contains the packet loss alarm parameters of the analyzer instances."
+    ::= { ibInqaAnalyzer 3 }
+
+ibInqaAnalyzerLossThresEntry OBJECT-TYPE
+    SYNTAX IbInqaAnalyzerLossThresEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This entry contains the packet loss alarm parameters of an analyzer instance."
+    INDEX { ibInqaAnalyzerInstID }
+    ::= { ibInqaAnalyzerLossThresTable 1 }
+
+IbInqaAnalyzerLossThresEntry ::=
+    SEQUENCE {
+        ibInqaLossUpperLimit  OCTET STRING,
+        ibInqaLossLowerLimit  OCTET STRING
+     }
+
+ibInqaLossUpperLimit OBJECT-TYPE
+    SYNTAX OCTET STRING
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Upper limit of the packet loss ratio.
+         The value ranges from 0.000001 to 100, and the unit is percentage."
+    ::= { ibInqaAnalyzerLossThresEntry 1 }
+
+ibInqaLossLowerLimit OBJECT-TYPE
+    SYNTAX OCTET STRING
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Lower limit of the packet loss ratio.
+         The value ranges from 0.000001 to 100, and the unit is percentage."
+    ::= { ibInqaAnalyzerLossThresEntry 2 }
+
+ibInqaAnalyzerDelayThresTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbInqaAnalyzerDelayThresEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This table contains the packet delay alarm parameters of the analyzer instances."
+    ::= { ibInqaAnalyzer 4 }
+
+ibInqaAnalyzerDelayThresEntry OBJECT-TYPE
+    SYNTAX IbInqaAnalyzerDelayThresEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "This entry contains the packet delay alarm parameters of an analyzer instance."
+    INDEX { ibInqaAnalyzerInstID }
+    ::= { ibInqaAnalyzerDelayThresTable 1 }
+
+IbInqaAnalyzerDelayThresEntry ::=
+    SEQUENCE {
+        ibInqaDelayUpperLimit    CounterBasedGauge64,
+        ibInqaDelayLowerLimit    CounterBasedGauge64
+     }
+
+ibInqaDelayUpperLimit OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Upper limit of the packet delay.
+         The value ranges from 0 to 3600000000, and the unit is microseconds."
+    ::= { ibInqaAnalyzerDelayThresEntry 1 }
+
+ibInqaDelayLowerLimit OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Lower limit of the packet delay.
+         The value ranges from 0 to 3600000000, and the unit is microseconds."
+    ::= { ibInqaAnalyzerDelayThresEntry 2 }
+
+
+END
+

@@ -1,0 +1,850 @@
+-- =====================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: MLAG MIB
+-- Reference:
+-- Version: V1.1
+-- History:
+--   V1.0 Initial version, created by liuyafang
+--   V1.1 2023-05-31 Add ibMLagVmacInEffective trap by zhengjun
+-- =====================================================================
+IB-MLAG-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    Integer32, OBJECT-TYPE, NOTIFICATION-TYPE, MODULE-IDENTITY
+        FROM SNMPv2-SMI
+    MacAddress, TruthValue, RowStatus
+        FROM SNMPv2-TC
+    InetAddressIPv4, InetAddressIPv6
+        FROM INET-ADDRESS-MIB
+    PortList
+        FROM Q-BRIDGE-MIB
+    InterfaceIndex,ifIndex,ifDescr
+        FROM IF-MIB;
+
+ibMLag MODULE-IDENTITY
+    LAST-UPDATED "202305311156Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "
+        This MIB defines objects for
+        Multichassis Link Aggregation Group (M-LAG).
+        "
+    REVISION
+        "202305311156Z"
+    DESCRIPTION
+        "Add the trap for virtual mac ineffective."
+    REVISION
+        "202204131707Z"
+    DESCRIPTION
+        "MLAG MIB."
+    ::= { ibCommon 176 }
+
+
+--
+-- Node definitions
+--
+
+ibMLagObjects OBJECT IDENTIFIER ::= { ibMLag 1 }
+
+
+ibMLagBaseGroup OBJECT IDENTIFIER ::= { ibMLagObjects 1 }
+
+ibMLagRoleGroup OBJECT IDENTIFIER ::= { ibMLagObjects 2 }
+
+ibMLagKeepaliveGroup OBJECT IDENTIFIER ::= { ibMLagObjects 3 }
+
+ibMLagTables OBJECT IDENTIFIER ::= { ibMLagObjects 4 }
+
+
+ibMLagSystemMac OBJECT-TYPE
+    SYNTAX MacAddress
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Multichassis Link Aggregation Group (M-LAG) system MAC address.
+         The default value is six octets of zero."
+    ::= { ibMLagBaseGroup 1 }
+
+ibMLagSystemPriority OBJECT-TYPE
+    SYNTAX Integer32 (0..65535)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "M-LAG system priority.  The default value is 32768."
+    DEFVAL { 32768 }
+    ::= { ibMLagBaseGroup 2 }
+
+ibMLagSystemNumber OBJECT-TYPE
+    SYNTAX Integer32 (0..2)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        " M-LAG system number."
+    DEFVAL { 0 }
+    ::= { ibMLagBaseGroup 3 }
+
+ibMLagRestoreDelay OBJECT-TYPE
+    SYNTAX Integer32 (1..3600)
+    UNITS "seconds"
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Data restoration interval in seconds."
+    DEFVAL { 30 }
+    ::= { ibMLagBaseGroup 4 }
+
+ibMLagAutoRecoveryReloadDelay OBJECT-TYPE
+    SYNTAX Integer32 (0|240..3600)
+    UNITS "seconds"
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Reload delay timer for M-LAG system auto-recovery."
+    DEFVAL { 0 }
+    ::= { ibMLagBaseGroup 5 }
+
+
+ibMLagRoleLocalRolePriority OBJECT-TYPE
+    SYNTAX Integer32 (0..65535)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "M-LAG role priority of the local M-LAG member device."
+    DEFVAL { 32768 }
+    ::= { ibMLagRoleGroup 1 }
+
+ibMLagRolePeerRolePriority OBJECT-TYPE
+    SYNTAX Integer32 (0..65535)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "M-LAG role priority of the peer M-LAG member device."
+    ::= { ibMLagRoleGroup 2 }
+
+ibMLagRoleLocalBridgeMac OBJECT-TYPE
+    SYNTAX MacAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Bridge MAC address of the local M-LAG member device.
+         The default value is six octets of zero."
+    ::= { ibMLagRoleGroup 3 }
+
+ibMLagRolePeerBridgeMac OBJECT-TYPE
+    SYNTAX MacAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Bridge MAC address of the peer M-LAG member device.  If this address
+         is unknown, the default value is six octets of zero."
+    ::= { ibMLagRoleGroup 4 }
+
+ibMLagRoleLocalConfiguredRole OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(0),
+        primary(1),
+        secondary(2)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "M-LAG role calculated based on the role priority and bridge MAC
+         address of the local M-LAG member device."
+    ::= { ibMLagRoleGroup 5 }
+
+ibMLagRolePeerConfiguredRole OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(0),
+        primary(1),
+        secondary(2)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "M-LAG role calculated based on the role priority and bridge MAC
+         address of the peer M-LAG member device."
+    ::= { ibMLagRoleGroup 6 }
+
+ibMLagRoleLocalEffectiveRole OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(0),
+        primary(1),
+        secondary(2)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Current role of the local M-LAG member device."
+    ::= { ibMLagRoleGroup 7 }
+
+ibMLagRolePeerEffectiveRole OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(0),
+        primary(1),
+        secondary(2)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Current role of the peer M-LAG member device."
+    ::= { ibMLagRoleGroup 8 }
+
+
+ibMLagKeepaliveDestIpv4 OBJECT-TYPE
+    SYNTAX InetAddressIPv4
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Destination IPv4 address of the keepalive link.
+         The default value is 0.0.0.0."
+    ::= { ibMLagKeepaliveGroup 1 }
+
+ibMLagKeepaliveSourceIpv4 OBJECT-TYPE
+    SYNTAX InetAddressIPv4
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Source IPv4 address of the keepalive link.
+         The default value is 0.0.0.0.
+         This object must be used with the KeepaliveDestIpv4 object."
+    ::= { ibMLagKeepaliveGroup 2 }
+
+ibMLagKeepaliveDestIpv6 OBJECT-TYPE
+    SYNTAX InetAddressIPv6
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Destination IPv6 address of the keepalive link.
+         The default value is 0::0."
+    ::= { ibMLagKeepaliveGroup 3 }
+
+ibMLagKeepaliveSourceIpv6 OBJECT-TYPE
+    SYNTAX InetAddressIPv6
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Source IPv6 address of the keepalive link.
+         The default value is 0::0.
+         This object must be used with the KeepaliveDestIpv6 object."
+    ::= { ibMLagKeepaliveGroup 4 }
+
+ibMLagKeepaliveUdpPort OBJECT-TYPE
+    SYNTAX Integer32 (1..65535)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Keepalive destination UDP port."
+    DEFVAL { 6400 }
+    ::= { ibMLagKeepaliveGroup 5 }
+
+ibMLagKeepaliveInterval OBJECT-TYPE
+    SYNTAX Integer32 (100..10000)
+    UNITS "milliseconds"
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Keepalive interval."
+    DEFVAL { 1000 }
+        ::= { ibMLagKeepaliveGroup 6 }
+
+ibMLagKeepaliveTimeout OBJECT-TYPE
+    SYNTAX Integer32 (3..20)
+    UNITS "seconds"
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Keepalive timeout time."
+    DEFVAL { 5 }
+        ::= { ibMLagKeepaliveGroup 7 }
+
+ibMLagKeepaliveHoldTime OBJECT-TYPE
+    SYNTAX Integer32 (3..10)
+    UNITS "seconds"
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Keepalive hold time."
+    DEFVAL { 3 }
+        ::= { ibMLagKeepaliveGroup 8 }
+
+ibMLagKeepaliveLinkStatus OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        unknown(1),
+        up(2),
+        down(3)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Keepalive link status."
+        ::= { ibMLagKeepaliveGroup 9 }
+
+ibMLagKeepaliveVrf OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (0..31))
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "VPN instance name.  A zero-length string represents that the
+         local device is on the public network."
+    ::= { ibMLagKeepaliveGroup 10 }
+
+ibMLagPeerLinkTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbMLagPeerLinkEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The M-LAG peer-link table."
+    ::= { ibMLagTables 1 }
+
+ibMLagPeerLinkEntry OBJECT-TYPE
+    SYNTAX IbMLagPeerLinkEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The entry of ibMLagPeerLinkTable."
+    INDEX { ibMLagPeerLinkNumber }
+    ::= { ibMLagPeerLinkTable 1 }
+
+IbMLagPeerLinkEntry ::=
+    SEQUENCE {
+        ibMLagPeerLinkNumber
+            Integer32,
+        ibMLagPeerLinkIfIndex
+            InterfaceIndex,
+        ibMLagPeerLinkRowStatus
+            RowStatus
+     }
+
+ibMLagPeerLinkNumber OBJECT-TYPE
+    SYNTAX Integer32 (1..2)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The number of a peer link."
+    ::= { ibMLagPeerLinkEntry 1 }
+
+ibMLagPeerLinkIfIndex OBJECT-TYPE
+    SYNTAX InterfaceIndex
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Interface index."
+    ::= { ibMLagPeerLinkEntry 2 }
+
+ibMLagPeerLinkRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "This object is responsible for managing creation,
+         deletion, and modification of rows.  The rows support active
+         status and destroy operations."
+    ::= { ibMLagPeerLinkEntry 3 }
+
+ibMLagPortTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbMLagPortEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The M-LAG interface table."
+    ::= { ibMLagTables 2 }
+
+ibMLagPortEntry OBJECT-TYPE
+    SYNTAX IbMLagPortEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The entry of ibMLagInfoTable."
+    INDEX { ibMLagGroupId }
+    ::= { ibMLagPortTable 1 }
+
+IbMLagPortEntry ::=
+    SEQUENCE {
+        ibMLagGroupId
+            Integer32,
+        ibMLagPortIfIndex
+            InterfaceIndex,
+        ibMLagPortRowStatus
+            RowStatus
+     }
+
+ibMLagGroupId OBJECT-TYPE
+    SYNTAX Integer32 (1..1024)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "M-LAG group identifier."
+    ::= { ibMLagPortEntry 1 }
+
+ibMLagPortIfIndex OBJECT-TYPE
+    SYNTAX InterfaceIndex
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Interface index of the Layer 2 aggregate interface."
+    ::= { ibMLagPortEntry 2 }
+
+ibMLagPortRowStatus OBJECT-TYPE
+    SYNTAX RowStatus
+    MAX-ACCESS read-create
+    STATUS current
+    DESCRIPTION
+        "This object is responsible for managing creation,
+         deletion, and modification of rows.  The rows support active
+         status and destroy operations."
+    ::= { ibMLagPortEntry 3 }
+
+
+ibMLagAllPortTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF IbMLagAllPortEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The M-LAG port table."
+    ::= { ibMLagTables 3 }
+
+ibMLagAllPortEntry OBJECT-TYPE
+    SYNTAX IbMLagAllPortEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "The entry of ibMLagAllPortTable."
+    INDEX { ibMLagAllPortIfIndex }
+    ::= { ibMLagAllPortTable 1 }
+
+IbMLagAllPortEntry ::=
+    SEQUENCE {
+        ibMLagAllPortIfIndex
+            InterfaceIndex,
+        ibMLagPortDrcpIsShortPeriod
+            TruthValue,
+        ibMLagPortPortStatus
+            INTEGER,
+        ibMLagPortLocalDRCPState
+            OCTET STRING,
+        ibMLagPortPeerDRCPState
+            OCTET STRING,
+        ibMLagPortLocalMemberList
+            PortList,
+        ibMLagPortPeerMemberList
+            PortList
+     }
+
+ibMLagAllPortIfIndex OBJECT-TYPE
+    SYNTAX InterfaceIndex
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Interface index."
+    ::= { ibMLagAllPortEntry 1 }
+
+ibMLagPortDrcpIsShortPeriod OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "
+        Short Distributed Relay Control Protocol (DRCP)
+        timeout timer flag, true or false.
+        "
+    ::= { ibMLagAllPortEntry 2 }
+
+ibMLagPortPortStatus OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        up(1),
+        down(2)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Port status."
+    ::= { ibMLagAllPortEntry 3 }
+
+ibMLagPortLocalDRCPState OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "DRCP state flags on the local port.
+         The flag field is one byte long,represented by ABCDEFGH
+         from the lowest bit to the highest bit.A letter is displayed
+         when its bit is 1 and is not displayed when its bit is 0.
+         A-Indicates whether DRCP is enabled on the local device.
+           1 indicates enabled.0 indicates disabled.
+         B-Indicates whether DRCP is enabled on the M-LAG peer device.
+           1 indicates enabled.0 indicates disabled.
+         C-Indicates whether DRCP is enabled on a third M-LAG member device.
+           1 indicates enabled.0 indicates disabled.
+         D-Indicates whether the local peer-link interface has determined that
+           DRCP is enabled on the M-LAG peer device.
+           1 indicates yes.0 indicates no.
+         E-Indicates the DRCP timeout timer.
+           1 indicates the short timeout timer.
+           0 indicates the long timeout timer.
+         F-Indicates whether the local peer-link interface permits the packets
+           that contain the negotiated gateway conversation IDs.
+           1 indicates yes.0 indicates no.
+         G-Indicates whether the local peer-link interface permits the packets that
+           contain the negotiated port conversation IDs.
+           1 indicates yes.0 indicates no.
+         H-Indicates whether the local DRCPDU receive machine is in
+           default or expired state.
+           1 indicates yes.0 indicates no."
+    ::= { ibMLagAllPortEntry 4 }
+
+ibMLagPortPeerDRCPState OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "DRCP state flags on the local port.
+         The flag field is one byte long,represented by ABCDEFGH
+         from the lowest bit to the highest bit.A letter is displayed
+         when its bit is 1 and is not displayed when its bit is 0.
+         A-Indicates whether DRCP is enabled on the local device.
+           1 indicates enabled.0 indicates disabled.
+         B-Indicates whether DRCP is enabled on the M-LAG peer device.
+           1 indicates enabled.0 indicates disabled.
+         C-Indicates whether DRCP is enabled on a third M-LAG member device.
+           1 indicates enabled.0 indicates disabled.
+         D-Indicates whether the local peer-link interface has determined that
+           DRCP is enabled on the M-LAG peer device.
+           1 indicates yes.0 indicates no.
+         E-Indicates the DRCP timeout timer.
+           1 indicates the short timeout timer.
+           0 indicates the long timeout timer.
+         F-Indicates whether the local peer-link interface permits the packets
+           that contain the negotiated gateway conversation IDs.
+           1 indicates yes.0 indicates no.
+         G-Indicates whether the local peer-link interface permits the packets that
+           contain the negotiated port conversation IDs.
+           1 indicates yes.0 indicates no.
+         H-Indicates whether the local DRCPDU receive machine is in
+           default or expired state.
+           1 indicates yes.0 indicates no."
+    ::= { ibMLagAllPortEntry 5 }
+
+ibMLagPortLocalMemberList OBJECT-TYPE
+    SYNTAX PortList
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Local M-LAG member device's Selected aggregation member ports in
+         an M-LAG interface or peer-link interface."
+    ::= { ibMLagAllPortEntry 6 }
+
+ibMLagPortPeerMemberList OBJECT-TYPE
+    SYNTAX PortList
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Peer M-LAG member device's Selected aggregation member ports in
+         an M-LAG interface or peer-link interface."
+    ::= { ibMLagAllPortEntry 7 }
+
+-- trap --
+ibMLagTrap      OBJECT IDENTIFIER ::= { ibMLag 2 }
+
+ibMLagTrapPrex OBJECT IDENTIFIER ::= { ibMLagTrap 0 }
+
+ibMLagGlobalCheckConsistency NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMLagConsistencyType
+        }
+    STATUS       current
+    DESCRIPTION
+        "Finished global configuration consistency check.  No inconsistency exists."
+    ::= { ibMLagTrapPrex 1 }
+
+ibMLagGlobalCheckInConsistency NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMLagConsistencyType
+        }
+    STATUS       current
+    DESCRIPTION
+        "Finished global configuration consistency check.  Inconsistency exists."
+    ::= { ibMLagTrapPrex 2 }
+
+ibMLagIfCheckConsistency NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMLagConsistencyType,
+            ifIndex,
+            ifDescr
+        }
+    STATUS       current
+    DESCRIPTION
+        "Finished M-LAG interface configuration consistency check.  No inconsistency exists."
+    ::= { ibMLagTrapPrex 3 }
+
+ibMLagIfCheckInConsistency NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMLagConsistencyType,
+            ifIndex,
+            ifDescr
+        }
+    STATUS       current
+    DESCRIPTION
+        "Finished M-LAG interface configuration consistency check.  Inconsistency exists."
+    ::= { ibMLagTrapPrex 4 }
+
+ibMLagPortGlobalDown NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMLagGroupIdForNotify
+        }
+    STATUS       current
+    DESCRIPTION
+        "The state of the M-LAG group changed to global down."
+    ::= { ibMLagTrapPrex 5 }
+
+ibMLagPortGlobalUp NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMLagGroupIdForNotify
+        }
+    STATUS       current
+    DESCRIPTION
+        "The state of the M-LAG group changed to global up."
+    ::= { ibMLagTrapPrex 6 }
+
+ibMLagPortSelected NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibMLagGroupIdForNotify
+        }
+    STATUS       current
+    DESCRIPTION
+        "The local M-LAG interface has selected member ports."
+    ::= { ibMLagTrapPrex 7 }
+
+ibMLagPortNoSelected NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibMLagGroupIdForNotify,
+            ibMLagPortNotSelectedReason
+        }
+    STATUS       current
+    DESCRIPTION
+        "The local M-LAG interface does not have selected member ports."
+    ::= { ibMLagTrapPrex 8 }
+
+ibMLagPortPeerNoSelected NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMLagGroupIdForNotify
+        }
+    STATUS       current
+    DESCRIPTION
+        "The peer M-LAG interface does not have selected member ports."
+    ::= { ibMLagTrapPrex 9 }
+
+ibMLagPortPeerSelected NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMLagGroupIdForNotify
+        }
+    STATUS       current
+    DESCRIPTION
+        "The peer M-LAG interface has selected member ports."
+    ::= { ibMLagTrapPrex 10 }
+
+ibMLagPeerLinkUp NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS       current
+    DESCRIPTION
+        "The peer link came up."
+    ::= { ibMLagTrapPrex 11 }
+
+ibMLagPeerLinkDown NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS       current
+    DESCRIPTION
+        "The peer link went down."
+    ::= { ibMLagTrapPrex 12 }
+
+ibMLagKeepaliveDown NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMLagKeepAliveDownReason
+        }
+    STATUS       current
+    DESCRIPTION
+        "The keepalive link went down."
+    ::= { ibMLagTrapPrex 13 }
+
+ibMLagKeepaliveUp NOTIFICATION-TYPE
+    STATUS       current
+    DESCRIPTION
+        "The keepalive link came up."
+    ::= { ibMLagTrapPrex 14 }
+
+ibMLagDeviceMadDown NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMLagMadDownReason
+        }
+    STATUS       current
+    DESCRIPTION
+        "The device changed to M-LAG MAD DOWN state."
+    ::= { ibMLagTrapPrex 15 }
+
+ibMLagDeviceMadRecovery NOTIFICATION-TYPE
+    STATUS       current
+    DESCRIPTION
+        "The device recovered from M-LAG MAD DOWN state."
+    ::= { ibMLagTrapPrex 16 }
+
+ibMLagDeviceRoleChange NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibMLagOldRole,
+            ibMLagNewRole,
+            ibMLagRoleChangeReason
+        }
+    STATUS       current
+    DESCRIPTION
+        "The device role has changed."
+    ::= { ibMLagTrapPrex 17 }
+
+ibMLagVmacInEffective NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr,
+            ibMLagVirtualMac,
+            ibMLagVmacInEffectiveReason
+        }
+    STATUS       current
+    DESCRIPTION
+        "The device virtual MAC address is ineffective."
+    ::= { ibMLagTrapPrex 18 }
+
+ibMLagTrapOjbects OBJECT IDENTIFIER ::= { ibMLagTrap 1 }
+
+ibMLagConsistencyType OBJECT-TYPE
+    SYNTAX  INTEGER {
+         type1(1),
+         type2(2)
+     }
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The consistency check type.
+        type1: Type 1 configuration consistency check.
+        type2: Type 2 configuration consistency check."
+    ::= { ibMLagTrapOjbects 1 }
+
+ibMLagGroupIdForNotify OBJECT-TYPE
+    SYNTAX Integer32 (1..1024)
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "M-LAG group identifier."
+    ::= { ibMLagTrapOjbects 2 }
+
+ibMLagPortNotSelectedReason OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (0..255))
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The M-LAG interface unselected reason."
+    ::= { ibMLagTrapOjbects 3 }
+
+ibMLagKeepAliveDownReason OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (0..255))
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The keepalive link down reason."
+    ::= { ibMLagTrapOjbects 4 }
+
+ibMLagMadDownReason OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (0..255))
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The M-LAG MAD DOWN reason."
+    ::= { ibMLagTrapOjbects 5 }
+
+ibMLagOldRole OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(0),
+        primary(1),
+        secondary(2)
+        }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Old role of the local M-LAG member device."
+    ::= { ibMLagTrapOjbects 6 }
+
+ibMLagNewRole OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(0),
+        primary(1),
+        secondary(2)
+        }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "New role of the local M-LAG member device."
+    ::= { ibMLagTrapOjbects 7 }
+
+ibMLagRoleChangeReason OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (0..255))
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The M-LAG role change reason."
+    ::= { ibMLagTrapOjbects 8 }
+
+ibMLagVmacInEffectiveReason OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (0..255))
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "Why the M-LAG virtual MAC address is ineffective."
+    ::= { ibMLagTrapOjbects 9 }
+
+ibMLagVirtualMac OBJECT-TYPE
+    SYNTAX MacAddress
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "The M-LAG virtual MAC address."
+    ::= { ibMLagTrapOjbects 10 }
+END
+
+--
+-- ib-mlag.mib
+--

@@ -1,0 +1,1371 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Trap MIB
+-- Reference:
+-- Version: V2.5
+-- History:
+-- V1.0 Created by Zhangshilin, 2001.06.29
+-- V1.1 Modified by lifengguang 2008.11.10, add trap node ibBootImageUpdated
+-- V1.2 2011-11-26 updated by duyanbing
+--      Added ibDevMFirstTrapTime to powerfailure and ibPowerNormal.
+-- V1.3 2012-04-26 updated by wangcong
+--      Added ibNetworkHealthMonitorFailure, ibNetworkHealthMonitorNormal for reserving.
+-- V1.4 2013-03-08 updated by fangliwen
+--      Added ibCpuRemoved, ibCpuFailure, ibCpuNormal.
+--      2014-08-02 updated by fangliwen
+--      Added ibPowerIncompatible.
+-- V1.5 2016-12-21 updated by yanfang
+--      Added ibCpuUsageSevereNotification
+--            ibCpuUsageSevereRecoverNotification
+--            ibCpuUsageMinorNotification
+--            ibCpuUsageMinorRecoverNotification.
+--            ibMemoryUsageEarlyWarningNotification
+--            ibMemoryUsageEarlyWarningRecoverNotification
+--            ibMemoryUsageMinorNotification
+--            ibMemoryUsageMinorRecoverNotification
+--            ibMemoryUsageSevereNotification
+--            ibMemoryUsageSevereRecoverNotification
+--            ibMemoryUsageCriticalNotification
+--            ibMemoryUsageCriticalRecoverNotification.
+--      2017-06-23 updated by wangweihui
+--      Added ibCoreUsageNotification
+--      2017-07-17 updated by fangliwen
+--      Added ibBoardPowerNotEnough, ibAvailablePower and ibRequiredPower.
+--      2017-12-5 updated by yuhaiyan
+--      Added ibAlarmInPortIn
+--            ibAlarmInPortRecover
+-- V1.6 2018-04-13 updated by wangweihui
+--      Added ibLswAlarmInPortInNum
+-- V1.7 2019-01-11 updated by wangweihui
+--      Added ibCoreUsageSevereRecoveryNotification
+--            ibCoreUsageMinorNotification
+--            ibCoreUsageMinorRecoveryNotification
+-- V1.8 2019-11-22 updated by xuyuanqiang
+--      Added ibDMAMemoryUsageCriticalNotification
+--            ibDMAMemoryUsageRecoverNotification
+-- V1.9 2020-10-15 updated by caohao
+--      Added ibRemainingPowerNotEnough
+--            ibFrameRemainingPower
+-- V2.0 2022-02-15 updated by fangliwen
+--      Added ibMMUParityError
+--      2022-03-02 updated by liwenxiao
+--      Added ibOutputPowerStatusNotification
+-- V2.1 2022-06-15 updated by caohao
+--      Added ibHeartbeatTimeoutSeconds
+--            ibBoardHeartbeatTimeout
+--            ibBoardHeartbeatResume.
+-- V2.2 2022-07-12 updated by zhangjindong
+--      Added ibDevTrapChassis
+--            ibDevTrapSrcSlot
+--            ibDevTrapSrcCpu
+--            ibDevTrapDestChassis
+--            ibDevTrapDestSlot
+--            ibDevTrapDestCpu
+--            ibDevTrapRebootReason
+--            ibDevTrapSlaveSwitchFailReason
+--            ibCommunicateError
+--            ibCommunicateResume
+--            ibBoardRebooted
+--            ibDevTrapSlaveSwitchFail
+--            ibAllBoardHeartbeatTimeout
+--            ibAllBoardHeartbeatResume
+--            ibDevTrapFanFailureErrcode
+-- V2.3 2022-09-26 updated by fangliwen
+--      Added ibBladeNotInsertedNotCleared
+--            ibBladeInsertedCleared
+-- V2.4 2022-12-06 updated by shenhongxia
+--      Added ibDevTrapSliceStarting
+--            ibDevTrapSliceOnline
+--            ibDevTrapSliceOffline
+--            ibDevTrapSliceIndex
+--      2023-02-23 updated by tianruichuan
+--      Added ibBoardReceiveWrongPackets
+-- V2.5 2023-9-14 updated by liziyi
+--      Added ibDevTrapPressKeyName
+--            ibDevTrapPressKeyOper
+--            ibDevPressKeyOperNotification
+-- ==================================================================
+
+-- ==================================================================
+--
+-- Variables and types be imported
+--
+-- ==================================================================
+IB-LswTRAP-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    MODULE-IDENTITY, NOTIFICATION-TYPE, OBJECT-TYPE, Unsigned32, Integer32
+        FROM SNMPv2-SMI
+    iblswCommon
+        FROM IB-OID-MIB
+    CounterBasedGauge64
+        FROM HCNUM-TC
+    SnmpAdminString
+        FROM SNMP-FRAMEWORK-MIB
+    ibDevMPowerNum, ibDevMFanNum, ibDevMFirstTrapTime
+        FROM IB-LswDEVM-MIB
+    ibLswFrameIndex, ibLswSlotIndex, ibLswSubslotIndex, ibLswCpuIndex, ibLswCoreIndex, ibLswCoreThreshold,
+    ibLswCoreMinorThreshold, ibLswCoreRecoveryThreshold,ibLswCpuRatio,ibLswCpuUsageMinorThreshold,ibLswCpuUsageSevereThreshold,
+    ibLswCpuUsageRecoverThreshold,ibLswCpuMemory,ibLswCpuMemoryFree,ibLswCpuMemoryFreeRatio,ibLswCpuMemoryHighTotal,ibLswCpuMemoryHighFree,
+    ibLswCpuMemoryLowTotal,ibLswCpuMemoryLowFree,ibLswCpuMemorySecureThreshold,ibLswCpuMemoryEarlyWarningThreshold,ibLswCpuMemoryNormalThreshold,
+    ibLswCpuMemoryMinorThreshold,ibLswCpuMemorySevereThreshold,ibLswCpuMemoryCriticalThreshold,ibLswCpuMemoryCurrentState,ibLswOutputPowerPortID,
+    ibLswOutputPowerStatus
+        FROM IB-LSW-DEV-ADM-MIB;
+
+-- ==================================================================
+--
+-- ======================= definition begin =========================
+--
+-- ==================================================================
+
+    ibLswTrapMib MODULE-IDENTITY
+            LAST-UPDATED "202309140000Z"
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION
+            ""
+            REVISION "202309140000Z"
+            DESCRIPTION
+            "Added ibDevTrapPressKeyName
+             ibDevTrapPressKeyOper
+             ibDevPressKeyOperNotification."
+            REVISION "202302230000Z"
+            DESCRIPTION
+            "Added ibBoardReceiveWrongPackets."
+            REVISION "202209260000Z"
+            DESCRIPTION
+            "Added ibBladeNotInsertedNotCleared
+             ibBladeInsertedCleared."
+            REVISION "202207120000Z"
+            DESCRIPTION
+            "Added ibLswSrcChassis
+             ibDevTrapSrcSlot
+             ibDevTrapSrcCpu
+             ibDevTrapDestChassis
+             ibDevTrapDestSlot
+             ibDevTrapDestCpu
+             ibDevTrapRebootReason
+             ibDevTrapSlaveSwitchFailReason
+             ibCommunicateError
+             ibCommunicateResume
+             ibBoardRebooted
+             ibDevTrapSlaveSwitchFail
+             ibAllBoardHeartbeatTimeout
+             ibAllBoardHeartbearReaume
+             ibDevTrapFanFailureErrcode."
+            REVISION "202206150000Z"
+            DESCRIPTION
+            "Added ibHeartbeatTimeoutSeconds
+             ibBoardHeartbeatTimeout
+             ibBoardHeartbeatResume."
+            REVISION "202203020000Z"
+            DESCRIPTION
+            "Added ibOutputPowerStatusNotification."
+            REVISION "202202150000Z"
+            DESCRIPTION
+            "Added ibMMUParityError."
+            REVISION "202010150000Z"
+            DESCRIPTION
+            "Added ibRemainingPowerNotEnough
+             ibFrameRemainingPower."
+            REVISION "201911220000Z"
+            DESCRIPTION
+            "Added ibDMAMemoryUsageCriticalNotification
+             ibDMAMemoryUsageRecoverNotification."
+            REVISION "201901110000Z"
+            DESCRIPTION
+            "Added ibCoreUsageSevereRecoveryNotification
+            ibCoreUsageMinorNotification
+            ibCoreUsageMinorRecoveryNotificationm."
+            REVISION "201804130000Z"
+            DESCRIPTION
+            "Added ibLswAlarmInPortInNum."
+            REVISION "201712050000Z"
+            DESCRIPTION
+            "Added ibAlarmInPortIn,  ibAlarmInPortRecover."
+            REVISION "201707170000Z"
+            DESCRIPTION
+            "Added ibBoardPowerNotEnough, ibAvailablePower and ibRequiredPower."
+            REVISION "201706240000Z"
+            DESCRIPTION
+            "ibCoreUsageNotification.
+             Added ibsLswTRAPMibObjectV2Prefix for bindings of notification."
+            REVISION "201701120000Z"
+            DESCRIPTION
+            "Added ibCpuUsageSevereNotification
+             ibCpuUsageSevereRecoverNotification
+             ibCpuUsageMinorNotification
+             ibCpuUsageMinorRecoverNotification.
+             ibMemoryUsageEarlyWarningNotification
+             ibMemoryUsageEarlyWarningRecoverNotification
+             ibMemoryUsageMinorNotification
+             ibMemoryUsageMinorRecoverNotification
+             ibMemoryUsageSevereNotification
+             ibMemoryUsageSevereRecoverNotification
+             ibMemoryUsageCriticalNotification
+             ibMemoryUsageCriticalRecoverNotification.
+             Added ibsLswTRAPMibInfor for bindings of notification."
+            REVISION "201111260000Z"
+            DESCRIPTION
+            "Initial revision"
+            ::= { iblswCommon 12 }
+
+-- ==================================================================
+--
+-- lsw trap object
+--
+-- ==================================================================
+    ibsLswTRAPMibObject OBJECT IDENTIFIER ::= { ibLswTrapMib 1 }
+
+    ibpowerfailure NOTIFICATION-TYPE
+      OBJECTS { ibDevMPowerNum, ibDevMFirstTrapTime }
+      STATUS  current
+      DESCRIPTION
+              "Power supply failure"
+      ::= { ibsLswTRAPMibObject 1 }
+
+    ibPowerNormal NOTIFICATION-TYPE
+      OBJECTS { ibDevMPowerNum, ibDevMFirstTrapTime }
+      STATUS  current
+      DESCRIPTION
+              "Power supply normal"
+      ::= { ibsLswTRAPMibObject 2 }
+
+    ibMasterPowerNormal NOTIFICATION-TYPE
+      OBJECTS { ibDevMPowerNum }
+      STATUS  current
+      DESCRIPTION
+              "Master power supply normal"
+      ::= { ibsLswTRAPMibObject 3 }
+
+    ibSlavePowerNormal NOTIFICATION-TYPE
+      OBJECTS { ibDevMPowerNum }
+      STATUS  current
+      DESCRIPTION
+              "Slave power supply normal"
+      ::= { ibsLswTRAPMibObject 4 }
+
+    ibPowerRemoved NOTIFICATION-TYPE
+      OBJECTS { ibDevMPowerNum }
+      STATUS  current
+      DESCRIPTION
+              "Power removed"
+      ::= { ibsLswTRAPMibObject 5 }
+
+    ibfanfailure NOTIFICATION-TYPE
+      OBJECTS { ibDevMFanNum, ibDevTrapFanFailureErrcode }
+      STATUS  current
+      DESCRIPTION
+              "Fan failure"
+      ::= { ibsLswTRAPMibObject 6 }
+
+    ibFanNormal NOTIFICATION-TYPE
+      OBJECTS { ibDevMFanNum }
+      STATUS  current
+      DESCRIPTION
+              "Fan normal"
+      ::= { ibsLswTRAPMibObject 7 }
+
+    ibBoardRemoved NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board removed"
+      ::= { ibsLswTRAPMibObject 8 }
+
+    ibBoardInserted NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex,ibLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board inserted"
+      ::= { ibsLswTRAPMibObject 9 }
+
+    ibBoardFailure NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board failed"
+      ::= { ibsLswTRAPMibObject 10 }
+
+    ibBoardNormal NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board normal"
+      ::= { ibsLswTRAPMibObject 11 }
+
+    ibSubcardRemove NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibLswSubslotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Sub card removed"
+      ::= { ibsLswTRAPMibObject 12 }
+
+    ibSubcardInsert NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibLswSubslotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Sub card inserted"
+      ::= { ibsLswTRAPMibObject 13 }
+
+    ibBoardTemperatureLower NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board temperature low"
+      ::= { ibsLswTRAPMibObject 14 }
+
+    ibBoardTemperatureFromLowerToNormal NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board temperature form lower to normal"
+      ::= { ibsLswTRAPMibObject 15 }
+
+    ibBoardTemperatureHigher NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board temperature high"
+      ::= { ibsLswTRAPMibObject 16 }
+
+    ibBoardTemperatureFormHigherToNormal NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board temperature from higher to normal"
+      ::= { ibsLswTRAPMibObject 17 }
+
+    ibRequestLoading NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board request load"
+      ::= { ibsLswTRAPMibObject 18 }
+
+    ibLoadFailure NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board load failure"
+      ::= { ibsLswTRAPMibObject 19 }
+
+    ibLoadFinished NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "Board load finished"
+      ::= { ibsLswTRAPMibObject 20 }
+
+    ibBackBoardModeSetFuilure NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex }
+      STATUS  current
+      DESCRIPTION
+              "Back board mode set failure"
+      ::= { ibsLswTRAPMibObject 21 }
+
+    ibBackBoardModeSetOK NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex }
+      STATUS  current
+      DESCRIPTION
+              "Back board mode set OK"
+      ::= { ibsLswTRAPMibObject 22 }
+
+    ibPowerInserted NOTIFICATION-TYPE
+      OBJECTS { ibDevMPowerNum }
+      STATUS  current
+      DESCRIPTION
+              "Power inserted"
+      ::= { ibsLswTRAPMibObject 23 }
+
+    ibBootImageUpdated NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex }
+      STATUS  current
+      DESCRIPTION
+              "This trap node indicates that the boot image of specified board
+              is updated."
+      ::= { ibsLswTRAPMibObject 24 }
+
+    ibCpuRemoved NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibLswCpuIndex }
+      STATUS  current
+      DESCRIPTION
+              "Node removed"
+      ::= { ibsLswTRAPMibObject 25 }
+
+    ibCpuFailure NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibLswCpuIndex }
+      STATUS  current
+      DESCRIPTION
+              "Node failed"
+      ::= { ibsLswTRAPMibObject 26 }
+
+    ibCpuNormal NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibLswCpuIndex }
+      STATUS  current
+      DESCRIPTION
+              "Node normal"
+      ::= { ibsLswTRAPMibObject 27 }
+
+      ibPowerIncompatible NOTIFICATION-TYPE
+      OBJECTS { ibDevMPowerNum}
+      STATUS  current
+      DESCRIPTION
+              "Power module is incompatible with the device"
+      ::= { ibsLswTRAPMibObject 28 }
+
+      ibCpuUsageSevereNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibLswCpuRatio,
+            ibLswCpuUsageMinorThreshold,
+            ibLswCpuUsageSevereThreshold,
+            ibLswCpuUsageRecoverThreshold,
+            ibsLswTrapCpuCoreInfo,
+            ibsLswTrapProcessCpuInfo
+            }
+      STATUS current
+      DESCRIPTION
+            "The trap indicates that the CPU usage increased to or above
+             the ibLswCpuUsageSevereThreshold."
+      ::= { ibsLswTRAPMibObject 29 }
+
+      ibCpuUsageSevereRecoverNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibLswCpuRatio,
+            ibLswCpuUsageMinorThreshold,
+            ibLswCpuUsageSevereThreshold,
+            ibLswCpuUsageRecoverThreshold,
+            ibsLswTrapCpuCoreInfo,
+            ibsLswTrapProcessCpuInfo
+            }
+      STATUS current
+      DESCRIPTION
+            "
+            When the product does not support ibLswCpuUsageRecoverThreshold,
+            the trap indicates that the CPU usage decreased to or below
+            the ibLswCpuUsageSevereThreshold.
+            When the product supports ibLswCpuUsageRecoverThreshold,
+            the trap indicates that the CPU usage decreased to or below
+            the ibLswCpuUsageMinorThreshold.
+            "
+      ::= { ibsLswTRAPMibObject 30 }
+
+      ibCpuUsageMinorNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibLswCpuRatio,
+            ibLswCpuUsageMinorThreshold,
+            ibLswCpuUsageSevereThreshold,
+            ibLswCpuUsageRecoverThreshold,
+            ibsLswTrapCpuCoreInfo,
+            ibsLswTrapProcessCpuInfo
+            }
+      STATUS current
+      DESCRIPTION
+            "The trap indicates that the CPU usage increased to or above
+             the ibLswCpuUsageMinorThreshold."
+      ::= { ibsLswTRAPMibObject 31 }
+
+      ibCpuUsageMinorRecoverNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibLswCpuRatio,
+            ibLswCpuUsageMinorThreshold,
+            ibLswCpuUsageSevereThreshold,
+            ibLswCpuUsageRecoverThreshold,
+            ibsLswTrapCpuCoreInfo,
+            ibsLswTrapProcessCpuInfo
+            }
+      STATUS current
+      DESCRIPTION
+            "
+            When the product dose not support ibLswCpuUsageRecoverThreshold,
+            the trap indicates that the CPU usage decreased to or below
+            the ibLswCpuUsageMinorThreshold.
+            When the product supports ibLswCpuUsageRecoverThreshold,
+            the trap indicates that the CPU usage decreased to or below
+            the ibLswCpuUsageRecoverThreshold.
+            "
+      ::= { ibsLswTRAPMibObject 32 }
+
+      ibMemoryUsageEarlyWarningNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibLswCpuMemory,
+            ibLswCpuMemoryFree,
+            ibLswCpuMemoryFreeRatio,
+            ibLswCpuMemoryHighTotal,
+            ibLswCpuMemoryHighFree,
+            ibLswCpuMemoryLowTotal,
+            ibLswCpuMemoryLowFree,
+            ibLswCpuMemorySecureThreshold,
+            ibLswCpuMemoryEarlyWarningThreshold,
+            ibLswCpuMemoryNormalThreshold,
+            ibLswCpuMemoryMinorThreshold,
+            ibLswCpuMemorySevereThreshold,
+            ibLswCpuMemoryCriticalThreshold,
+            ibLswCpuMemoryCurrentState,
+            ibsLswTrapProcessMemoryInfo,
+            ibsLswTrapSlubInfo
+            }
+      STATUS current
+      DESCRIPTION
+            "The trap indicates that the amount of free memory decreased to or below
+            the ibMemoryUsageEarlyWarningThreshold."
+      ::= { ibsLswTRAPMibObject 33 }
+
+      ibMemoryUsageEarlyWarningRecoverNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibLswCpuMemory,
+            ibLswCpuMemoryFree,
+            ibLswCpuMemoryFreeRatio,
+            ibLswCpuMemoryHighTotal,
+            ibLswCpuMemoryHighFree,
+            ibLswCpuMemoryLowTotal,
+            ibLswCpuMemoryLowFree,
+            ibLswCpuMemorySecureThreshold,
+            ibLswCpuMemoryEarlyWarningThreshold,
+            ibLswCpuMemoryNormalThreshold,
+            ibLswCpuMemoryMinorThreshold,
+            ibLswCpuMemorySevereThreshold,
+            ibLswCpuMemoryCriticalThreshold,
+            ibLswCpuMemoryCurrentState,
+            ibsLswTrapProcessMemoryInfo,
+            ibsLswTrapSlubInfo
+            }
+      STATUS current
+      DESCRIPTION
+            "The trap indicates that the amount of free memory usage increased to or above
+             the ibMemoryUsageSecureThreshold."
+      ::= { ibsLswTRAPMibObject 34 }
+
+      ibMemoryUsageMinorNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibLswCpuMemory,
+            ibLswCpuMemoryFree,
+            ibLswCpuMemoryFreeRatio,
+            ibLswCpuMemoryHighTotal,
+            ibLswCpuMemoryHighFree,
+            ibLswCpuMemoryLowTotal,
+            ibLswCpuMemoryLowFree,
+            ibLswCpuMemorySecureThreshold,
+            ibLswCpuMemoryEarlyWarningThreshold,
+            ibLswCpuMemoryNormalThreshold,
+            ibLswCpuMemoryMinorThreshold,
+            ibLswCpuMemorySevereThreshold,
+            ibLswCpuMemoryCriticalThreshold,
+            ibLswCpuMemoryCurrentState,
+            ibsLswTrapProcessMemoryInfo,
+            ibsLswTrapSlubInfo
+            }
+      STATUS current
+      DESCRIPTION
+            "The trap indicates that the amount of free memory decreased to or below
+            the ibLswCpuMemoryMinorThreshold."
+      ::= { ibsLswTRAPMibObject 35 }
+
+      ibMemoryUsageMinorRecoverNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibLswCpuMemory,
+            ibLswCpuMemoryFree,
+            ibLswCpuMemoryFreeRatio,
+            ibLswCpuMemoryHighTotal,
+            ibLswCpuMemoryHighFree,
+            ibLswCpuMemoryLowTotal,
+            ibLswCpuMemoryLowFree,
+            ibLswCpuMemorySecureThreshold,
+            ibLswCpuMemoryEarlyWarningThreshold,
+            ibLswCpuMemoryNormalThreshold,
+            ibLswCpuMemoryMinorThreshold,
+            ibLswCpuMemorySevereThreshold,
+            ibLswCpuMemoryCriticalThreshold,
+            ibLswCpuMemoryCurrentState,
+            ibsLswTrapProcessMemoryInfo,
+            ibsLswTrapSlubInfo
+            }
+      STATUS current
+      DESCRIPTION
+            "The trap indicates that the amount of free memory usage increased to or above
+             the ibLswCpuMemoryNormalThreshold."
+      ::= { ibsLswTRAPMibObject 36 }
+
+      ibMemoryUsageSevereNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibLswCpuMemory,
+            ibLswCpuMemoryFree,
+            ibLswCpuMemoryFreeRatio,
+            ibLswCpuMemoryHighTotal,
+            ibLswCpuMemoryHighFree,
+            ibLswCpuMemoryLowTotal,
+            ibLswCpuMemoryLowFree,
+            ibLswCpuMemorySecureThreshold,
+            ibLswCpuMemoryEarlyWarningThreshold,
+            ibLswCpuMemoryNormalThreshold,
+            ibLswCpuMemoryMinorThreshold,
+            ibLswCpuMemorySevereThreshold,
+            ibLswCpuMemoryCriticalThreshold,
+            ibLswCpuMemoryCurrentState,
+            ibsLswTrapProcessMemoryInfo,
+            ibsLswTrapSlubInfo
+            }
+      STATUS current
+      DESCRIPTION
+            "The trap indicates that the amount of free memory decreased to or below
+             the ibMemoryUsageSevereThreshold."
+      ::= { ibsLswTRAPMibObject 37 }
+
+      ibMemoryUsageSevereRecoverNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibLswCpuMemory,
+            ibLswCpuMemoryFree,
+            ibLswCpuMemoryFreeRatio,
+            ibLswCpuMemoryHighTotal,
+            ibLswCpuMemoryHighFree,
+            ibLswCpuMemoryLowTotal,
+            ibLswCpuMemoryLowFree,
+            ibLswCpuMemorySecureThreshold,
+            ibLswCpuMemoryEarlyWarningThreshold,
+            ibLswCpuMemoryNormalThreshold,
+            ibLswCpuMemoryMinorThreshold,
+            ibLswCpuMemorySevereThreshold,
+            ibLswCpuMemoryCriticalThreshold,
+            ibLswCpuMemoryCurrentState,
+            ibsLswTrapProcessMemoryInfo,
+            ibsLswTrapSlubInfo
+            }
+      STATUS current
+      DESCRIPTION
+            "The trap indicates that the amount of free memory usage increased to or above
+            the ibMemoryUsageMinorThreshold."
+      ::= { ibsLswTRAPMibObject 38 }
+
+      ibMemoryUsageCriticalNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibLswCpuMemory,
+            ibLswCpuMemoryFree,
+            ibLswCpuMemoryFreeRatio,
+            ibLswCpuMemoryHighTotal,
+            ibLswCpuMemoryHighFree,
+            ibLswCpuMemoryLowTotal,
+            ibLswCpuMemoryLowFree,
+            ibLswCpuMemorySecureThreshold,
+            ibLswCpuMemoryEarlyWarningThreshold,
+            ibLswCpuMemoryNormalThreshold,
+            ibLswCpuMemoryMinorThreshold,
+            ibLswCpuMemorySevereThreshold,
+            ibLswCpuMemoryCriticalThreshold,
+            ibLswCpuMemoryCurrentState,
+            ibsLswTrapProcessMemoryInfo,
+            ibsLswTrapSlubInfo
+            }
+      STATUS current
+      DESCRIPTION
+            "The trap indicates that the amount of free memory decreased to or below
+             the ibMemoryUsageCriticalThreshold."
+      ::= { ibsLswTRAPMibObject 39 }
+
+      ibMemoryUsageCriticalRecoverNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibLswCpuMemory,
+            ibLswCpuMemoryFree,
+            ibLswCpuMemoryFreeRatio,
+            ibLswCpuMemoryHighTotal,
+            ibLswCpuMemoryHighFree,
+            ibLswCpuMemoryLowTotal,
+            ibLswCpuMemoryLowFree,
+            ibLswCpuMemorySecureThreshold,
+            ibLswCpuMemoryEarlyWarningThreshold,
+            ibLswCpuMemoryNormalThreshold,
+            ibLswCpuMemoryMinorThreshold,
+            ibLswCpuMemorySevereThreshold,
+            ibLswCpuMemoryCriticalThreshold,
+            ibLswCpuMemoryCurrentState,
+            ibsLswTrapProcessMemoryInfo,
+            ibsLswTrapSlubInfo
+            }
+      STATUS current
+      DESCRIPTION
+            "The trap indicates that the amount of free memory usage increased to or above
+             the ibMemoryUsageSevereThreshold."
+      ::= { ibsLswTRAPMibObject 40 }
+
+    ibNetworkHealthMonitorFailure OBJECT IDENTIFIER ::= { ibsLswTRAPMibObject 98 }
+    ibNetworkHealthMonitorNormal OBJECT IDENTIFIER ::= { ibsLswTRAPMibObject 99 }
+
+-- For compatibility reasons, DO NOT add notification nodes under ibsLswTRAPMibObject.
+-- Please use ibsLswTRAPMibObjectV2Prefix instead.
+
+-- ==================================================================
+--
+-- lsw trap info
+--
+-- ==================================================================
+   ibsLswTRAPMibInfor OBJECT IDENTIFIER ::= { ibLswTrapMib 2 }
+
+   ibsLswTrapCpuCoreInfo OBJECT-TYPE
+        SYNTAX      SnmpAdminString (SIZE (0..255))
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "ibLswCpuCoreIndex,ibLswCpuCoreUsage,ibLswCpuCoreUsr,
+             ibLswCpuCoreSys,ibLswCpuCoreIrq,ibLswCpuCoreIdle.
+
+            Each line contains the following comma-separated values:
+
+            ibLswCpuCoreIndex(Integer32):CPU core index.
+            ibLswCpuCoreUsage(Unsigned32): Percentage of CPU core usage ,0~100
+            ibLswCpuCoreUsr(Unsigned32): Percentage of CPU core user usage ,0~100
+            ibLswCpuCoreSys(Unsigned32): Percentage of CPU core system usage ,0~100
+            ibLswCpuCoreIrq(Unsigned32): Percentage of CPU core interrupt usage ,0~100
+            ibLswCpuCoreIdle(Unsigned32): Percentage of CPU core idle usage ,0~100
+            "
+        ::= { ibsLswTRAPMibInfor 1}
+
+   ibsLswTrapProcessCpuInfo OBJECT-TYPE
+        SYNTAX      SnmpAdminString (SIZE (0..255))
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "ibLswProcessJobId,ibLswProcessPid,ibLswProcessName,
+            ibLswProcessState,ibLswProcessPriority,ibLswProcessFDs,
+            ibLswProcessRunTime,ibLswProcessCpuRatio5Secs,ibLswProcessCpuRatio1Min,
+            ibLswProcessCpuRatio5Mins.
+
+            Each line contains the following comma-separated values:
+
+            ibLswProcessName: Process name
+            ibLswProcessJobId:Job ID
+            ibLswProcessPid: Process ID
+            ibLswProcessPriority: Process priority
+            ibLswProcessState: Process state
+                {
+                R(1):running,
+                S(2):sleeping,
+                T(3):tracedorStopped,
+                D(4):uninterruptibleSleep,
+                Z(5):zombie
+                }
+            ibLswProcessFDs: Process FDs
+            ibLswProcessRunTime: Process run time
+            ibLswProcessCpuRatio: CPU ratio for the process.
+            "
+        ::= { ibsLswTRAPMibInfor 2 }
+
+   ibsLswTrapProcessMemoryInfo OBJECT-TYPE
+        SYNTAX      SnmpAdminString (SIZE (0..255))
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "ibLswProcessJobId,ibLswProcessName,ibLswProcessMemoryUsed.
+
+            Each line contains the following comma-separated values:
+
+            ibLswProcessJobId: Job ID
+            ibLswProcessName: Process name
+            ibLswProcessMemoryUsed:
+            Memory be used by the process(text + data + stack + dynamic)in KB.
+            "
+        ::= { ibsLswTRAPMibInfor 3 }
+
+   ibsLswTrapSlubInfo OBJECT-TYPE
+        SYNTAX      SnmpAdminString (SIZE (0..255))
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "ibLswSlubInfoUsed + ibLswSlubInfoName.
+
+            Each line contains the following comma-separated values:
+
+            ibLswSlubInfoName: Name of slubinfo
+            ibLswSlubInfoUsed: Memory be used by the slub(num*size)
+            "
+        ::= { ibsLswTRAPMibInfor 4 }
+
+    ibLswTrapCpuUsage OBJECT-TYPE
+        SYNTAX      SnmpAdminString (SIZE (0..255))
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Cpu usage in 5sec 1min 5min."
+        ::= { ibsLswTRAPMibInfor 5 }
+
+    ibLswTrapCoreProcessInfo OBJECT-TYPE
+        SYNTAX      SnmpAdminString (SIZE (0..255))
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "
+            Each line contains the following values:
+            JID PID PPID CPU State Memory 5Sec 1Min 5Min Name.
+            "
+        ::= { ibsLswTRAPMibInfor 6 }
+
+    ibLswCoreTrapUsage   OBJECT-TYPE
+        SYNTAX     Unsigned32
+        MAX-ACCESS     accessible-for-notify
+        STATUS     current
+        DESCRIPTION
+            "Core usage in last 30 minutes."
+        ::= {ibsLswTRAPMibInfor 7}
+
+    ibBoardAvailablePower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Available power of power supply."
+        ::= { ibsLswTRAPMibInfor 8 }
+
+    ibBoardRequiredPower OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Power required for a single board."
+        ::= { ibsLswTRAPMibInfor 9 }
+
+    ibLswAlarmInPortInNum OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Alarm-in port-in num."
+        ::= { ibsLswTRAPMibInfor 10 }
+
+    ibDMAMemoryTotal   OBJECT-TYPE
+        SYNTAX     CounterBasedGauge64
+        UNITS "byte"
+        MAX-ACCESS     accessible-for-notify
+        STATUS     current
+        DESCRIPTION
+            "The total DMA-memory space on the node."
+        ::= { ibsLswTRAPMibInfor 11 }
+
+    ibDMAMemoryUsed   OBJECT-TYPE
+        SYNTAX     CounterBasedGauge64
+        UNITS "byte"
+        MAX-ACCESS     accessible-for-notify
+        STATUS     current
+        DESCRIPTION
+            "The used DMA-memory space on the node."
+        ::= { ibsLswTRAPMibInfor 12 }
+
+    ibDMAMemoryFree   OBJECT-TYPE
+        SYNTAX     CounterBasedGauge64
+        UNITS "byte"
+        MAX-ACCESS     accessible-for-notify
+        STATUS     current
+        DESCRIPTION
+            "The free memory space on the node."
+        ::= { ibsLswTRAPMibInfor 13 }
+
+    ibDMAMemoryFreeRatio   OBJECT-TYPE
+        SYNTAX     Unsigned32 (0..100)
+        MAX-ACCESS     accessible-for-notify
+        STATUS     current
+        DESCRIPTION
+            "The percentage of free DMA-memory space on the node."
+        ::= { ibsLswTRAPMibInfor 14 }
+
+    ibDMAMemoryCriticalThreshold   OBJECT-TYPE
+        SYNTAX     Unsigned32
+        MAX-ACCESS     accessible-for-notify
+        STATUS     current
+        DESCRIPTION
+            "The critical alarm threshold for free DMA-memory,
+             MB or percentage."
+        ::= { ibsLswTRAPMibInfor 15 }
+
+    ibDMAMemoryRecoverThreshold   OBJECT-TYPE
+        SYNTAX     Unsigned32
+        MAX-ACCESS     accessible-for-notify
+        STATUS     current
+        DESCRIPTION
+            "The normal state threshold for free DMA-memory,
+             MB or percentage.
+
+             When the free DMA-memory space exceeds this threshold, a recovery notification will be sent.
+             The normal state threshold cannot be smaller than the critical alarm threshold."
+        ::= { ibsLswTRAPMibInfor 16 }
+
+    ibDMAMemoryCurrentState   OBJECT-TYPE
+        SYNTAX          INTEGER
+        {
+            normal (1),
+            critical (2)
+        }
+        MAX-ACCESS     accessible-for-notify
+        STATUS     current
+        DESCRIPTION
+            "Current status of free DMA-memory.
+
+             Normal
+             Critical"
+        ::= { ibsLswTRAPMibInfor 17 }
+
+    ibFrameRemainingPower   OBJECT-TYPE
+        SYNTAX     Unsigned32
+        UNITS "W"
+        MAX-ACCESS     accessible-for-notify
+        STATUS     current
+        DESCRIPTION
+            "Remaining power of the frame."
+        ::= {ibsLswTRAPMibInfor 18}
+
+    ibHeartbeatTimeoutSeconds   OBJECT-TYPE
+        SYNTAX     Unsigned32
+        MAX-ACCESS     accessible-for-notify
+        STATUS     current
+        DESCRIPTION
+            "Heartbeat timeout value, in seconds."
+        ::= {ibsLswTRAPMibInfor 19}
+
+    ibDevTrapSrcChassis   OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Source chassis number."
+        ::= {ibsLswTRAPMibInfor 20}
+
+    ibDevTrapSrcSlot   OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Source slot number."
+        ::= {ibsLswTRAPMibInfor 21}
+
+    ibDevTrapSrcCpu   OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Source CPU number."
+        ::= {ibsLswTRAPMibInfor 22}
+
+    ibDevTrapDestChassis   OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Destination chassis number."
+        ::= {ibsLswTRAPMibInfor 23}
+
+    ibDevTrapDestSlot   OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Destination slot number."
+        ::= {ibsLswTRAPMibInfor 24}
+
+    ibDevTrapDestCpu   OBJECT-TYPE
+        SYNTAX      Integer32
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Destination CPU number."
+        ::= {ibsLswTRAPMibInfor 25}
+
+    ibDevTrapRebootReason   OBJECT-TYPE
+        SYNTAX      SnmpAdminString (SIZE (0..255))
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Reboot failure reason."
+        ::= {ibsLswTRAPMibInfor 26}
+
+    ibDevTrapSlaveSwitchFailReason   OBJECT-TYPE
+        SYNTAX      INTEGER {
+                        other(0),
+                        systemRestarting(1),
+                        standbyAbsent(2),
+                        standbyNoReady(3)
+                    }
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Reason for active/standby or master/subordinate switchover failure."
+        ::= {ibsLswTRAPMibInfor 27}
+
+    ibDevTrapFanFailureErrcode   OBJECT-TYPE
+        SYNTAX      INTEGER {
+                        remove(0),
+                        failed(1)
+                    }
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Cause of fan failure."
+        ::= {ibsLswTRAPMibInfor 28}
+
+    ibDevTrapSliceIndex   OBJECT-TYPE
+        SYNTAX      Unsigned32
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Slice index."
+        ::= {ibsLswTRAPMibInfor 29}
+
+    ibDevTrapPressKeyName   OBJECT-TYPE
+        SYNTAX      SnmpAdminString (SIZE (0..255))
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Device button name."
+        ::= {ibsLswTRAPMibInfor 30}
+
+    ibDevTrapPressKeyOper   OBJECT-TYPE
+        SYNTAX      SnmpAdminString (SIZE (0..255))
+        MAX-ACCESS  accessible-for-notify
+        STATUS      current
+        DESCRIPTION
+            "Operations triggered by device keys."
+        ::= {ibsLswTRAPMibInfor 31}
+
+    ibsLswTRAPMibObjectV2 OBJECT IDENTIFIER ::= { ibLswTrapMib 3 }
+    ibsLswTRAPMibObjectV2Prefix OBJECT IDENTIFIER ::= { ibsLswTRAPMibObjectV2 0 }
+
+    ibCoreUsageNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibLswCoreIndex,
+            ibLswCoreTrapUsage,
+            ibLswCoreThreshold,
+            ibLswTrapCpuUsage,
+            ibLswTrapCoreProcessInfo,
+            ibLswCoreMinorThreshold,
+            ibLswCoreRecoveryThreshold
+            }
+      STATUS current
+      DESCRIPTION
+            "The trap indicates that the amount of core usage increased to or above
+             the ibLswCoreThreshold."
+      ::= { ibsLswTRAPMibObjectV2Prefix 1 }
+
+    ibBoardPowerNotEnough NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibBoardAvailablePower, ibBoardRequiredPower}
+      STATUS  current
+      DESCRIPTION
+              "Not enough power for the board."
+      ::= { ibsLswTRAPMibObjectV2Prefix 2 }
+
+    ibAlarmInPortIn NOTIFICATION-TYPE
+        OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibLswAlarmInPortInNum }
+        STATUS current
+        DESCRIPTION
+            "Alarm reported on the alarm-in port."
+        ::= { ibsLswTRAPMibObjectV2Prefix 3 }
+
+    ibAlarmInPortRecover NOTIFICATION-TYPE
+        OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibLswAlarmInPortInNum }
+        STATUS current
+        DESCRIPTION
+            "Alarm removed on the alarm-in port."
+        ::= { ibsLswTRAPMibObjectV2Prefix 4 }
+
+    ibCoreUsageSevereRecoveryNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibLswCoreIndex,
+            ibLswCoreTrapUsage,
+            ibLswCoreThreshold,
+            ibLswTrapCpuUsage,
+            ibLswTrapCoreProcessInfo,
+            ibLswCoreMinorThreshold,
+            ibLswCoreRecoveryThreshold
+            }
+      STATUS current
+      DESCRIPTION
+            "
+            When the product does not support ibLswCoreRecoveryThreshold,
+            the trap indicates that the core usage decreased to or below
+            the ibLswCoreThreshold.
+            When the product supports ibLswCoreRecoveryThreshold,
+            the trap indicates that the core usage decreased to or below
+            the ibLswCoreMinorThreshold.
+            "
+      ::= { ibsLswTRAPMibObjectV2Prefix 10 }
+
+    ibCoreUsageMinorNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibLswCoreIndex,
+            ibLswCoreTrapUsage,
+            ibLswCoreThreshold,
+            ibLswTrapCpuUsage,
+            ibLswTrapCoreProcessInfo,
+            ibLswCoreMinorThreshold,
+            ibLswCoreRecoveryThreshold
+            }
+      STATUS current
+      DESCRIPTION
+            "The trap indicates that the core usage increased to or above
+             the ibLswCoreMinorThreshold."
+      ::= { ibsLswTRAPMibObjectV2Prefix 11 }
+
+    ibCoreUsageMinorRecoveryNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibLswCoreIndex,
+            ibLswCoreTrapUsage,
+            ibLswCoreThreshold,
+            ibLswTrapCpuUsage,
+            ibLswTrapCoreProcessInfo,
+            ibLswCoreMinorThreshold,
+            ibLswCoreRecoveryThreshold
+            }
+      STATUS current
+      DESCRIPTION
+            "
+            When the product does not support ibLswCoreRecoveryThreshold,
+            the trap indicates that the core usage decreased to or below
+            the ibLswCoreMinorThreshold.
+            When the product supports ibLswCoreRecoveryThreshold,
+            the trap indicates that the core usage decreased to or below
+            the ibLswCoreRecoveryThreshold.
+            "
+      ::= { ibsLswTRAPMibObjectV2Prefix 12 }
+
+      ibDMAMemoryUsageCriticalNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibDMAMemoryTotal,
+            ibDMAMemoryUsed,
+            ibDMAMemoryFree,
+            ibDMAMemoryCurrentState,
+            ibDMAMemoryFreeRatio,
+            ibDMAMemoryCriticalThreshold
+            }
+      STATUS current
+      DESCRIPTION
+            "The trap indicates that the free DMA-memory space decreased to or below
+             the critical alarm threshold."
+      ::= { ibsLswTRAPMibObjectV2Prefix 41 }
+
+      ibDMAMemoryUsageRecoverNotification NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex,
+            ibDMAMemoryTotal,
+            ibDMAMemoryUsed,
+            ibDMAMemoryFree,
+            ibDMAMemoryCurrentState,
+            ibDMAMemoryFreeRatio,
+            ibDMAMemoryRecoverThreshold
+            }
+      STATUS current
+      DESCRIPTION
+            "The trap indicates that the of free DMA-memory space increased to or above
+             the normal state threshold."
+      ::= { ibsLswTRAPMibObjectV2Prefix 42 }
+
+      ibRemainingPowerNotEnough NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibFrameRemainingPower
+            }
+      STATUS current
+      DESCRIPTION
+            "The trap indicates that the remaining power of the chassis is not enouth."
+      ::= { ibsLswTRAPMibObjectV2Prefix 43 }
+
+    ibMMUParityError NOTIFICATION-TYPE
+      OBJECTS {
+            ibLswFrameIndex,
+            ibLswSlotIndex,
+            ibLswCpuIndex
+            }
+      STATUS current
+      DESCRIPTION
+            "MMU(Memory Management Unit) checking error on the slot is detected,
+             rebooting the slot is recommended."
+      ::= { ibsLswTRAPMibObjectV2Prefix 44 }
+
+      ibOutputPowerStatusNotification NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibLswOutputPowerPortID, ibLswOutputPowerStatus }
+      STATUS current
+      DESCRIPTION
+            "The trap indicates that over voltage or over current."
+      ::= { ibsLswTRAPMibObjectV2Prefix 45 }
+
+      ibBoardHeartbeatTimeout NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibLswCpuIndex, ibHeartbeatTimeoutSeconds }
+      STATUS current
+      DESCRIPTION
+            "This notification is generated when heartbeat between the MPU and a card times out."
+      ::= { ibsLswTRAPMibObjectV2Prefix 46 }
+
+      ibBoardHeartbeatResume NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibLswCpuIndex }
+      STATUS current
+      DESCRIPTION
+            "This notification is generated when heartbeat between the MPU and a card recovers."
+      ::= { ibsLswTRAPMibObjectV2Prefix 47 }
+
+      ibCommunicateError  NOTIFICATION-TYPE
+      OBJECTS
+          {
+              ibDevTrapSrcChassis,
+              ibDevTrapSrcSlot,
+              ibDevTrapSrcCpu,
+              ibDevTrapDestChassis,
+              ibDevTrapDestSlot,
+              ibDevTrapDestCpu
+          }
+      STATUS current
+      DESCRIPTION
+          "This notification is generated when communication between LIPC nodes times out."
+      ::= { ibsLswTRAPMibObjectV2Prefix 48 }
+
+      ibCommunicateResume  NOTIFICATION-TYPE
+      OBJECTS
+          {
+              ibDevTrapSrcChassis,
+              ibDevTrapSrcSlot,
+              ibDevTrapSrcCpu,
+              ibDevTrapDestChassis,
+              ibDevTrapDestSlot,
+              ibDevTrapDestCpu
+          }
+      STATUS current
+      DESCRIPTION
+          "This notification is generated when LIPC nodes are reconnected after they are disconnected."
+      ::= { ibsLswTRAPMibObjectV2Prefix 49 }
+
+      ibBoardRebooted  NOTIFICATION-TYPE
+      OBJECTS
+          {
+              ibDevTrapRebootReason,
+              ibDevTrapSrcChassis,
+              ibDevTrapSrcSlot,
+              ibDevTrapSrcCpu
+          }
+      STATUS current
+      DESCRIPTION
+          "This notification is generated when reboot fails for a single card or member device."
+      ::= { ibsLswTRAPMibObjectV2Prefix 50 }
+
+      ibDevTrapSlaveSwitchFail  NOTIFICATION-TYPE
+      OBJECTS
+          {
+              ibDevTrapSlaveSwitchFailReason
+          }
+      STATUS current
+      DESCRIPTION
+          "This notification is generated when an active/standby or master/subordinate switchover fails."
+      ::= { ibsLswTRAPMibObjectV2Prefix 51 }
+
+      ibAllBoardHeartbeatTimeout  NOTIFICATION-TYPE
+      OBJECTS
+          {
+              ibHeartbeatTimeoutSeconds
+          }
+      STATUS current
+      DESCRIPTION
+          "This notification is generated when the active MPU or master device is disconnected from all cards or member devices."
+      ::= { ibsLswTRAPMibObjectV2Prefix 52 }
+
+      ibAllBoardHeartbeatResume  NOTIFICATION-TYPE
+      STATUS current
+      DESCRIPTION
+          "This notification is generated when the active MPU or master device is reconnected to any card or member device after a disconnection."
+      ::= { ibsLswTRAPMibObjectV2Prefix 53 }
+
+      ibBladeNotInsertedNotCleared NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibLswCpuIndex }
+      STATUS  current
+      DESCRIPTION
+          "This notification is generated when a blade controller is not reinserted or data about the blade controller
+       is not cleared a long time after it is removed."
+      ::= { ibsLswTRAPMibObjectV2Prefix 54 }
+
+      ibBladeInsertedCleared NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibLswCpuIndex }
+      STATUS  current
+      DESCRIPTION
+          "This notification is generated when the removed blade controller is reinserted or data about the removed blade controller is cleared."
+      ::= { ibsLswTRAPMibObjectV2Prefix 55 }
+
+    ibDevTrapSliceStarting NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibDevTrapSliceIndex }
+      STATUS current
+      DESCRIPTION
+          "This notification is generated when the Slice module is starting."
+      ::= { ibsLswTRAPMibObjectV2Prefix 56 }
+
+    ibDevTrapSliceOnline NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibDevTrapSliceIndex }
+      STATUS  current
+      DESCRIPTION
+          "This notification is generated when the slice module is onlined."
+      ::= { ibsLswTRAPMibObjectV2Prefix 57 }
+
+    ibDevTrapSliceOffline NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibDevTrapSliceIndex }
+      STATUS  current
+      DESCRIPTION
+          "This notification is generated when the slice module is offlined."
+      ::= { ibsLswTRAPMibObjectV2Prefix 58 }
+
+    ibBoardReceiveWrongPackets NOTIFICATION-TYPE
+      OBJECTS { ibLswFrameIndex, ibLswSlotIndex, ibLswCpuIndex }
+      STATUS  current
+      DESCRIPTION
+          "This notification is generated when a board has received some wrong packets."
+      ::= { ibsLswTRAPMibObjectV2Prefix 59 }
+
+    ibDevPressKeyOperNotification NOTIFICATION-TYPE
+      OBJECTS { ibDevTrapPressKeyName, ibDevTrapPressKeyOper }
+      STATUS  current
+      DESCRIPTION
+          "This notification is generated When the reset key is pressed."
+      ::= { ibsLswTRAPMibObjectV2Prefix 60 }
+END

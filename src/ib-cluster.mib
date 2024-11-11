@@ -1,0 +1,71 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Cluster MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+--  V1.0 Created by meishenhe
+--      Initial version 2023-07-04
+-- =================================================================
+IB-CLUSTER-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE,
+    Integer32
+        FROM SNMPv2-SMI
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibCluster MODULE-IDENTITY
+    LAST-UPDATED "202307040000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB module is used for cluster status notification."
+    REVISION    "202307040000Z"
+    DESCRIPTION    "The initial version."
+    ::= { ibCommon 264 }
+
+-- ==================================================================
+--
+-- CLUSTER trap object
+--
+-- ==================================================================
+ibClusterObjects OBJECT IDENTIFIER ::= { ibCluster 1 }
+
+ibClusterConnObjects OBJECT IDENTIFIER ::= { ibClusterObjects 1 }
+
+ibClusterMemberID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Member ID of a device in a cluster."
+    ::= { ibClusterConnObjects 1 }
+
+ibClusterTrap OBJECT IDENTIFIER ::= { ibCluster 2 }
+
+ibClusterConnTrapPrefix OBJECT IDENTIFIER ::= { ibClusterTrap 0 }
+
+ibClusterRecombine NOTIFICATION-TYPE
+    OBJECTS {
+            ibClusterMemberID
+        }
+    STATUS  current
+    DESCRIPTION
+        "The ibClusterRecombine notification indicates a cluster merge event."
+::= { ibClusterConnTrapPrefix 1 }
+
+ibClusterSplitOut NOTIFICATION-TYPE
+    OBJECTS {
+            ibClusterMemberID
+        }
+    STATUS  current
+    DESCRIPTION
+        "The ibClusterSplitOut notification indicates a cluster split event."
+::= { ibClusterConnTrapPrefix 2 }
+
+END

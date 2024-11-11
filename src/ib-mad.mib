@@ -1,0 +1,50 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Multi-active Detection mib
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 Created by chenjie
+--     Initial version 2022-09-08
+-- =================================================================
+IB-MAD-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        MODULE-IDENTITY, NOTIFICATION-TYPE
+    FROM SNMPv2-SMI;
+
+ibMad MODULE-IDENTITY
+    LAST-UPDATED "202209080000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "An IRF link failure causes an IRF fabric to split in multiple IRF fabrics operating with the same Layer 3 settings,
+         including the same IP address. To avoid IP address collision and network issues, IRF uses multi-active detection
+         (MAD) mechanisms to detect the presence of multiple identical IRF fabrics, handle collisions, and recover from faults.
+        "
+    REVISION "202209080000Z"
+    DESCRIPTION
+        "Initial version of this MIB module, including ibMadTrapPrex."
+    ::= { ibCommon 253 }
+
+ibMadTrap OBJECT IDENTIFIER ::= { ibMad 1 }
+ibMadTrapPrex OBJECT IDENTIFIER ::= { ibMadTrap 0 }
+
+ibMadConflictDetect NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the detect conflict."
+    ::= { ibMadTrapPrex 1 }
+
+ibMadConflictResume NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+        "The notification is generated when the detect conflict resume."
+    ::= { ibMadTrapPrex 2 }
+
+END

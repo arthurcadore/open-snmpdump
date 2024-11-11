@@ -1,0 +1,103 @@
+-- =====================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:
+--      This MIB module is intended for the management of Fibre Channel (FC)
+--      Name Server.
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 Initial version
+--        created by qiaoxinghua 2014-03-03
+-- =====================================================================
+IB-FC-NAME-SERVER-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibSan, ibVsanIndex
+        FROM IB-VSAN-MIB
+    IbFcNameId
+        FROM IB-FC-TC-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    TruthValue
+        FROM SNMPv2-TC;
+
+ibFcNameServer MODULE-IDENTITY
+    LAST-UPDATED "201403031018Z"    -- March 03, 2014 at 10:18 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB module is intended for the management of Fibre Channel (FC)
+         Name Server."
+    REVISION "201403031018Z"
+    DESCRIPTION
+        "Initial version of this MIB module."
+    ::= { ibSan 10 }
+
+-- Node definitions
+ibFcNameServerMibObjects OBJECT IDENTIFIER ::= { ibFcNameServer 1 }
+
+-- FC Name Server Notifications
+ibFcNsNotification OBJECT IDENTIFIER ::= { ibFcNameServerMibObjects 1 }
+
+ibFcNsNotificationPrefix   OBJECT IDENTIFIER ::= { ibFcNsNotification 0 }
+ibFcNsNotificationSwitch   OBJECT IDENTIFIER ::= { ibFcNsNotification 1 }
+ibFcNsObjsForNotification  OBJECT IDENTIFIER ::= { ibFcNsNotification 2 }
+
+ibFcNsPortLoginNotify NOTIFICATION-TYPE
+    OBJECTS    { ibVsanIndex,
+                 ibFcNsLocalSwitchWWN,
+                 ibFcNsFloginPortWWN }
+    STATUS     current
+    DESCRIPTION
+    "This notification will be generated when an entry is added to the
+     Name Server database by Nx_Port locally logging in."
+    ::= { ibFcNsNotificationPrefix 1 }
+
+ibFcNsPortLogoutNotify NOTIFICATION-TYPE
+    OBJECTS    { ibVsanIndex,
+                 ibFcNsLocalSwitchWWN,
+                 ibFcNsFloginPortWWN }
+    STATUS     current
+    DESCRIPTION
+    "This notification will be generated when an entry is deleted from
+     the Name Server database by Nx_Port locally logging out."
+    ::= { ibFcNsNotificationPrefix 2 }
+
+ibFcNsPortLoginNotifyEnable OBJECT-TYPE
+    SYNTAX     TruthValue
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+    "This object is used to determine whether ibFcNsPortLoginNotify
+     will be generated for Nx_Port locally logging in."
+    ::= { ibFcNsNotificationSwitch 1 }
+
+ibFcNsPortLogoutNotifyEnable OBJECT-TYPE
+    SYNTAX     TruthValue
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+    "This object is used to determine whether ibFcNsPortLogoutNotify
+     will be generated for Nx_Port locally logging out."
+    ::= { ibFcNsNotificationSwitch 2 }
+
+ibFcNsLocalSwitchWWN OBJECT-TYPE
+    SYNTAX     IbFcNameId
+    MAX-ACCESS accessible-for-notify
+    STATUS     current
+    DESCRIPTION
+        "The world wide name of the local switch."
+    ::= { ibFcNsObjsForNotification 1 }
+
+ibFcNsFloginPortWWN OBJECT-TYPE
+    SYNTAX     IbFcNameId
+    MAX-ACCESS accessible-for-notify
+    STATUS     current
+    DESCRIPTION
+        "The world wide name of the local logged-in Nx_Port."
+    ::= { ibFcNsObjsForNotification 2 }
+
+END

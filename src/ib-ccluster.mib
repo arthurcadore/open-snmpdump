@@ -1,0 +1,614 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: cloud-cluster mib
+-- Reference: CCLUSTER-MIB
+-- Version: V1.0
+-- History:
+--   V1.0 Created by matianming10568
+--        Initial version 2023-8-10
+-- =================================================================
+IB-CCLUSTER-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+                FROM IB-OID-MIB
+    InetAddress, InetAddressType
+                FROM INET-ADDRESS-MIB
+    entPhysicalIndex
+                FROM ENTITY-MIB
+    ifIndex, ifDescr, InterfaceIndex
+                FROM IF-MIB
+    Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, Unsigned32
+                FROM SNMPv2-SMI
+    DisplayString, MacAddress, TruthValue
+                FROM SNMPv2-TC;
+
+ibCCluster MODULE-IDENTITY
+    LAST-UPDATED "202308101630Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB is used to manage cloud cluster topology management
+         information for CCLUSTER (Cloud Cluster) devices.
+         This MIB is applicable to CCLUSTER-capable products. Some objects in
+         this MIB may be used only for some specific products, so users should
+         refer to the related documents to acquire more detailed information."
+    REVISION "202308101630Z"             -- 10th August, 2023 at 16:30 GMT
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 265 }
+
+
+-- Scalar MIB objects, which are considered as global variables
+-- Global Level Configuration
+
+ibCClusterGlobalConfig OBJECT IDENTIFIER ::= { ibCCluster 1 }
+
+ibCClusterServiceDomainID OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..4294967295)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Domain ID of the service cluster fabric that is used to uniquely identify a service cluster fabric.
+         Domain IDs prevent service cluster fabrics from interfering with one another."
+    ::= { ibCClusterGlobalConfig 1 }
+
+ibCClusterCHelloTimeout OBJECT-TYPE
+    SYNTAX      Integer32 (3..58)
+    UNITS       "second"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Timeout of cloud cluster hello packet."
+    ::= { ibCClusterGlobalConfig 2 }
+
+ibCClusterSHelloTimeout OBJECT-TYPE
+    SYNTAX      Integer32 (5..60)
+    UNITS       "second"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Timeout of service-cluster hello packet.
+         The timeout time of the cluster Hello message may be too short,
+         which may lead to frequent cluster splitting. If it is too long,
+         it can lead to a decrease in the performance of the cluster's active/standby switching.
+         Usually, the default value is sufficient."
+    ::= { ibCClusterGlobalConfig 3 }
+
+ibCClusterLinkDelayInterval OBJECT-TYPE
+    SYNTAX      Integer32 (0..10000)
+    UNITS       "millisecond"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Delay for cluster ports to report a link down event.  If the link comes up
+         before the delay timer expires, the cluster port will not report the link
+         down event. If the link is not recovered before the delay timer expires,
+         the cluster port will report the change.  If the delay is set to 0,
+         the cluster ports will report a link down event without delay.
+
+        0: no delay
+        other value(ms): delay time"
+    ::= { ibCClusterGlobalConfig 4 }
+
+ibCClusterMacPersistence OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            notPersist(1),
+            persistForSixMin(2),
+            persistForever(3)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The mode of bridge MAC address persistence.  When a cluster starts,
+         the bridge MAC address of the master is used as that of the cluster.
+         When the master leaves the cluster, the bridge MAC address of the
+         cluster changes depending on the mode of bridge MAC address persistence.
+
+        notPersist: The bridge MAC address of the new master is used
+                    as that of the cluster immediately.
+        persistForSixMin: The original bridge MAC address will be reserved for six
+                    minutes. In this period, if the master that has left rejoins the cluster,
+                    the bridge MAC address of the cluster will not change.
+                    If the old master doesn't rejoin the cluster within this period, the
+                    bridge MAC address of the new master will be used as that of the cluster.
+        persistForever: Whether the master leaves or not, the bridge MAC address
+                    of the cluster will never change."
+    ::= { ibCClusterGlobalConfig 5 }
+
+ibCClusterMacPersistenceTime OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "minute"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Cloud cluster bridge MAC persistence time."
+    ::= { ibCClusterGlobalConfig 6 }
+
+ibCClusterBridgeMacAddress OBJECT-TYPE
+    SYNTAX         MacAddress
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+        "The textual name of the cloud cluster bridge MAC address."
+    ::= { ibCClusterGlobalConfig 7 }
+
+ibCClusterMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current cloud cluster mode of the device.
+
+         true: the current device mode is cluster mode
+         false: the current device mode is standalone mode"
+    ::= { ibCClusterGlobalConfig 8 }
+
+ibCClusterMemberNum OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of members currently in the cloud cluster."
+    ::= { ibCClusterGlobalConfig 9 }
+
+ibCClusterMaxMember OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum number of members in the cloud cluster."
+    ::= { ibCClusterGlobalConfig 10 }
+
+ibCClusterAutoUpdate OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The function for automatically updating the image from the master to
+         a device that is attempting to join the cluster.
+         When a new device tries to join a cluster, Cloud cluster verifies the
+         image consistency between the joining device and the master.
+         If the joining device uses a different image version than the master,
+         the function updates the joining device with the image of the master.
+         When this function is disabled, the new device can't join the cluster
+         if it uses a different software version than the master.
+
+        false: disable auto update function
+        true: enable auto update function"
+    ::= { ibCClusterGlobalConfig 11 }
+
+ibCClusterConfigActivate OBJECT-TYPE
+    SYNTAX     INTEGER
+        {
+            set(1),
+            none(2)
+        }
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        "After modifying the cluster configuration, it is necessary to activate the
+         configuration through this node for the new configuration to take effect.
+         This node will automatically determine the impact of the modified configuration
+         on the device, determine whether hardware restart is necessary based on the impact,
+         and automatically restart the business board, member devices,
+         and even the entire cloud cluster.
+
+         none: If the user sets this object to none, this object will return
+               a success without performing any operation.
+         set: Activates the settings on the IRF ports.
+              After the settings is activated, this object will return to
+              none at the next reading."
+    DEFVAL { none }
+    ::= { ibCClusterGlobalConfig 12 }
+
+
+-- Member Level Configuration
+ibCClusterMemberConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbCClusterMemberConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects to manage device information in a cloud cluster."
+    ::= { ibCCluster 2 }
+
+ibCClusterMemberConfigEntry OBJECT-TYPE
+    SYNTAX      IbCClusterMemberConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects to manage device information in a cloud cluster."
+    INDEX
+        {
+            entPhysicalIndex
+        }
+    ::= { ibCClusterMemberConfigTable 1 }
+
+IbCClusterMemberConfigEntry ::= SEQUENCE
+    {
+        ibCClusterMemberID          Integer32,
+        ibCClusterNewMemberID       Integer32,
+        ibCClusterMemberIPType      InetAddressType,
+        ibCClusterMemberIP          InetAddress,
+        ibCClusterMemberIPMaskLen   Integer32,
+        ibCClusterJoinIP            InetAddress,
+        ibCClusterRole              INTEGER,
+        ibCClusterCPUMacAddress     MacAddress,
+        ibCClusterDeviceStatus      OCTET STRING
+    }
+
+ibCClusterMemberID OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The member ID of the device in a cloud cluster."
+    ::= { ibCClusterMemberConfigEntry 1 }
+
+ibCClusterNewMemberID OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The configured member ID of the device. The valid value ranges from
+         1 to the value in ibCClusterMaxMember. The configured member ID will
+         take effect at a reboot if it is unique within the cluster."
+    ::= { ibCClusterMemberConfigEntry 2 }
+
+ibCClusterMemberIPType OBJECT-TYPE
+    SYNTAX       InetAddressType
+    MAX-ACCESS   read-write
+    STATUS       current
+    DESCRIPTION
+         "The IP address type (IPv4 or IPv6) of ibCClusterMemberIP."
+    ::= { ibCClusterMemberConfigEntry 3 }
+
+ibCClusterMemberIP OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "IP address for cloud cluster member."
+    ::= { ibCClusterMemberConfigEntry 4 }
+
+ibCClusterMemberIPMaskLen OBJECT-TYPE
+    SYNTAX      Integer32 (1..127)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "IP address mask length for cloud cluster member."
+    ::= { ibCClusterMemberConfigEntry 5 }
+
+ibCClusterJoinIP OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The IP address of the member in the cluster."
+    ::= { ibCClusterMemberConfigEntry 6 }
+
+ibCClusterRole OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            managerworker(1),
+            worker(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The role of device in a cloud cluster.
+
+         managerworker: Being both a cluster manager and a cluster worker.
+         worker: Cluster worker."
+    ::= { ibCClusterMemberConfigEntry 7 }
+
+ibCClusterCPUMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The textual name of the CPU MAC address of the member device in a cloud cluster."
+    ::= { ibCClusterMemberConfigEntry 8 }
+
+ibCClusterDeviceStatus OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device container running status: Online, Offline, MAD down, etc."
+    ::= { ibCClusterMemberConfigEntry 9 }
+
+
+-- Board Level Configuration
+ibCClusterBoardConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbCClusterBoardConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects to manage MPU information for a cloud cluster."
+    ::= { ibCCluster 3 }
+
+ibCClusterBoardConfigEntry OBJECT-TYPE
+    SYNTAX      IbCClusterBoardConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects to manage MPU information for a cloud cluster."
+    INDEX
+        {
+            ibCClusterMemberID
+        }
+    ::= { ibCClusterBoardConfigTable 1 }
+
+IbCClusterBoardConfigEntry ::= SEQUENCE
+    {
+        ibCClusterBoardRole               INTEGER,
+        ibCClusterBoardBelongtoMember     Integer32
+    }
+
+ibCClusterBoardRole OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            master(1),
+            standby(2),
+            loading(3),
+            other(4)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The role of the MPU in the service cluster.
+
+         master: Master MPU.
+         standby: Standby MPU.
+         loading: Standby MPU is loading the software image from the master.
+         other: other."
+    ::= { ibCClusterBoardConfigEntry 1 }
+
+ibCClusterBoardBelongtoMember OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Member ID of the device that holds the current board."
+    ::= { ibCClusterBoardConfigEntry 2 }
+
+
+-- cloud cluster port Information
+ibCClusterPortInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbCClusterPortInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects to manage cluster port information
+         for CCLUSTER stacked devices."
+    ::= { ibCCluster 4 }
+
+ibCClusterPortInfoEntry OBJECT-TYPE
+    SYNTAX      IbCClusterPortInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains objects to manage cluster port information
+         for CCLUSTER stacked devices."
+    INDEX
+        {
+            ibCClusterMemberID
+        }
+    ::= { ibCClusterPortInfoTable 1 }
+
+IbCClusterPortInfoEntry ::= SEQUENCE
+    {
+        ibCClusterPortIfIndex     InterfaceIndex,
+        ibCClusterPortLinkType    INTEGER,
+        ibCClusterPortLinkState   INTEGER
+    }
+
+ibCClusterPortIfIndex OBJECT-TYPE
+    SYNTAX        InterfaceIndex
+    MAX-ACCESS    read-write
+    STATUS        current
+    DESCRIPTION
+        "Cluster interface index."
+    ::= { ibCClusterPortInfoEntry 1 }
+
+ibCClusterPortLinkType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            control(1),
+            data(2),
+            misc(3),
+            none(4)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Cluster interface channel type. A cluster link must have at least one control
+         channel and one data channel.
+
+         control: Control channel type for transmitting cluster protocol messages
+                  between members of a cloud cluster.
+         data: Data channel type, used for forwarding business messages
+               between members of a cloud cluster.
+         misc: As both control and data channels.
+         none: Unbind cluster links and physical interfaces."
+    ::= { ibCClusterPortInfoEntry 2 }
+
+ibCClusterPortLinkState OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            up(1),
+            down(2)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The link status of a cluster port on the device.
+
+        up: The physical state of the interface is up.
+        down: The physical state of the interface is down."
+    ::= { ibCClusterPortInfoEntry 3 }
+
+
+--
+-- Notification definitions
+--
+-- =================================================================
+-- Traps are defined below.
+ibCClusterTrap OBJECT IDENTIFIER ::= { ibCCluster 5 }
+
+ibCClusterTrapObjects OBJECT IDENTIFIER ::= { ibCClusterTrap 0 }
+-- All trap definitions should be placed under this object.
+
+ibCClusterMadLacpChangeNormal NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS      current
+    DESCRIPTION
+        "The ibCClusterMadLacpChangeNormal trap indicates that the
+         LACP MAD function changed to the normal state."
+    ::= { ibCClusterTrapObjects 1 }
+
+ibCClusterMadLacpChangeFail NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ifIndex,
+            ifDescr
+        }
+    STATUS      current
+    DESCRIPTION
+        "The ibCClusterMadLacpChangeFail trap indicates that the
+         LACP MAD function changed to the failure state."
+    ::= { ibCClusterTrapObjects 2 }
+
+ibCClusterPhysIntfLinkUp NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCClusterMemberID,
+            ibCClusterPhysIntfName
+        }
+    STATUS      current
+    DESCRIPTION
+        "The ibCClusterPhysIntfLinkUp trap indicates that the status
+         of the cluster physical interface has changed to the up state."
+    ::= { ibCClusterTrapObjects 3 }
+
+ibCClusterPhysIntfLinkDown NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCClusterMemberID,
+            ibCClusterPhysIntfName
+        }
+    STATUS      current
+    DESCRIPTION
+        "The ibCClusterPhysIntfLinkDown trap indicates that the status
+         of the cluster physical interface has changed to the down state."
+    ::= { ibCClusterTrapObjects 4 }
+
+ibCClusterMemberAdd NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCClusterMemberID,
+            ibCClusterCPUMacAddress
+        }
+    STATUS      current
+    DESCRIPTION
+        "The ibCClusterMemberAdd trap indicates that
+         the new cluster member has joined."
+    ::= { ibCClusterTrapObjects 5 }
+
+ibCClusterMemberLeave NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCClusterMemberID,
+            ibCClusterCPUMacAddress
+        }
+    STATUS      current
+    DESCRIPTION
+        "The ibCClusterMemberLeave trap indicates that
+         the cluster member has left."
+    ::= { ibCClusterTrapObjects 6 }
+
+ibCClusterLinkUp NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCClusterMemberID
+        }
+    STATUS      current
+    DESCRIPTION
+        "The ibCClusterLinkUp trap indicates that the cluster
+         logical interface has changed to the up state."
+    ::= { ibCClusterTrapObjects 7 }
+
+ibCClusterLinkDown NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCClusterMemberID
+        }
+    STATUS      current
+    DESCRIPTION
+        "The ibCClusterLinkDown trap indicates that the cluster
+         logical interface has changed to the down state."
+    ::= { ibCClusterTrapObjects 8 }
+
+ibCClusterBrigdgeMacChange NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCClusterMemberID
+        }
+    STATUS      current
+    DESCRIPTION
+        "The ibCClusterBrigdgeMacChange trap indicates that the MAC address of
+         the cluster system has changed to that of the new primary device."
+    ::= { ibCClusterTrapObjects 9 }
+
+ibCClusterPortConfigFailure NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCClusterMemberID
+        }
+    STATUS      current
+    DESCRIPTION
+        "The ibCClusterPortConfigFailure trap indicates that
+         Cloud cluster port configuration failed."
+    ::= { ibCClusterTrapObjects 10 }
+
+ibCClusterSetUpFailure NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibCClusterMemberID,
+            ibCClusterSetUpFailureReason
+        }
+    STATUS      current
+    DESCRIPTION
+        "The ibCClusterSetUpFailure trap indicates that
+         Cloud cluster creation failed."
+    ::= { ibCClusterTrapObjects 11 }
+
+ibCClusterTrapObjectDefs OBJECT IDENTIFIER ::= { ibCClusterTrap 1 }
+-- All objects used for TRAP only are defined here.
+
+ibCClusterPhysIntfName OBJECT-TYPE
+    SYNTAX         OCTET STRING (SIZE(1..255))
+    MAX-ACCESS     accessible-for-notify
+    STATUS         current
+    DESCRIPTION
+        "The textual name of the stack physical interface."
+    ::= { ibCClusterTrapObjectDefs 1 }
+
+ibCClusterSetUpFailureReason OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE(1..512))
+    MAX-ACCESS     accessible-for-notify
+    STATUS         current
+    DESCRIPTION
+        "The textual name of the stack creation failed error reason."
+    ::= { ibCClusterTrapObjectDefs 2 }
+
+END

@@ -1,0 +1,713 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: This file describes the enterprise mib implementation
+--              of sending some traps.
+-- Reference:
+-- Version: V1.8
+-- History:
+--   V1.0 created by Huang Yang
+--     Initial version 2005-01-25
+--   V1.1 2005-10-27  added ibArpPortDynamicEntryFullTrap by ZhangLin
+--   V1.2 2007-02-06  added ibNdTabTrapEnable, ibNdTabTrapInterval,
+--                    ibNdTabLen and ibNdTabFullTrap by lizuxing04859
+--   V1.3 2008-07-18  added ibPeriodicalTrapGroup by songhao
+--   V1.4 2009-10-09  modified ibPeriodicalTrapInterval by lisong
+--   V1.5 2010-03-06  added ibPeriodicalTrapSwitch, ibTrapDesInfoTable
+--                    ibTrapConfigTable by haoyan
+--        2010-04-29  added ibDefaultRtDelTrap by wenchenhua
+--        2010-06-05  added ibTrapDesAddrTAddress by jinyi
+--   V1.6 2013-09-13  added ibPeriodicalTrapSwitch2 and
+--                    ibTrapConfigSwitch2 by duyanbing
+--   V1.7 2022-06-17  Add ibTrapSnmp to ibTableGroup.
+--                  Add ibTrapPrex to ibTrapSnmp
+--                  Add ibTrapSnmpSystemReset to ibTrapPrex.
+--   V1.8 2023-04-21  Add ibArpTabTrapNotification to ibArpTabStatGroup.
+--                  Add ibArpTabTrapNotificationPrefix to ibArpTabTrapNotification
+--                  Add ibArpTabFullResumeTrap to ibArpTabTrapNotificationPrefix.
+-- =================================================================
+IB-TRAP-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        IpAddress
+            FROM SNMPv2-SMI
+        SnmpAdminString
+            FROM SNMP-FRAMEWORK-MIB
+        ifIndex, ifDescr, InterfaceIndex
+            FROM IF-MIB
+        RowStatus, TAddress, TruthValue
+            FROM SNMPv2-TC
+        Integer32, OBJECT-TYPE,
+        MODULE-IDENTITY, NOTIFICATION-TYPE
+            FROM SNMPv2-SMI
+        InetAddressType, InetAddress
+            FROM INET-ADDRESS-MIB
+        ibCommon
+            FROM IB-OID-MIB;
+
+    ibTrap MODULE-IDENTITY
+        LAST-UPDATED "202304211050Z"
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+            "This MIB is applicable to routers, switches and other products.
+
+            Some objects in this may be used only for some specific products,
+            so users should refer to the related documents to acquire more
+            detail information.
+            "
+        REVISION "202304211050Z"
+        DESCRIPTION
+            "Add ibArpTabTrapNotification to ibArpTabStatGroup.
+             Add ibArpTabTrapNotificationPrefix to ibArpTabTrapNotification
+             Add ibArpTabFullResumeTrap to ibArpTabTrapNotificationPrefix."
+        REVISION "202206171050Z"
+        DESCRIPTION
+            "Add ibTrapSnmp to ibTableGroup.
+             Add ibTrapPrex to ibTrapSnmp
+             Add ibTrapSnmpSystemReset to ibTrapPrex."
+        REVISION "201006051050Z"
+        DESCRIPTION
+            "The initial revision of this MIB module."
+        ::= { ibCommon 38 }
+
+
+--
+-- Node definitions
+--
+    ibTableGroup OBJECT IDENTIFIER ::= { ibTrap 1 }
+
+-- Describe objects for MAC table
+    ibMacTabStatGroup OBJECT IDENTIFIER ::= { ibTableGroup 1 }
+
+    ibMacTabTrapEnable OBJECT-TYPE
+        SYNTAX INTEGER{
+                        enable(1),
+                        disable(2)
+                        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibMacTabFullTrap and
+            ibMacTabAlmostFullTrap traps should be generated
+            when the MAC table is filled."
+        DEFVAL { enable }
+        ::= { ibMacTabStatGroup 1 }
+
+    ibMacTabTrapInterval OBJECT-TYPE
+        SYNTAX Integer32 (30..3600)
+        UNITS "seconds"
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Definition of the minimum interval between two
+            traps which occur when the MAC table is full or
+            two traps which occur when the MAC table is almost full."
+        DEFVAL { 30 }
+        ::= { ibMacTabStatGroup 2 }
+
+    ibMacTabTrapInfo OBJECT IDENTIFIER ::= { ibMacTabStatGroup 3 }
+
+    ibMacTabLen OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The length of the MAC table."
+        ::= { ibMacTabTrapInfo 1 }
+
+    ibMacTabTrap OBJECT IDENTIFIER ::= { ibMacTabStatGroup 4 }
+
+    ibMacTabFullTrap NOTIFICATION-TYPE
+            OBJECTS { ibMacTabLen }
+            STATUS current
+            DESCRIPTION
+                "Send this trap when the MAC table is filled.  The
+                interval between two traps generated should be longer
+                than ibMacTabTrapInterval."
+            ::= { ibMacTabTrap 1 }
+
+    ibMacTabAlmostFullTrap NOTIFICATION-TYPE
+            STATUS current
+            DESCRIPTION
+                "Send this trap when the MAC table is almost full.  The
+                interval between two traps generated should be longer
+                than ibMacTabTrapInterval."
+            ::= { ibMacTabTrap 2 }
+
+-- Describe objects for ARP table
+    ibArpTabStatGroup OBJECT IDENTIFIER ::= { ibTableGroup 2 }
+
+    ibArpTabTrapEnable OBJECT-TYPE
+        SYNTAX INTEGER {
+                        enable(1),
+                        disable(2)
+                        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibArpTabFullTrap traps
+            should be generated when the ARP table is filled."
+        DEFVAL { enable }
+        ::= { ibArpTabStatGroup 1 }
+
+    ibArpTabTrapInterval OBJECT-TYPE
+        SYNTAX Integer32 (30..3600)
+        UNITS "seconds"
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Definition of the minimum interval between two traps
+            which occur when the ARP table is filled."
+        DEFVAL { 30 }
+        ::= { ibArpTabStatGroup 2 }
+
+    ibArpTabTrapInfo OBJECT IDENTIFIER ::= { ibArpTabStatGroup 3 }
+
+    ibArpTabLen OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The length of the ARP table."
+        ::= { ibArpTabTrapInfo 1 }
+
+    ibArpTabTrap OBJECT IDENTIFIER ::= { ibArpTabStatGroup 4 }
+
+    ibArpTabFullTrap NOTIFICATION-TYPE
+            OBJECTS { ibArpTabLen }
+            STATUS current
+            DESCRIPTION
+                "Send this trap when the ARP table is filled.  The
+                interval between two traps generated should be longer
+                than ibArpTabTrapInterval."
+            ::= { ibArpTabTrap 1 }
+
+    ibArpPortDynamicEntryFullTrap NOTIFICATION-TYPE
+            OBJECTS { ibArpTabLen, ifIndex, ifDescr }
+            STATUS current
+            DESCRIPTION
+                 "Send this trap when the dynamic ARP number of the
+                port exceeds the limitation. The object ibArpTabLen
+                describes the limitation of the max dynamic ARP number
+                of this port. The interval between two traps should be
+                longer than ibArpTabTrapInterval."
+            ::= { ibArpTabTrap 2 }
+
+    ibArpTabTrapNotification OBJECT IDENTIFIER
+        ::= { ibArpTabStatGroup 5 }
+
+    ibArpTabTrapNotificationPrefix OBJECT IDENTIFIER
+        ::= { ibArpTabTrapNotification 0 }
+
+    ibArpTabFullResumeTrap NOTIFICATION-TYPE
+            OBJECTS { ibArpTabLen }
+            STATUS current
+            DESCRIPTION
+                "Send this trap when the ARP table is filled for
+                recovery. The interval between two traps generated
+                should be longer than ibArpTabTrapInterval."
+            ::= { ibArpTabTrapNotificationPrefix 3 }
+
+-- Describe objects for routing table
+    ibRtTabStatGroup OBJECT IDENTIFIER ::= { ibTableGroup 3 }
+
+    ibDetailRtTrapTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbDetailRtTrapEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "This table contains objects to decide what kind of
+            trap should be sent."
+        ::= { ibRtTabStatGroup 1 }
+
+    ibDetailRtTrapEntry OBJECT-TYPE
+        SYNTAX IbDetailRtTrapEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Entry items"
+        INDEX { ibDetailRtProType }
+        ::= { ibDetailRtTrapTable 1 }
+
+    IbDetailRtTrapEntry ::=
+        SEQUENCE {
+            ibDetailRtProType
+                INTEGER,
+            ibDetailRtEnable
+                INTEGER
+        }
+
+    ibDetailRtProType OBJECT-TYPE
+        SYNTAX INTEGER {
+            other(1),       -- none of the following
+
+                            -- non-protocol information,
+                            -- e.g., manually configured
+            local(2),       -- entries
+            rip(3),
+            isis(4),
+            ospf(5),
+            bgp(6)
+        }
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The index value which uniquely identifies an entry
+            in the ibDetailRtTrapTable."
+        ::= { ibDetailRtTrapEntry 1 }
+
+    ibDetailRtEnable OBJECT-TYPE
+        SYNTAX INTEGER {
+                        enable(1),
+                        disable(2)
+                        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibDetailRtTabFullTrap traps
+            should be generated when a specific routing table
+            is filled."
+        DEFVAL { enable }
+        ::= { ibDetailRtTrapEntry 2 }
+
+    ibRtTabTrapEnable OBJECT-TYPE
+        SYNTAX INTEGER {
+                        enable(1),
+                        disable(2)
+                        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibRtTabFullTrap traps should
+            be generated when the routing table is filled."
+        DEFVAL { enable }
+        ::= { ibRtTabStatGroup 2 }
+
+    ibRtTabTrapInterval OBJECT-TYPE
+        SYNTAX Integer32 (30..3600)
+        UNITS "seconds"
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Definition of the minimum interval between two
+            traps which occur when the routing table is filled."
+        DEFVAL { 30 }
+        ::= { ibRtTabStatGroup 3 }
+
+    ibRtTabTrapInfo OBJECT IDENTIFIER ::= { ibRtTabStatGroup 4 }
+
+    ibRtTabLen OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The length of the routing table.  The detail
+            routing tables also use the same object."
+        ::= { ibRtTabTrapInfo 1 }
+
+    ibDefaultRtNextHopType OBJECT-TYPE
+        SYNTAX InetAddressType
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The IP address type of the next hop of the default route.
+            The value must be ipv4 or ipv6"
+        ::= { ibRtTabTrapInfo 2 }
+
+    ibDefaultRtNextHop OBJECT-TYPE
+        SYNTAX InetAddress
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The IP address of the next hop of the default route."
+        ::= { ibRtTabTrapInfo 3 }
+
+    ibDefaultRtOutIf OBJECT-TYPE
+        SYNTAX InterfaceIndex
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The index value which uniquely identifies the
+             local interface through which the next hop of this
+             route should be reached.  The interface identified
+             by a particular value of this index is the same
+             interface as identified by the same value of
+             ifIndex."
+        ::= { ibRtTabTrapInfo 4 }
+
+    ibRtTabTrap OBJECT IDENTIFIER ::= { ibRtTabStatGroup 5 }
+
+    ibRtTabFullTrap NOTIFICATION-TYPE
+            OBJECTS { ibRtTabLen }
+            STATUS current
+            DESCRIPTION
+                "Send this trap when the routing table is filled.  The
+                interval between two traps generated should be longer
+                than ibRtTabTrapInterval."
+            ::= { ibRtTabTrap 1 }
+
+    ibDetailRtTabFullTrap NOTIFICATION-TYPE
+            OBJECTS { ibDetailRtProType, ibRtTabLen }
+            STATUS current
+            DESCRIPTION
+                "Send this trap when the detail routing table is filled.  The
+                interval between two traps generated should be longer than
+                ibRtTabTrapInterval."
+            ::= { ibRtTabTrap 2 }
+
+    ibDefaultRtDelTrap NOTIFICATION-TYPE
+            OBJECTS { ibDetailRtProType, ibDefaultRtNextHopType, ibDefaultRtNextHop, ibDefaultRtOutIf }
+            STATUS current
+            DESCRIPTION
+                "Send this trap when the default route is deleted."
+            ::= { ibRtTabTrap 3 }
+
+    ibDefaultRtDelTrapEnable OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibDefaultRtDelTrap traps should
+            be generated when the default route is deleted."
+        DEFVAL { false }
+        ::= { ibRtTabStatGroup 6 }
+
+-- Describe objects for multicast table
+    ibMulticastTabStatGroup OBJECT IDENTIFIER ::= { ibTableGroup 4 }
+
+    ibMulticastTabTrapEnable OBJECT-TYPE
+        SYNTAX INTEGER {
+                        enable(1),
+                        disable(2)
+                        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibMulticastTabFullTrap traps
+            should be generated when the multicast table is filled."
+        DEFVAL { enable }
+        ::= { ibMulticastTabStatGroup 1 }
+
+    ibMulticastTabTrapInterval OBJECT-TYPE
+        SYNTAX Integer32 (30..3600)
+        UNITS "seconds"
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Definition of the minimum interval between two traps
+            which occur when the multicast table is filled."
+        DEFVAL { 30 }
+        ::= { ibMulticastTabStatGroup 2 }
+
+    ibMulticastTabTrapInfo OBJECT IDENTIFIER ::= { ibMulticastTabStatGroup 3 }
+
+    ibMulticastTabType OBJECT-TYPE
+        SYNTAX INTEGER {
+                        lay2(1),
+                        lay3(2)
+                        }
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "Defining the type of the multicast table, layer2 or layer3."
+        ::= { ibMulticastTabTrapInfo 1 }
+
+    ibMulticastTabLen OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The length of the multicast table."
+        ::= { ibMulticastTabTrapInfo 2 }
+
+    ibMulticastTabTrap OBJECT IDENTIFIER ::= { ibMulticastTabStatGroup 4 }
+
+    ibMulticastTabFullTrap NOTIFICATION-TYPE
+            OBJECTS { ibMulticastTabType, ibMulticastTabLen }
+            STATUS current
+            DESCRIPTION
+                "Send this trap when the multicast table is filled.  The
+                interval between two traps generated should be longer
+                than ibMulticastTabTrapInterval."
+            ::= { ibMulticastTabTrap 1 }
+
+
+-- Describe objects for Neighbor table
+    ibNdTabStatGroup OBJECT IDENTIFIER ::= { ibTableGroup 5 }
+
+    ibNdTabTrapEnable OBJECT-TYPE
+        SYNTAX INTEGER {
+                        enable(1),
+                        disable(2)
+                        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Indicates whether ibNdTabFullTrap traps
+            should be generated when the ND table is filled."
+        DEFVAL { enable }
+        ::= { ibNdTabStatGroup 1 }
+
+    ibNdTabTrapInterval OBJECT-TYPE
+        SYNTAX Integer32 (30..3600)
+        UNITS "seconds"
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Definition of the minimum interval between two traps
+            which occur when the ND table is filled."
+        DEFVAL { 30 }
+        ::= { ibNdTabStatGroup 2 }
+
+    ibNdTabTrapInfo OBJECT IDENTIFIER ::= { ibNdTabStatGroup 3 }
+
+    ibNdTabLen OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The length of the ND table."
+        ::= { ibNdTabTrapInfo 1 }
+
+    ibNdTabTrap OBJECT IDENTIFIER ::= { ibNdTabStatGroup 4 }
+
+    ibNdTabFullTrap NOTIFICATION-TYPE
+            OBJECTS { ibNdTabLen }
+            STATUS current
+            DESCRIPTION
+                "Send this trap when the ND table is filled.  The
+                interval between two traps generated should be longer
+                than ibNdTabTrapInterval."
+            ::= { ibNdTabTrap 1 }
+
+-- Describe SNMP periodical trap group
+    ibPeriodicalTrapGroup OBJECT IDENTIFIER ::= { ibTableGroup 6 }
+
+-- Describe objects for SNMP periodical trap
+    ibPeriodicalTrapObjects OBJECT IDENTIFIER
+        ::= { ibPeriodicalTrapGroup 1 }
+
+    ibPeriodicalTrapInterval OBJECT-TYPE
+        SYNTAX Integer32 (0|10..3600)
+        UNITS "seconds"
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Definition of the periodical interval.
+            If no trap occurs during the certain interval, an ibPeriodicalTrap
+            will be generated.
+            If the interval is set to 0, no ibPeriodicalTrap will be generated."
+        DEFVAL { 60 }
+        ::= { ibPeriodicalTrapObjects 1 }
+
+    ibPeriodicalTrapSwitch OBJECT-TYPE
+        SYNTAX INTEGER {
+                        enable(1),
+                        disable(2)
+                        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Definition of the periodical switch.
+            If the value is off,the ibPeriodicalTrap will not be generated.
+            the ibPeriodicalTrapInterval will be set to 0."
+        DEFVAL { enable }
+        ::= { ibPeriodicalTrapObjects 2 }
+
+    ibPeriodicalTrapSwitch2 OBJECT-TYPE
+        SYNTAX INTEGER {
+                        off(0),
+                        on(1)
+                        }
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Periodical heartbeat trap sending switch.
+            If the value is off, the ibPeriodicalTrap will not be generated,
+            and the ibPeriodicalTrapInterval will be set to 0.  This node
+            differs from ibPeriodicalTrapSwitch in value."
+        DEFVAL { on }
+        ::= { ibPeriodicalTrapObjects 3 }
+
+-- Describe information for SNMP periodical trap
+    ibPeriodicalTrapInfo OBJECT IDENTIFIER
+        ::= { ibPeriodicalTrapGroup 2 }
+
+-- Describe SNMP periodical trap
+    ibPeriodicalNotification OBJECT IDENTIFIER
+        ::= { ibPeriodicalTrapGroup 3 }
+
+    ibPeriodicalNotificationPrefix OBJECT IDENTIFIER
+        ::= { ibPeriodicalNotification 0 }
+
+    ibPeriodicalTrap NOTIFICATION-TYPE
+            STATUS current
+            DESCRIPTION
+                "If no trap occurs during the interval spicified by
+                ibPeriodicalTrapInterval, an ibPeriodicalTrap
+                will be generated. If the interval is set to 0, no
+                ibPeriodicalTrap will be generated."
+            ::= { ibPeriodicalNotificationPrefix 1 }
+
+-- Describe SNMP TrapDesInfo group
+    ibTrapDesInfo OBJECT IDENTIFIER ::= { ibTableGroup 7 }
+
+    ibTrapDesInfoTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbTrapDesInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "A table of trap destination host address and port ."
+            ::= { ibTrapDesInfo 1 }
+
+    ibTrapDesInfoEntry OBJECT-TYPE
+            SYNTAX IbTrapDesInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The entry of trap destination host address and port."
+            INDEX { ibTrapDesInfoIndex }
+            ::= { ibTrapDesInfoTable 1 }
+
+    IbTrapDesInfoEntry ::=
+            SEQUENCE {
+                ibTrapDesInfoIndex Integer32,
+                ibTrapDesIPAddress IpAddress,
+                ibTrapDesPort Integer32,
+                ibTrapDesRowStatus  RowStatus,
+                ibTrapDesAddrTAddress TAddress
+            }
+
+    ibTrapDesInfoIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..20)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The index of this table."
+            ::= { ibTrapDesInfoEntry 1 }
+
+    ibTrapDesIPAddress OBJECT-TYPE
+            SYNTAX IpAddress
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The host IP address of the trap destination."
+            ::= { ibTrapDesInfoEntry 2 }
+
+    ibTrapDesPort OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The port of the trap destination."
+            ::= { ibTrapDesInfoEntry 3 }
+
+    ibTrapDesRowStatus OBJECT-TYPE
+            SYNTAX RowStatus
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The status of this table entry."
+            ::= { ibTrapDesInfoEntry 4 }
+
+    ibTrapDesAddrTAddress OBJECT-TYPE
+            SYNTAX TAddress
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "This object contains a transport address."
+            ::= { ibTrapDesInfoEntry 5 }
+
+-- Describe SNMP TrapConfig group
+    ibTrapConfig OBJECT IDENTIFIER ::= { ibTableGroup 8 }
+
+    ibTrapConfigTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbTrapConfigEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "A table of trap configuration."
+            ::= { ibTrapConfig 1 }
+
+    ibTrapConfigEntry OBJECT-TYPE
+            SYNTAX IbTrapConfigEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The entry of trap configuration."
+            INDEX { ibTrapConfigIndex }
+            ::= { ibTrapConfigTable 1 }
+
+    IbTrapConfigEntry ::=
+            SEQUENCE {
+                    ibTrapConfigIndex Integer32,
+                    ibTrapConfigName SnmpAdminString,
+                    ibTrapConfigDescr SnmpAdminString,
+                    ibTrapConfigSwitch INTEGER,
+                    ibTrapConfigSwitch2 INTEGER
+            }
+
+    ibTrapConfigIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..2147483647)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The index of this table."
+            ::= { ibTrapConfigEntry 1 }
+
+    ibTrapConfigName OBJECT-TYPE
+            SYNTAX SnmpAdminString (SIZE(0..127))
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The name of the appointed traps."
+            ::= { ibTrapConfigEntry 2 }
+
+    ibTrapConfigDescr OBJECT-TYPE
+            SYNTAX SnmpAdminString (SIZE(0..127))
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The description of the appointed traps."
+            ::= { ibTrapConfigEntry 3 }
+
+    ibTrapConfigSwitch OBJECT-TYPE
+            SYNTAX INTEGER {
+                            enable(1),
+                            disable(2)
+                            }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Indicates whether the specified traps
+                should be generated."
+            DEFVAL { enable }
+            ::= { ibTrapConfigEntry 4 }
+
+    ibTrapConfigSwitch2 OBJECT-TYPE
+            SYNTAX INTEGER {
+                            off(0),
+                            on(1)
+                            }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Indicates whether the specified traps should be generated.
+                This node differs from ibTrapConfigSwitch in value."
+            DEFVAL { on }
+            ::= { ibTrapConfigEntry 5 }
+
+    ibTrapSnmp OBJECT IDENTIFIER ::= { ibTableGroup 9 }
+    ibTrapPrex OBJECT IDENTIFIER ::= { ibTrapSnmp 0 }
+
+    ibTrapSnmpSystemReset NOTIFICATION-TYPE
+            STATUS current
+            DESCRIPTION
+                "The notification is generated when the SNMP process restarts or
+                the HA smoothing of the active/standby switchover is complete."
+            ::= { ibTrapPrex 1 }
+
+END

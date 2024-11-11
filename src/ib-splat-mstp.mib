@@ -1,0 +1,1170 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: MSTP MIB
+-- Reference:
+-- Version: V1.20
+-- History:
+--      v1.0 (1) Created by Zhang Shilin, 2001.6.29
+--           (2) Revised by Qi Zhenglin, 2002.01.08
+--      v1.01 2004-7-13 remove default value
+--         of ibdot1sMstDefaultVlanAllo & ibdot1sMstDefaultRegionName
+--      v1.02 2004-08-19 Revised by Song Jianyong,
+--            add ibdot1sStpPathCostStandard in mstp global table
+--      v1.1 2004-10-12 updated by gaolong
+--           Import OBJECT-IDENTITY, NOTIFICATION-TYPE, TEXTUAL-CONVENTION.
+--           Import dot1dStpPort.
+--           Relocate ibdot1sMstp MODULE-IDENTITY clause.
+--           Fix default value errors for ibdot1sMstBpduGuard, ibdot1sMstiStpPortEdgeport,
+--           ibdot1sMstiStpStatus, ibdot1sMstiPortRootGuard, ibdot1sMstiPortLoopGuard.
+--      v1.11 2004-10-23 Revised by Song Jianyong,
+--            modify the range of ibdot1sMstiPathCost value in ibdot1sPortTable
+--      v1.12 2005-01-22 Revised by Song Jianyong,
+--            Add an enumeration for ibdot1sStpForceVersion in mstp global table
+--            Add an enumeration for ibdot1sStpPathCostStandard in ibdot1sPortTable
+--            Adjust format of objects' description
+--     V1.13 2005-6-30 Updated by zhanghaihong
+--            add ibdot1sMstiStpPortSendingBPDUType, ibdot1sMstiStpOperPortPointToPoint
+--            in ibdot1sPortTable
+--     V1.14 2005-11-07 Updated by zhanghaihong
+--            Modify the description of ibdot1sMstiStpOperPortPointToPoint in
+--            ibdot1sPortTable.
+--            Add ibdot1sMstiStpPortAdminBPDUFmt, ibdot1sMstiStpPortOperBPDUFmt
+--            in ibdot1sPortTable.
+--     V1.15 2011-8-11 Updated by zhangwei
+--            Modify the range of ibdot1sAdminMstID, ibdot1sOperMstID in
+--            ibdot1sPortTable and ibdot1sInstanceID in ibdot1sInstanceTable.
+--            Remove the default value of ibdot1sMstiStpTransLimit.
+--            Add ibdot1sMstiStpPortRoleRestriction, ibdot1sMstiStpPortTcRestriction and
+--            ibdot1sMstiStpPortDisputed in ibdot1sPortTable.
+--     V1.16 2014-02-11 Updated by wangmingjun
+--            Add the binding value ibdot1sMstiDesignatedBridge of ibPortMstiBpduGuarded
+--            in mstp traps table.
+--            Add ibMstiNewRoot, ibPortPvstBpduProtection in mstp traps table.
+--     V1.17 2021-02-03 Updated by tuchanyong
+--            Add ibdot1sMstiPortLoopbackGuard in ibdot1sPortTable.
+--     V1.18 2022-05-27 Updated by zhengjun
+--            Add ibPortMstiTcGuarded ibPortMstiLostEdge, ibMstiTopologyChange
+--            in ibdot1sPortTable.
+--           2022-06-28 Updated by zhengjun
+--            Add ibPortMstiProTcGuarded in ibdot1sPortTable.
+--     V1.19 2023-06-06 Updated by zhengjun
+--            Add ibPortMstiLoopbackGuarded, ibPortPvstLoopbackGuarded,
+--            ibPortPvstRootGuarded, ibPortPvstLoopGuarded, ibPortPvstPvidInconsistent,
+--            ibPortPvstPortTypeInconsistent, ibPortPvstLostEdge,
+--            ibMstiStgNumInconsistent traps in ibdot1sPortTable.
+--     V1.20 2023-06-27 Updated by zhengjun
+--            Add ibPortMstiDispute, ibPortMstiDisputeClear,
+--            ibPortPvstDispute, ibPortPvstDispute traps in ibdot1sPortTable.
+-- ==================================================================
+-- ==================================================================
+--
+-- Variables and types be imported
+--
+-- ==================================================================
+-- ------------------------------------------------------------------
+-- ------------------------------------------------------------------
+IB-LswMSTP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+
+    MODULE-IDENTITY,OBJECT-TYPE, Integer32, Counter32, OBJECT-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION, TruthValue, DisplayString
+        FROM SNMPv2-TC
+    dot1dStpPortEntry, dot1dStpPort
+        FROM BRIDGE-MIB
+    ifDescr
+        FROM IF-MIB
+    iblswCommon
+        FROM IB-OID-MIB;
+
+    ibdot1sMstp MODULE-IDENTITY
+            LAST-UPDATED "202306271137Z"
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION
+            "Added node ibPortMstiProTcGuarded."
+            REVISION "202306271137Z"
+            DESCRIPTION
+            "Added trap node ibPortMstiDispute, ibPortMstiDisputeClear,
+            ibPortPvstDispute, ibPortPvstDispute."
+            REVISION "202306062011Z"
+            DESCRIPTION
+            "Added node ibPortMstiLoopbackGuard, ibPortPvstLoopbackGuard,
+            ibPortPvstRootGuard, ibPortPvstLoopGuard, ibPortPvstPvidInconsistent,
+            ibPortPvstPortTypeInconsistent, ibPortPvstLostEdge,
+            ibMstiStgNumInconsistent."
+            REVISION "202206281952Z"
+            DESCRIPTION
+            "Added node ibPortMstiTcGuarded, ibPortMstiLostEdge
+            ibMstiTopologyChange."
+            REVISION "202205271518Z"
+            DESCRIPTION
+            "Added node ibdot1sMstiPortLoopbackGuard."
+            REVISION "202102030000Z"
+            DESCRIPTION
+            "This MIB defines objects for managing MSTP."
+            REVISION "200106290000Z"
+            DESCRIPTION
+            "The initial version of this MIB file."
+            ::= { iblswCommon  14 }
+
+    EnabledStatus ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "A simple status value for the object."
+    SYNTAX      INTEGER { enabled(1), disabled(2) }
+
+    BridgeId ::= OCTET STRING (SIZE (8))
+
+    Ibdot1sFormatStatus ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Legacy means that the BPDU format is legacy.  Dot1s means that the
+        BPDU format is IEEE 802.1s.  Auto means that the format of BPDU sending
+        on the port is determined by the BPDU format of its connective port."
+    SYNTAX      INTEGER { legacy(1), dot1s(2), auto(3) }
+
+
+  ibdot1sStpStatus OBJECT-TYPE
+    SYNTAX      EnabledStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Whether the Bridge MSTP is enabled."
+    DEFVAL      { 2 }
+    ::= { ibdot1sMstp 1 }
+
+  ibdot1sStpForceVersion OBJECT-TYPE
+    SYNTAX      INTEGER{stp(0),rstp(2),mstp(3)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      " The mode of this Bridge spanning-tree protocol."
+    DEFVAL      { mstp}
+    ::= { ibdot1sMstp 2 }
+
+  ibdot1sStpDiameter OBJECT-TYPE
+    SYNTAX      Integer32(2..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The diameter of Bridge."
+    DEFVAL      { 7}
+    ::= { ibdot1sMstp 3 }
+
+  ibdot1sMstBridgeMaxHops OBJECT-TYPE
+    SYNTAX      Integer32(1..40)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The maximum value of the  Bridge hops."
+    DEFVAL      { 20}
+    ::= { ibdot1sMstp 4 }
+
+  ibdot1sMstMasterBridgeID OBJECT-TYPE
+    SYNTAX      BridgeId
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "The Bridge Identifier of the current Master Bridge."
+    ::= { ibdot1sMstp 5 }
+
+  ibdot1sMstMasterPathCost OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "The CIST path cost from the transmitting Bridge to the Master Bridge."
+    DEFVAL      { 0}
+    ::= { ibdot1sMstp 6 }
+
+  ibdot1sMstBpduGuard OBJECT-TYPE
+    SYNTAX      EnabledStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Whether the Bridge BPDU Guard function is enabled.  If the function
+      is enabled, the port will shutdown when received BPDU and the port
+      is configured as portfast."
+    DEFVAL      { disabled}
+    ::= { ibdot1sMstp 7 }
+
+  ibdot1sMstAdminFormatSelector OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "The administrative Configuration Identifier Format Selector in use
+      by the Bridge.  This has a value of 0 indicate the format specified
+      in the Standard of IEEE 802.1s."
+    DEFVAL      { 0}
+    ::= { ibdot1sMstp 8 }
+
+  ibdot1sMstAdminRegionName OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(1..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "This MSTP administrative region name."
+    ::= { ibdot1sMstp 9 }
+
+  ibdot1sMstAdminRevisionLevel OBJECT-TYPE
+    SYNTAX      Integer32(0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "This MSTP administrative revision level."
+    DEFVAL      { 0}
+    ::= { ibdot1sMstp 10 }
+
+  ibdot1sMstOperFormatSelector OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "The operative Configuration Identifier Format Selector in use by the
+      Bridge.  This has a value of 0 indicate the format specified in the
+      Standard of IEEE 802.1s."
+    DEFVAL      { 0}
+    ::= { ibdot1sMstp 11 }
+
+  ibdot1sMstOperRegionName OBJECT-TYPE
+    SYNTAX      OCTET STRING( SIZE(0..32) )
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "This MSTP operative region name."
+    ::= { ibdot1sMstp 12 }
+
+  ibdot1sMstOperRevisionLevel OBJECT-TYPE
+    SYNTAX      Integer32(0..65535)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "This MSTP operative revision level."
+    DEFVAL      { 0}
+    ::= { ibdot1sMstp 13 }
+
+  ibdot1sMstOperConfigDigest OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+      "This MSTP Region's Configuration Digest Signature Key."
+    ::= { ibdot1sMstp 14 }
+
+  ibdot1sMstRegionConfActive OBJECT-TYPE
+    SYNTAX      INTEGER{enable(1),disable(2)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Active the region configuration."
+    DEFVAL      { disable }
+    ::= { ibdot1sMstp 15 }
+
+  ibdot1sMstDefaultVlanAllo OBJECT-TYPE
+    SYNTAX      INTEGER{enable(1),unused(65535)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Set default configuration about VLAN allocation and all VLANs
+      are mapped to CIST."
+    ::= { ibdot1sMstp 16 }
+
+  ibdot1sMstDefaultRegionName OBJECT-TYPE
+    SYNTAX      INTEGER{enable(1),unused(65535)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Set default region name."
+    ::= { ibdot1sMstp 17 }
+
+-- TABLE: ibdot1sVIDAllocationTable ------
+  ibdot1sVIDAllocationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF Ibdot1sVIDAllocationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "MSTP VLAN-to-instance mapping table."
+    ::= { ibdot1sMstp 18 }
+
+  ibdot1sVIDAllocationEntry OBJECT-TYPE
+    SYNTAX      Ibdot1sVIDAllocationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "MSTP VLAN-to-instance mapping table entry."
+    INDEX {
+              ibdot1sMstVID
+             }
+    ::= { ibdot1sVIDAllocationTable 1 }
+
+  Ibdot1sVIDAllocationEntry ::=
+    SEQUENCE
+    {
+      ibdot1sMstVID Integer32,
+      ibdot1sAdminMstID Integer32,
+      ibdot1sOperMstID  Integer32
+    }
+
+  ibdot1sMstVID OBJECT-TYPE
+    SYNTAX      Integer32(1..4094)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "VLAN Identifier"
+    ::={ ibdot1sVIDAllocationEntry 1 }
+
+  ibdot1sAdminMstID OBJECT-TYPE
+    SYNTAX      Integer32(0..4094)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Administrative Multiple spanning-tree instance Identifier."
+    ::={ ibdot1sVIDAllocationEntry 2 }
+
+  ibdot1sOperMstID OBJECT-TYPE
+    SYNTAX      Integer32(0..4094)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Operative Multiple spanning-tree instance Identifier."
+    ::={ ibdot1sVIDAllocationEntry 3 }
+
+-- TABLE: ibdot1sInstanceTable ------
+  ibdot1sInstanceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF Ibdot1sInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "MSTI table."
+    ::= { ibdot1sMstp 19 }
+
+  ibdot1sInstanceEntry OBJECT-TYPE
+    SYNTAX      Ibdot1sInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "MSTI table entry."
+    INDEX {
+              ibdot1sInstanceID
+             }
+    ::= { ibdot1sInstanceTable 1 }
+
+  Ibdot1sInstanceEntry ::=
+    SEQUENCE
+    {
+      ibdot1sInstanceID Integer32,
+      ibdot1sMstiBridgeID   BridgeId,
+      ibdot1sMstiBridgePriority Integer32,
+      ibdot1sMstiDesignedRoot   BridgeId,
+      ibdot1sMstiRootPathCost   Integer32,
+      ibdot1sMstiRootPort   Integer32,
+      ibdot1sMstiRootType   INTEGER,
+      ibdot1sMstiRemainingHops  Integer32,
+      ibdot1sMstiAdminMappedVlanListLow OCTET STRING,
+      ibdot1sMstiAdminMappedVlanListHigh OCTET STRING,
+      ibdot1sMstiOperMappedVlanListLow OCTET STRING,
+      ibdot1sMstiOperMappedVlanListHigh OCTET STRING
+    }
+
+  ibdot1sInstanceID OBJECT-TYPE
+    SYNTAX      Integer32(0..4094)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Multiple spanning-tree instance Identifier"
+    ::={ ibdot1sInstanceEntry 1 }
+
+  ibdot1sMstiBridgeID OBJECT-TYPE
+    SYNTAX      BridgeId
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Bridge Identifier for the spanning tree instance
+        identified by MSTID"
+    ::={ ibdot1sInstanceEntry 2 }
+
+  ibdot1sMstiBridgePriority OBJECT-TYPE
+    SYNTAX      Integer32(0..61440)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The Bridge Priority for the spanning tree instance
+        identified by MSTID.  Step of 4096"
+    DEFVAL      { 32768 }
+    ::={ ibdot1sInstanceEntry 3 }
+
+  ibdot1sMstiDesignedRoot OBJECT-TYPE
+    SYNTAX      BridgeId
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Bridge Identifier of the Root Bridge for the spanning
+        tree instance identified by MSTID"
+    ::={ ibdot1sInstanceEntry 4 }
+
+  ibdot1sMstiRootPathCost OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The path cost from the transmitting Bridge to the Root Bridge
+        for the spanning tree instance  identified by MSTID"
+    ::={ ibdot1sInstanceEntry 5 }
+
+  ibdot1sMstiRootPort OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Root Port for the spanning tree instance identified by the MSTID"
+    ::={ ibdot1sInstanceEntry 6 }
+
+  ibdot1sMstiRootType OBJECT-TYPE
+    SYNTAX      INTEGER{normal(0), secondary(1), primary(2)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Config this Bridge as a primary root or secondary root and or cancel
+        the root for this spanning tree instance  identified by MSTID"
+    DEFVAL      { normal }
+    ::={ ibdot1sInstanceEntry 7 }
+
+  ibdot1sMstiRemainingHops OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The remaining hops of the spanning tree instance  identified by MSTID"
+    ::={ ibdot1sInstanceEntry 8 }
+
+  ibdot1sMstiAdminMappedVlanListLow  OBJECT-TYPE
+    SYNTAX  OCTET STRING (SIZE(0..256))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        " The lower part of administrative Vlan list mapped to the spanning
+        tree instance identified by MSTID"
+    ::= { ibdot1sInstanceEntry 9 }
+
+  ibdot1sMstiAdminMappedVlanListHigh  OBJECT-TYPE
+    SYNTAX  OCTET STRING (SIZE(0..256))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        " The higher part of administrative Vlan  list mapped to the spanning
+        tree instance identified by MSTID"
+    ::= { ibdot1sInstanceEntry 10 }
+
+  ibdot1sMstiOperMappedVlanListLow  OBJECT-TYPE
+    SYNTAX  OCTET STRING (SIZE(0..256))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        " The lower part of operative Vlan list mapped to the spanning
+        tree instance identified by MSTID"
+    ::= { ibdot1sInstanceEntry 11 }
+
+  ibdot1sMstiOperMappedVlanListHigh  OBJECT-TYPE
+    SYNTAX  OCTET STRING (SIZE(0..256))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        " The higher part of operative Vlan list mapped to the spanning
+        tree instance identified by MSTID"
+    ::= { ibdot1sInstanceEntry 12 }
+
+-- TABLE: ibdot1sPortTable ------
+  ibdot1sPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF Ibdot1sPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "MSTP interface table."
+    ::= { ibdot1sMstp 20 }
+
+  ibdot1sPortEntry OBJECT-TYPE
+    SYNTAX      Ibdot1sPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+      "MSTP interface table entry."
+    INDEX {   ibdot1sInstanceID,
+              ibdot1sMstiPortIndex
+             }
+    ::= { ibdot1sPortTable 1 }
+
+  Ibdot1sPortEntry ::=
+    SEQUENCE
+    {
+      ibdot1sMstiPortIndex  Integer32,
+      ibdot1sMstiState  INTEGER,
+      ibdot1sMstiPortPriority   Integer32,
+      ibdot1sMstiPathCost   Integer32,
+      ibdot1sMstiDesignatedRoot BridgeId,
+      ibdot1sMstiDesignatedCost Integer32,
+      ibdot1sMstiDesignatedBridge   BridgeId,
+      ibdot1sMstiDesignatedPort OCTET STRING,
+      ibdot1sMstiMasterBridgeID BridgeId,
+      ibdot1sMstiMasterPortCost Integer32,
+      ibdot1sMstiStpPortEdgeport    EnabledStatus,
+      ibdot1sMstiStpPortPointToPoint    INTEGER,
+      ibdot1sMstiStpMcheck  INTEGER,
+      ibdot1sMstiStpTransLimit  Integer32,
+      ibdot1sMstiStpRXStpBPDU   Counter32,
+      ibdot1sMstiStpTXStpBPDU   Counter32,
+      ibdot1sMstiStpRXTCNBPDU   Counter32,
+      ibdot1sMstiStpTXTCNBPDU   Counter32,
+      ibdot1sMstiStpRXRSTPBPDU  Counter32,
+      ibdot1sMstiStpTXRSTPBPDU  Counter32,
+      ibdot1sMstiStpRXMSTPBPDU  Counter32,
+      ibdot1sMstiStpTXMSTPBPDU  Counter32,
+      ibdot1sMstiStpClearStatistics INTEGER,
+      ibdot1sMstiStpDefaultPortCost INTEGER,
+      ibdot1sMstiStpStatus  EnabledStatus,
+      ibdot1sMstiPortRootGuard  EnabledStatus,
+      ibdot1sMstiPortLoopGuard  EnabledStatus,
+      ibdot1sMstiStpPortSendingBPDUType  INTEGER,
+      ibdot1sMstiStpOperPortPointToPoint INTEGER,
+      ibdot1sMstiStpPortAdminBPDUFmt  Ibdot1sFormatStatus,
+      ibdot1sMstiStpPortOperBPDUFmt  Ibdot1sFormatStatus,
+      ibdot1sMstiStpPortRoleRestriction  EnabledStatus,
+      ibdot1sMstiStpPortTcRestriction  EnabledStatus,
+      ibdot1sMstiStpPortDisputed  TruthValue,
+      ibdot1sMstiPortLoopbackGuard  EnabledStatus
+    }
+
+  ibdot1sMstiPortIndex OBJECT-TYPE
+    SYNTAX      Integer32(0..65535)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The index of the Bridge Port"
+    ::={ ibdot1sPortEntry 1 }
+
+  ibdot1sMstiState OBJECT-TYPE
+    SYNTAX      INTEGER{disabled(1),discarding(2),learning(4),forwarding(5)}
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current state of the Port (i.e., Disabled, Discarding ,
+        Learning, Forwarding)"
+    ::={ ibdot1sPortEntry 2 }
+
+  ibdot1sMstiPortPriority OBJECT-TYPE
+    SYNTAX      Integer32(0..240)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The value of the priority field which is contained in the
+        first (in network byte order)  four bits of the (2 octet long) Port ID.
+        The other octet of the Port ID is given by the value of mstiPortIndex.
+        And step of 16"
+    DEFVAL      { 128 }
+    ::={ ibdot1sPortEntry 3 }
+
+  ibdot1sMstiPathCost OBJECT-TYPE
+    SYNTAX      Integer32(1..200000000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The contribution of this port to the path cost of paths towards the
+        spanning tree root which include this port.  The range of path cost
+        is 1..65535 for 802.1d standard, is 1..200000000 for 802.1t standard,
+        and is 1..200000 for the legacy standard."
+    ::={ ibdot1sPortEntry 4 }
+
+  ibdot1sMstiDesignatedRoot OBJECT-TYPE
+    SYNTAX      BridgeId
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Bridge Identifier of the Root Bridge for the port of the Spanning
+         Tree instance identified by the MSTID"
+    ::={ ibdot1sPortEntry 5 }
+
+  ibdot1sMstiDesignatedCost OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The path cost of the Designated Port of the segment connected to
+        this port.  This value is compared to the Root Path Cost field
+        in received bridge PDUs."
+    ::={ ibdot1sPortEntry 6 }
+
+  ibdot1sMstiDesignatedBridge OBJECT-TYPE
+    SYNTAX      BridgeId
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Bridge Identifier of the bridge which this port considers to
+        be the Designated Bridge for this port's segment."
+    ::={ ibdot1sPortEntry 7 }
+
+  ibdot1sMstiDesignatedPort OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE (2))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Port Identifier of the port on the Designated Bridge
+        for this port's segment."
+    ::={ ibdot1sPortEntry 8 }
+
+  ibdot1sMstiMasterBridgeID OBJECT-TYPE
+    SYNTAX      BridgeId
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Bridge Identifier of the current Master Bridge.
+        Effective in CIST."
+    ::={ ibdot1sPortEntry 9 }
+
+  ibdot1sMstiMasterPortCost OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The CIST path cost from the transmitting Bridge to
+        the Master Bridge.  Effective in CIST."
+    ::={ ibdot1sPortEntry 10 }
+
+  ibdot1sMstiStpPortEdgeport OBJECT-TYPE
+    SYNTAX      EnabledStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Whether the port fast is enabled.  Effective in CIST."
+    DEFVAL      { disabled }
+    ::={ ibdot1sPortEntry 11 }
+
+  ibdot1sMstiStpPortPointToPoint OBJECT-TYPE
+    SYNTAX      INTEGER{forceTrue (1),forceFalse (2),auto  (3)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Whether the port connects the point to point link.  Effective in CIST."
+    DEFVAL      { auto }
+    ::={ ibdot1sPortEntry 12 }
+
+  ibdot1sMstiStpMcheck OBJECT-TYPE
+    SYNTAX      INTEGER{enable(1),unused(65535)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        " Forcing the state machine to send MST BPDUs in this manner
+        can be used to test whether all legacy Bridges on a given LAN
+        have been removed.  Effective in CIST."
+    ::={ ibdot1sPortEntry 13 }
+
+  ibdot1sMstiStpTransLimit OBJECT-TYPE
+    SYNTAX      Integer32(1..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The value used by the Port Transmit state machine to limit
+        the maximum transmission rate.  Effective in CIST."
+    ::={ ibdot1sPortEntry 14 }
+
+  ibdot1sMstiStpRXStpBPDU OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of received Config BPDU.  Effective in CIST."
+    ::={ ibdot1sPortEntry 15 }
+
+  ibdot1sMstiStpTXStpBPDU OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of transmitted Config BPDU.  Effective in CIST."
+    ::={ ibdot1sPortEntry 16 }
+
+  ibdot1sMstiStpRXTCNBPDU OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of received TCN BPDU.  Effective in CIST."
+    ::={ ibdot1sPortEntry 17 }
+
+  ibdot1sMstiStpTXTCNBPDU OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of transmitted TCN BPDU.  Effective in CIST."
+    ::={ ibdot1sPortEntry 18 }
+
+  ibdot1sMstiStpRXRSTPBPDU OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of received RST BPDU.  Effective in CIST."
+    ::={ ibdot1sPortEntry 19 }
+
+  ibdot1sMstiStpTXRSTPBPDU OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of transmitted RST BPDU.  Effective in CIST."
+    ::={ ibdot1sPortEntry 20 }
+
+  ibdot1sMstiStpRXMSTPBPDU OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of received MST BPDU.  Effective in CIST."
+    ::={ ibdot1sPortEntry 21 }
+
+  ibdot1sMstiStpTXMSTPBPDU OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of transmitted MST BPDU.  Effective in CIST."
+    ::={ ibdot1sPortEntry 22 }
+
+  ibdot1sMstiStpClearStatistics OBJECT-TYPE
+    SYNTAX      INTEGER{clear(1),unused(65535)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Clear the spanning tree statistic.  Effective in CIST."
+    ::={ ibdot1sPortEntry 23 }
+
+  ibdot1sMstiStpDefaultPortCost OBJECT-TYPE
+    SYNTAX      INTEGER{enable(1),unused(65535)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set default Port path cost."
+    ::={ ibdot1sPortEntry 24 }
+
+  ibdot1sMstiStpStatus OBJECT-TYPE
+    SYNTAX      EnabledStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Whether the spanning tree protocol is enabled on this port.
+        Effective in CIST."
+    DEFVAL      { enabled}
+    ::={ ibdot1sPortEntry 25 }
+
+  ibdot1sMstiPortRootGuard OBJECT-TYPE
+    SYNTAX      EnabledStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Whether the root guard is enabled.  Effective in CIST."
+    DEFVAL      { disabled }
+    ::={ ibdot1sPortEntry 26 }
+
+  ibdot1sMstiPortLoopGuard OBJECT-TYPE
+    SYNTAX      EnabledStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Whether the loop protection is enabled.  Effective in CIST."
+    DEFVAL      { disabled }
+    ::={ ibdot1sPortEntry 27 }
+
+  ibdot1sMstiStpPortSendingBPDUType  OBJECT-TYPE
+    SYNTAX  INTEGER {
+                    stp(1),
+                    rstp(2),
+                    mstp(3)
+                    }
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Type of BPDU which the port is sending."
+    ::= { ibdot1sPortEntry 28 }
+
+  ibdot1sMstiStpOperPortPointToPoint  OBJECT-TYPE
+    SYNTAX  INTEGER {
+                    true(1),
+                    false(2)
+                    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object indicates whether the port has connected to a
+        point-to-point link or not.  The value of the node is an operative value.
+        The administrative value can be read from the node
+        ibdot1sMstiStpPortPointToPoint.  If the value of
+        ibdot1sMstiStpPortPointToPoint is auto, the value of this node
+        should be calculated by the network topology of this port.  If the
+        value of ibdot1sMstiStpPortPointToPoint is forceFalse, the value of this
+        node is false.  If the value of ibdot1sMstiStpPortPointToPoint is
+        forceTrue, the value of this node is true."
+    ::= { ibdot1sPortEntry 29 }
+
+  ibdot1sMstiStpPortAdminBPDUFmt  OBJECT-TYPE
+    SYNTAX     Ibdot1sFormatStatus
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+       "The value of the node is an administrative value.  Value legacy means that
+       the MST BPDU format is forced to legacy.  Value dot1s means that the MST BPDU format
+       is forced to IEEE 802.1s.  Value auto means that the format of MST BPDU sending
+       on the port is determined by the MST BPDU that the port has received.  Effective in
+       CIST."
+      ::= { ibdot1sPortEntry 30 }
+
+  ibdot1sMstiStpPortOperBPDUFmt  OBJECT-TYPE
+    SYNTAX     Ibdot1sFormatStatus
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+      "The format of MST BPDU which the port is sending.  Value legacy means that the
+      format of MST BPDU sending on the port is legacy.  Value dot1s means that the
+      format of MST BPDU sending on the port is IEEE 802.1s.  Effective in CIST."
+    ::= { ibdot1sPortEntry 31 }
+
+  ibdot1sMstiStpPortRoleRestriction OBJECT-TYPE
+    SYNTAX      EnabledStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Whether the role-restriction is enabled.  Effective in CIST.
+         The role-restriction causes the port not to be selected as root port for the
+         CIST or any MSTI."
+    DEFVAL      { disabled }
+    ::= { ibdot1sPortEntry 32 }
+
+  ibdot1sMstiStpPortTcRestriction OBJECT-TYPE
+    SYNTAX      EnabledStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Whether the tc-restriction is enabled.  Effective in CIST.
+         The tc-restriction causes the port not to propagate topology changes to
+         other ports."
+    DEFVAL      { disabled }
+    ::= { ibdot1sPortEntry 33 }
+
+  ibdot1sMstiStpPortDisputed OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Whether the port is disputed for the CIST or MSTI."
+    ::= { ibdot1sPortEntry 34 }
+
+  ibdot1sMstiPortLoopbackGuard OBJECT-TYPE
+    SYNTAX      EnabledStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Whether the loopback protection is enabled.  Effective in CIST."
+    DEFVAL      { enabled }
+    ::={ ibdot1sPortEntry 35 }
+
+  ibdot1sStpPathCostStandard  OBJECT-TYPE
+    SYNTAX      INTEGER{legacy(0),dot1d-1998(1),dot1t(2)}
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+      "Path cost standard of the bridge.  Value dot1d-1998 is
+      IEEE 802.1d standard in 1998, value dot1t is IEEE 802.1t standard,
+      and value legacy is a private legacy standard."
+    ::= { ibdot1sMstp 21 }
+
+--  Mstp Traps
+
+  ibMstpEventsV2 OBJECT-IDENTITY
+     STATUS      current
+     DESCRIPTION "Definition point for Mstp notifications."
+     ::= { ibdot1sMstp 0 }
+
+  ibPortMstiStateForwarding NOTIFICATION-TYPE
+     OBJECTS  { ibdot1sInstanceID , ibdot1sMstiPortIndex}
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap that is generated when a port turns into
+         forwarding state form other state."
+     ::= { ibMstpEventsV2 1 }
+
+  ibPortMstiStateDiscarding NOTIFICATION-TYPE
+     OBJECTS  { ibdot1sInstanceID , ibdot1sMstiPortIndex}
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap that is generated when a port turns into
+         discarding state form forwarding state."
+     ::= { ibMstpEventsV2 2 }
+
+
+  ibBridgeLostRootPrimary NOTIFICATION-TYPE
+     OBJECTS  { ibdot1sInstanceID }
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap that is generated when the bridge is no longer
+         the root bridge of the instance.  Another switch with higher
+         priority has already been the root bridge of the instance."
+     ::= { ibMstpEventsV2 3 }
+
+  ibPortMstiRootGuarded NOTIFICATION-TYPE
+     OBJECTS  { ibdot1sInstanceID , ibdot1sMstiPortIndex}
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap that is generated when a root-guard port
+         receives a superior message on the relevant instance."
+     ::= { ibMstpEventsV2 4 }
+
+  ibPortMstiBpduGuarded NOTIFICATION-TYPE
+     OBJECTS  { dot1dStpPort , ibdot1sMstiDesignatedBridge}
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap is generated when an edged port of the BPDU-guard
+         device receives a BPDU.  If the designated bridge ID can't be obtained
+         from the BPDU, the designated bridge ID will be zero."
+     ::= { ibMstpEventsV2 5 }
+
+  ibPortMstiLoopGuarded NOTIFICATION-TYPE
+     OBJECTS  { ibdot1sInstanceID , ibdot1sMstiPortIndex}
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap that is generated when an Alternate-Port
+         or Root-Port is aged out."
+     ::= { ibMstpEventsV2 6 }
+
+  ibMstiNewRoot NOTIFICATION-TYPE
+     OBJECTS  { ibdot1sInstanceID , ibdot1sMstiDesignedRoot , ibdot1sMstiDesignedRoot}
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap is generated when the sending device becomes the new
+         root of the spanning tree.  The first root bridge ID means the
+         old root bridge ID, and the second one means the new root bridge ID."
+     ::= { ibMstpEventsV2 7 }
+
+  ibPortPvstBpduProtection NOTIFICATION-TYPE
+     OBJECTS  { dot1dStpPort , ibdot1sMstiDesignatedBridge}
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap is generated when a PVST BPDU is received on an MSTP port
+         that is enabled with the PVST protection feature.  If the designated
+         bridge ID can't be obtained from the BPDU, the designated bridge ID
+         will be zero."
+     ::= { ibMstpEventsV2 8 }
+
+  ibMstiTopologyChange NOTIFICATION-TYPE
+     OBJECTS  { ibdot1sInstanceID }
+     STATUS   current
+     DESCRIPTION
+         "A topology change trap is sent by a bridge when any of
+         its configured ports transits from the Learning state
+         to the Forwarding state, or from the Forwarding state to
+         the Blocking state."
+     ::= { ibMstpEventsV2 9 }
+
+  ibPortMstiLostEdge NOTIFICATION-TYPE
+     OBJECTS  { ibdot1sMstiPortIndex, ifDescr, ibdot1sInstanceID }
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap is generated when an edge port
+         receives a BPDU packet, and the port is no longer an edge port."
+     ::= { ibMstpEventsV2 10 }
+
+  ibMstiTcGuarded NOTIFICATION-TYPE
+     OBJECTS  { ibdot1sInstanceID }
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap is generated when a port received a BPDU after the
+         number of TC BPDUs received by an instance exceeded the threshold."
+     ::= { ibMstpEventsV2 11 }
+
+  ibMstiProTcGuarded NOTIFICATION-TYPE
+     OBJECTS  { ibdot1sInstanceID, ibMstiTcGuardVal }
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap is generated when a port received a BPDU after the
+         number of TC BPDUs received by an instance exceeded the threshold."
+     ::= { ibMstpEventsV2 12 }
+
+  ibPortMstiLoopbackGuarded NOTIFICATION-TYPE
+     OBJECTS  { ibdot1sInstanceID, ifDescr }
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap is generated when a loop is detected
+         on a port that is based on an instance."
+     ::= { ibMstpEventsV2 13 }
+
+  ibPortPvstLoopbackGuarded NOTIFICATION-TYPE
+     OBJECTS  { ibMstiVlanID, ifDescr }
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap is generated when a loop is detected
+         on a port that is based on a vlan."
+     ::= { ibMstpEventsV2 14 }
+
+  ibPortPvstRootGuarded NOTIFICATION-TYPE
+     OBJECTS  { ibMstiVlanID, ifDescr }
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap that is generated when a root-guard port
+         receives a superior message on the relevant instance."
+     ::= { ibMstpEventsV2 15 }
+
+  ibPortPvstLoopGuarded NOTIFICATION-TYPE
+     OBJECTS  { ibMstiVlanID , ifDescr}
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap that is generated when an Alternate-Port
+         or Root-Port is aged out."
+     ::= { ibMstpEventsV2 16 }
+
+  ibPortPvstPvidInconsistent NOTIFICATION-TYPE
+     OBJECTS  { ibPvstPvid, ibPvstPvidInPdu, ifDescr}
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap that is generated when the PVID of the port
+         and the PVID in the packet are inconsistent."
+     ::= { ibMstpEventsV2 17 }
+
+  ibPortPvstPortTypeInconsistent NOTIFICATION-TYPE
+     OBJECTS  { ibMstiVlanID , ifDescr}
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap that is generated when the access
+         port has received a PVST packet within a certain VLAN."
+     ::= { ibMstpEventsV2 18 }
+
+  ibPortPvstLostEdge NOTIFICATION-TYPE
+     OBJECTS  { ibMstiVlanID, ifDescr }
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap is generated when an edge port
+         receives a BPDU packet, and the port is no longer an edge port."
+     ::= { ibMstpEventsV2 19 }
+
+  ibMstiStgNumInconsistent NOTIFICATION-TYPE
+     OBJECTS  { ibMstiLpuStgNum , ibMstiMpuStgNum}
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap that is generated when the STG specification of
+         the interface board is less than that of the control board."
+     ::= { ibMstpEventsV2 20 }
+
+  ibPortMstiDispute NOTIFICATION-TYPE
+     OBJECTS  { ibdot1sInstanceID,
+                ifDescr,
+                ibMstiBridgeIDInPdu,
+                ibMstiPortPriorityInPdu,
+                ibMstiPortNumInPdu}
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap that is generated when the port has received a
+         low-priority BPDU from the specified port."
+     ::= { ibMstpEventsV2 21 }
+
+   ibPortMstiDisputeClear NOTIFICATION-TYPE
+     OBJECTS  { ibdot1sInstanceID, ifDescr}
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap that is generated when the port recovers from the dispute state."
+     ::= { ibMstpEventsV2 22 }
+
+  ibPortPvstDispute NOTIFICATION-TYPE
+     OBJECTS  { ibMstiVlanID,
+                ifDescr,
+                ibMstiBridgeIDInPdu,
+                ibMstiPortPriorityInPdu,
+                ibMstiPortNumInPdu}
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap that is generated when the port has received a
+         low-priority BPDU from the specified port."
+     ::= { ibMstpEventsV2 23 }
+
+   ibPortPvstDisputeClear NOTIFICATION-TYPE
+     OBJECTS  { ibMstiVlanID, ifDescr}
+     STATUS   current
+     DESCRIPTION
+         "The SNMP trap that is generated when the port recovers from the dispute state."
+     ::= { ibMstpEventsV2 24 }
+
+  ibMstpEventsObjects OBJECT IDENTIFIER ::= { ibdot1sMstp 22 }
+
+  ibMstiTcGuardVal OBJECT-TYPE
+    SYNTAX  Integer32(1..255)
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The msti tc guard value."
+    ::= { ibMstpEventsObjects 1 }
+
+  ibPvstPvid OBJECT-TYPE
+    SYNTAX  Integer32(1..4094)
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The port VLAN ID."
+    ::= { ibMstpEventsObjects 2 }
+
+  ibPvstPvidInPdu OBJECT-TYPE
+    SYNTAX  Integer32(1..4094)
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The port VLAN ID in PDU."
+    ::= { ibMstpEventsObjects 3 }
+
+  ibMstiLpuStgNum OBJECT-TYPE
+    SYNTAX  Integer32(1..4094)
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The STG count resouce on the LPU."
+    ::= { ibMstpEventsObjects 4 }
+
+  ibMstiMpuStgNum OBJECT-TYPE
+    SYNTAX  Integer32(1..4094)
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The STG count resouce on the MPU."
+    ::= { ibMstpEventsObjects 5 }
+
+  ibMstiVlanID OBJECT-TYPE
+    SYNTAX  Integer32(1..4094)
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "The VLAN ID."
+    ::= { ibMstpEventsObjects 6 }
+
+  ibMstiBridgeIDInPdu OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE(0..512))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+      "The Bridge ID in the BPDU."
+    ::= { ibMstpEventsObjects 7 }
+
+  ibMstiPortPriorityInPdu OBJECT-TYPE
+    SYNTAX      Integer32(1..65535)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+      "The Port priority in the BPDU."
+    ::= { ibMstpEventsObjects 8 }
+
+  ibMstiPortNumInPdu OBJECT-TYPE
+    SYNTAX      Integer32(1..65535)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+      "The Port number in the BPDU."
+    ::= { ibMstpEventsObjects 9 }
+END

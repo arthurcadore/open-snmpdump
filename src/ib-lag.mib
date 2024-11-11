@@ -1,0 +1,705 @@
+-- =====================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: LACP extend MIB
+-- Reference:
+-- Version: V2.2
+-- History:
+--   V1.0 Initial version
+--   V1.1 2004-10-12 updated by gaolong
+--        Remove OID comments.
+--        Change MAX-ACCESS clause value of ibAggLinkNumber to accessible-for-notify
+--        because this index object is used when sending notification.
+--        Fix a default value error of ibAggResourceAllocationValue.
+--   V1.2 2004-10-25 updated by fuzhenyu
+--        Change the range of ibAggLinkNumber from (1..256) to (1..728)
+--        Change the size of ibAggPortNotAttachedString from (1..50) to (1..255)
+--   V1.3 2006-03-05 updated by zhangjian
+--        Edit the description of ibAggPortNotAttachedReason.
+--        Change value range of ibAggLinkNumber.
+--   V1.4 2006-11-15 updated by zhangjian
+--        Change MAX-ACCESS clause of ibAggPortIndex to accessible-for-notify.
+--        Add ibAggPortInactiveNotification2 and ibAggPortActiveNotification.
+--   V1.5 2009-10-09 updated by songjianyong
+--        Change value range of ibAggPortNotAttachedReason.
+--   V1.6 2010-03-26 updated by songjianyong
+--        Change value range of ibAggPortNotAttachedReason.
+--   V1.7 2011-10-12 updated by liyugang
+--        Change some descriptions.
+--   V1.8 2021-07-20 updated by wangmeng
+--        Add ibAggPartnerMisconnect and ibAggPartnerMisconnectResume.
+--   V1.9 2022-05-28 updated by zhengjun
+--        Add ibAggAllMemberDown ibAggLacpPartnerExpired ibAggPortLacpInactive
+--        ibAggMemberNumberChanged ibAggAllMemberUp ibAggAllMemberDownRecovery
+--        ibAggMemberLinkDown ibAggMemberLinkUp ibAggMemberCoutExceedThreshold
+--        and ibAggPortLacpNegotiateRecovery ibAggMemberCoutExceedRecovery
+--        ibAggMemberCoutExceedRecovery trap.
+--   V2.0 2022-07-18 updated by zhengjun
+--        Add ibAggMemberChange and ibAggPortLacpActive trap.
+--        2022-08-19 updated by zhengjun
+--        Add ibAggTotalLinkLoss, ibAggTotalLinkLossResume,
+--        ibAggPartialLinkLoss and ibAggPartialLinkLossResume trap.
+--   V2.1 2022-11-29 updated by zhengjun
+--        Add ibAggPortActiveNotification and ibAggPortInactiveNotification2
+--        agg port name and member port name.
+--   V2.2 2023-06-05 updated by zhengjun
+--        Add ibAggPortMadDetect trap info.
+-- =====================================================================
+IB-LAG-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP
+            FROM SNMPv2-CONF
+        Integer32, Gauge32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+            FROM SNMPv2-SMI
+        DisplayString, RowStatus,TruthValue
+            FROM SNMPv2-TC
+        ibRhw
+            FROM IB-OID-MIB
+        PortList
+            FROM Q-BRIDGE-MIB;
+
+    ibLAG MODULE-IDENTITY
+        LAST-UPDATED "202306051150Z"
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+            "LACP extend MIB."
+        REVISION
+            "202306051150Z"
+        DESCRIPTION
+            "Add ibAggPortMadDetect trap info."
+        REVISION
+            "202211291048Z"
+        DESCRIPTION
+            "Add ibAggPortActiveNotification and ibAggPortInactiveNotification2,
+             agg port name and member port name."
+        REVISION
+            "202208191056Z"
+        DESCRIPTION
+            "Add ibAggTotalLinkLoss, ibAggTotalLinkLossResume,
+             ibAggPartialLinkLoss and ibAggPartialLinkLossResume trap."
+        REVISION
+            "202207181051Z"
+        DESCRIPTION
+            "Add ibAggMemberChange and ibAggPortLacpActive trap."
+        REVISION
+            "202205280937Z"
+        DESCRIPTION
+            "Add ibAggAllMemberDown, ibAggLacpPartnerExpired, ibAggPortLacpInactive,
+             ibAggMemberNumberChanged, ibAggAllMemberUp, ibAggAllMemberDownRecovery,
+             ibAggMemberLinkDown, ibAggMemberLinkUp, ibAggMemberCoutExceedThreshold,
+             and ibAggPortLacpNegotiateFailed, ibAggPortLacpNegotiateRecovery
+             ibAggMemberCoutExceedRecovery trap."
+        REVISION
+            "202107201942Z"
+        DESCRIPTION
+            "Add ibAggPartnerMisconnect and ibAggPartnerMisconnectResume."
+        ::= { ibRhw 25 }
+
+--
+-- Node definitions
+--
+
+    ibLAGMibObjects OBJECT IDENTIFIER ::= { ibLAG 1 }
+
+
+    ibAggLinkTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbAggLinkEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "A table of aggregate link objects."
+        ::= { ibLAGMibObjects 1 }
+
+
+    ibAggLinkEntry OBJECT-TYPE
+        SYNTAX IbAggLinkEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Entry of table."
+        INDEX { ibAggLinkNumber }
+        ::= { ibAggLinkTable 1 }
+
+
+    IbAggLinkEntry ::=
+        SEQUENCE {
+            ibAggLinkNumber
+                Integer32,
+            ibAggLinkName
+                DisplayString,
+            ibAggLinkMode
+                INTEGER,
+            ibAggLinkPortList
+                PortList,
+            ibAggLinkState
+                RowStatus,
+            ibAggPortListSelectedPorts
+                PortList,
+            ibAggPortListSamePartnerPorts
+                PortList
+         }
+
+    ibAggLinkNumber OBJECT-TYPE
+        SYNTAX Integer32 (1..2147483647)
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "The serial number of aggregation group."
+        ::= { ibAggLinkEntry 1 }
+
+
+    ibAggLinkName OBJECT-TYPE
+        SYNTAX DisplayString (SIZE (0..32))
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "Aggregation name."
+        ::= { ibAggLinkEntry 2 }
+
+
+    ibAggLinkMode OBJECT-TYPE
+        SYNTAX INTEGER
+            {
+            manual(1),
+            static(2),
+            dynamic(3)
+            }
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "Type of aggregation.
+             manual: Manual aggregation, no LACP.
+             static: Membership specified by user, LACP is
+                     used to validate.
+             dynamic: Completely dynamic aggregation detected
+                      by LACP."
+        ::= { ibAggLinkEntry 3 }
+
+
+    ibAggLinkPortList OBJECT-TYPE
+        SYNTAX PortList
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "List of ports in this link aggregation group, by bridge port
+             number. If the mode of the link aggregation group is manual
+             or static, you can update this list to your
+             hearts content. However, if the link aggregation group is
+             dynamic, the system will maintain it. You are not
+             permitted to set the value of this to
+             all zeroes."
+        ::= { ibAggLinkEntry 4 }
+
+
+    ibAggLinkState OBJECT-TYPE
+        SYNTAX RowStatus
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+            "RowStatus, now support three states:
+            createAndGo, active, destroy."
+        ::= { ibAggLinkEntry 5 }
+
+
+    ibAggPortListSelectedPorts OBJECT-TYPE
+        SYNTAX PortList
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "A PortList of physical ports that have been
+             selected but not attached to this aggregator.
+             When the bit is set to 1,it means the
+             corresponding port is in the portlist."
+        ::= { ibAggLinkEntry 6 }
+
+
+    ibAggPortListSamePartnerPorts OBJECT-TYPE
+        SYNTAX PortList
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "PortList of physical ports that have the
+             same Actor SystemID and partner systemID as
+             this aggregator, but have different actor
+             and partner keys of aggregator."
+        ::= { ibAggLinkEntry 7 }
+
+
+    ibAggPortTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF IbAggPortEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "A table of aggregate port objects."
+        ::= { ibLAGMibObjects 2 }
+
+
+    ibAggPortEntry OBJECT-TYPE
+        SYNTAX IbAggPortEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+            "Entry of table."
+        INDEX { ibAggPortIndex }
+        ::= { ibAggPortTable 1 }
+
+
+    IbAggPortEntry ::=
+        SEQUENCE {
+            ibAggPortIndex
+                Gauge32,
+            ibAggPortNotAttachedReason
+                Integer32,
+            ibAggPortLacpState
+                TruthValue,
+            ibAggPortNotAttachedString
+                DisplayString
+        }
+
+    ibAggPortIndex OBJECT-TYPE
+        SYNTAX Gauge32
+        MAX-ACCESS accessible-for-notify
+        STATUS current
+        DESCRIPTION
+            "Port ifindex which is according to RFC1213 MIB."
+        ::= { ibAggPortEntry 1 }
+
+
+    ibAggPortNotAttachedReason OBJECT-TYPE
+        SYNTAX Integer32 (0..10)
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Reason why this port is selected for an
+             aggregator but not attached,
+             0: The port is attached to this aggregator.
+             1: The current number of active ports has
+                reached the upper limit.
+             2: All aggregation resources are already in-use.
+             3: The port's configuration is improper
+                for being attached.
+             4: The port's partner is improper for being attached.
+             5: The number of current active ports
+                has not reached the lower limit.
+             6: The port's physical state (down) is
+                improper for being attached.
+             7: The port is not selected for an aggregator.
+             8: The port's hardware restriction is
+                improper for being attached.
+             9: The port's speed is improper for being attached.
+             10: The port's duplex mode is improper for being attached."
+        ::= { ibAggPortEntry 2 }
+
+    ibAggPortLacpState OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "Control ports' lacp enble or disable."
+        ::= { ibAggPortEntry 3 }
+
+    ibAggPortNotAttachedString OBJECT-TYPE
+        SYNTAX DisplayString (SIZE (0..255))
+        MAX-ACCESS read-write
+        STATUS current
+        DESCRIPTION
+            "The string which interprets this
+             port is selected for an aggregator
+             but not attached."
+        ::= { ibAggPortEntry 4 }
+
+
+    ibAggResourceAllocationValue OBJECT-TYPE
+        SYNTAX PortList
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "The priority value calculated to decide which
+             aggregations have first call on the load-sharing
+             aggregation resources in the hardware. It
+             depends on the aggregation type and total
+             speed."
+        DEFVAL { "0" }
+        ::= { ibLAGMibObjects 3 }
+
+
+    ibLAGMibNotifications OBJECT IDENTIFIER ::= { ibLAG 2 }
+
+
+    ibAggSpeedChangedNotification NOTIFICATION-TYPE
+        OBJECTS { ibAggLinkNumber }
+        STATUS current
+        DESCRIPTION
+            "This event will be triggered whenever an
+             aggregation changes its speed."
+        ::= { ibLAGMibNotifications 1 }
+
+
+    ibAggPortInactiveNotification NOTIFICATION-TYPE
+        OBJECTS { ibAggLinkNumber }
+        STATUS current
+        DESCRIPTION
+            "This event will be triggered whenever any port
+             in aggregator is made inactive."
+        ::= { ibLAGMibNotifications 2 }
+
+
+    ibAggPortInactiveNotification2 NOTIFICATION-TYPE
+        OBJECTS { ibAggLinkNumber,
+                  ibAggPortIndex,
+                  ibAggMemberPortName,
+                  ibAggPortName }
+        STATUS current
+        DESCRIPTION
+            "This event will be triggered whenever the port
+             in aggregator is made inactive."
+        ::= { ibLAGMibNotifications 3 }
+
+
+    ibAggPortActiveNotification NOTIFICATION-TYPE
+        OBJECTS { ibAggLinkNumber,
+                  ibAggPortIndex,
+                  ibAggMemberPortName,
+                  ibAggPortName }
+        STATUS current
+        DESCRIPTION
+            "This event will be triggered whenever the port
+             in aggregator is made active."
+        ::= { ibLAGMibNotifications 4 }
+
+    ibLAGMibConformance OBJECT IDENTIFIER ::= { ibLAG 3 }
+
+
+    ibLAGMibCompliances OBJECT IDENTIFIER ::= { ibLAGMibConformance 1 }
+
+
+    ibLAGMibCompliance MODULE-COMPLIANCE
+        STATUS current
+        DESCRIPTION
+            "The compliance statement for SNMP entities
+             which implement the Lag MIB."
+        MODULE -- this module
+            MANDATORY-GROUPS
+                { ibLAGMibObjectGroup, ibLAGMibNotificationGroup }
+        ::= { ibLAGMibCompliances 1 }
+
+
+    ibLAGMibGroup OBJECT IDENTIFIER ::= { ibLAGMibConformance 2 }
+
+
+    ibLAGMibObjectGroup OBJECT-GROUP
+        OBJECTS { ibAggLinkName, ibAggLinkMode, ibAggLinkPortList,
+                ibAggLinkState, ibAggPortListSelectedPorts,
+                ibAggPortListSamePartnerPorts,
+                ibAggPortNotAttachedReason, ibAggPortLacpState,
+                ibAggPortNotAttachedString,
+                ibAggResourceAllocationValue }
+        STATUS current
+        DESCRIPTION
+            "The collection of objects which are used to
+             represent LAG objects."
+        ::= { ibLAGMibGroup 1 }
+
+
+-- The ibLAGMibNotificationGroup TRAP group is forzen and can not add new trap to this group.
+    ibLAGMibNotificationGroup NOTIFICATION-GROUP
+        NOTIFICATIONS { ibAggSpeedChangedNotification,
+                        ibAggPortInactiveNotification,
+                        ibAggPortInactiveNotification2,
+                        ibAggPortActiveNotification }
+        STATUS current
+        DESCRIPTION
+            "The collection of objects which are used to
+             represent notifications."
+        ::= { ibLAGMibGroup 2 }
+
+-- All new trap are defined here.
+ibLAGMibNotificationsPrefix OBJECT IDENTIFIER ::= { ibLAG 0 }
+
+ibAggPartnerMisconnect NOTIFICATION-TYPE
+    OBJECTS { ibAggLinkNumber,
+              ibAggPortIndex }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered whenever the peer link of the LACP
+         member interface might be incorrectly connected.
+        "
+    ::= { ibLAGMibNotificationsPrefix 5 }
+
+ibAggPartnerMisconnectResume NOTIFICATION-TYPE
+    OBJECTS { ibAggLinkNumber,
+              ibAggPortIndex }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered whenever the peer link of the LACP
+         member interface was correctly connected.
+        "
+    ::= { ibLAGMibNotificationsPrefix 6 }
+
+ibAggAllMemberDown NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when all aggregation member ports
+        went down."
+    ::= { ibLAGMibNotificationsPrefix 7 }
+
+ibAggAllMemberDownRecovery NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when all down aggregation member
+        ports recoverd."
+    ::= { ibLAGMibNotificationsPrefix 8 }
+
+ibAggAllMemberUp NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when all aggregation member ports
+        came up."
+    ::= { ibLAGMibNotificationsPrefix 9 }
+
+ibAggMemberLinkDown NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName,
+              ibAggMemberPortName }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when an aggregation member link
+        went down."
+    ::= { ibLAGMibNotificationsPrefix 10 }
+
+ibAggMemberLinkUp NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName,
+              ibAggMemberPortName }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when an aggregation member link
+        came up."
+    ::= { ibLAGMibNotificationsPrefix 11 }
+
+ibAggMemberCoutExceedThreshold NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName,
+              ibAggUpThreshold }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when the number of selected aggregation
+        member ports exceeded the threshold."
+    ::= { ibLAGMibNotificationsPrefix 12 }
+
+ibAggMemberCoutExceedRecovery NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName,
+              ibAggUpThreshold }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when the number of selected aggregation
+        member ports dropped below the threshold."
+    ::= { ibLAGMibNotificationsPrefix 13 }
+
+ibAggMemberNumberChanged NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName,
+              ibAggMemberPortName,
+              ibAggTotalActiveNum,
+              ibAggReasonCode }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when the number of selected aggregation
+        member ports changed."
+    ::= { ibLAGMibNotificationsPrefix 14 }
+
+ibAggLacpPartnerExpired NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName,
+              ibAggMemberPortName,
+              ibAggLinkNumber }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when an LACP peer expired."
+    ::= { ibLAGMibNotificationsPrefix 15 }
+
+ibAggPortLacpInactive NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName,
+              ibAggMemberPortName,
+              ibAggLinkNumber,
+              ibAggOldPduInfo,
+              ibAggNewPduInfo,
+              ibAggPduChangeCode }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when an aggregation member port
+        was unselected after receiving a packet."
+    ::= { ibLAGMibNotificationsPrefix 16 }
+
+ibAggPortLacpNegotiateFailed NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName,
+              ibAggMemberPortName,
+              ibAggLinkNumber }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when an aggregation member port
+        failed to negotiate with the peer."
+    ::= { ibLAGMibNotificationsPrefix 17 }
+
+ibAggPortLacpNegotiateRecovery NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName,
+              ibAggMemberPortName,
+              ibAggLinkNumber }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when an aggregation member port
+        negotiated with the peer successfully."
+    ::= { ibLAGMibNotificationsPrefix 18 }
+
+ibAggMemberChange NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName,
+              ibAggMemberPortName,
+              ibAggChangeType }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when an aggregation member port changes."
+    ::= { ibLAGMibNotificationsPrefix 19 }
+
+ibAggPortLacpActive NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName,
+              ibAggMemberPortName,
+              ibAggLinkNumber }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when an aggregation member port recovers from
+         the LACP inactive state."
+    ::= { ibLAGMibNotificationsPrefix 20 }
+
+ibAggTotalLinkLoss NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName,
+              ibAggLinkNumber }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when the bandwidth of an aggregate
+         interface drops to zero."
+    ::= { ibLAGMibNotificationsPrefix 21 }
+
+ibAggTotalLinkLossResume NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName,
+              ibAggLinkNumber }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when the bandwidth of an aggregate
+         interface restores to the original value."
+    ::= { ibLAGMibNotificationsPrefix 22 }
+
+ibAggPartialLinkLoss NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName,
+              ibAggMemberPortName,
+              ibAggLinkNumber }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when the bandwidth of an aggregate
+         interface drops."
+    ::= { ibLAGMibNotificationsPrefix 23 }
+
+ibAggPartialLinkLossResume NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName,
+              ibAggMemberPortName,
+              ibAggLinkNumber }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when the bandwidth of an aggregate
+         interface restores to the original value."
+    ::= { ibLAGMibNotificationsPrefix 24 }
+
+ibAggPortMadDetect NOTIFICATION-TYPE
+    OBJECTS { ibAggPortName,
+              ibAggLinkNumber }
+    STATUS current
+    DESCRIPTION
+        "This event will be triggered when the mad an aggregate
+         interface mad detect."
+    ::= { ibLAGMibNotificationsPrefix 25 }
+
+ibAggTrapOjbects OBJECT IDENTIFIER ::= { ibLAG 4 }
+
+ibAggPortName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..255))
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "Aggregate interface name."
+    ::= { ibAggTrapOjbects 1 }
+
+ibAggMemberPortName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..255))
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "Aggregation member port name."
+    ::= { ibAggTrapOjbects 2 }
+
+ibAggOldPduInfo OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..512))
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "An aggregation member port's old PDU information."
+    ::= { ibAggTrapOjbects 3 }
+
+ibAggNewPduInfo OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..512))
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "An aggregation member port's new PDU information."
+    ::= { ibAggTrapOjbects 4 }
+
+ibAggPduChangeCode OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..255))
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "Why an aggregation member port was unselected."
+    ::= { ibAggTrapOjbects 5 }
+
+ibAggTotalActiveNum OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Number of selected member ports."
+    ::= { ibAggTrapOjbects 6 }
+
+ibAggUpThreshold OBJECT-TYPE
+    SYNTAX      Integer32(1..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of selected member ports."
+    ::= { ibAggTrapOjbects 7 }
+
+ibAggReasonCode OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..255))
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+        "Aggregation member port change reason."
+    ::= { ibAggTrapOjbects 8 }
+
+ibAggChangeType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        unknown(1),
+        join(2),
+        leave(3)
+        }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The member change type.
+        unknown : The member change type is unknown.
+        join    : The member joins the group.
+        leave   : The member leaves the group.
+        "
+    ::= { ibAggTrapOjbects 9 }
+
+END

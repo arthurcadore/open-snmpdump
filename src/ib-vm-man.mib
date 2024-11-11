@@ -1,0 +1,734 @@
+-- ===========================================================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: VM(Video Management) Feature Configuration management MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 Initial version 2007-04-13 created by zhoujianming
+--- ============================================================================================================
+IB-VM-MAN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    entPhysicalAssetID
+        FROM ENTITY-MIB
+    Integer32, Unsigned32,IpAddress, Counter32, OBJECT-TYPE,
+    MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    DateAndTime, DisplayString
+        FROM SNMPv2-TC
+    ibSurveillanceMIB
+        FROM IB-OID-MIB;
+
+
+ibVMMan MODULE-IDENTITY
+    LAST-UPDATED "200704130000Z"        -- April 13, 2007  GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "VM is one of surveillance features, implementing user authentication,
+        configuration management, network management and control signalling
+        forwarding.
+        This MIB contains objects to manage the VM feature."
+    ::= { ibSurveillanceMIB 1 }
+
+--
+-- Node definitions
+--
+
+ibVMManMIBObjects OBJECT IDENTIFIER ::= { ibVMMan 1 }
+
+ibVMCapabilitySet OBJECT-TYPE
+    SYNTAX BITS
+    {
+        cms(0),
+        css(1),
+        dm(2)
+    }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Components included in the VM feature represented by bit fields. VM feature
+        includes three componets: CMS(Central Management Server), CSS(Control Signalling
+        Server) and DM(Data Managment).
+        A bit set to 1 indicates the corresponding component of this bit is included
+        otherwise indicates the corresponding component of this bit is not included. VM
+        can include one or more components at one time.
+        "
+    ::= { ibVMManMIBObjects 1 }
+
+--
+-- statistics
+--
+ibVMStat OBJECT IDENTIFIER ::= { ibVMManMIBObjects 2 }
+
+ibVMStatTotalConnEstablishRequests OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of establishment requests for video connection."
+    ::= { ibVMStat 1 }
+
+ibVMStatSuccConnEstablishRequests OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of successful establishment requests for video connection."
+    ::= { ibVMStat 2 }
+
+ibVMStatFailConnEstablishRequests OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of unsuccessful establishment requests for video connection."
+    ::= { ibVMStat 3 }
+
+ibVMStatTotalConnReleaseRequests OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of release requests for video connection."
+    ::= { ibVMStat 4 }
+
+ibVMStatSuccConnReleaseRequests OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of successful release requests for video connection."
+    ::= { ibVMStat 5 }
+
+ibVMStatFailConnReleaseRequests OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of unsuccessful release requests for video connection."
+    ::= { ibVMStat 6 }
+
+ibVMStatExceptionTerminationConn OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The total number of exceptional termination for video connection."
+    ::= { ibVMStat 7 }
+
+
+--
+-- Notification definitions
+--
+-- =================================================================
+-- Traps are defined below.
+ibVMManMIBTrap OBJECT IDENTIFIER ::= { ibVMMan 2 }
+
+-- All trap definitions should be placed under this object.
+ibVMManTrapPrex OBJECT IDENTIFIER ::= { ibVMManMIBTrap 0 }
+
+ibVMManDeviceOnlineTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManRegDevIP,
+        ibVMManRegDevName
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about the device having been registered to VM."
+    ::= { ibVMManTrapPrex 1 }
+
+ibVMManDeviceOfflineTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManRegDevIP,
+        ibVMManRegDevName
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about the device having been unregistered to VM."
+    ::= { ibVMManTrapPrex 2 }
+
+ibVMManForwardDeviceExternalSemaphoreTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManRegDevIP,
+        ibVMManRegDevName,
+        ibVMManPUExternalInputAlarmChannelID
+    }
+    STATUS  current
+    DESCRIPTION
+        "Forward a trap about external semaphore alarm, which is created
+        by the third party device."
+    ::= { ibVMManTrapPrex 3 }
+
+ibVMManForwardDeviceVideoLossTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManRegDevIP,
+        ibVMManRegDevName,
+        ibVMManPUECVideoChannelName
+    }
+    STATUS  current
+    DESCRIPTION
+        "Forward a trap about video loss, which is created by the third
+        party device."
+    ::= { ibVMManTrapPrex 4 }
+
+ibVMManForwardDeviceVideoRecoverTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManRegDevIP,
+        ibVMManRegDevName,
+        ibVMManPUECVideoChannelName
+    }
+    STATUS  current
+    DESCRIPTION
+        "Forward a trap about video recovery after loss, which is created
+        by the third party device."
+    ::= { ibVMManTrapPrex 5 }
+
+ibVMManForwardDeviceMotionDetectTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManRegDevIP,
+        ibVMManRegDevName,
+        ibVMManPUECVideoChannelName,
+        ibVMManRegionCoordinateX1,
+        ibVMManRegionCoordinateY1,
+        ibVMManRegionCoordinateX2,
+        ibVMManRegionCoordinateY2
+    }
+    STATUS  current
+    DESCRIPTION
+        "Forward a trap about motion detection, which is created by the
+        third party device."
+    ::= { ibVMManTrapPrex 6 }
+
+ibVMManForwardDeviceCoverTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManRegDevIP,
+        ibVMManRegDevName,
+        ibVMManPUECVideoChannelName,
+        ibVMManRegionCoordinateX1,
+        ibVMManRegionCoordinateY1,
+        ibVMManRegionCoordinateX2,
+        ibVMManRegionCoordinateY2
+    }
+    STATUS  current
+    DESCRIPTION
+        "Forward a trap about video cover, which is created by the third
+        party device."
+    ::= { ibVMManTrapPrex 7 }
+
+ibVMManForwardDeviceCpuUsageThresholdTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManRegDevIP,
+        ibVMManRegDevName,
+        ibVMManCpuUsage,
+        ibVMManCpuUsageThreshold
+    }
+    STATUS  current
+    DESCRIPTION
+        "Forward a trap about cpu usage exceeding its threshold, which is
+        created by the third party device."
+    ::= { ibVMManTrapPrex 8 }
+
+ibVMManForwardDeviceMemUsageThresholdTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManRegDevIP,
+        ibVMManRegDevName,
+        ibVMManMemUsage,
+        ibVMManMemUsageThreshold
+    }
+    STATUS  current
+    DESCRIPTION
+        "Forward a trap about memory usage exceeding its threshold, which is
+        created by the third party device."
+    ::= { ibVMManTrapPrex 9 }
+
+ibVMManForwardDeviceHardDiskUsageThresholdTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManRegDevIP,
+        ibVMManRegDevName,
+        ibVMManHardDiskUsage,
+        ibVMManHardDiskUsageThreshold
+    }
+    STATUS  current
+    DESCRIPTION
+        "Forward a trap about harddisk usage exceeding its threshold, which is
+        created by the third party device."
+    ::= { ibVMManTrapPrex 10 }
+
+
+ibVMManForwardDeviceTemperatureThresholdTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManRegDevIP,
+        ibVMManRegDevName,
+        ibVMManTemperature,
+        ibVMManTemperatureThreshold
+    }
+    STATUS  current
+    DESCRIPTION
+        "Forward a trap about temperature exceeding its threshold, which is created
+        by the third party device."
+    ::= { ibVMManTrapPrex 11 }
+
+ibVMManForwardDeviceStartKinescopeTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManRegDevIP,
+        ibVMManRegDevName,
+        ibVMManPUECVideoChannelName
+    }
+    STATUS  current
+    DESCRIPTION
+        "Forward a trap about starting kinescope, which is created by the third party
+        device."
+    ::= { ibVMManTrapPrex 12 }
+
+ibVMManForwardDeviceStopKinescopeTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManRegDevIP,
+        ibVMManRegDevName,
+        ibVMManPUECVideoChannelName
+    }
+    STATUS  current
+    DESCRIPTION
+        "Forward a trap about stopping kinescope, which is created by the third party
+        device."
+    ::= { ibVMManTrapPrex 13 }
+
+ibVMManClientReportTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManClientIP,
+        ibVMManUserName,
+        ibVMManReportContent
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about the fault which is reported by clients."
+    ::= { ibVMManTrapPrex 14 }
+
+ibVMManClientRealtimeSurveillanceNoVideoTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManClientIP,
+        ibVMManUserName,
+        ibVMManRegDevIP,
+        ibVMManRegDevName,
+        ibVMManPUECVideoChannelName
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about no realtime surveillance video stream which is reported by clients.
+        ibVMManRegDevIP, entPhysicalAssetID, ibVMManRegDevName and ibVMManPUECVideoChannelName
+        describe an EC's relative information. "
+    ::= { ibVMManTrapPrex 15 }
+
+ibVMManClientVODNoVideoTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManClientIP,
+        ibVMManUserName,
+        ibVMManRegDevIP,
+        ibVMManRegDevName,
+        ibVMManPUECVideoChannelName,
+        ibVMManClientVODStart,
+        ibVMManClientVODEnd,
+        ibVMManIPSANDevIP
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about no VOD video stream which is reported by clients. ibVMManRegDevIP,
+        entPhysicalAssetID, ibVMManRegDevName and ibVMManPUECVideoChannelName describe an EC's relative information."
+    ::= { ibVMManTrapPrex 16 }
+
+ibVMManClientRealtimeSurveillanceVideoStreamDiscontinuityTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManClientIP,
+        ibVMManUserName,
+        ibVMManRegDevIP,
+        ibVMManRegDevName,
+        ibVMManPUECVideoChannelName,
+        ibVMManClientVideoStreamDiscontinuityInterval,
+        ibVMManClientVideoStreamDiscontinuityIntervalThreshold,
+        ibVMManClientStatPeriod
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about the realtime surveillance video stream discontinuity which is reported by clients.
+        entPhysicalAssetID, ibVMManRegDevIP, ibVMManRegDevName and ibVMManPUECVideoChannelName describe an EC's relative
+        information."
+    ::= { ibVMManTrapPrex 17 }
+
+ibVMManClientVODVideoStreamDiscontinuityTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManClientIP,
+        ibVMManUserName,
+        ibVMManRegDevIP,
+        ibVMManRegDevName,
+        ibVMManPUECVideoChannelName,
+        ibVMManClientVODStart,
+        ibVMManClientVODEnd,
+        ibVMManIPSANDevIP,
+        ibVMManClientVideoStreamDiscontinuityInterval,
+        ibVMManClientVideoStreamDiscontinuityIntervalThreshold,
+        ibVMManClientStatPeriod
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about the VOD video stream discontinuity which is reported by clients.
+        ibVMManRegDevIP, entPhysicalAssetID, ibVMManRegDevName and ibVMManPUECVideoChannelName
+        describe an EC's relative information."
+    ::= { ibVMManTrapPrex 18 }
+
+ibVMManClientCtlConnExceptionTerminationTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManClientIP,
+        ibVMManUserName
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about the exceptional termination for control connection. "
+    ::= { ibVMManTrapPrex 19 }
+
+ibVMManClientFrequencyLoginFailTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManClientIP,
+        ibVMManUserName,
+        ibVMManClientLoginFailNum,
+        ibVMManClientLoginFailNumThreshold,
+        ibVMManClientStatPeriod
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about the frequency of client login failure."
+    ::= { ibVMManTrapPrex 20 }
+
+ibVMManClientFrequencyVODFailTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManClientIP,
+        ibVMManUserName,
+        ibVMManClientVODFailNum,
+        ibVMManClientVODFailNumThreshold,
+        ibVMManClientStatPeriod
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about the frequency of client VOD failure."
+    ::= { ibVMManTrapPrex 21 }
+
+-- All DM trap definitions should be placed here.
+ibVMManDMECDisobeyStorageScheduleTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManRegDevIP,
+        ibVMManPUECVideoChannelName
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about EC disobeying storage schedule created by DM."
+    ::= { ibVMManTrapPrex 22 }
+
+ibVMManDMECDisobeyStorageScheduleRecoverTrap NOTIFICATION-TYPE
+    OBJECTS
+    {
+        entPhysicalAssetID,
+        ibVMManRegDevIP,
+        ibVMManPUECVideoChannelName
+    }
+    STATUS  current
+    DESCRIPTION
+        "Send a trap about recovery after EC disobeying storage schedule created by DM."
+    ::= { ibVMManTrapPrex 23 }
+
+
+-- All objects used for TRAP only are defined here.
+ibVMManTrapObjects OBJECT IDENTIFIER ::= { ibVMManMIBTrap 1 }
+
+ibVMManIPSANDevIP OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "IP address of IPSAN Device which can store video data."
+    ::= { ibVMManTrapObjects 1 }
+
+ibVMManRegDevIP OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "IP address of devices which can registered or unregistered to VM."
+    ::= { ibVMManTrapObjects 2 }
+
+ibVMManRegDevName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of devices which can registered or unregistered to VM."
+    ::= { ibVMManTrapObjects 3 }
+
+ibVMManRegionCoordinateX1 OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The horizontal coordinate of top left point of the motion detection region."
+    ::= { ibVMManTrapObjects 4 }
+
+ibVMManRegionCoordinateY1 OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The vertical coordinate of top left point of the motion detection region."
+    ::= { ibVMManTrapObjects 5 }
+
+ibVMManRegionCoordinateX2 OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The horizontal coordinate of botton right point of the motion detection region."
+    ::= { ibVMManTrapObjects 6 }
+
+ibVMManRegionCoordinateY2 OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The horizontal coordinate of botton right point of the motion detection region."
+    ::= { ibVMManTrapObjects 7 }
+
+ibVMManCpuUsage OBJECT-TYPE
+    SYNTAX      Unsigned32 ( 0..100 )
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The CPU usage for this entity. Generally, the CPU usage
+        will caculate the overall CPU usage on the entity, and it
+        is not sensible with the number of CPU on the entity. "
+    ::= { ibVMManTrapObjects 8 }
+
+ibVMManCpuUsageThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32 ( 0..100 )
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The threshold for the CPU usage. When the CPU usage exceeds
+        the threshold, a notification will be sent."
+    ::= { ibVMManTrapObjects 9 }
+
+ibVMManMemUsage OBJECT-TYPE
+    SYNTAX      Unsigned32 ( 0..100 )
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The memory usage for the entity. This object indicates what
+        percent of memory are used. "
+    ::= { ibVMManTrapObjects 10 }
+
+ibVMManMemUsageThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32 ( 0..100 )
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The threshold for the Memory usage. When the memory usage
+        exceeds the threshold, a notification will be sent. "
+    ::= { ibVMManTrapObjects 11 }
+
+ibVMManHardDiskUsage OBJECT-TYPE
+    SYNTAX      Unsigned32 ( 0..100 )
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The hard disk usage for the entity. This object indicates what
+        percent of hard disk are used. "
+    ::= { ibVMManTrapObjects 12 }
+
+ibVMManHardDiskUsageThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32 ( 0..100 )
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The threshold for the hard disk usage. When the hard disk usage
+        exceeds the threshold, a notification will be sent. "
+    ::= { ibVMManTrapObjects 13 }
+
+ibVMManTemperature OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The temperature for the entity. "
+    ::= { ibVMManTrapObjects 14 }
+
+ibVMManTemperatureThreshold OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The threshold for the temperature. When the temperature
+        exceeds the threshold, a notification will be sent. "
+    ::= { ibVMManTrapObjects 15 }
+
+ibVMManClientIP OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The client device IP address."
+    ::= { ibVMManTrapObjects 16 }
+
+ibVMManUserName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The client user name."
+    ::= { ibVMManTrapObjects 17 }
+
+ibVMManReportContent OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..128))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The details of the fault which reported by clients"
+    ::= { ibVMManTrapObjects 18 }
+
+ibVMManClientVideoStreamDiscontinuityInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Video stream discontinuity interval. "
+    ::= { ibVMManTrapObjects 19 }
+
+ibVMManClientVideoStreamDiscontinuityIntervalThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The threshold for the video stream discontinuity interval. When the
+        discontinuity interval exceeds the threshold, a notification will be sent. "
+    ::= { ibVMManTrapObjects 20 }
+
+ibVMManClientStatPeriod OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The client statistic period. "
+    ::= { ibVMManTrapObjects 21 }
+
+ibVMManClientLoginFailNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The total number of client login failure in last statistic period which is
+        defined by ibVMManClientStatPeriod entity."
+    ::= { ibVMManTrapObjects 22 }
+
+ibVMManClientLoginFailNumThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The threshold for the total number of client login failure in last statistic
+        period. When the number exceeds the threshold, a notification will be sent. "
+    ::= { ibVMManTrapObjects 23 }
+
+ibVMManClientVODFailNum OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The total number of client VOD failure in last statistic period which is
+        defined by ibVMManClientStatPeriod entity."
+    ::= { ibVMManTrapObjects 24 }
+
+ibVMManClientVODFailNumThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The threshold for the total number of client VOD failure in last statistic
+        period. When the number exceeds the threshold, a notification will be sent. "
+    ::= { ibVMManTrapObjects 25 }
+
+ibVMManClientVODStart OBJECT-TYPE
+    SYNTAX DateAndTime
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The start time for VOD."
+    ::= { ibVMManTrapObjects 26 }
+
+ibVMManClientVODEnd OBJECT-TYPE
+    SYNTAX DateAndTime
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The end time for VOD."
+    ::= { ibVMManTrapObjects 27 }
+
+ibVMManPUExternalInputAlarmChannelID  OBJECT-TYPE
+    SYNTAX  Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The ID of the external input alarm channel."
+    ::= { ibVMManTrapObjects 28 }
+
+ibVMManPUECVideoChannelName  OBJECT-TYPE
+    SYNTAX  DisplayString (SIZE (0..32))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The name of the video channel. It is suggested that the name includes
+        the channel ID information."
+    ::= { ibVMManTrapObjects 29 }
+
+END

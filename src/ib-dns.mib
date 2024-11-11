@@ -1,0 +1,240 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: DNS MIB File
+-- Reference:
+-- Version: V1.1
+-- History:
+--      V1.0 created by jiangshuaihua
+--      initial version 2009-02-12
+--      V1.1 Modified by yujunjie 2021-06-23
+--      Delete the size of InetAddress for nodes ibDnsStaticSrvIpAddr,
+--      ibDnsDynamicSrvIpAddr
+-- =================================================================
+IB-DNS-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        OBJECT-GROUP, MODULE-COMPLIANCE
+            FROM SNMPv2-CONF
+        MODULE-IDENTITY, OBJECT-TYPE, Integer32
+            FROM SNMPv2-SMI
+        RowStatus
+            FROM SNMPv2-TC
+        InetAddressType, InetAddress
+            FROM INET-ADDRESS-MIB
+        ibCommon
+            FROM IB-OID-MIB;
+
+    ibDns MODULE-IDENTITY
+        LAST-UPDATED
+            "202106230000Z"
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+            "Delete the size of InetAddress for nodes
+            ibDnsStaticSrvIpAddr,ibDnsDynamicSrvIpAddr."
+        REVISION
+            "202106230000Z"
+        DESCRIPTION
+            "This MIB contains objects to manage the DNS."
+        REVISION
+            "200902120000Z"
+        DESCRIPTION
+            " "
+        ::= { ibCommon 97 }
+
+-- Objects define
+    ibDnsObjects OBJECT IDENTIFIER ::= { ibDns 1 }
+
+-- DNS static server IP table
+    ibDnsStaticSrvIpTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDnsStaticSrvIpEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "
+            This table is a list of DNS static server IPv4 address
+            configuration, which is manually specified.
+            "
+       ::= { ibDnsObjects 1 }
+
+    ibDnsStaticSrvIpEntry OBJECT-TYPE
+        SYNTAX      IbDnsStaticSrvIpEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "
+            An entry of ibDnsStaticSrvIpTable.
+            "
+        INDEX
+        {
+            ibDnsStaticSrvIpType,
+            ibDnsStaticSrvIpAddr
+        }
+        ::= { ibDnsStaticSrvIpTable 1 }
+
+    IbDnsStaticSrvIpEntry ::=
+        SEQUENCE {
+        ibDnsStaticSrvIpType       InetAddressType,
+        ibDnsStaticSrvIpAddr       InetAddress,
+        ibDnsStaticSrvIpPriority   Integer32,
+        ibDnsStaticSrvIpRowStatus  RowStatus
+        }
+
+    ibDnsStaticSrvIpType          OBJECT-TYPE
+        SYNTAX      InetAddressType
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "
+            This node gives the type of the static DNS server IP address.
+            "
+        ::= { ibDnsStaticSrvIpEntry 1 }
+
+    ibDnsStaticSrvIpAddr        OBJECT-TYPE
+        SYNTAX      InetAddress
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "
+            This node gives the IP address of the DNS server
+            specified by the user.
+            "
+        ::= { ibDnsStaticSrvIpEntry 2 }
+
+    ibDnsStaticSrvIpPriority          OBJECT-TYPE
+        SYNTAX      Integer32 (0..2147483647)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "
+            This node gives the priority of the DNS server, according to the
+            creation order.  The smaller the value is, the higher the priority
+            level is.
+            "
+        ::= { ibDnsStaticSrvIpEntry 3 }
+
+    ibDnsStaticSrvIpRowStatus      OBJECT-TYPE
+        SYNTAX      RowStatus
+        MAX-ACCESS  read-create
+        STATUS      current
+        DESCRIPTION
+            "
+            This node gives the operation status of this table entry.
+            "
+        ::= { ibDnsStaticSrvIpEntry 4 }
+
+-- DNS dynamic server IP table
+    ibDnsDynamicSrvIpTable OBJECT-TYPE
+        SYNTAX      SEQUENCE OF IbDnsDynamicSrvIpEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "
+            This table is a list of DNS dynamic server IPv4 address
+            configuration, which is dynamically obtained through DHCP.
+            "
+       ::= { ibDnsObjects 2 }
+
+    ibDnsDynamicSrvIpEntry OBJECT-TYPE
+        SYNTAX      IbDnsDynamicSrvIpEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "An entry of ibDnsDynamicSrvIpTable."
+        INDEX
+        {
+           ibDnsDynamicSrvIpType,
+           ibDnsDynamicSrvIpAddr
+        }
+        ::= { ibDnsDynamicSrvIpTable 1 }
+
+    IbDnsDynamicSrvIpEntry ::=
+        SEQUENCE
+        {
+            ibDnsDynamicSrvIpType      InetAddressType,
+            ibDnsDynamicSrvIpAddr      InetAddress,
+            ibDnsDynamicSrvIpPriority  Integer32
+        }
+
+    ibDnsDynamicSrvIpType          OBJECT-TYPE
+        SYNTAX      InetAddressType
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "
+            This node gives the type of the dynamic DNS server IP address.
+            "
+        ::= { ibDnsDynamicSrvIpEntry 1 }
+
+    ibDnsDynamicSrvIpAddr          OBJECT-TYPE
+        SYNTAX      InetAddress
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+            "
+            This node gives the IP address of the DNS server dynamically
+            obtained through DHCP.
+            "
+        ::= { ibDnsDynamicSrvIpEntry 2 }
+
+    ibDnsDynamicSrvIpPriority      OBJECT-TYPE
+        SYNTAX      Integer32 (0..2147483647)
+        MAX-ACCESS  read-only
+        STATUS      current
+        DESCRIPTION
+            "
+            This node gives the priority of the DNS server, according to the
+            order obtained through DHCP.  The smaller the value is, the higher
+            the priority level is.
+            "
+        ::= { ibDnsDynamicSrvIpEntry 3 }
+
+-- Conformance define
+    ibDnsMIBConformance OBJECT IDENTIFIER ::= { ibDns 2 }
+
+        ibDnsMIBCompliances OBJECT IDENTIFIER ::= { ibDnsMIBConformance 1 }
+
+        ibDnsMIBCompliance MODULE-COMPLIANCE
+            STATUS current
+            DESCRIPTION
+                "
+                The compliance statement for entities which implement
+                the DNS MIB.
+                "
+            MODULE -- this module
+                MANDATORY-GROUPS
+                {
+                    ibDnsStaticSrvIpGroup,
+                    ibDnsDynamicSrvIpGroup
+                }
+            ::= { ibDnsMIBCompliances 1 }
+
+        ibDnsMIBGroups OBJECT IDENTIFIER ::= { ibDnsMIBConformance 2 }
+
+        ibDnsStaticSrvIpGroup OBJECT-GROUP
+            OBJECTS
+            {
+                ibDnsStaticSrvIpPriority,
+                ibDnsStaticSrvIpRowStatus
+            }
+            STATUS current
+            DESCRIPTION
+                "
+                A collection of objects providing mandatory DNS server IP
+                addresses manually specified.
+                "
+            ::= { ibDnsMIBGroups 1 }
+
+        ibDnsDynamicSrvIpGroup OBJECT-GROUP
+            OBJECTS { ibDnsDynamicSrvIpPriority }
+            STATUS current
+            DESCRIPTION
+                "
+                A collection of objects providing mandatory DNS server IP
+                addresses dynamically obtained through DHCP.
+                "
+            ::= { ibDnsMIBGroups 2 }
+END

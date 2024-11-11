@@ -1,0 +1,383 @@
+-- ============================================================================
+-- Copyright (c) Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria. All rights reserved.
+-- Description: This MIB will maintain the products MIB OID and management
+--              properties root node for Intelbras products
+--
+-- Reference:
+-- Version: V1.00
+-- History:
+--   V1.00 2023-10-10 created by zhangmiao
+-- ============================================================================
+IB-OID-MIB DEFINITIONS ::= BEGIN
+    IMPORTS
+        enterprises
+            FROM RFC1155-SMI;
+
+-- Object under .enterprises
+    intelbras OBJECT IDENTIFIER ::= { enterprises 26138 }
+	
+-- Object under .enterprises.intelbras
+	ibnew OBJECT IDENTIFIER ::= { intelbras 1 }
+	
+-- Object under .enterprises.intelbras.ibnew
+	lansw 	   OBJECT IDENTIFIER ::= { ibnew 2 }
+	wireless   OBJECT IDENTIFIER ::= { ibnew 4 }
+
+-- Object under .enterprises.intelbras
+    ibCommon                  OBJECT IDENTIFIER ::= { intelbras 2 }
+    ibEntityVendorTypeOID     OBJECT IDENTIFIER ::= { intelbras 3 }
+    ibNM                      OBJECT IDENTIFIER ::= { intelbras 4 }
+    ibSystem                  OBJECT IDENTIFIER ::= { intelbras 6 }
+    ibSNMPAgCpb               OBJECT IDENTIFIER ::= { intelbras 7 }
+    ibRhw                     OBJECT IDENTIFIER ::= { intelbras 8 }
+    ibSurveillanceMIB         OBJECT IDENTIFIER ::= { intelbras 9 }
+    ibStorageRef              OBJECT IDENTIFIER ::= { intelbras 10 }
+    ibJointMibs               OBJECT IDENTIFIER ::= { intelbras 12 }
+    ib2014                    OBJECT IDENTIFIER ::= { intelbras 13 }
+    ibSNA                     OBJECT IDENTIFIER ::= { intelbras 14 }
+    ibBasesoft                OBJECT IDENTIFIER ::= { intelbras 15 }
+    ibCloud                   OBJECT IDENTIFIER ::= { intelbras 16 }
+
+-- Define joint vendor product ID
+    ibJointVendorId           OBJECT IDENTIFIER ::= { ibJointMibs 1 }
+
+-- Object under .enterprises.intelbras.ibCommon
+    ibFtm                     OBJECT IDENTIFIER ::= { ibCommon 1 }
+    ibUIMgt                   OBJECT IDENTIFIER ::= { ibCommon 2 }
+    ibSystemMan               OBJECT IDENTIFIER ::= { ibCommon 3 }
+    ibConfig                  OBJECT IDENTIFIER ::= { ibCommon 4 }
+    ibFlash                   OBJECT IDENTIFIER ::= { ibCommon 5 }
+    ibEntityExtend            OBJECT IDENTIFIER ::= { ibCommon 6 }
+    ibIPSecMonitor            OBJECT IDENTIFIER ::= { ibCommon 7 }
+    ibAcl                     OBJECT IDENTIFIER ::= { ibCommon 8 }
+    ibVoiceVlan               OBJECT IDENTIFIER ::= { ibCommon 9 }
+    ibL4Redirect              OBJECT IDENTIFIER ::= { ibCommon 10 }
+    ibIpPBX                   OBJECT IDENTIFIER ::= { ibCommon 11 }
+    ibUser                    OBJECT IDENTIFIER ::= { ibCommon 12 }
+    ibRadius                  OBJECT IDENTIFIER ::= { ibCommon 13 }
+    ibPowerEthernetExt        OBJECT IDENTIFIER ::= { ibCommon 14 }
+    ibEntityRelation          OBJECT IDENTIFIER ::= { ibCommon 15 }
+    ibProtocolVlan            OBJECT IDENTIFIER ::= { ibCommon 16 }
+    ibQosProfile              OBJECT IDENTIFIER ::= { ibCommon 17 }
+    ibNat                     OBJECT IDENTIFIER ::= { ibCommon 18 }
+    ibPos                     OBJECT IDENTIFIER ::= { ibCommon 19 }
+    ibNS                      OBJECT IDENTIFIER ::= { ibCommon 20 }
+    ibAAL5                    OBJECT IDENTIFIER ::= { ibCommon 21 }
+    ibSSH                     OBJECT IDENTIFIER ::= { ibCommon 22 }
+    ibRSA                     OBJECT IDENTIFIER ::= { ibCommon 23 }
+    ibVrrpExt                 OBJECT IDENTIFIER ::= { ibCommon 24 }
+    ibIpa                     OBJECT IDENTIFIER ::= { ibCommon 25 }
+    ibPortSecurity            OBJECT IDENTIFIER ::= { ibCommon 26 }
+    ibVpls                    OBJECT IDENTIFIER ::= { ibCommon 27 }
+    ibE1                      OBJECT IDENTIFIER ::= { ibCommon 28 }
+    ibT1                      OBJECT IDENTIFIER ::= { ibCommon 29 }
+    ibIKEMonitor              OBJECT IDENTIFIER ::= { ibCommon 30 }
+    ibWebSwitch               OBJECT IDENTIFIER ::= { ibCommon 31 }
+    ibAutoDetect              OBJECT IDENTIFIER ::= { ibCommon 32 }
+    ibIpBroadcast             OBJECT IDENTIFIER ::= { ibCommon 33 }
+    ibIpx                     OBJECT IDENTIFIER ::= { ibCommon 34 }
+    ibIPS                     OBJECT IDENTIFIER ::= { ibCommon 35 }
+    ibDhcpSnoop               OBJECT IDENTIFIER ::= { ibCommon 36 }
+    ibProtocolPriority        OBJECT IDENTIFIER ::= { ibCommon 37 }
+    ibTrap                    OBJECT IDENTIFIER ::= { ibCommon 38 }
+    ibVoice                   OBJECT IDENTIFIER ::= { ibCommon 39 }
+    ibIfExt                   OBJECT IDENTIFIER ::= { ibCommon 40 }
+    ibCfCard                  OBJECT IDENTIFIER ::= { ibCommon 41 }
+    ibEpon                    OBJECT IDENTIFIER ::= { ibCommon 42 }
+    ibDldp                    OBJECT IDENTIFIER ::= { ibCommon 43 }
+    ibUnicast                 OBJECT IDENTIFIER ::= { ibCommon 44 }
+    ibRrpp                    OBJECT IDENTIFIER ::= { ibCommon 45 }
+    ibDomain                  OBJECT IDENTIFIER ::= { ibCommon 46 }
+    ibIds                     OBJECT IDENTIFIER ::= { ibCommon 47 }
+    ibRcr                     OBJECT IDENTIFIER ::= { ibCommon 48 }
+    ibAtmDxi                  OBJECT IDENTIFIER ::= { ibCommon 49 }
+    ibMulticast               OBJECT IDENTIFIER ::= { ibCommon 50 }
+    ibMpm                     OBJECT IDENTIFIER ::= { ibCommon 51 }
+    ibOadp                    OBJECT IDENTIFIER ::= { ibCommon 52 }
+    ibTunnel                  OBJECT IDENTIFIER ::= { ibCommon 53 }
+    ibGre                     OBJECT IDENTIFIER ::= { ibCommon 54 }
+    ibObjectInfo              OBJECT IDENTIFIER ::= { ibCommon 55 }
+    ibStorage                 OBJECT IDENTIFIER ::= { ibCommon 56 }
+    ibDvpn                    OBJECT IDENTIFIER ::= { ibCommon 57 }
+    ibDhcpRelay               OBJECT IDENTIFIER ::= { ibCommon 58 }
+    ibIsis                    OBJECT IDENTIFIER ::= { ibCommon 59 }
+    ibRpr                     OBJECT IDENTIFIER ::= { ibCommon 60 }
+    ibSubnetVlan              OBJECT IDENTIFIER ::= { ibCommon 61 }
+    ibDlswExt                 OBJECT IDENTIFIER ::= { ibCommon 62 }
+    ibSyslog                  OBJECT IDENTIFIER ::= { ibCommon 63 }
+    ibFlowTemplate            OBJECT IDENTIFIER ::= { ibCommon 64 }
+    ibQos2                    OBJECT IDENTIFIER ::= { ibCommon 65 }
+    ibStormConstrain          OBJECT IDENTIFIER ::= { ibCommon 66 }
+    ibIpAddrMIB               OBJECT IDENTIFIER ::= { ibCommon 67 }
+    ibMirrGroup               OBJECT IDENTIFIER ::= { ibCommon 68 }
+    ibQINQ                    OBJECT IDENTIFIER ::= { ibCommon 69 }
+    ibTransceiver             OBJECT IDENTIFIER ::= { ibCommon 70 }
+    ibIpv6AddrMIB             OBJECT IDENTIFIER ::= { ibCommon 71 }
+    ibBfdMIB                  OBJECT IDENTIFIER ::= { ibCommon 72 }
+    ibRCP                     OBJECT IDENTIFIER ::= { ibCommon 73 }
+    ibAcfp                    OBJECT IDENTIFIER ::= { ibCommon 74 }
+    ibDot11                   OBJECT IDENTIFIER ::= { ibCommon 75 }
+    ibE1T1VI                  OBJECT IDENTIFIER ::= { ibCommon 76 }
+    ibwapiMIB                 OBJECT IDENTIFIER ::= { ibCommon 77 }
+    ibL2VpnPwe3               OBJECT IDENTIFIER ::= { ibCommon 78 }
+    ibMplsOam                 OBJECT IDENTIFIER ::= { ibCommon 79 }
+    ibMplsOamPs               OBJECT IDENTIFIER ::= { ibCommon 80 }
+    ibSiemMib                 OBJECT IDENTIFIER ::= { ibCommon 81 }
+    ibUps                     OBJECT IDENTIFIER ::= { ibCommon 82 }
+    ibEOCCommon               OBJECT IDENTIFIER ::= { ibCommon 83 }
+    ibHPEOC                   OBJECT IDENTIFIER ::= { ibCommon 84 }
+    ibAFC                     OBJECT IDENTIFIER ::= { ibCommon 85 }
+    ibMultCDR                 OBJECT IDENTIFIER ::= { ibCommon 86 }
+    ibMACInformation          OBJECT IDENTIFIER ::= { ibCommon 87 }
+    ibFireWall                OBJECT IDENTIFIER ::= { ibCommon 88 }
+    ibDSP                     OBJECT IDENTIFIER ::= { ibCommon 89 }
+    ibNetMan                  OBJECT IDENTIFIER ::= { ibCommon 90 }
+    ibStack                   OBJECT IDENTIFIER ::= { ibCommon 91 }
+    ibPosa                    OBJECT IDENTIFIER ::= { ibCommon 92 }
+    ibWebAuthentication       OBJECT IDENTIFIER ::= { ibCommon 93 }
+    ibCATVTransceiver         OBJECT IDENTIFIER ::= { ibCommon 94 }
+    ibLpbkdt                  OBJECT IDENTIFIER ::= { ibCommon 95 }
+    ibMultiMedia              OBJECT IDENTIFIER ::= { ibCommon 96 }
+    ibDns                     OBJECT IDENTIFIER ::= { ibCommon 97 }
+    ib3GModem                 OBJECT IDENTIFIER ::= { ibCommon 98 }
+    ibPortal                  OBJECT IDENTIFIER ::= { ibCommon 99 }
+    iblldp                    OBJECT IDENTIFIER ::= { ibCommon 100 }
+    ibDHCPServer              OBJECT IDENTIFIER ::= { ibCommon 101 }
+    ibPPPoEServer             OBJECT IDENTIFIER ::= { ibCommon 102 }
+    ibL2Isolate               OBJECT IDENTIFIER ::= { ibCommon 103 }
+    ibSnmpExt                 OBJECT IDENTIFIER ::= { ibCommon 104 }
+    ibVsi                     OBJECT IDENTIFIER ::= { ibCommon 105 }
+    ibEvc                     OBJECT IDENTIFIER ::= { ibCommon 106 }
+    ibMinm                    OBJECT IDENTIFIER ::= { ibCommon 107 }
+    ibBlg                     OBJECT IDENTIFIER ::= { ibCommon 108 }
+    ibRS485                   OBJECT IDENTIFIER ::= { ibCommon 109 }
+    ibARPRatelimit            OBJECT IDENTIFIER ::= { ibCommon 110 }
+    ibLI                      OBJECT IDENTIFIER ::= { ibCommon 111 }
+    ibDar                     OBJECT IDENTIFIER ::= { ibCommon 112 }
+    ibPBR                     OBJECT IDENTIFIER ::= { ibCommon 113 }
+    ibAAANasId                OBJECT IDENTIFIER ::= { ibCommon 114 }
+    ibTeTunnel                OBJECT IDENTIFIER ::= { ibCommon 115 }
+    ibLB                      OBJECT IDENTIFIER ::= { ibCommon 116 }
+    ibDldp2                   OBJECT IDENTIFIER ::= { ibCommon 117 }
+    ibWIPS                    OBJECT IDENTIFIER ::= { ibCommon 118 }
+    ibInfoCenter              OBJECT IDENTIFIER ::= { ibCommon 119 }
+    ibFCoE                    OBJECT IDENTIFIER ::= { ibCommon 120 }
+    ibTRNG2                   OBJECT IDENTIFIER ::= { ibCommon 121 }
+    ibDhcp4                   OBJECT IDENTIFIER ::= { ibCommon 122 }
+    ibMulticastSnoop          OBJECT IDENTIFIER ::= { ibCommon 123 }
+    ibDhcpSnoop2              OBJECT IDENTIFIER ::= { ibCommon 124 }
+    ibRmonExt                 OBJECT IDENTIFIER ::= { ibCommon 125 }
+    ibIPsecMonitorV2          OBJECT IDENTIFIER ::= { ibCommon 126 }
+    ibSan                     OBJECT IDENTIFIER ::= { ibCommon 127 }
+    ibSpb                     OBJECT IDENTIFIER ::= { ibCommon 128 }
+    ibPex                     OBJECT IDENTIFIER ::= { ibCommon 129 }
+    ibSlbg                    OBJECT IDENTIFIER ::= { ibCommon 130 }
+    ibPvst                    OBJECT IDENTIFIER ::= { ibCommon 131 }
+    ibEvi                     OBJECT IDENTIFIER ::= { ibCommon 132 }
+    ibIssuUpgrade             OBJECT IDENTIFIER ::= { ibCommon 133 }
+    ibEvb                     OBJECT IDENTIFIER ::= { ibCommon 134 }
+    ibFcoeMode                OBJECT IDENTIFIER ::= { ibCommon 135 }
+    ibMDC                     OBJECT IDENTIFIER ::= { ibCommon 136 }
+    ibQinQv2                  OBJECT IDENTIFIER ::= { ibCommon 137 }
+    ibVmap                    OBJECT IDENTIFIER ::= { ibCommon 138 }
+    ibL2tp                    OBJECT IDENTIFIER ::= { ibCommon 139 }
+    ibMultilinkPPPV2          OBJECT IDENTIFIER ::= { ibCommon 140 }
+    ibLocAAASrv               OBJECT IDENTIFIER ::= { ibCommon 141 }
+    ibMplsExt                 OBJECT IDENTIFIER ::= { ibCommon 142 }
+    ibMplsTe                  OBJECT IDENTIFIER ::= { ibCommon 143 }
+    ibBpa                     OBJECT IDENTIFIER ::= { ibCommon 144 }
+    ibLicense                 OBJECT IDENTIFIER ::= { ibCommon 145 }
+    ibSmlk                    OBJECT IDENTIFIER ::= { ibCommon 147 }
+    ibARPSourceSuppression    OBJECT IDENTIFIER ::= { ibCommon 146 }
+    ibLBv2                    OBJECT IDENTIFIER ::= { ibCommon 148 }
+    ibSession                 OBJECT IDENTIFIER ::= { ibCommon 149 }
+    ibVxlan                   OBJECT IDENTIFIER ::= { ibCommon 150 }
+    ibRddc                    OBJECT IDENTIFIER ::= { ibCommon 151 }
+    ibIpRanDcn                OBJECT IDENTIFIER ::= { ibCommon 152 }
+    ib8021XExt2               OBJECT IDENTIFIER ::= { ibCommon 153 }
+    ibContext                 OBJECT IDENTIFIER ::= { ibCommon 154 }
+    ibObjp                    OBJECT IDENTIFIER ::= { ibCommon 155 }
+    ibNvgre                   OBJECT IDENTIFIER ::= { ibCommon 156 }
+    ibWlanMt                  OBJECT IDENTIFIER ::= { ibCommon 157 }
+    ibRbac                    OBJECT IDENTIFIER ::= { ibCommon 158 }
+    ibDHCP6Server             OBJECT IDENTIFIER ::= { ibCommon 159 }
+    ibMplsVpnBgp              OBJECT IDENTIFIER ::= { ibCommon 160 }
+    ibOspf                    OBJECT IDENTIFIER ::= { ibCommon 161 }
+    ibL2vpn                   OBJECT IDENTIFIER ::= { ibCommon 162 }
+    ibMACsec                  OBJECT IDENTIFIER ::= { ibCommon 163 }
+    ibFailover                OBJECT IDENTIFIER ::= { ibCommon 164 }
+    ibVpnPeer                 OBJECT IDENTIFIER ::= { ibCommon 165 }
+    ibSecp                    OBJECT IDENTIFIER ::= { ibCommon 166 }
+    ibOfp                     OBJECT IDENTIFIER ::= { ibCommon 167 }
+    ibARPEntry                OBJECT IDENTIFIER ::= { ibCommon 168 }
+    ibResMon                  OBJECT IDENTIFIER ::= { ibCommon 169 }
+    ibSslvpn                  OBJECT IDENTIFIER ::= { ibCommon 170 }
+    ibSecHigh                 OBJECT IDENTIFIER ::= { ibCommon 171 }
+    ibBgpEvpn                 OBJECT IDENTIFIER ::= { ibCommon 172 }
+    ibEvpn                    OBJECT IDENTIFIER ::= { ibCommon 173 }
+    ibLTE                     OBJECT IDENTIFIER ::= { ibCommon 174 }
+    ibPPP                     OBJECT IDENTIFIER ::= { ibCommon 175 }
+    ibDrni                    OBJECT IDENTIFIER ::= { ibCommon 176 }
+    ibFlexE                   OBJECT IDENTIFIER ::= { ibCommon 177 }
+    ibVlanGroup               OBJECT IDENTIFIER ::= { ibCommon 178 }
+    ibDhcp6                   OBJECT IDENTIFIER ::= { ibCommon 179 }
+    ibVbr                     OBJECT IDENTIFIER ::= { ibCommon 180 }
+    ibAAA                     OBJECT IDENTIFIER ::= { ibCommon 181 }
+    ibBgp4v2                  OBJECT IDENTIFIER ::= { ibCommon 183 }
+    ibTwamp                   OBJECT IDENTIFIER ::= { ibCommon 184 }
+    ibLTEMEC                  OBJECT IDENTIFIER ::= { ibCommon 185 }
+    ibSrpolicy                OBJECT IDENTIFIER ::= { ibCommon 186 }
+    ibRbm                     OBJECT IDENTIFIER ::= { ibCommon 187 }
+    ib5GC                     OBJECT IDENTIFIER ::= { ibCommon 188 }
+    ibSrv6Policy              OBJECT IDENTIFIER ::= { ibCommon 189 }
+    ibCusp                    OBJECT IDENTIFIER ::= { ibCommon 190 }
+    ibSava                    OBJECT IDENTIFIER ::= { ibCommon 191 }
+    ibUpBackup                OBJECT IDENTIFIER ::= { ibCommon 192 }
+    ibVlanTerm                OBJECT IDENTIFIER ::= { ibCommon 193 }
+    ibCupmCp                  OBJECT IDENTIFIER ::= { ibCommon 194 }
+    ibCupmUp                  OBJECT IDENTIFIER ::= { ibCommon 195 }
+    ibVnfDevice               OBJECT IDENTIFIER ::= { ibCommon 196 }
+    ibSrv6                    OBJECT IDENTIFIER ::= { ibCommon 197 }
+    ibeNodeBBU                OBJECT IDENTIFIER ::= { ibCommon 198 }
+    ibCpdr                    OBJECT IDENTIFIER ::= { ibCommon 199 }
+    ibBrasAccess              OBJECT IDENTIFIER ::= { ibCommon 200 }
+    ibNcm                     OBJECT IDENTIFIER ::= { ibCommon 201 }
+    ibBgpVpn                  OBJECT IDENTIFIER ::= { ibCommon 202 }
+    ibGold                    OBJECT IDENTIFIER ::= { ibCommon 203 }
+    ibSib                     OBJECT IDENTIFIER ::= { ibCommon 204 }
+    ibGir                     OBJECT IDENTIFIER ::= { ibCommon 205 }
+    ibNetconf                 OBJECT IDENTIFIER ::= { ibCommon 206 }
+    ibCfd                     OBJECT IDENTIFIER ::= { ibCommon 207 }
+    ibStrunk                  OBJECT IDENTIFIER ::= { ibCommon 208 }
+    ibPKIMonitor              OBJECT IDENTIFIER ::= { ibCommon 209 }
+    ibSavap                   OBJECT IDENTIFIER ::= { ibCommon 210 }
+    ibIpfw                    OBJECT IDENTIFIER ::= { ibCommon 211 }
+    ibIpMcast                 OBJECT IDENTIFIER ::= { ibCommon 212 }
+    ibPimStd                  OBJECT IDENTIFIER ::= { ibCommon 213 }
+    ibClcp                    OBJECT IDENTIFIER ::= { ibCommon 214 }
+    ibTcp                     OBJECT IDENTIFIER ::= { ibCommon 215 }
+    ibFib                     OBJECT IDENTIFIER ::= { ibCommon 216 }
+    ibARPTrap                 OBJECT IDENTIFIER ::= { ibCommon 217 }
+    ibNDTrap                  OBJECT IDENTIFIER ::= { ibCommon 218 }
+    ibRib                     OBJECT IDENTIFIER ::= { ibCommon 219 }
+    ibARPSuppression          OBJECT IDENTIFIER ::= { ibCommon 220 }
+    ibKPI                     OBJECT IDENTIFIER ::= { ibCommon 221 }
+    ibTrafficStat             OBJECT IDENTIFIER ::= { ibCommon 222 }
+    ibMgmdStd                 OBJECT IDENTIFIER ::= { ibCommon 223 }
+    ibSecpV9                  OBJECT IDENTIFIER ::= { ibCommon 224 }
+    ibErps                    OBJECT IDENTIFIER ::= { ibCommon 225 }
+    ibTunnelTrap              OBJECT IDENTIFIER ::= { ibCommon 226 }
+    ibEthoam                  OBJECT IDENTIFIER ::= { ibCommon 227 }
+    ibL3vpn                   OBJECT IDENTIFIER ::= { ibCommon 228 }
+    ibMplsRsvp                OBJECT IDENTIFIER ::= { ibCommon 229 }
+    ibMplsSlsp                OBJECT IDENTIFIER ::= { ibCommon 230 }
+    ibMplsScrlsp              OBJECT IDENTIFIER ::= { ibCommon 231 }
+    ibHDLC                    OBJECT IDENTIFIER ::= { ibCommon 232 }
+    ibVsys                    OBJECT IDENTIFIER ::= { ibCommon 233 }
+    ibAtk                     OBJECT IDENTIFIER ::= { ibCommon 234 }
+    ibPTP                     OBJECT IDENTIFIER ::= { ibCommon 235 }
+    ibDim                     OBJECT IDENTIFIER ::= { ibCommon 236 }
+    ibDac                     OBJECT IDENTIFIER ::= { ibCommon 237 }
+    ibSecDiag                 OBJECT IDENTIFIER ::= { ibCommon 238 }
+    ibOspfv3                  OBJECT IDENTIFIER ::= { ibCommon 239 }
+    ibMplsPce                 OBJECT IDENTIFIER ::= { ibCommon 240 }
+    ibMplsLspv                OBJECT IDENTIFIER ::= { ibCommon 241 }
+    ibDhcp4Client             OBJECT IDENTIFIER ::= { ibCommon 242 }
+    ibAlarm                   OBJECT IDENTIFIER ::= { ibCommon 243 }
+    ibBier                    OBJECT IDENTIFIER ::= { ibCommon 244 }
+    ibMACTrap                 OBJECT IDENTIFIER ::= { ibCommon 245 }
+    ibIpsg                    OBJECT IDENTIFIER ::= { ibCommon 246 }
+    ibIpsgt                   OBJECT IDENTIFIER ::= { ibCommon 247 }
+    ibFtps                    OBJECT IDENTIFIER ::= { ibCommon 248 }
+    ibTelnet                  OBJECT IDENTIFIER ::= { ibCommon 249 }
+    ibPortAtkTrap             OBJECT IDENTIFIER ::= { ibCommon 250 }
+    ibEmdi                    OBJECT IDENTIFIER ::= { ibCommon 251 }
+    ibInqa                    OBJECT IDENTIFIER ::= { ibCommon 252 }
+    ibMad                     OBJECT IDENTIFIER ::= { ibCommon 253 }
+    ibVsrp                    OBJECT IDENTIFIER ::= { ibCommon 254 }
+    ibHttp                    OBJECT IDENTIFIER ::= { ibCommon 255 }
+    ibNetstream4              OBJECT IDENTIFIER ::= { ibCommon 256 }
+    ibNetstream6              OBJECT IDENTIFIER ::= { ibCommon 257 }
+    ibMicroSegment            OBJECT IDENTIFIER ::= { ibCommon 258 }
+    ibGrpc                    OBJECT IDENTIFIER ::= { ibCommon 259 }
+    ibEsmc                    OBJECT IDENTIFIER ::= { ibCommon 260 }
+    ibMplsBfd                 OBJECT IDENTIFIER ::= { ibCommon 261 }
+    ibEthTrap                 OBJECT IDENTIFIER ::= { ibCommon 262 }
+    ibIecmrp                  OBJECT IDENTIFIER ::= { ibCommon 263 }
+    ibCluster                 OBJECT IDENTIFIER ::= { ibCommon 264 }
+    ibCCluster                OBJECT IDENTIFIER ::= { ibCommon 265 }
+
+-- under enterprises.intelbras.ibCommon.ibQos2
+    ibIfQos2                  OBJECT IDENTIFIER ::= { ibQos2 1 }
+    ibCBQos2                  OBJECT IDENTIFIER ::= { ibQos2 2 }
+
+-- under enterprises.intelbras.ibSNMPAgCpb
+    ibQosCapability           OBJECT IDENTIFIER ::= { ibSNMPAgCpb 1 }
+
+-- under enterprises.intelbras.ibRhw
+    ibDHCPRelayMib            OBJECT IDENTIFIER ::= { ibRhw 1 }
+    ibDHCPServerMib           OBJECT IDENTIFIER ::= { ibRhw 2 }
+    ibNqa                     OBJECT IDENTIFIER ::= { ibRhw 3 }
+    ibrmonExtend              OBJECT IDENTIFIER ::= { ibRhw 4 }
+--    ibVlan                    OBJECT IDENTIFIER ::= { ibRhw 5 } removed
+    ibpaeExtMib               OBJECT IDENTIFIER ::= { ibRhw 6 }
+    ibHgmp                    OBJECT IDENTIFIER ::= { ibRhw 7 }
+    ibDevice                  OBJECT IDENTIFIER ::= { ibRhw 8 }
+    ibMpls                    OBJECT IDENTIFIER ::= { ibRhw 12 }
+    ibTRNG                    OBJECT IDENTIFIER ::= { ibRhw 13 }
+    ibUserLogMIB              OBJECT IDENTIFIER ::= { ibRhw 18 }
+    ibNTP                     OBJECT IDENTIFIER ::= { ibRhw 22 }
+    ibLAG                     OBJECT IDENTIFIER ::= { ibRhw 25 }
+    ibSmonExtend              OBJECT IDENTIFIER ::= { ibRhw 26 }
+    ibQoS                     OBJECT IDENTIFIER ::= { ibRhw 32 }
+    ibMultilinkPPP            OBJECT IDENTIFIER ::= { ibRhw 33 }
+-- delete ibrouter                  OBJECT IDENTIFIER ::= { ibRhw 34 }
+    iblswCommon               OBJECT IDENTIFIER ::= { ibRhw 35 }
+    ibmlsr                    OBJECT IDENTIFIER ::= { ibRhw 36 }
+    ibdlsw                    OBJECT IDENTIFIER ::= { ibRhw 37 }
+
+-- Object under .enterprises.intelbras.ibSurveillanceMIB
+    ibVMMan     OBJECT IDENTIFIER ::= { ibSurveillanceMIB 1 }
+    ibPUMan     OBJECT IDENTIFIER ::= { ibSurveillanceMIB 2 }
+    ibMSMan     OBJECT IDENTIFIER ::= { ibSurveillanceMIB 3 }
+
+-- Object under .enterprises.intelbras.ibStorageRef
+    ibStorageMIB     OBJECT IDENTIFIER ::= { ibStorageRef 1 }
+    ibStorageSnap     OBJECT IDENTIFIER ::= { ibStorageRef 2 }
+    ibDisk     OBJECT IDENTIFIER ::= { ibStorageRef 3 }
+    ibRaid     OBJECT IDENTIFIER ::= { ibStorageRef 4 }
+    ibLogicVolume     OBJECT IDENTIFIER ::= { ibStorageRef 5 }
+
+
+-- under enterprises.intelbras.ibRhw.ibMpls
+    ibMplsLsr                 OBJECT IDENTIFIER ::= { ibMpls 1 }
+    ibMplsLdp                 OBJECT IDENTIFIER ::= { ibMpls 2 }
+    ibMplsVpn                 OBJECT IDENTIFIER ::= { ibMpls 3 }
+
+-- under enterprises.intelbras.ibRhw.iblswCommon
+    ibLswExtInterface OBJECT IDENTIFIER ::= { iblswCommon 1 }
+    ibLswVlan OBJECT IDENTIFIER ::= { iblswCommon 2 }
+    ibLswMacPort OBJECT IDENTIFIER ::= { iblswCommon 3 }
+    ibLswArpMib OBJECT IDENTIFIER ::= { iblswCommon 4 }
+    ibLswL2InfMib OBJECT IDENTIFIER ::= { iblswCommon 5 }
+    ibLswRstpMib OBJECT IDENTIFIER ::= { iblswCommon 6 }
+    ibLswIgmpsnoopingMib OBJECT IDENTIFIER ::= { iblswCommon 7 }
+    ibLswDhcpMib OBJECT IDENTIFIER ::= { iblswCommon 8 }
+    ibLswdevMMib OBJECT IDENTIFIER ::= { iblswCommon 9 }
+    ibLswTrapMib OBJECT IDENTIFIER ::= { iblswCommon 12 }
+    ibdot1sMstp OBJECT IDENTIFIER ::= { iblswCommon 14 }
+    ibLswQosAclMib OBJECT IDENTIFIER ::= { iblswCommon 16 }
+    ibLswMix OBJECT IDENTIFIER ::= { iblswCommon 17 }
+    ibLswDeviceAdmin OBJECT IDENTIFIER ::= { iblswCommon 18 }
+
+-- under enterprises.intelbras.ibRhw.ibmlsr
+    ibNDEC OBJECT IDENTIFIER ::= { ibmlsr 2 }
+    ibredundancyPower OBJECT IDENTIFIER ::= { ibmlsr 4 }
+    ibredundancyFan OBJECT IDENTIFIER ::= { ibmlsr 5 }
+-- delete ibmSystem OBJECT IDENTIFIER ::= { ibmlsr 6 }
+-- delete ib8040If OBJECT IDENTIFIER ::= { ibmlsr 7 }
+    ibpos OBJECT IDENTIFIER ::= { ibmlsr 8 }
+    ibIsdnMib OBJECT IDENTIFIER ::= { ibmlsr 9 }
+-- delete ibaR46-E200 OBJECT IDENTIFIER ::= { ibmlsr 20 }
+
+END

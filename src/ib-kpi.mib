@@ -1,0 +1,196 @@
+-- ===================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: V1.0
+-- History:
+--   V1.0 Created by zhangjitong
+--        Initial version 2022-01-25
+-- ====================================================================
+IB-KPI-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ibCommon
+    FROM IB-OID-MIB
+        Integer32, OBJECT-TYPE, NOTIFICATION-TYPE, MODULE-IDENTITY
+    FROM SNMPv2-SMI;
+
+ibKPI MODULE-IDENTITY
+    LAST-UPDATED "202204081635Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB module is used for managing KPI."
+    REVISION "202204081635Z"
+    DESCRIPTION
+        "Modify the SYNTAX of ibKPIDataTimeStamp from TimeStamp to OCTET STRING."
+    REVISION "202201251502Z"
+    DESCRIPTION
+        "The initial revision of this KPI module."
+    ::= { ibCommon 221 }
+
+ibKPINotification OBJECT IDENTIFIER ::= {ibKPI 1}
+
+ibKPINotificationPrefix OBJECT IDENTIFIER ::= { ibKPINotification 0 }
+
+-- All Notifications definitions should be placed under this object
+ibKPIDataOverThreshold NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibKPIDataChassis,
+        ibKPIDataSlot,
+        ibKPIDataCPUID,
+        ibKPIDataModuleName,
+        ibKPIDataTimeStamp,
+        ibKPIDataObjectName,
+        ibKPIDataIndicatorName,
+        ibKPIDataIndicatorValue,
+        ibKPIDataThreshold
+    }
+    STATUS       current
+    DESCRIPTION
+        "This notification is generated when the KPI value exceeds the threshold."
+    ::= { ibKPINotificationPrefix 1 }
+
+ibKPIDataRecover NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibKPIDataChassis,
+        ibKPIDataSlot,
+        ibKPIDataCPUID,
+        ibKPIDataModuleName,
+        ibKPIDataTimeStamp,
+        ibKPIDataObjectName,
+        ibKPIDataIndicatorName,
+        ibKPIDataIndicatorValue,
+        ibKPIDataThreshold
+    }
+    STATUS       current
+    DESCRIPTION
+        "This notification is generated when the KPI value returns within the threshold range."
+    ::= { ibKPINotificationPrefix 2 }
+
+ibKPIPredictDataOverThreshold NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibKPIDataChassis,
+        ibKPIDataSlot,
+        ibKPIDataCPUID,
+        ibKPIDataModuleName,
+        ibKPIDataTimeStamp,
+        ibKPIDataObjectName,
+        ibKPIDataIndicatorName,
+        ibKPIDataIndicatorValue,
+        ibKPIDataPredictCycle,
+        ibKPIDataThreshold
+    }
+    STATUS       current
+    DESCRIPTION
+        "This notification is generated when the predicted KPI value exceeds the
+        threshold after n cycles."
+    ::= { ibKPINotificationPrefix 3 }
+
+ibKPIPredictDataRecover NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibKPIDataChassis,
+        ibKPIDataSlot,
+        ibKPIDataCPUID,
+        ibKPIDataModuleName,
+        ibKPIDataTimeStamp,
+        ibKPIDataObjectName,
+        ibKPIDataIndicatorName,
+        ibKPIDataIndicatorValue,
+        ibKPIDataPredictCycle,
+        ibKPIDataThreshold
+    }
+    STATUS       current
+    DESCRIPTION
+        "This notification is generated when the predicted KPI value returns within the threshold range."
+    ::= { ibKPINotificationPrefix 4 }
+
+ibKPINotificationDefinitions OBJECT IDENTIFIER ::= {ibKPINotification 1}
+-- All objects used for Notification only are defined here
+
+ibKPIDataChassis OBJECT-TYPE
+    SYNTAX Integer32(0..65535)
+    MAX-ACCESS  accessible-for-notify
+    STATUS  current
+    DESCRIPTION
+        "Number of the chassis where the KPI data is collected."
+    ::= { ibKPINotificationDefinitions 1 }
+
+ibKPIDataSlot OBJECT-TYPE
+    SYNTAX Integer32(0..65535)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Number of the slot where the KPI data is collected."
+    ::= { ibKPINotificationDefinitions 2 }
+
+ibKPIDataCPUID OBJECT-TYPE
+    SYNTAX Integer32(0..65535)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Number of the CPU where the KPI data is collected."
+    ::= { ibKPINotificationDefinitions 3 }
+
+ibKPIDataModuleName OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(1..8))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Name of the module where the KPI data is collected."
+    ::= { ibKPINotificationDefinitions 4 }
+
+ibKPIDataTimeStamp OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(1..32))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Time when the KPI data is collected."
+    ::= { ibKPINotificationDefinitions 5 }
+
+ibKPIDataObjectName OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(1..64))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Name of the object where the KPI data is collected."
+    ::= { ibKPINotificationDefinitions 6 }
+
+ibKPIDataIndicatorName OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(1..64))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Name of the KPI indicator."
+    ::= { ibKPINotificationDefinitions 7 }
+
+ibKPIDataIndicatorValue OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(1..32))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Value of the KPI indicator."
+    ::= { ibKPINotificationDefinitions 8 }
+
+ibKPIDataPredictCycle OBJECT-TYPE
+    SYNTAX Integer32(0..65535)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Number of cycles after which the threshold will be exceeded."
+    ::= { ibKPINotificationDefinitions 9 }
+
+ibKPIDataThreshold OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(1..32))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Upper/Lower threshold, that is, the maximum/minimum value of the KPI data."
+    ::= { ibKPINotificationDefinitions 10 }
+
+END

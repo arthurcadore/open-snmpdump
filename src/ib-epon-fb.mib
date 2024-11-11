@@ -1,0 +1,157 @@
+-- ===========================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:
+-- The information of EPON fiber backup.
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 created by zhaodan.
+-- Initial version for ibEponFBMibObjects of ibEpon.
+-- ===========================================================
+IB-EPON-FB-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        ibEpon
+    FROM IB-OID-MIB
+        Integer32, OBJECT-TYPE, MODULE-IDENTITY
+    FROM SNMPv2-SMI
+        RowStatus
+    FROM SNMPv2-TC;
+
+
+ibEponFBMibObjects MODULE-IDENTITY
+    LAST-UPDATED "200711271008Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "
+        The objects in this MIB module are used to manage and
+        display current configuration of fiber backup groups
+        based on EPON OLT port.
+        "
+    ::= { ibEpon 6 }
+
+ibEponFBMIB OBJECT IDENTIFIER ::= { ibEponFBMibObjects 1 }
+--
+-- ibEponFBMIBTable
+--
+
+ibEponFBMIBTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbEponFBMIBEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table defines several optical fiber-backup system parameters."
+    ::= { ibEponFBMIB  1 }
+
+ibEponFBMIBEntry OBJECT-TYPE
+    SYNTAX      IbEponFBMIBEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The entry of ibEponFBMIBTable."
+    INDEX
+        {
+            ibEponFBGroupIndex
+        }
+    ::= { ibEponFBMIBTable 1}
+
+
+IbEponFBMIBEntry ::= SEQUENCE
+    {
+        ibEponFBGroupIndex          Integer32,
+        ibEponFBGroupRowStatus      RowStatus,
+        ibEponFBMasterPort          Integer32,
+        ibEponFBSlavePort           Integer32,
+        ibEponFBMasterPortStatus    INTEGER,
+        ibEponFBSlavePortStatus     INTEGER,
+        ibEponFBSwitchover          INTEGER
+    }
+
+ibEponFBGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The EPON fiber-backup group ID."
+    ::= { ibEponFBMIBEntry 1 }
+
+ibEponFBGroupRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object allows entry to be created and deleted
+        from the ibEponFBMIBTable."
+    ::= { ibEponFBMIBEntry 2 }
+
+ibEponFBMasterPort OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "OLT port ifindex of the fiber-backup group.
+        Use it to set or get the group master port."
+    ::= { ibEponFBMIBEntry 3 }
+
+ibEponFBSlavePort OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "OLT port ifindex of the fiber-backup group.
+        Use it to set or get the group slave port.
+        ibEponFBSlavePort must be set after ibEponFBMasterPort.
+        "
+    ::= { ibEponFBMIBEntry 4 }
+
+ibEponFBMasterPortStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            active(1),
+            down(2)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The master port status of the fiber-backup group.
+        The active state indicates that the port's role is master, the olt chip is right
+        and the optical module is inserted.
+        The down state indicates others conditions."
+    ::= { ibEponFBMIBEntry 5 }
+
+ibEponFBSlavePortStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            ready(1),
+            down(2)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The slave port status of the fiber-backup group.
+        The ready state indicates that the port's role is slave, the olt chip is right
+        and optical module is inserted.
+        The down state indicates others conditions."
+    ::= { ibEponFBMIBEntry 6 }
+
+ibEponFBSwitchover OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            false(1),
+            true(2)
+        }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Switch the fiber backup group's two port manually.
+        The group must has two ports
+        and the value of ibEponFBSlavePortStatus must be ready before Switchover.
+        after Switchover the port's role will be changed.
+        The value true is for switch-over.  The default value is false."
+    ::= { ibEponFBMIBEntry 7 }
+
+END

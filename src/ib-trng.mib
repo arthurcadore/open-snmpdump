@@ -1,0 +1,348 @@
+-- =====================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Timerange MIB Definition
+-- Reference:
+-- Version: V1.3
+-- History:
+--   V1.0 Yang Hongjie,2003-04-11,Initial Version
+--   v1.1 modify follow node define:
+--        ibTrngPeriodicDayOfWeek,ibTrngCreateRowStatus
+--        ibTimerangeAbsolueRowStatus,ibTimerangePeriodicRowStatus
+--   V1.2 2004-10-12 updated by gaolong
+--        Change DESCRIPTION syntax format of ibTRNG and ibTrngCreateTimerangeTable.
+--        Change ibTrngPeriodicDayofWeek to ibTrngPeriodicDayOfWeek. This is
+--        a word error.
+--   V1.3 2005-2-5 updated by zhangjie
+--        Correct word error for 'wednesday'.
+--      Adjust the file format
+-- =====================================================================
+IB-TRNG-MIB DEFINITIONS ::= BEGIN
+
+        IMPORTS
+            ibRhw
+                FROM IB-OID-MIB
+            OBJECT-GROUP, MODULE-COMPLIANCE
+                FROM SNMPv2-CONF
+            Integer32, OBJECT-TYPE, MODULE-IDENTITY
+                FROM SNMPv2-SMI
+            TruthValue, DateAndTime, RowStatus
+                FROM SNMPv2-TC;
+
+
+        ibTRNG MODULE-IDENTITY
+            LAST-UPDATED "200304110000Z"        -- April 11, 2003 at 00:00 GMT
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION
+                "The IB-TRNG-MIB contains objects to
+                Configure the system absolute and periodic time-range."
+            REVISION "200304110000Z"        -- April 11, 2003 at 00:00 GMT
+            DESCRIPTION
+                "200304110000Z, --The initial revision of this MIB module."
+            ::= { ibRhw 13 }
+
+
+--
+-- Node definitions
+--
+
+        ibTRNGMibObjects OBJECT IDENTIFIER ::= { ibTRNG 1 }
+
+
+        ibTrngCreateTimerangeTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbTrngCreateTimerangeEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                              "Creat TimeRange."
+            ::= { ibTRNGMibObjects 1 }
+
+
+        ibTrngCreateTimerangeEntry OBJECT-TYPE
+            SYNTAX IbTrngCreateTimerangeEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Define the entry of ibTrngCreateTimerangeTable"
+            INDEX { ibTrngIndex }
+            ::= { ibTrngCreateTimerangeTable 1 }
+
+
+        IbTrngCreateTimerangeEntry ::=
+            SEQUENCE {
+                ibTrngIndex
+                    Integer32,
+                ibTrngName
+                    OCTET STRING,
+                ibTrngValidFlag
+                    TruthValue,
+                ibTrngCreateRowStatus
+                    RowStatus
+             }
+
+        ibTrngIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..256)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "TimeRange's index"
+            ::= { ibTrngCreateTimerangeEntry 1 }
+
+
+        ibTrngName OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE (1..32))
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "TimeRange's name"
+            ::= { ibTrngCreateTimerangeEntry 2 }
+
+
+        ibTrngValidFlag OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Valid or Invalid flag"
+            ::= { ibTrngCreateTimerangeEntry 3 }
+
+
+        ibTrngCreateRowStatus OBJECT-TYPE
+            SYNTAX RowStatus
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The status of this conceptual row.Now only realize CreateAndGo and Destroy and Active."
+            ::= { ibTrngCreateTimerangeEntry 4 }
+
+
+        ibTrngAbsoluteTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbTrngAbsoluteEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Creat absoluteness time item of the TimeRange"
+            ::= { ibTRNGMibObjects 2 }
+
+
+        ibTrngAbsoluteEntry OBJECT-TYPE
+            SYNTAX IbTrngAbsoluteEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Define the entry of ibTrngAbsoluteTable"
+            INDEX { ibTrngAbsoluteNameIndex, ibTrngAbsoluteSubIndex }
+            ::= { ibTrngAbsoluteTable 1 }
+
+
+        IbTrngAbsoluteEntry ::=
+            SEQUENCE {
+                ibTrngAbsoluteNameIndex
+                    Integer32,
+                ibTrngAbsoluteSubIndex
+                    Integer32,
+                ibTimerangeAbsoluteStartTime
+                    DateAndTime,
+                ibTimerangeAbsoluteEndTime
+                    DateAndTime,
+                ibTimerangeAbsolueRowStatus
+                    RowStatus
+             }
+
+        ibTrngAbsoluteNameIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..256)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "TimeRange's index"
+            ::= { ibTrngAbsoluteEntry 1 }
+
+
+        ibTrngAbsoluteSubIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..12)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "SubItem's index"
+            ::= { ibTrngAbsoluteEntry 2 }
+
+
+        ibTimerangeAbsoluteStartTime OBJECT-TYPE
+            SYNTAX DateAndTime
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Start point of the timerange.The format defined like 'YYYY-MM-DD,hh:mm:0.0'."
+            ::= { ibTrngAbsoluteEntry 3 }
+
+
+        ibTimerangeAbsoluteEndTime OBJECT-TYPE
+            SYNTAX DateAndTime
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "End point of the timerange.The format defined like 'YYYY-MM-DD,hh:mm:0.0'."
+            ::= { ibTrngAbsoluteEntry 4 }
+
+
+        ibTimerangeAbsolueRowStatus OBJECT-TYPE
+            SYNTAX RowStatus
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The status of this conceptual row. Now only realize CreateAndGo and Destroy and Active."
+            ::= { ibTrngAbsoluteEntry 5 }
+
+
+        ibTrngPeriodicTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbTrngPeriodicEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Creat periodic time item of the TimeRange"
+            ::= { ibTRNGMibObjects 3 }
+
+
+        ibTrngPeriodicEntry OBJECT-TYPE
+            SYNTAX IbTrngPeriodicEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Define the index of ibTrngPeriodicTable"
+            INDEX { ibTrngPeriodicNameIndex, ibTrngPeriodicSubIndex }
+            ::= { ibTrngPeriodicTable 1 }
+
+
+        IbTrngPeriodicEntry ::=
+            SEQUENCE {
+                ibTrngPeriodicNameIndex
+                    Integer32,
+                ibTrngPeriodicSubIndex
+                    Integer32,
+                ibTrngPeriodicDayOfWeek
+                    BITS,
+                ibTimerangePeriodicStartTime
+                    DateAndTime,
+                ibTimerangePeriodicEndTime
+                    DateAndTime,
+                ibTimerangePeriodicRowStatus
+                    RowStatus
+             }
+
+        ibTrngPeriodicNameIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..256)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "TimeRange's index"
+            ::= { ibTrngPeriodicEntry 1 }
+
+
+        ibTrngPeriodicSubIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..32)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "SubItem's index"
+            ::= { ibTrngPeriodicEntry 2 }
+
+
+        ibTrngPeriodicDayOfWeek OBJECT-TYPE
+            SYNTAX BITS {
+                                      sunday(0),
+                                      monday(1),
+                                      tuesday(2),
+                                      wednesday(3),
+                                      thursday(4),
+                                      friday(5),
+                                      saturday(6)
+                                      }
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The day of week. This is a bit-map of possible conditions.
+                The various bit positions are:
+                |0        |sunday                    |
+                |1        |monday                 |
+                |2        |tuesday                |
+                |3        |wednesday              |
+                |4        |thursday               |
+                |5        |friday                 |
+                |6        |saturday               |
+                "
+            ::= { ibTrngPeriodicEntry 3 }
+
+
+        ibTimerangePeriodicStartTime OBJECT-TYPE
+            SYNTAX DateAndTime
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Start point of this timerange,The format defined like 'hh:mm:0,0'."
+            ::= { ibTrngPeriodicEntry 4 }
+
+
+        ibTimerangePeriodicEndTime OBJECT-TYPE
+            SYNTAX DateAndTime
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "End point of this timerange. The format definedlike 'hh:mm:0,0'."
+            ::= { ibTrngPeriodicEntry 5 }
+
+
+        ibTimerangePeriodicRowStatus OBJECT-TYPE
+            SYNTAX RowStatus
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The status of this conceptual row, Now only realize CreateAndGo and Destroy and Active."
+            ::= { ibTrngPeriodicEntry 6 }
+
+        ibTRNGMibConformance OBJECT IDENTIFIER ::= { ibTRNG 3 }
+
+
+        ibTRNGMibCompliances OBJECT IDENTIFIER ::= { ibTRNGMibConformance 1 }
+
+
+        ibTRNGMibCompliance MODULE-COMPLIANCE
+            STATUS current
+            DESCRIPTION
+                "The compliance statement for entities which
+                implement the Time-range MIB."
+            MODULE -- this module
+                MANDATORY-GROUPS { ibTRNGGroup }
+                OBJECT ibTrngCreateRowStatus
+                    SYNTAX INTEGER
+                    DESCRIPTION
+                        "Now only realize CreateAndGo and Destroy and Active."
+                OBJECT ibTimerangeAbsolueRowStatus
+                    SYNTAX INTEGER
+                    DESCRIPTION
+                        "Now only realize CreateAndGo and Destroy and Active."
+                OBJECT ibTimerangePeriodicRowStatus
+                    SYNTAX INTEGER
+                    DESCRIPTION
+                        "Now only realize CreateAndGo and Destroy and Active."
+            ::= { ibTRNGMibCompliances 1 }
+
+
+        ibTRNGMibGroups OBJECT IDENTIFIER ::= { ibTRNGMibConformance 2 }
+
+
+        ibTRNGGroup OBJECT-GROUP
+            OBJECTS { ibTrngName, ibTrngValidFlag, ibTrngCreateRowStatus, ibTimerangeAbsoluteStartTime, ibTimerangeAbsoluteEndTime,
+                ibTimerangeAbsolueRowStatus, ibTrngPeriodicDayOfWeek, ibTimerangePeriodicStartTime, ibTimerangePeriodicEndTime, ibTimerangePeriodicRowStatus
+                 }
+            STATUS current
+            DESCRIPTION
+                "A collection of objects providing mandatory time-range information."
+            ::= { ibTRNGMibGroups 1 }
+
+
+
+    END
+

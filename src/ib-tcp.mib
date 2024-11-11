@@ -1,0 +1,352 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: TCP MIB File
+-- Reference:
+-- Version: V1.2
+-- History:
+-- V1.0 2021-12-15 created by zhuqiuxue
+-- V1.1 2022-07-15 Modify by yuanyuchen
+--      Add ibTcpSynFloodFlowTraps, ibTcpSynFloodIfTraps
+-- V1.2 2023-04-20 Modify by yuanyuchen
+--      Add ibTcpNumExceedAlarm, ibTcpNumExceedResume,
+--      ibTcpExceptionClose, ibTcpNumExceedState,
+--      ibTcpRcvVrfName, ibTcpSndVrfName
+-- =================================================================
+IB-TCP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, Integer32, NOTIFICATION-TYPE, Unsigned32
+        FROM SNMPv2-SMI
+    InetAddressType, InetAddress
+        FROM INET-ADDRESS-MIB
+    InterfaceIndex
+        FROM IF-MIB;
+
+ibTcp MODULE-IDENTITY
+    LAST-UPDATED
+        "202304200930Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB file defines the Tcp trap warning feature only."
+    REVISION
+        "202304200930Z"
+    DESCRIPTION
+        "Add ibTcpNumExceedAlarm, ibTcpNumExceedResume, ibTcpExceptionClose,
+         ibTcpNumExceedState, ibTcpRcvVrfName and ibTcpSndVrfName."
+    REVISION
+        "202207151110Z"
+    DESCRIPTION
+        "Add ibTcpSynFloodFlowTraps and ibTcpSynFloodIfTraps."
+    REVISION
+        "202112152017Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 215 }
+
+
+ibTcpMIBTraps OBJECT IDENTIFIER ::= { ibTcp 1 }
+
+ibTcpMIBTrap            OBJECT IDENTIFIER ::= { ibTcpMIBTraps 0 }
+
+-- ibTcpMIBTrap
+ibTcpMD5AuthenFail NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTcpConnLocalAddressTCP,
+            ibTcpConnLocalPortTCP,
+            ibTcpConnRemAddressTCP,
+            ibTcpConnRemPortTCP,
+            ibTcpProtocol,
+            ibTcpVrfNameVRF
+        }
+    STATUS      current
+    DESCRIPTION
+        "The MD5 connected of TCP is failing to authenticate."
+    ::= { ibTcpMIBTrap 1 }
+
+ibTcpNumExceedAlarm NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTcpNumExceedState
+        }
+    STATUS      current
+    DESCRIPTION
+        "The number of TCP connections exceeds the maximum limit."
+    ::= { ibTcpMIBTrap 2 }
+
+ibTcpNumExceedResume NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTcpNumExceedState
+        }
+    STATUS      current
+    DESCRIPTION
+        "The number of TCP connections has returned to normal."
+    ::= { ibTcpMIBTrap 3 }
+
+ibTcpExceptionClose NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTcpConnLocalAddressTCP,
+            ibTcpConnLocalPortTCP,
+            ibTcpConnRemAddressTCP,
+            ibTcpConnRemPortTCP,
+            ibTcpRcvVrfName,
+            ibTcpSndVrfName
+        }
+    STATUS      current
+    DESCRIPTION
+        "The TCP connection is disconnected because a large number of
+        abnormal messages are received."
+    ::= { ibTcpMIBTrap 4 }
+
+ibTcpMIBTrapobjects            OBJECT IDENTIFIER ::= { ibTcpMIBTraps 1 }
+-- ibTcpMIBTrapobjects
+ibTcpConnLocalAddressTCP OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The local address of the TCP connection."
+    ::= { ibTcpMIBTrapobjects 1 }
+
+ibTcpConnLocalPortTCP OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The port number of the TCP connection."
+    ::= { ibTcpMIBTrapobjects 2 }
+
+ibTcpConnRemAddressTCP OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The destination address of the TCP connection."
+    ::= { ibTcpMIBTrapobjects 3 }
+
+ibTcpConnRemPortTCP OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The destination port number of the TCP connection."
+    ::= { ibTcpMIBTrapobjects 4 }
+
+ibTcpProtocol OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of Protocol, the TCP protocol value is six."
+    ::= { ibTcpMIBTrapobjects 5 }
+
+ibTcpVrfNameVRF OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of VrfName."
+    ::= { ibTcpMIBTrapobjects 6 }
+
+ibTcpNumExceedState OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            established(1),
+            finWait1(2),
+            closing(3),
+            lastAck(4),
+            finWait2(5)
+        }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "TCP connection status."
+    ::= { ibTcpMIBTrapobjects 7 }
+
+ibTcpRcvVrfName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The name of the VPN instance used for receiving."
+    ::= { ibTcpMIBTrapobjects 8 }
+
+ibTcpSndVrfName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The name of the VPN instance used for sending."
+    ::= { ibTcpMIBTrapobjects 9 }
+
+ibTcpSynFloodFlowTraps OBJECT IDENTIFIER ::= { ibTcp 2 }
+
+ibTcpSynFloodFlowTrap OBJECT IDENTIFIER ::= { ibTcpSynFloodFlowTraps 0 }
+
+-- ibTcpSynFloodFlowTrap
+ibTcpSynFloodFlow NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTcpSynFloodFlowChassis,
+            ibTcpSynFloodFlowSlot,
+            ibTcpSynFloodFlowIpType,
+            ibTcpSynFloodFlowIpAddress,
+            ibTcpSynFloodFlowPort,
+            ibTcpSynFloodFlowVrfName,
+            ibTcpSynFloodFlowPktType,
+            ibTcpSynFloodFlowRate
+        }
+    STATUS      current
+    DESCRIPTION
+        "The number of received SYN packets exceeds the threshold."
+    ::= { ibTcpSynFloodFlowTrap 1 }
+
+
+ibTcpSynFloodFlowTrapobjects OBJECT IDENTIFIER ::= { ibTcpSynFloodFlowTraps 1 }
+-- ibTcpSynFloodFlowTrapobjects
+ibTcpSynFloodFlowChassis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of chassis ID. If the value is 65535, the device is
+        not a stacked device."
+    ::= { ibTcpSynFloodFlowTrapobjects 1 }
+
+ibTcpSynFloodFlowSlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of slot."
+    ::= { ibTcpSynFloodFlowTrapobjects 2 }
+
+ibTcpSynFloodFlowIpType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The type of address."
+    ::= { ibTcpSynFloodFlowTrapobjects 3 }
+
+ibTcpSynFloodFlowIpAddress OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The source address of packet."
+    ::= { ibTcpSynFloodFlowTrapobjects 4 }
+
+ibTcpSynFloodFlowPort OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The destination port number of packet."
+    ::= { ibTcpSynFloodFlowTrapobjects 5 }
+
+ibTcpSynFloodFlowVrfName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..255))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of VrfName."
+    ::= { ibTcpSynFloodFlowTrapobjects 6 }
+
+ibTcpSynFloodFlowPktType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            ip(1),
+            mpls(2)
+        }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The type of packet."
+    ::= { ibTcpSynFloodFlowTrapobjects 7 }
+
+ibTcpSynFloodFlowRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The rate of syn flood."
+    ::= { ibTcpSynFloodFlowTrapobjects 8 }
+
+ibTcpSynFloodIfTraps OBJECT IDENTIFIER ::= { ibTcp 3 }
+
+ibTcpSynFloodIfTrap OBJECT IDENTIFIER ::= { ibTcpSynFloodIfTraps 0 }
+
+-- ibTcpSynFloodIfTrap
+ibTcpSynFloodIf NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibTcpSynFloodIfChassis,
+            ibTcpSynFloodIfSlot,
+            ibTcpSynFloodIfIndex,
+            ibTcpSynFloodIfPktType,
+            ibTcpSynFloodIfRate
+        }
+    STATUS      current
+    DESCRIPTION
+        "The number of received SYN packets exceeds the threshold."
+    ::= { ibTcpSynFloodIfTrap 1 }
+
+
+ibTcpSynFloodIfTrapobjects OBJECT IDENTIFIER ::= { ibTcpSynFloodIfTraps 1 }
+-- ibTcpSynFloodIfTrapobjects
+ibTcpSynFloodIfChassis OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of chassis ID. If the value is 65535, the device is
+        not a stacked device."
+    ::= { ibTcpSynFloodIfTrapobjects 1 }
+
+ibTcpSynFloodIfSlot OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The information of slot."
+    ::= { ibTcpSynFloodIfTrapobjects 2 }
+
+ibTcpSynFloodIfIndex OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The index value of the interface."
+    ::= { ibTcpSynFloodIfTrapobjects 3 }
+
+ibTcpSynFloodIfPktType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+            ip(1),
+            mpls(2)
+        }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The type of packet."
+    ::= { ibTcpSynFloodIfTrapobjects 4 }
+
+ibTcpSynFloodIfRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The rate of syn flood."
+    ::= { ibTcpSynFloodIfTrapobjects 5 }
+
+END
+

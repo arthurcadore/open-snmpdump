@@ -1,0 +1,1807 @@
+-- ==================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Domain MIB
+-- Reference:
+-- Version: V2.9
+-- History:
+-- V1.0 2005.03.23 The initial version, created by Xulei
+-- V1.1 2005.06.03 updated by Xulei
+--      Updated the SMIv2 syntax of some MIB objects
+-- V1.2 2006.03.27 updated by yuanzhijie
+--      1. Modified the description of ibDomainSchemeRowStatus
+--      2. Added ibDomainSchemeAAAType, ibDomainSchemeAAAName,
+--         and ibDomainSchemeAccessMode
+--      3. Changed the value range for objects ibDomainAuthSchemeName
+--         and ibDomainAcctSchemeName
+-- V1.3 2007.03.07 updated by yangyang
+--      Changed the SYNTAX of ibDomainName and ibDomainDefault
+-- V1.4 2008.11.25 updated by ouzhili
+--      Added enumeration value vlanlist(3) to object ibDomainVlanAssignMode
+-- V1.5 2008.12.30 updated by dupengfei
+--      Added ibDomainCurrentAccessNum
+-- V1.6 2009.08.05 updated by huxiulan
+--      Added enumeration value reserved(12) to object ibAccessModeofDomainScheme
+-- V1.7 2012.05.20 updated by qiuchunxia
+--      Added ibDomainIdleCutTime
+--      2012.10.15 updated by liubo
+--      Added enumeration value ldap(5) to object ibDomainSchemeMode
+-- V1.8 2013.02.28 updated by xuyonggang
+--      Changed ibDomainSchemeAccessMode
+-- V1.9 2013.4.25 updated by qiuchunxia
+--      Deleted the range of ibDomainIdleCutMaxTime
+-- V2.0 2013.11.25 updated by zhangdexu
+--      Changed the range of ibDomainDefault and ibDomainName
+-- V2.1 2017.6.3 updated by yuhua
+--      Added ibDomainGlobalStat, ibDomainStatTable, ibDomainIPPoolStatTable,
+--      ibDomainServiceType, ibDomainIpPoolName, and ibDomainIpv6PoolName
+--      2017.10.13 updated by yangliping
+--      Changed ibDomainGlobalStat and ibDomainStatTable
+-- V2.2 2018.11.27 updated by yuhua
+--      Changed IbDomainStatEntry, IbDomainIPPoolStatEntry and ibDomainGlobalStat,
+--      add ibDomainTraps
+-- V2.3 2019.3.12 updated by yuhua
+--      Added ibDomainIPv4PoolUpperValue, ibDomainIPv4PoolLowerValue, ibDomainIPv6PoolUpperValue, ibDomainIPv6PoolLowerValue,
+--      ibUserIPv6AllocAlarm, ibUserIPv6AllocAlarmResume, ibUserIPv6LowlimitWarnAlarm,
+--      ibUserIPv6LowlimitWarnResum, ibUserNDRAPfAllocAlarm, ibUserNDRAPfAllocAlarmResume,
+--      ibUserNDRAPfLowlimitWarnAlarm, ibUserNDRAPfLowlimitWarnResume, ibUserPDPfAllocAlarm, ibUserPDPfAllocAlarmResume,
+--      ibUserPDPfLowlimitWarnAlarm, ibUserPDPfLowlimitWarnResume
+-- V2.4 2020.1.16 updated by liubo
+--      1. Added ibDomainIpPoolGroupName, ibDomainIpv6PoolGroupName, ibDomainNdPrefixPoolName,
+--      ibDomainNdPrefixPoolGroupName, ibDomainIpv6Prefix, ibDomainIpv6PrefixLength,
+--      ibDomainNatBindingTable, ibDomainNatBindingUserGroupName, ibDomainNatBindingNatInstance
+--      and ibDomainNatBindingRowStatus
+--      2. Changed the MAX-ACCESS attribute value of ibDomainName to read-only
+-- V2.5 2020.7.3 updated by liubo
+--      Changed ibDomainIPv4PoolUpperValue, ibDomainIPv4PoolLowerValue, ibDomainIPv4PoolUpperValue
+--      and ibDomainIPv6PoolLowerValue
+-- V2.6 2020.11.20 updated by liubo
+--      Added ibDomainUpStatTable
+-- V2.7 2021.2.2 updated by liubo
+--      Changed ibDomainUpStatTable
+-- V2.8 2021.3.24 updated by jinyu
+--      Added ibDomainActiveWebServerUrl, ibUserWebServerDownAlarm,
+--      ibUserWebServerUpAlarm, ibUserWebServerChangeAlarm
+-- V2.9 2021.9.3 updated by wudegen
+--      Added ibDomainActiveWebServerIpv6Url, ibUserIPv6WebServerDownAlarm,
+--      ibUserIPv6WebServerUpAlarm, ibUserIPv6WebServerChangeAlarm
+-- ==================================================================
+IB-DOMAIN-MIB DEFINITIONS ::= BEGIN
+    IMPORTS
+        ibCommon
+            FROM IB-OID-MIB
+        Integer32, OBJECT-TYPE, NOTIFICATION-TYPE, MODULE-IDENTITY, TimeTicks, Unsigned32
+            FROM SNMPv2-SMI
+        InetAddressType, InetAddress
+            FROM INET-ADDRESS-MIB
+        Ipv6AddressPrefix
+            FROM IPV6-TC
+        RowStatus, TruthValue, TEXTUAL-CONVENTION
+            FROM SNMPv2-TC;
+
+    ibDomain MODULE-IDENTITY
+        LAST-UPDATED "202109030000Z"            -- September 03, 2021 at 00:00 GMT
+        ORGANIZATION
+            "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+        CONTACT-INFO
+            ""
+        DESCRIPTION
+            "The MIB module is used for managing domain."
+
+--  Revision history
+    REVISION     "202109030000Z"          -- September 03, 2021 at 00:00 GMT
+        DESCRIPTION  "Added ibDomainActiveWebServerIpv6Url, ibUserIPv6WebServerDownAlarm,
+                  ibUserIPv6WebServerUpAlarm, ibUserIPv6WebServerChangeAlarm"
+
+    REVISION     "202103240000Z"          -- March 24, 2021 at 00:00 GMT
+        DESCRIPTION  "Added ibDomainActiveWebServerUrl, ibUserWebServerDownAlarm,
+                  ibUserWebServerUpAlarm, ibUserWebServerChangeAlarm"
+
+    REVISION     "202102020000Z"          -- February 02, 2021 at 00:00 GMT
+        DESCRIPTION  "Changed ibDomainUpStatTable"
+
+    REVISION     "202011200000Z"          -- November 20, 2020 at 00:00 GMT
+        DESCRIPTION  "Added ibDomainUpStatTable"
+
+    REVISION     "202007030000Z"          -- July 03, 2020 at 00:00 GMT
+        DESCRIPTION  "Changed ibDomainIPv4PoolUpperValue, ibDomainIPv4PoolLowerValue, ibDomainIPv4PoolUpperValue
+                      and ibDomainIPv6PoolLowerValue"
+
+    REVISION     "202001160000Z"          -- January 16, 2020 at 00:00 GMT
+        DESCRIPTION  "1. Added ibDomainIpPoolGroupName, ibDomainIpv6PoolGroupName, ibDomainNdPrefixPoolName,
+                  ibDomainNdPrefixPoolGroupName, ibDomainIpv6Prefix, ibDomainIpv6PrefixLength,
+                  ibDomainNatBindingTable, ibDomainNatBindingUserGroupName, ibDomainNatBindingNatInstance
+                  and ibDomainNatBindingRowStatus
+                  2. Changed the MAX-ACCESS attribute value of ibDomainName to read-only"
+
+    REVISION     "201903120000Z"          -- March 11, 2019 at 00:00 GMT
+        DESCRIPTION  "1.Changed ibDomainInfoTable, ibDomainTraps
+                  2.Added ibDomainIPv4PoolUpperValue, ibDomainIPv4PoolLowerValue, ibDomainIPv6PoolUpperValue, ibDomainIPv6PoolLowerValue
+                  3.Modify ibUserIPAllocAlarm, ibUserIPAllocAlarmResume, ibUserIPLowerlimitWarningAlarm, ibUserIPLowerlimitWarningResume
+                  4.ibUserIPv6AllocAlarm, ibUserIPv6AllocAlarmResume, ibUserIPv6LowlimitWarnAlarm, ibUserIPv6LowlimitWarnResum, ibUserNDRAPfAllocAlarm,
+                    ibUserNDRAPfAllocAlarmResume, ibUserNDRAPfLowlimitWarnAlarm, ibUserNDRAPfLowlimitWarnResume, ibUserPDPfAllocAlarm,
+                    ibUserPDPfAllocAlarmResume, ibUserPDPfLowlimitWarnAlarm, ibUserPDPfLowlimitWarnResume"
+
+    REVISION     "201811270000Z"          -- November 27, 2018 at 00:00 GMT
+        DESCRIPTION  "Changed IbDomainStatEntry, IbDomainIPPoolStatEntry and ibDomainGlobalStat,
+                      added ibDomainTraps"
+
+    REVISION     "201710130000Z"          -- October 13, 2017 at 00:00 GMT
+        DESCRIPTION  "Changed ibDomainGlobalStat and ibDomainStatTable"
+
+    REVISION     "201706030000Z"          -- June 03, 2017 at 00:00 GMT
+        DESCRIPTION  "Added ibDomainGlobalStat, ibDomainStatTable, ibDomainIPPoolStatTable,
+                  ibDomainServiceType, ibDomainIpPoolName, and ibDomainIpv6PoolName"
+
+    REVISION     "201311250000Z"          -- November 25, 2013 at 00:00 GMT
+        DESCRIPTION  "Changed the range of ibDomainDefault and ibDomainName"
+
+    REVISION     "201304250000Z"          -- April 25, 2013 at 00:00 GMT
+        DESCRIPTION  "Deleted the range of ibDomainIdleCutMaxTime"
+
+    REVISION     "201302280000Z"          -- February 28, 2013 at 00:00 GMT
+        DESCRIPTION  "Changed ibDomainSchemeAccessMode"
+
+    REVISION     "201210150000Z"          -- October 15, 2012 at 00:00 GMT
+        DESCRIPTION  "Added enumeration value ldap(5) to object ibDomainSchemeMode"
+
+    REVISION     "201205200000Z"          -- May 20, 2012 at 00:00 GMT
+        DESCRIPTION  "Added ibDomainIdleCutTime"
+
+    REVISION     "200908050000Z"          -- August 5, 2009 at 00:00 GMT
+        DESCRIPTION  "Added enumeration value reserved(12) to object ibAccessModeofDomainScheme"
+
+    REVISION     "200812300000Z"          -- December 30, 2008 at 00:00 GMT
+        DESCRIPTION  "Added ibDomainCurrentAccessNum"
+
+    REVISION     "200811250000Z"          -- November 25, 2008 at 00:00 GMT
+        DESCRIPTION  "Added enumeration value vlanlist(3) to object ibDomainVlanAssignMode"
+
+    REVISION     "200703070000Z"          -- March 7, 2007 at 00:00 GMT
+        DESCRIPTION  "Changed the SYNTAX of ibDomainName and ibDomainDefault"
+
+    REVISION     "200603270000Z"          -- March 27, 2006 at 00:00 GMT
+        DESCRIPTION  "1. Modified the description of ibDomainSchemeRowStatus
+                  2. Added ibDomainSchemeAAAType, ibDomainSchemeAAAName,
+                     and ibDomainSchemeAccessMode
+                  3. Changed the value range for objects ibDomainAuthSchemeName
+                     and ibDomainAcctSchemeName"
+
+    REVISION     "200506300000Z"          -- June 30, 2005 at 00:00 GMT
+        DESCRIPTION  "Updated the SMIv2 syntax of some MIB objects"
+
+    REVISION     "200503230000Z"          -- March 23, 2005 at 00:00 GMT
+        DESCRIPTION  "The initial version, created"
+
+    ::= { ibCommon 46 }
+
+    IbModeOfDomainScheme ::= TEXTUAL-CONVENTION
+        STATUS current
+        DESCRIPTION
+        "The scheme mode of the domain.
+        none: indicates the domain has no scheme.
+        local:indicates the domain will use local-server as a scheme.
+        radius:indicates the domain will use radius scheme.
+        tacacs:indicates the domain will use tacacs scheme.
+        ldap:indicates the domain will use ldap scheme."
+        SYNTAX INTEGER
+        {
+            none(1),
+            local(2),
+            radius(3),
+            tacacs(4),
+            ldap(5)
+        }
+
+    IbAAATypeDomainScheme ::= TEXTUAL-CONVENTION
+        STATUS current
+        DESCRIPTION
+        "The service type of the server."
+        SYNTAX INTEGER
+        {
+            accounting(1),
+            authentication(2),
+            authorization(3),
+            none(4)
+        }
+
+    IbAccessModeofDomainScheme ::= TEXTUAL-CONVENTION
+        STATUS current
+        DESCRIPTION
+        "The access mode of the domain."
+        SYNTAX INTEGER
+        {
+            default(1),
+            login(2),
+            lanAccess(3),
+            portal(4),
+            ppp(5),
+            gcm(6),
+            dvpn(7),
+            dhcp(8),
+            voice(9),
+            superauthen(10),
+            command(11),
+            reserved(12)
+        }
+
+    ibDomainControl OBJECT IDENTIFIER ::= { ibDomain 1 }
+
+    ibDomainDefault OBJECT-TYPE
+        SYNTAX      OCTET STRING (SIZE (1..255))
+        MAX-ACCESS  read-write
+        STATUS      current
+        DESCRIPTION
+        "Specifies default domain on the equipment.  Default value is 'system'."
+    ::=  { ibDomainControl 1 }
+
+
+    ibDomainTables OBJECT IDENTIFIER ::= { ibDomain 2 }
+
+    ibDomainInfoTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF IbDomainInfoEntry
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION
+        "The (conceptual) table listing the domains."
+    ::= { ibDomainTables 1 }
+
+    ibDomainInfoEntry OBJECT-TYPE
+        SYNTAX  IbDomainInfoEntry
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION
+        "An entry (conceptual row) representing a domain."
+        INDEX { ibDomainName }
+    ::= { ibDomainInfoTable 1 }
+
+    IbDomainInfoEntry ::= SEQUENCE {
+        ibDomainName                   OCTET STRING,
+        ibDomainState                  INTEGER,
+        ibDomainMaxAccessNum           Integer32,
+        ibDomainVlanAssignMode         INTEGER,
+        ibDomainIdleCutEnable          TruthValue,
+        ibDomainIdleCutMaxTime         Integer32,
+        ibDomainIdleCutMinFlow         Integer32,
+        ibDomainMessengerEnable        TruthValue,
+        ibDomainMessengerLimitTime     Integer32,
+        ibDomainMessengerSpanTime      Integer32,
+        ibDomainSelfServiceEnable      TruthValue,
+        ibDomainSelfServiceURL         OCTET STRING,
+        ibDomainAccFailureAction       INTEGER,
+        ibDomainRowStatus              RowStatus,
+        ibDomainCurrentAccessNum       Integer32,
+        ibDomainIdleCutTime            TimeTicks,
+        ibDomainServiceType            INTEGER,
+        ibDomainIpPoolName             OCTET STRING,
+        ibDomainIpv6PoolName           OCTET STRING,
+        ibDomainIPv4PoolUpperValue     Integer32,
+        ibDomainIPv4PoolLowerValue     Integer32,
+        ibDomainIPv6PoolUpperValue     Integer32,
+        ibDomainIPv6PoolLowerValue     Integer32,
+        ibDomainIpPoolGroupName        OCTET STRING,
+        ibDomainIpv6PoolGroupName      OCTET STRING,
+        ibDomainNdPrefixPoolName       OCTET STRING,
+        ibDomainNdPrefixPoolGroupName  OCTET STRING,
+        ibDomainIpv6Prefix             Ipv6AddressPrefix,
+        ibDomainIpv6PrefixLength       Integer32,
+        ibDomainActiveWebServerUrl     OCTET STRING,
+        ibDomainActiveWebServerIpv6Url OCTET STRING}
+
+    ibDomainName   OBJECT-TYPE
+        SYNTAX  OCTET STRING (SIZE (1..255))
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION
+        "An index uniquely identifies a domain. "
+    ::= { ibDomainInfoEntry  1 }
+
+    ibDomainState   OBJECT-TYPE
+        SYNTAX INTEGER
+        {
+            active(1),
+            block(2)
+        }
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "The state of the domain, which reflects whether the domain is active.
+        Default value is active."
+    ::= { ibDomainInfoEntry  2 }
+
+    ibDomainMaxAccessNum   OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "The maximum number which the domain allows to access.  If the value
+        is set to 0, the access limit will be disabled."
+    ::= { ibDomainInfoEntry  3 }
+
+    ibDomainVlanAssignMode   OBJECT-TYPE
+        SYNTAX INTEGER
+        {
+            integer(1),
+            string(2),
+            vlanlist(3)
+        }
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "The vlan assignment mode.  The mode SHOULD be the same as the mode of
+        corresponding server.
+        1 (integer) - Integer Vlan assignment mode.
+        2 (string)  - String Vlan assignment mode.
+        3 (vlanlist)  - VLAN-List Vlan assignment mode.
+        The default value is integer."
+    ::= { ibDomainInfoEntry  4 }
+
+    ibDomainIdleCutEnable   OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "The idle cut control.  Setting this attribute to true, the connection will be
+        cut when the flow is less than ibDomainIdleCutMinFlow and lasts
+        ibDomainIdleCutMaxTime. Default value is false."
+    ::= { ibDomainInfoEntry  5 }
+
+    ibDomainIdleCutMaxTime   OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "The maximal time of idle-cut.  The unit is minute.  If the value of
+        ibDomainIdleCutEnable is false, the value of ibDomainIdleCutMaxTime
+        is meaningless."
+    ::= { ibDomainInfoEntry  6 }
+
+    ibDomainIdleCutMinFlow   OBJECT-TYPE
+        SYNTAX Integer32(1..10240000)
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "The minimal flow of idle-cut.  The unit is byte. If the value of
+        ibDomainIdleCutEnable is false, the value of ibDomainIdleCutMinFlow
+        is meaningless."
+    ::= { ibDomainInfoEntry  7 }
+
+    ibDomainMessengerEnable   OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "The messenger service control.  If set ibDomainMessengerEnable to true,
+        ibDomainMessengerLimitTime and ibDomainMessengerSpanTime must be
+        set to valid values.  Default value is false."
+    ::= { ibDomainInfoEntry  8 }
+
+    ibDomainMessengerLimitTime   OBJECT-TYPE
+        SYNTAX Integer32(1..60)
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "The messenger service limit time.  The unit is minute.  If the value of
+        ibDomainMessengerEnable is false, the value of ibDomainMessengerLimitTime
+        is meaningless."
+    ::= { ibDomainInfoEntry  9 }
+
+    ibDomainMessengerSpanTime   OBJECT-TYPE
+        SYNTAX Integer32(5..60)
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "The messenger service span time.  The unit is minute.
+        It must be a multiple of 5.  If the value of ibDomainMessengerEnable is false,
+        the value of ibDomainMessengerSpanTime is meaningless."
+    ::= { ibDomainInfoEntry  10 }
+
+    ibDomainSelfServiceEnable   OBJECT-TYPE
+        SYNTAX TruthValue
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "The self service control.  If set ibDomainSelfServiceEnable to true,
+        ibDomainSelfServiceURL must be set to a valid value.
+        Default value is FALSE."
+    ::= { ibDomainInfoEntry  11 }
+
+    ibDomainSelfServiceURL   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (1..64))
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "Self-service URL(Uniform Resource Locator) of the domain."
+    ::= { ibDomainInfoEntry  12 }
+
+    ibDomainAccFailureAction   OBJECT-TYPE
+        SYNTAX INTEGER
+        {
+            ignore(1),
+            reject(2)
+        }
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "Defines the action that authentication should be taken if
+        authentication succeeds but the associated accounting start
+        fails.
+        1 (ignore) - treat as authentication success; ignore
+            accounting start failure.
+        2 (reject) - treat as authentication failed if
+            corresponding accounting start fails.
+        Default value is reject."
+    ::= { ibDomainInfoEntry  13 }
+
+    ibDomainRowStatus   OBJECT-TYPE
+        SYNTAX   RowStatus
+        MAX-ACCESS  read-create
+        STATUS   current
+        DESCRIPTION
+        "This object is responsible for managing the creation, deletion and modification
+        of rows, which supports active status and CreateAndGo, Destroy operation. To destroy
+        an existent row, the domain of the row MUST NOT be used by user."
+    ::= { ibDomainInfoEntry 14 }
+
+    ibDomainCurrentAccessNum   OBJECT-TYPE
+        SYNTAX   Integer32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "The current access number of the domain."
+    ::= { ibDomainInfoEntry 15 }
+
+    ibDomainIdleCutTime   OBJECT-TYPE
+        SYNTAX TimeTicks
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION
+        "Authentication aging time.  If no packet is transmitted during the aging time,
+        the authentication is aged out."
+    ::= { ibDomainInfoEntry  16 }
+
+    ibDomainServiceType   OBJECT-TYPE
+        SYNTAX INTEGER
+        {
+            hsi(1),
+            stb(2),
+            voip(3)
+        }
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "Service type of users in the domain, including hsi(1), stb(2), and voip(3).
+         The default value is hsi.
+
+         The High Speed Internet (hsi) service is applicable to users that access the
+         network through PPP, 802.1X, or IPoE. If this service is used, the multicast feature of
+         the access module is disabled to save system resources.
+
+         The Set Top Box (stb) service is applicable to users that access the network
+         through stb. If this service is used, the multicast feature of the access module
+         is enabled to improve the performance of the multicast module.
+
+         The Voice over IP (voip) service is applicable to users that access the network
+         through IP phones. If this service is used, the Quality of Service (QoS) module
+         increases the priority of voice traffic to reduce the transmission delay for
+         IP phone users.
+
+        Default value is hsi."
+    ::= { ibDomainInfoEntry  17 }
+
+    ibDomainIpPoolName   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..63))
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "Specifies an IPv4 address pool for users in the domain."
+    ::= { ibDomainInfoEntry  18 }
+
+    ibDomainIpv6PoolName   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..63))
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "Specifies an IPv6 address pool for users in the domain."
+    ::= { ibDomainInfoEntry  19 }
+
+    ibDomainIPv4PoolUpperValue OBJECT-TYPE
+        SYNTAX Integer32 (0..100)
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+        "High alarm threshold for authorization IPv4 address usage, in percentage.
+        Value 0 indicates that no alarm notifications will be generated for high
+        authorization IPv4 address usage."
+        ::= { ibDomainInfoEntry 20 }
+
+    ibDomainIPv4PoolLowerValue OBJECT-TYPE
+        SYNTAX Integer32 (0..100)
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+        "Low alarm threshold for authorization IPv4 address usage, in percentage.
+        Value 100 indicates that no alarm notifications will be generated for low
+        authorization IPv4 address usage."
+        ::= { ibDomainInfoEntry 21 }
+
+    ibDomainIPv6PoolUpperValue OBJECT-TYPE
+        SYNTAX Integer32 (0..100)
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+        "High alarm threshold for authorization IPv6 address or prefix usage, in percentage.
+        Value 0 indicates that no alarm notifications will be generated for high
+        authorization IPv6 address or prefix usage."
+        ::= { ibDomainInfoEntry 22 }
+
+    ibDomainIPv6PoolLowerValue OBJECT-TYPE
+        SYNTAX Integer32 (0..100)
+        MAX-ACCESS read-create
+        STATUS current
+        DESCRIPTION
+        "Low alarm threshold for authorization IPv6 address or prefix usage, in percentage.
+        Value 100 indicates that no alarm notifications will be generated for low
+        authorization IPv6 address or prefix usage."
+        ::= { ibDomainInfoEntry 23 }
+
+    ibDomainIpPoolGroupName   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..63))
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "IP address pool group authorized to users in the domain."
+        DEFVAL { "" }
+    ::= { ibDomainInfoEntry  24 }
+
+    ibDomainIpv6PoolGroupName   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..63))
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "IPv6 address pool group authorized to users in the domain."
+        DEFVAL { "" }
+    ::= { ibDomainInfoEntry  25 }
+
+    ibDomainNdPrefixPoolName   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..63))
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "IPv6 address ND prefix pool authorized to users in the domain."
+        DEFVAL { "" }
+    ::= { ibDomainInfoEntry  26 }
+
+    ibDomainNdPrefixPoolGroupName   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..63))
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "IPv6 address ND prefix pool group authorized to users in the domain."
+        DEFVAL { "" }
+    ::= { ibDomainInfoEntry  27 }
+
+    ibDomainIpv6Prefix   OBJECT-TYPE
+        SYNTAX Ipv6AddressPrefix
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "IPv6 address prefix authorized to users in the domain."
+        DEFVAL { "" }
+    ::= { ibDomainInfoEntry  28 }
+
+    ibDomainIpv6PrefixLength   OBJECT-TYPE
+        SYNTAX Integer32 (0..128)
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "IPv6 address prefix length authorized to users in the domain."
+        DEFVAL { 0 }
+    ::= { ibDomainInfoEntry  29 }
+
+    ibDomainActiveWebServerUrl   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..255))
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION
+        "Active URL(Uniform Resource Locator) of the Web server in ISP domain."
+    ::= { ibDomainInfoEntry  30 }
+
+    ibDomainActiveWebServerIpv6Url   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..255))
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION
+        "Active IPv6 URL of the Web server in ISP domain."
+    ::= { ibDomainInfoEntry  31 }
+
+    -- ----------------------------------------------------------------------
+    -- Scheme Table
+    -- ----------------------------------------------------------------------
+    ibDomainSchemeTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF IbDomainSchemeEntry
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION
+        "The (conceptual) table listing schemes of all domains."
+    ::= { ibDomainTables 2 }
+
+    ibDomainSchemeEntry OBJECT-TYPE
+        SYNTAX  IbDomainSchemeEntry
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION
+        "An entry (conceptual row) representing an IP pool of a domain"
+        INDEX { ibDomainName, ibDomainSchemeIndex }
+    ::= { ibDomainSchemeTable 1 }
+
+    IbDomainSchemeEntry ::= SEQUENCE {
+        ibDomainSchemeIndex            Integer32,
+        ibDomainSchemeMode             IbModeOfDomainScheme,
+        ibDomainAuthSchemeName         OCTET STRING,
+        ibDomainAcctSchemeName         OCTET STRING,
+        ibDomainSchemeRowStatus        RowStatus,
+        ibDomainSchemeAAAType          IbAAATypeDomainScheme,
+        ibDomainSchemeAAAName          OCTET STRING,
+        ibDomainSchemeAccessMode       IbAccessModeofDomainScheme
+        }
+
+    ibDomainSchemeIndex   OBJECT-TYPE
+        SYNTAX Integer32
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION
+        "The scheme index of domain, which is an identifier of a domain scheme."
+    ::= { ibDomainSchemeEntry  1 }
+
+    ibDomainSchemeMode   OBJECT-TYPE
+        SYNTAX IbModeOfDomainScheme
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "The scheme mode of the domain.  Setting ibDomainSchemeMode to none(1) indicates
+        the domain has none scheme.  Setting ibDomainSchemeMode to local(2) indicates the
+        domain will use local-server as a scheme.  Setting ibDomainSchemeMode to radius(3),
+        tacacs(4) or ldap(5) indicates the domain will use radius, tacacs or ldap scheme.  If set
+        ibDomainSchemeMode to radius(3), tacacs(4) or ldap(5), ibDomainAuthSchemeName and
+        ibDomainAcctSchemeName must be set to valid values.  And if ibDomainSchemeMode is
+        set to none(1) or local(2), the value of ibDomainAuthSchemeName and ibDomainAcctSchemeName
+        will be ignored."
+    ::= { ibDomainSchemeEntry  2 }
+
+    ibDomainAuthSchemeName   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..32))
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "The authentication scheme name of domain.  If ibDomainSchemeMode is set to radius,
+        tacacs or ldap, the ibDomainAuthSchemeName must be configured with a valid value."
+    ::= { ibDomainSchemeEntry  3 }
+
+    ibDomainAcctSchemeName   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..32))
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "The accounting scheme name of the domain. If ibDomainSchemeMode is set to radius
+        or tacacs, the ibDomainAcctSchemeName must be configured with a valid value."
+    ::= { ibDomainSchemeEntry  4 }
+
+    ibDomainSchemeRowStatus   OBJECT-TYPE
+        SYNTAX RowStatus
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "This object is responsible for managing the creation, deletion and modification
+        of rows, which supports active status and createAndGo, destroy operation. To
+        create a new row, ibDomainSchemeMode must be specified. To destroy an existent
+        row, the scheme of the row MUST NOT be used by user."
+    ::= { ibDomainSchemeEntry  5 }
+
+    ibDomainSchemeAAAType    OBJECT-TYPE
+        SYNTAX     IbAAATypeDomainScheme
+        MAX-ACCESS  read-create
+        STATUS  current
+        DESCRIPTION
+        "Service Type of the server."
+   ::= { ibDomainSchemeEntry  6 }
+
+    ibDomainSchemeAAAName       OBJECT-TYPE
+         SYNTAX      OCTET STRING(SIZE (0..32))
+         MAX-ACCESS  read-create
+         STATUS  current
+         DESCRIPTION
+         "The scheme name of the domain, whether the scheme represents accounting,
+          authentication or authorization references the object ibDomainSchemeAAAType.
+          The value of the object must be valid if the value of ibDomainSchemeMode
+          is radius or tacacs, the value of the object will be ignored if the value
+          of ibDomainSchemeMode is none or local. If the domain has no scheme,
+          there will be a null string. If this object is supported, the objects
+          ibDomainAuthSchemeName and ibDomainAcctSchemeName will be ignored."
+    ::= { ibDomainSchemeEntry  7 }
+
+    ibDomainSchemeAccessMode    OBJECT-TYPE
+         SYNTAX      IbAccessModeofDomainScheme
+         MAX-ACCESS  read-create
+         STATUS  current
+         DESCRIPTION
+         "The access mode of the domain scheme."
+    ::= { ibDomainSchemeEntry  8 }
+
+    -- ----------------------------------------------------------------------
+    -- IP pool Table
+    -- ----------------------------------------------------------------------
+    ibDomainIpPoolTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF IbDomainIpPoolEntry
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION
+        "The (conceptual) table listing IP pools of all domains."
+    ::= { ibDomainTables 3 }
+
+    ibDomainIpPoolEntry OBJECT-TYPE
+        SYNTAX  IbDomainIpPoolEntry
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION
+        "An entry (conceptual row) representing an IP pool of a domain."
+        INDEX { ibDomainName, ibDomainIpPoolNum }
+    ::= { ibDomainIpPoolTable 1 }
+
+    IbDomainIpPoolEntry ::= SEQUENCE {
+        ibDomainIpPoolNum              Integer32,
+        ibDomainIpPoolLowIpAddrType    InetAddressType,
+        ibDomainIpPoolLowIpAddr        InetAddress,
+        ibDomainIpPoolLen              Integer32,
+        ibDomainIpPoolRowStatus        RowStatus }
+
+
+    ibDomainIpPoolNum   OBJECT-TYPE
+        SYNTAX   Integer32(0..99)
+        MAX-ACCESS  not-accessible
+        STATUS   current
+        DESCRIPTION
+        "The number of IP pool, which is an identifier of an IP pool."
+    ::= { ibDomainIpPoolEntry 1 }
+
+
+    ibDomainIpPoolLowIpAddrType   OBJECT-TYPE
+        SYNTAX   InetAddressType
+        MAX-ACCESS  read-create
+        STATUS   current
+        DESCRIPTION
+        "The low IP addresses type (IPv4 or IPv6) of IP pool."
+    ::= { ibDomainIpPoolEntry 2 }
+
+
+    ibDomainIpPoolLowIpAddr   OBJECT-TYPE
+        SYNTAX   InetAddress
+        MAX-ACCESS  read-create
+        STATUS   current
+        DESCRIPTION
+        "The low IP address of IP pool."
+    ::= { ibDomainIpPoolEntry 3 }
+
+
+    ibDomainIpPoolLen   OBJECT-TYPE
+        SYNTAX   Integer32
+        MAX-ACCESS  read-create
+        STATUS   current
+        DESCRIPTION
+        "The length of IP pool.  Default value is 1."
+    ::= { ibDomainIpPoolEntry 4 }
+
+   ibDomainIpPoolRowStatus   OBJECT-TYPE
+        SYNTAX   RowStatus
+        MAX-ACCESS  read-create
+        STATUS   current
+        DESCRIPTION
+        "This object is responsible for managing the creation, deletion and modification
+        of rows, which supports active status and CreateAndGo, Destroy operation.  To
+        create a new row, ibDomainIpPoolNum and ibDomainIpPoolLowIpAddr must be specified.
+        To destroy an existent row, the IP pool of this row MUST NOT be used by user."
+    ::= { ibDomainIpPoolEntry 5 }
+
+    -- ----------------------------------------------------------------------
+    -- Domain Statistics Table
+    -- ----------------------------------------------------------------------
+    ibDomainStatTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF IbDomainStatEntry
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION
+        "The (conceptual) table listing Domain statistics."
+    ::= { ibDomainTables 4 }
+
+    ibDomainStatEntry OBJECT-TYPE
+        SYNTAX  IbDomainStatEntry
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION
+        "An entry (conceptual row) representing statistics of a domain."
+        INDEX { ibDomainName }
+    ::= { ibDomainStatTable 1 }
+
+    IbDomainStatEntry ::= SEQUENCE {
+        ibDomainAccessedNum              Unsigned32,
+        ibDomainOnlineNum                Unsigned32,
+        ibDomainOnlinePPPUser            Unsigned32,
+        ibDomainOnlineIPoEUser           Unsigned32,
+        ibDomainOnlinePPPoEUser          Unsigned32,
+        ibDomainOnlinePPPoAUser          Unsigned32,
+        ibDomainOnlinePPPoFRUser         Unsigned32,
+        ibDomainOnlineLacUser            Unsigned32,
+        ibDomainOnlineLnsUser            Unsigned32,
+        ibDomainOnlineIPoEBindAuthUser   Unsigned32,
+        ibDomainOnlineIPoEWebAuthUser    Unsigned32,
+        ibDomainOnlineLeasedUser         Unsigned32,
+        ibDomainOnlineIPv4User           Unsigned32,
+        ibDomainOnlineIPv6User           Unsigned32,
+        ibDomainOnlineDualStackUser      Unsigned32}
+
+
+    ibDomainAccessedNum   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Total number of users in the domain."
+    ::= { ibDomainStatEntry 1 }
+
+
+    ibDomainOnlineNum   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online users in the domain."
+    ::= { ibDomainStatEntry 2 }
+
+
+    ibDomainOnlinePPPUser   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online PPP users in the domain."
+    ::= { ibDomainStatEntry 3 }
+
+    ibDomainOnlineIPoEUser   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online IPoE users in the domain."
+    ::= { ibDomainStatEntry 4 }
+
+    ibDomainOnlinePPPoEUser   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online PPPoE users in the domain."
+    ::= { ibDomainStatEntry 5 }
+
+    ibDomainOnlinePPPoAUser   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online PPPoA users in the domain."
+    ::= { ibDomainStatEntry 6 }
+
+    ibDomainOnlinePPPoFRUser   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online PPPoFR users in the domain."
+    ::= { ibDomainStatEntry 7 }
+
+    ibDomainOnlineLacUser   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online LAC users in the domain."
+    ::= { ibDomainStatEntry 8 }
+
+    ibDomainOnlineLnsUser   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online LNS users in the domain."
+    ::= { ibDomainStatEntry 9 }
+
+    ibDomainOnlineIPoEBindAuthUser   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online IPoE users that use bind authentication in the domain."
+    ::= { ibDomainStatEntry 10 }
+
+    ibDomainOnlineIPoEWebAuthUser   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online IPoE users that use WEB authentication in the domain."
+    ::= { ibDomainStatEntry 11 }
+
+    ibDomainOnlineLeasedUser   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online IPoE Leased users in the domain."
+    ::= { ibDomainStatEntry 12 }
+
+    ibDomainOnlineIPv4User   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online IPv4 users in the domain."
+    ::= { ibDomainStatEntry 13 }
+
+    ibDomainOnlineIPv6User   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online IPv6 users in the domain."
+    ::= { ibDomainStatEntry 14 }
+
+    ibDomainOnlineDualStackUser   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online dual stack users in the domain."
+    ::= { ibDomainStatEntry 15 }
+
+    -- ----------------------------------------------------------------------
+    -- Domain IP Pool Statistics Table
+    -- ----------------------------------------------------------------------
+    ibDomainIPPoolStatTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF IbDomainIPPoolStatEntry
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION
+        "The (conceptual) table listing IP pool statistics."
+    ::= { ibDomainTables 5 }
+
+    ibDomainIPPoolStatEntry OBJECT-TYPE
+        SYNTAX  IbDomainIPPoolStatEntry
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION
+        "An entry (conceptual row) representing statistics of an IP pool."
+        INDEX { ibDomainName }
+    ::= { ibDomainIPPoolStatTable 1 }
+
+    IbDomainIPPoolStatEntry ::= SEQUENCE {
+        ibDomainIPTotalNum                Unsigned32,
+        ibDomainIPUsedNum                 Unsigned32,
+        ibDomainIPConflictNum             Unsigned32,
+        ibDomainIPExcludeNum              Unsigned32,
+        ibDomainIPIdleNum                 Unsigned32,
+        ibDomainIPUsedPercent             OCTET STRING,
+        ibDomainIPv6AddressTotalNum       Unsigned32,
+        ibDomainIPv6AddressUsedNum        Unsigned32,
+        ibDomainIPv6AddressFreeNum        Unsigned32,
+        ibDomainIPv6AddressConflictNum    Unsigned32,
+        ibDomainIPv6AddressExcludeNum     Unsigned32,
+        ibDomainIPv6AddressUsedPercent    OCTET STRING,
+        ibDomainNDRAPrefixTotalNum        Unsigned32,
+        ibDomainNDRAPrefixUsedNum         Unsigned32,
+        ibDomainNDRAPrefixFreeNum         Unsigned32,
+        ibDomainNDRAPrefixConflictNum     Unsigned32,
+        ibDomainNDRAPrefixExcludeNum      Unsigned32,
+        ibDomainNDRAPrefixUsedPercent     OCTET STRING,
+        ibDomainPDPrefixTotalNum          Unsigned32,
+        ibDomainPDPrefixUsedNum           Unsigned32,
+        ibDomainPDPrefixFreeNum           Unsigned32,
+        ibDomainPDPrefixConflictNum       Unsigned32,
+        ibDomainPDPrefixExcludeNum        Unsigned32,
+        ibDomainPDPrefixUsedPercent       OCTET STRING }
+
+
+    ibDomainIPTotalNum   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION
+        "Total number of addresses in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 1 }
+
+
+    ibDomainIPUsedNum    OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION
+        "Number of addresses already used in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 2 }
+
+
+    ibDomainIPConflictNum   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION
+        "Number of conflicting addresses in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 3 }
+
+
+    ibDomainIPExcludeNum   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of addresses excluded from the IP pool."
+    ::= { ibDomainIPPoolStatEntry 4 }
+
+   ibDomainIPIdleNum   OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS  current
+        DESCRIPTION
+        "Number of idle addresses in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 5 }
+
+    ibDomainIPUsedPercent   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (0..32))
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Address occupancy rate in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 6 }
+
+    ibDomainIPv6AddressTotalNum   OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Total number of IPv6 addresses in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 7 }
+
+    ibDomainIPv6AddressUsedNum   OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of IPv6 addresses already used in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 8 }
+
+    ibDomainIPv6AddressFreeNum   OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of idle IPv6 addresses in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 9 }
+
+    ibDomainIPv6AddressConflictNum   OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of conflicting IPv6 addresses in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 10 }
+
+    ibDomainIPv6AddressExcludeNum   OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of IPv6 addresses excluded from the IP pool."
+    ::= { ibDomainIPPoolStatEntry 11 }
+
+    ibDomainIPv6AddressUsedPercent   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (1..64))
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "IPv6 Address occupancy rate in the IP pool.
+        The value is in percentage.
+        For example: 0.79 means the IPv6 Address occupancy rate in the IP pool is 0.79%."
+    ::= { ibDomainIPPoolStatEntry 12 }
+
+    ibDomainNDRAPrefixTotalNum   OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Total number of NDRA prefix addresses in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 13 }
+
+    ibDomainNDRAPrefixUsedNum   OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of NDRA prefix addresses already used in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 14 }
+
+    ibDomainNDRAPrefixFreeNum   OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of idle NDRA prefix addresses in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 15 }
+
+    ibDomainNDRAPrefixConflictNum   OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of conflicting NDRA prefix addresses in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 16 }
+
+    ibDomainNDRAPrefixExcludeNum   OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of NDRA prefix addresses excluded from the IP pool."
+    ::= { ibDomainIPPoolStatEntry 17 }
+
+    ibDomainNDRAPrefixUsedPercent   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (1..64))
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "NDRA prefix occupancy rate in the IP pool.
+        The value is in percentage.
+        For example: 0.79 means the NDRA prefix occupancy rate in the IP pool is 0.79%."
+    ::= { ibDomainIPPoolStatEntry 18 }
+
+    ibDomainPDPrefixTotalNum   OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Total number of PD prefix addresses in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 19 }
+
+    ibDomainPDPrefixUsedNum   OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of PD prefix addresses already used in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 20 }
+
+    ibDomainPDPrefixFreeNum   OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of idle PD prefix addresses in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 21 }
+
+    ibDomainPDPrefixConflictNum   OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of conflicting PD prefix addresses in the IP pool."
+    ::= { ibDomainIPPoolStatEntry 22 }
+
+    ibDomainPDPrefixExcludeNum   OBJECT-TYPE
+        SYNTAX Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of PD prefix addresses excluded from the IP pool."
+    ::= { ibDomainIPPoolStatEntry 23 }
+
+    ibDomainPDPrefixUsedPercent   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (1..64))
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "PD prefix occupancy rate in the IP pool.
+        The value is in percentage.
+        For example: 0.79 means the PD prefix occupancy rate in the IP pool is 0.79%."
+    ::= { ibDomainIPPoolStatEntry 24 }
+
+    -- ----------------------------------------------------------------------
+    -- Domain NAT binding Table
+    -- ----------------------------------------------------------------------
+    ibDomainNatBindingTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF IbDomainNatBindingEntry
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION
+        "The (conceptual) table lists user group-to-NAT instance bindings of
+        all domains.  The device assigns an authenticated user to a load-sharing
+        user group and uses the NAT instance associated with that user group
+        to process the NAT service of the user."
+    ::= { ibDomainTables 6 }
+
+    ibDomainNatBindingEntry OBJECT-TYPE
+        SYNTAX  IbDomainNatBindingEntry
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION
+        "An entry (conceptual row) lists user group-to-NAT instance bindings of a domain."
+        INDEX { ibDomainName, ibDomainNatBindingUserGroupName }
+    ::= { ibDomainNatBindingTable 1 }
+
+    IbDomainNatBindingEntry ::= SEQUENCE {
+        ibDomainNatBindingUserGroupName  OCTET STRING,
+        ibDomainNatBindingNatInstance    OCTET STRING,
+        ibDomainNatBindingRowStatus      RowStatus
+        }
+
+    ibDomainNatBindingUserGroupName   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (1..32))
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "The user group name."
+    ::= { ibDomainNatBindingEntry 1 }
+
+    ibDomainNatBindingNatInstance   OBJECT-TYPE
+        SYNTAX OCTET STRING (SIZE (1..31))
+        MAX-ACCESS  read-create
+        STATUS   current
+        DESCRIPTION
+        "The bound NAT instance."
+    ::= { ibDomainNatBindingEntry 2 }
+
+    ibDomainNatBindingRowStatus   OBJECT-TYPE
+        SYNTAX   RowStatus
+        MAX-ACCESS  read-create
+        STATUS   current
+        DESCRIPTION
+        "This object is responsible for managing the creation, deletion and
+         modification of rows. The object supports the active state and the
+         CreateAndGo and Destroy operations."
+    ::= { ibDomainNatBindingEntry 3 }
+
+    -- ----------------------------------------------------------------------
+    -- Domain UP Statistics Table
+    -- ----------------------------------------------------------------------
+    ibDomainUpStatTable OBJECT-TYPE
+        SYNTAX  SEQUENCE OF IbDomainUpStatEntry
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION
+        "The (conceptual) table listing domain statistics on the user plane."
+    ::= { ibDomainTables 7 }
+
+    ibDomainUpStatEntry OBJECT-TYPE
+        SYNTAX  IbDomainUpStatEntry
+        MAX-ACCESS  not-accessible
+        STATUS  current
+        DESCRIPTION
+        "An entry (conceptual row) representing statistics of a domain on a user plane."
+        INDEX { ibDomainName, ibDomainUpId }
+    ::= { ibDomainUpStatTable 1 }
+
+    IbDomainUpStatEntry ::= SEQUENCE {
+        ibDomainUpId                       Unsigned32,
+        ibDomainUpAccessedNum              Unsigned32,
+        ibDomainUpOnlineNum                Unsigned32,
+        ibDomainUpOnlinePPPUser            Unsigned32,
+        ibDomainUpOnlineIPoEUser           Unsigned32,
+        ibDomainUpOnlinePPPoEUser          Unsigned32,
+        ibDomainUpOnlinePPPoAUser          Unsigned32,
+        ibDomainUpOnlinePPPoFRUser         Unsigned32,
+        ibDomainUpOnlineLacUser            Unsigned32,
+        ibDomainUpOnlineLnsUser            Unsigned32,
+        ibDomainUpOnlineIPoEBindAuthUser   Unsigned32,
+        ibDomainUpOnlineIPoEWebAuthUser    Unsigned32,
+        ibDomainUpOnlineLeasedUser         Unsigned32,
+        ibDomainUpOnlineIPv4User           Unsigned32,
+        ibDomainUpOnlineIPv6User           Unsigned32,
+        ibDomainUpOnlineDualStackUser      Unsigned32
+  }
+
+    ibDomainUpId  OBJECT-TYPE
+        SYNTAX   Unsigned32 (1024..2047)
+        MAX-ACCESS  not-accessible
+        STATUS   current
+        DESCRIPTION
+        "User plane ID."
+    ::= { ibDomainUpStatEntry 1 }
+
+    ibDomainUpAccessedNum  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of users in the domain of the user plane."
+    ::= { ibDomainUpStatEntry 2 }
+
+    ibDomainUpOnlineNum  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online users in the domain of the user plane."
+    ::= { ibDomainUpStatEntry 3 }
+
+    ibDomainUpOnlinePPPUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online PPP users in the domain of the user plane."
+    ::= { ibDomainUpStatEntry 4 }
+
+    ibDomainUpOnlineIPoEUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online IPoE users in the domain of the user plane."
+    ::= { ibDomainUpStatEntry 5 }
+
+    ibDomainUpOnlinePPPoEUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online PPPoE users in the domain of the user plane."
+    ::= { ibDomainUpStatEntry 6 }
+
+    ibDomainUpOnlinePPPoAUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online PPPoA users in the domain of the user plane."
+    ::= { ibDomainUpStatEntry 7 }
+
+    ibDomainUpOnlinePPPoFRUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online PPPoFR users in the domain of the user plane."
+    ::= { ibDomainUpStatEntry 8 }
+
+    ibDomainUpOnlineLacUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online LAC users in the domain of the user plane."
+    ::= { ibDomainUpStatEntry 9 }
+
+    ibDomainUpOnlineLnsUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online LNS users in the domain of the user plane."
+    ::= { ibDomainUpStatEntry 10 }
+
+    ibDomainUpOnlineIPoEBindAuthUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online IPoE users that use bind authentication in the domain of the user plane."
+    ::= { ibDomainUpStatEntry 11 }
+
+    ibDomainUpOnlineIPoEWebAuthUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online IPoE users that use Web authentication in the domain of the user plane."
+    ::=  { ibDomainUpStatEntry 12 }
+
+    ibDomainUpOnlineLeasedUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online IPoE leased users in the domain of the user plane."
+    ::= { ibDomainUpStatEntry 13 }
+
+    ibDomainUpOnlineIPv4User  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Total number of IPv4 online users in the domain of the user plane."
+    ::= { ibDomainUpStatEntry 14 }
+
+    ibDomainUpOnlineIPv6User  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Total number of IPv6 online users in the domain of the user plane."
+    ::= { ibDomainUpStatEntry 15 }
+
+    ibDomainUpOnlineDualStackUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Total number of dual-stack online users in the domain of the user plane."
+    ::= { ibDomainUpStatEntry 16 }
+
+    -- ----------------------------------------------------------------------
+    -- Domain Global Statistics Table
+    -- ----------------------------------------------------------------------
+    ibDomainGlobalStat OBJECT IDENTIFIER ::= { ibDomain 3 }
+
+    ibDomainGlobalAccessedNum  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of users in all domains."
+    ::=  { ibDomainGlobalStat 1 }
+
+    ibDomainGlobalOnlineNum  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online users in all domains."
+    ::=  { ibDomainGlobalStat 2 }
+
+    ibDomainGlobalOnlinePPPUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online PPP users in all domains."
+    ::=  { ibDomainGlobalStat 3 }
+
+    ibDomainGlobalOnlineIPoEUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online IPoE users in all domains."
+    ::=  { ibDomainGlobalStat 4 }
+
+    ibDomainGlobalOnlinePPPoEUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online PPPoE users in all domains."
+    ::=  { ibDomainGlobalStat 5 }
+
+    ibDomainGlobalOnlinePPPoAUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online PPPoA users in all domains."
+    ::=  { ibDomainGlobalStat 6 }
+
+    ibDomainGlobalOnlinePPPoFRUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online PPPoFR users in all domains."
+    ::=  { ibDomainGlobalStat 7 }
+
+    ibDomainGlobalOnlineLacUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online LAC users in all domains."
+    ::=  { ibDomainGlobalStat 8 }
+
+    ibDomainGlobalOnlineLnsUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online LNS users in all domains."
+    ::=  { ibDomainGlobalStat 9 }
+
+    ibDomainGlobalOnlineIPoEBindAuthUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online IPoE users that use bind authentication in all domains."
+    ::=  { ibDomainGlobalStat 10 }
+
+    ibDomainGlobalOnlineIPoEWebAuthUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online IPoE users that use WEB authentication in all domains."
+    ::=  { ibDomainGlobalStat 11 }
+
+    ibDomainGlobalOnlineLeasedUser  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Number of online IPoE Leased users in all domains."
+    ::=  { ibDomainGlobalStat 12 }
+
+    ibDomainGlobalTotalIPv4OnlineNum  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Total number of IPv4 online users in all domains."
+    ::=  { ibDomainGlobalStat 13 }
+
+    ibDomainGlobalTotalIPv6OnlineNum  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Total number of IPv6 online users in all domains."
+    ::=  { ibDomainGlobalStat 14 }
+
+    ibDomainGlobalTotalDualStackOnlineNum  OBJECT-TYPE
+        SYNTAX   Unsigned32
+        MAX-ACCESS  read-only
+        STATUS   current
+        DESCRIPTION
+        "Total number of dual stack online users in all domains."
+    ::=  { ibDomainGlobalStat 15 }
+
+    -- ----------------------------------------------------------------------
+    -- ibDomainTraps Table
+    -- ----------------------------------------------------------------------
+    ibDomainTraps      OBJECT IDENTIFIER ::= { ibDomain 5 }
+    ibDomainTrapsDefine      OBJECT IDENTIFIER ::= { ibDomainTraps 0 }
+
+    ibUserIPAllocAlarm NOTIFICATION-TYPE
+            OBJECTS {ibDomainIPUsedPercent, ibDomainIPv4PoolUpperValue, ibDomainIPv4PoolLowerValue}
+            STATUS current
+            DESCRIPTION
+                "
+                1 Notice/Trap name:  Reach IP address allocable threshold
+                2 Notice/Trap generation cause:  Reach the threshold set in domain
+                3 Repair suggestions:
+                    Check whether to renew the configuration of the BAS IP pool
+                    Add new IP pool to this domain.
+                "
+            ::= { ibDomainTrapsDefine 1 }
+
+    ibUserIPAllocAlarmResume NOTIFICATION-TYPE
+            OBJECTS {ibDomainIPUsedPercent, ibDomainIPv4PoolUpperValue, ibDomainIPv4PoolLowerValue}
+            STATUS current
+            DESCRIPTION
+                "
+                1 Notice/Trap name:  Overallocated IP address recovery
+                2 Notice/Trap generation cause:  Recover from a state where IP address allocable threshold are reached.
+                3 Repair suggestions: NA.
+                "
+            ::= { ibDomainTrapsDefine 2 }
+
+    ibUserIPLowerlimitWarningAlarm NOTIFICATION-TYPE
+            OBJECTS {ibDomainIPUsedPercent, ibDomainIPv4PoolUpperValue, ibDomainIPv4PoolLowerValue}
+            STATUS current
+            DESCRIPTION
+                "
+                1 Notice/Trap name:  Reach IP address allocable lower limit threshold
+                2 Notice/Trap generation cause:  Reach the lower limit threshold set in domain
+                3 Repair suggestions:
+                    Check the domain.
+                "
+            ::= { ibDomainTrapsDefine 3 }
+
+    ibUserIPLowerlimitWarningResume NOTIFICATION-TYPE
+            OBJECTS {ibDomainIPUsedPercent, ibDomainIPv4PoolUpperValue, ibDomainIPv4PoolLowerValue}
+            STATUS current
+            DESCRIPTION
+                "
+                1 Notice/Trap name:  Less-allocated IP address recovery
+                2 Notice/Trap generation cause:  Recover from a state where IP address allocable lower limit threshold are reached.
+                3 Repair suggestions: NA.
+                "
+            ::= { ibDomainTrapsDefine 4 }
+
+    ibUserIPv6AllocAlarm NOTIFICATION-TYPE
+            OBJECTS {ibDomainIPv6AddressUsedPercent, ibDomainIPv6PoolUpperValue, ibDomainIPv6PoolLowerValue }
+            STATUS current
+            DESCRIPTION
+                "
+                1 Notice/Trap name:  Reach IPv6 address allocable threshold
+                2 Notice/Trap generation cause:  Reach the threshold set in domain
+                3 Repair suggestions:
+                    Check whether to renew the configuration of the BAS IPv6 address pool
+                    Add new IPv6 address pool to this domain .
+                "
+            ::= { ibDomainTrapsDefine 5 }
+
+    ibUserIPv6AllocAlarmResume NOTIFICATION-TYPE
+            OBJECTS {ibDomainIPv6AddressUsedPercent, ibDomainIPv6PoolUpperValue, ibDomainIPv6PoolLowerValue }
+            STATUS current
+            DESCRIPTION
+                "
+                1 Notice/Trap name:  Overallocated IPv6 address recovery
+                2 Notice/Trap generation cause:  Recover from a state where IPv6 address allocable threshold are reached.
+                3 Repair suggestions: NA.
+                "
+            ::= { ibDomainTrapsDefine 6 }
+
+    ibUserIPv6LowlimitWarnAlarm NOTIFICATION-TYPE
+            OBJECTS {ibDomainIPv6AddressUsedPercent, ibDomainIPv6PoolUpperValue, ibDomainIPv6PoolLowerValue}
+            STATUS current
+            DESCRIPTION
+                "
+                1 Notice/Trap name:  Reach IPv6 address allocable lower limit threshold
+                2 Notice/Trap generation cause:  Reach the lower limit threshold set at domain
+                3 Repair suggestions:
+                    Check the domain.
+                "
+            ::= { ibDomainTrapsDefine 7 }
+
+    ibUserIPv6LowlimitWarnResume NOTIFICATION-TYPE
+            OBJECTS {ibDomainIPv6AddressUsedPercent, ibDomainIPv6PoolUpperValue, ibDomainIPv6PoolLowerValue}
+            STATUS current
+            DESCRIPTION
+                "
+                1 Notice/Trap name:  Less-allocated IPv6 address recovery
+                2 Notice/Trap generation cause:  Recover from a state where IPv6 address allocable lower limit threshold are reached.
+                3 Repair suggestions: NA.
+                "
+            ::= { ibDomainTrapsDefine 8 }
+
+    ibUserNDRAPfAllocAlarm NOTIFICATION-TYPE
+            OBJECTS {ibDomainNDRAPrefixUsedPercent, ibDomainIPv6PoolUpperValue, ibDomainIPv6PoolLowerValue }
+            STATUS current
+            DESCRIPTION
+                "
+                1 Notice/Trap name:  Reach IPv6 NDRA prefix allocable threshold
+                2 Notice/Trap generation cause: Reach the threshold set in domain
+                3 Repair suggestions:
+                    Check whether to renew the configuration of the BAS IPv6 NDRA prefix pool
+                    Add new IPv6 NDRA prefix pool to this domain .
+                "
+            ::= { ibDomainTrapsDefine 9 }
+
+    ibUserNDRAPfAllocAlarmResume NOTIFICATION-TYPE
+            OBJECTS {ibDomainNDRAPrefixUsedPercent, ibDomainIPv6PoolUpperValue, ibDomainIPv6PoolLowerValue }
+            STATUS current
+            DESCRIPTION
+                "
+                1 Notice/Trap name:  Overallocated NDRA prefix recovery
+                2 Notice/Trap generation cause:  Recover from a state where NDRA prefix allocable threshold are reached.
+                3 Repair suggestions: NA.
+                "
+            ::= { ibDomainTrapsDefine 10 }
+
+    ibUserNDRAPfLowlimitWarnAlarm NOTIFICATION-TYPE
+            OBJECTS {ibDomainNDRAPrefixUsedPercent, ibDomainIPv6PoolUpperValue, ibDomainIPv6PoolLowerValue}
+            STATUS current
+            DESCRIPTION
+                "
+                1 Notice/Trap name:  Reach NDRA prefix allocable lower limit threshold
+                2 Notice/Trap generation cause:  Reach the lower limit threshold set at domain
+                3 Repair suggestions:
+                    Check the domain.
+                "
+            ::= { ibDomainTrapsDefine 11 }
+
+    ibUserNDRAPfLowlimitWarnResume NOTIFICATION-TYPE
+            OBJECTS {ibDomainNDRAPrefixUsedPercent, ibDomainIPv6PoolUpperValue, ibDomainIPv6PoolLowerValue}
+            STATUS current
+            DESCRIPTION
+                "
+                1 Notice/Trap name:  Less-allocated NDRA prefix recovery
+                2 Notice/Trap generation cause:  Recover from a state where NDRA Prefix allocable lower limit threshold are reached.
+                3 Repair suggestions: NA.
+                "
+            ::= { ibDomainTrapsDefine 12 }
+
+    ibUserPDPfAllocAlarm NOTIFICATION-TYPE
+            OBJECTS {ibDomainPDPrefixUsedPercent, ibDomainIPv6PoolUpperValue, ibDomainIPv6PoolLowerValue }
+            STATUS current
+            DESCRIPTION
+                "
+                1 Notice/Trap name:  Reach IPv6 DHCPv6-PD prefix allocable threshold
+                2 Notice/Trap generation cause:  Reach the threshold set in domain
+                3 Repair suggestions:
+                    Check whether to renew the configuration of the BAS IPv6 DHCPv6-PD prefix pool
+                    Add new IPv6 DHCPv6-PD prefix pool to this domain .
+                "
+            ::= { ibDomainTrapsDefine 13 }
+
+    ibUserPDPfAllocAlarmResume NOTIFICATION-TYPE
+            OBJECTS {ibDomainPDPrefixUsedPercent, ibDomainIPv6PoolUpperValue, ibDomainIPv6PoolLowerValue }
+            STATUS current
+            DESCRIPTION
+                "
+                1 Notice/Trap name:  Overallocated IPv6 DHCPv6-PD prefix recovery
+                2 Notice/Trap generation cause:  Recover from a state where IPv6 DHCPv6-PD Prefix allocable threshold are reached.
+                3 Repair suggestions: NA.
+                "
+            ::= { ibDomainTrapsDefine 14 }
+
+    ibUserPDPfLowlimitWarnAlarm NOTIFICATION-TYPE
+            OBJECTS {ibDomainPDPrefixUsedPercent, ibDomainIPv6PoolUpperValue, ibDomainIPv6PoolLowerValue}
+            STATUS current
+            DESCRIPTION
+                "
+                1 Notice/Trap name:  Reach IPv6 DHCPv6-PD prefix allocable lower limit threshold
+                2 Notice/Trap generation cause:  Reach the lower limit threshold set at domain
+                3 Repair suggestions:
+                    Check the domain.
+                "
+            ::= { ibDomainTrapsDefine 15 }
+
+    ibUserPDPfLowlimitWarnResume NOTIFICATION-TYPE
+            OBJECTS {ibDomainPDPrefixUsedPercent, ibDomainIPv6PoolUpperValue, ibDomainIPv6PoolLowerValue}
+            STATUS current
+            DESCRIPTION
+                "
+                1 Notice/Trap name:  Less-allocated IPv6 DHCPv6-PD prefix recovery
+                2 Notice/Trap generation cause:  Recover from a state where IPv6 DHCPv6-PD Prefix allocable lower limit threshold are reached.
+                3 Repair suggestions: NA.
+                "
+            ::= { ibDomainTrapsDefine 16 }
+
+    ibUserWebServerDownAlarm NOTIFICATION-TYPE
+            OBJECTS { ibDomainActiveWebServerUrl }
+            STATUS current
+            DESCRIPTION
+                "
+                This trap is generated when the Web server is not reachable.
+                "
+            ::= { ibDomainTrapsDefine 17 }
+
+    ibUserWebServerUpAlarm NOTIFICATION-TYPE
+            OBJECTS { ibDomainActiveWebServerUrl }
+            STATUS current
+            DESCRIPTION
+                "
+                This trap is generated when the Web server becomes reachable.
+                "
+            ::= { ibDomainTrapsDefine 18 }
+
+    ibUserWebServerChangeAlarm NOTIFICATION-TYPE
+            OBJECTS { ibDomainActiveWebServerUrl }
+            STATUS current
+            DESCRIPTION
+                "
+                This trap is generated when the valid URL of the Web Server changes.
+                "
+            ::= { ibDomainTrapsDefine 19 }
+
+    ibUserIPv6WebServerDownAlarm NOTIFICATION-TYPE
+            OBJECTS { ibDomainActiveWebServerIpv6Url }
+            STATUS current
+            DESCRIPTION
+                "
+                This trap is generated when the IPv6 Web server is not reachable.
+                "
+            ::= { ibDomainTrapsDefine 20 }
+
+    ibUserIPv6WebServerUpAlarm NOTIFICATION-TYPE
+            OBJECTS { ibDomainActiveWebServerIpv6Url }
+            STATUS current
+            DESCRIPTION
+                "
+                This trap is generated when the IPv6 Web server becomes reachable.
+                "
+            ::= { ibDomainTrapsDefine 21 }
+
+    ibUserIPv6WebServerChangeAlarm NOTIFICATION-TYPE
+            OBJECTS { ibDomainActiveWebServerIpv6Url }
+            STATUS current
+            DESCRIPTION
+                "
+                This trap is generated when the valid IPv6 URL of the Web Server changes.
+                "
+            ::= { ibDomainTrapsDefine 22 }
+END

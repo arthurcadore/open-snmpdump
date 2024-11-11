@@ -1,0 +1,102 @@
+-- =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Multiprotocol Label Switching Path Computation Element MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 2022-07-13 Initial version Created by Zhujieyi
+--        2022-08-23 Modified by Zhujieyi, Added ibMplsPceDelegationInfo
+-- =============================================================================
+IB-MPLSPCE-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    ibCommon
+        FROM IB-OID-MIB
+    ;
+
+-- =============================================================================
+-- module identity part
+-- =============================================================================
+ibMplsPce MODULE-IDENTITY
+    LAST-UPDATED
+        "202208230300Z"   -- August 23, 2022 at 03:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Multiprotocol Label Switching Path Computation Element MIB"
+    REVISION
+        "202208230300Z"   -- August 23, 2022 at 03:00 GMT
+    DESCRIPTION
+        "Added ibMplsPceDelegationInfo."
+    REVISION
+        "202207130853Z"   -- July 13, 2022 at 08:54 GMT
+    DESCRIPTION
+        "Initial version of this MIB."
+    ::= { ibCommon 240 }
+
+-- =============================================================================
+-- Top level components of this MIB module.
+-- =============================================================================
+ibMplsPceNotifications OBJECT IDENTIFIER  ::= { ibMplsPce 0 }
+
+ibMplsPceObjects       OBJECT IDENTIFIER  ::= { ibMplsPce 1 }
+
+ibMplsPceScalarGroup   OBJECT IDENTIFIER  ::= { ibMplsPceObjects 1 }
+
+ibMplsPcePcepSessInfo    OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..127))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The base information of MPLS PCEP Session."
+    ::= { ibMplsPceScalarGroup 1 }
+
+ibMplsPceDelegationInfo    OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..127))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The base information of MPLS PCE Delegation."
+    ::= { ibMplsPceScalarGroup 2 }
+
+-- =============================================================================
+-- Notifications
+-- =============================================================================
+ibMplsPcePcepSessDown  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsPcePcepSessInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the PCEP Session changed to Down."
+    ::= { ibMplsPceNotifications 1 }
+
+ibMplsPcePcepSessUp  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsPcePcepSessInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the PCEP Session changed to Up."
+    ::= { ibMplsPceNotifications 2 }
+
+ibMplsPceRetDelegation  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsPceDelegationInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the PCE returned delegation
+      for MPLS TE Tunnel."
+    ::= { ibMplsPceNotifications 3 }
+
+ibMplsPceRetDelegationClear  NOTIFICATION-TYPE
+    OBJECTS {  ibMplsPceDelegationInfo  }
+    STATUS      current
+    DESCRIPTION
+      "This notification is generated when the PCE delegated MPLS TE Tunnel."
+    ::= { ibMplsPceNotifications 4 }
+
+-- =============================================================================
+-- End of notifications.
+-- =============================================================================
+
+END

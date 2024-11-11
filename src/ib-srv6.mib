@@ -1,0 +1,88 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Segment Routing over IPv6 (SRv6) MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2020-08-31 The initial version, created by Chen ZiChao
+-- =================================================================
+IB-SRV6-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY,OBJECT-TYPE, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    InetAddressIPv6, InetAddressPrefixLength
+        FROM INET-ADDRESS-MIB
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibSrv6 MODULE-IDENTITY
+    LAST-UPDATED "202008310000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+
+    DESCRIPTION
+        "This MIB file provides information about Segment Routing over IPv6 (SRv6)."
+    REVISION "202008310000Z"
+    DESCRIPTION
+        "The initial version of this MIB file."
+    ::= { ibCommon 197 }
+
+-- Top-level structure of MIB
+ibSrv6Notifications  OBJECT IDENTIFIER ::= { ibSrv6 0 }
+ibSrv6Objects    OBJECT IDENTIFIER ::= { ibSrv6 1 }
+
+-- The SRv6 Notification Table
+
+-- The SRv6 Notification Table records fields that are
+-- required for notifications.
+
+ibSrv6NotificationEntry OBJECT IDENTIFIER
+    ::= { ibSrv6Objects 1 }
+
+ibSrv6NotificationSid OBJECT-TYPE
+    SYNTAX       InetAddressIPv6
+    MAX-ACCESS   accessible-for-notify
+    STATUS   current
+    DESCRIPTION
+    "The local SRv6 SID."
+    ::= { ibSrv6NotificationEntry 1 }
+
+ibSrv6NotificationSidPrefixLen OBJECT-TYPE
+    SYNTAX       InetAddressPrefixLength
+    MAX-ACCESS   accessible-for-notify
+    STATUS       current
+    DESCRIPTION
+    "The prefix length of the local SRv6 SID."
+    ::= { ibSrv6NotificationEntry 2 }
+
+-- Notification Definitions
+
+-- The notifications need to be throttled so as to not overwhelm the
+-- management agent in case of rapid changes to the SRv6 module.
+
+ibSrv6SidRouteConflict NOTIFICATION-TYPE
+    OBJECTS { ibSrv6NotificationSid,
+        ibSrv6NotificationSidPrefixLen
+        }
+    STATUS       current
+    DESCRIPTION
+    "A ibSrv6SidRouteConflict notification signifies that an
+    local SRv6 SID is conflicted with routes in routing table."
+    ::= { ibSrv6Notifications 1 }
+
+ibSrv6SidRouteConflictClear NOTIFICATION-TYPE
+    OBJECTS { ibSrv6NotificationSid,
+        ibSrv6NotificationSidPrefixLen
+        }
+    STATUS       current
+    DESCRIPTION
+    "A ibSrv6SidRouteConflictClear notification signifies that
+    the conflict between the local SRv6 SID and routes in routing table
+    has been resolved."
+    ::= { ibSrv6Notifications 2 }
+
+END

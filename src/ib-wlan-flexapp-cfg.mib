@@ -1,0 +1,1418 @@
+-- =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description:
+--   The file defines a MIB that provides WLAN application configuration information.
+-- Reference:
+-- Version: V1.1
+-- History:
+--   V1.0 2015-05-26 Initial version, created by lifei (Richard)
+--   V1.1 2023-07-10 modified by qiuchunxia
+--        Modify the keyword in the MIB file to "RTT".
+--        2023-08-08 modified by c14716
+--        Modify some words.
+-- =============================================================================
+IB-WLAN-FLEXAPP-CFG-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        TruthValue,
+        MacAddress
+    FROM SNMPv2-TC
+        MODULE-IDENTITY,
+        NOTIFICATION-TYPE,
+        OBJECT-TYPE,
+        Integer32,
+        IpAddress
+    FROM SNMPv2-SMI
+        ibDot11
+    FROM IB-DOT11-REF-MIB;
+
+ibWlanFlexAppCFG MODULE-IDENTITY
+    LAST-UPDATED "202309081800Z"        -- Sept 08, 2023 at 18:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "This MIB provides information about WLAN application configuration."
+    REVISION "202309081800Z"        -- Sept 08, 2023 at 18:00 GMT
+    DESCRIPTION
+        "Modify some words."
+    REVISION "202307101800Z"        -- July 10, 2023 at 18:00 GMT
+    DESCRIPTION
+        "Modify keyword to RTT."
+    REVISION "201505261800Z"        -- May 26, 2015 at 18:00 GMT
+    DESCRIPTION
+        "Added new nodes."
+    ::= { ibDot11 19 }
+--
+-- Node definitions
+--
+
+ibWlanModuleConfigGroup OBJECT IDENTIFIER ::= { ibWlanFlexAppCFG 1 }
+--  Module Group has the following children:
+--  ibWlanModuleConfigTable          ::= { ibWlanModuleConfigGroup 1 }
+--  ibWlanModuleInfoTable            ::= { ibWlanModuleConfigGroup 2 }
+
+ibWlanIOTConfigGroup OBJECT IDENTIFIER ::= { ibWlanFlexAppCFG 2 }
+--  IOT Configure Group has the following children:
+--  ibWlanIOTConfigTable             ::= { ibWlanIOTConfigGroup 1 }
+
+ibWlanModuleNotifyGroup OBJECT IDENTIFIER ::= { ibWlanFlexAppCFG 3 }
+--  Module Notify Group has the following children:
+--  ibWlanModuleTraps ::= { ibWlanModuleNotifyGroup 0 }
+--  ibWlanModuleTrapVarObjects ::= { ibWlanModuleNotifyGroup 1 }
+
+ibWlanBLEConfigGroup OBJECT IDENTIFIER ::= { ibWlanFlexAppCFG 4 }
+--  BLE Configure Group has the following children:
+--  ibWlanBLEConfigTable             ::= { ibWlanBLEConfigGroup 1 }
+--  ibWlanBLEModuleConfigTable       ::= { ibWlanBLEConfigGroup 2 }
+
+ibWlanAEConfigGroup OBJECT IDENTIFIER ::= { ibWlanFlexAppCFG 5 }
+--  AE Configure Group has the following children:
+--  ibWlanAEConfigTable               ::= { ibWlanAEConfigGroup 1 }
+--  ibWlanAERadioConfigTable          ::= { ibWlanAEConfigGroup 2 }
+
+ibWlanCommonConfigGroup OBJECT IDENTIFIER ::= { ibWlanFlexAppCFG 6 }
+--  common Configure Group has the following children:
+--  ibWlanCommonConfigTable             ::= { ibWlanCommonConfigGroup 1 }
+
+ibWlanRTTConfigGroup OBJECT IDENTIFIER ::= { ibWlanFlexAppCFG 7 }
+--  RTT Configure Group has the following children:
+--  ibWlanRTTConfigTable             ::= { ibWlanRTTConfigGroup 1 }
+
+ibWlanFPConfigGroup OBJECT IDENTIFIER ::= { ibWlanFlexAppCFG 8 }
+--  fingerprint Configure Group has the following children:
+--  ibWlanFPConfigTable             ::= { ibWlanFPConfigGroup 1 }
+
+-- *****************************************************************************
+-- *  ibWlanModuleConfigTable Definition
+-- *****************************************************************************
+ibWlanModuleConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbWlanModuleConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Administrators must configure module parameters for a module to operate."
+    ::= { ibWlanModuleConfigGroup 1 }
+
+ibWlanModuleConfigEntry OBJECT-TYPE
+    SYNTAX      IbWlanModuleConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry contains module configuration information."
+    INDEX
+        {
+            ibWlanAPSerialID,
+            ibWlanModuleID
+        }
+    ::= { ibWlanModuleConfigTable 1 }
+
+IbWlanModuleConfigEntry ::= SEQUENCE
+    {
+        ibWlanAPSerialID               OCTET STRING,
+        ibWlanModuleID                 Integer32,
+        ibWlanModuleType               INTEGER,
+        ibWlanModuleStatus             TruthValue,
+        ibWlanModuleReset              INTEGER,
+        ibWlanModuleRstFac             INTEGER,
+        ibWlanModuleUpWareStatus       TruthValue,
+        ibWlanModuleTxPower            Integer32,
+        ibWlanModuleManualUpdate          OCTET STRING
+    }
+
+ibWlanAPSerialID OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object represents the serial ID of an AP."
+    ::= { ibWlanModuleConfigEntry 1 }
+
+ibWlanModuleID OBJECT-TYPE
+    SYNTAX      Integer32(1..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object represents the module ID of a module."
+    ::= { ibWlanModuleConfigEntry 2 }
+
+ibWlanModuleType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+          none(0),
+          ble(1),
+          iot(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the type of a module."
+    ::= { ibWlanModuleConfigEntry 3 }
+
+ibWlanModuleStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of a module."
+    ::= { ibWlanModuleConfigEntry 4 }
+
+ibWlanModuleReset OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+      none(0),
+      reboot(1)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When read the value from the node
+         none: Represents the module has been rebooted and the status of the module is normal.
+         When write the value to the node
+         reboot: Represents module rebooting.  Other values are not supported."
+    ::= { ibWlanModuleConfigEntry 5 }
+
+ibWlanModuleRstFac OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+      none(0),
+      restore(1)
+    }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When read the value from the node
+         none: Represents the module has been restored and the status of the module is normal.
+         When write the value to the node
+         restore: Represents module restoring.  Other values are not supported."
+    ::= { ibWlanModuleConfigEntry 6 }
+
+ibWlanModuleUpWareStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of module auto update."
+    ::= { ibWlanModuleConfigEntry 7 }
+
+ibWlanModuleTxPower OBJECT-TYPE
+    SYNTAX      Integer32(1..4)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the packet transmit power."
+    ::= { ibWlanModuleConfigEntry 8 }
+
+ibWlanModuleManualUpdate OBJECT-TYPE
+    SYNTAX       OCTET STRING
+    MAX-ACCESS   read-write
+    STATUS       current
+    DESCRIPTION
+        "This object represents the file path for module firmware updating."
+    ::= { ibWlanModuleConfigEntry 9 }
+
+-- *****************************************************************************
+-- * End of ibWlanModuleConfigTable Definition
+-- *****************************************************************************
+
+-- *****************************************************************************
+-- *  ibWlanModuleInfoTable Definition
+-- *****************************************************************************
+ibWlanModuleInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbWlanModuleInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The table contains information about each module of an AP."
+    ::= { ibWlanModuleConfigGroup 2 }
+
+ibWlanModuleInfoEntry OBJECT-TYPE
+    SYNTAX      IbWlanModuleInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry contains IOT module information."
+    INDEX
+        {
+            ibDot11IOTAPSerialID,
+            ibDot11IOTModuleID
+        }
+    ::= { ibWlanModuleInfoTable 1 }
+
+IbWlanModuleInfoEntry ::= SEQUENCE
+    {
+        ibDot11IOTAPSerialID          OCTET STRING,
+        ibDot11IOTModuleID            Integer32,
+        ibDot11IOTModuleType          INTEGER,
+        ibDot11IOTModuleModel         OCTET STRING,
+        ibDot11IOTModuleHwVersion     OCTET STRING,
+        ibDot11IOTModuleSwVersion     OCTET STRING,
+        ibDot11IOTModuleSerialId      OCTET STRING
+    }
+
+ibDot11IOTAPSerialID OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object represents the serial ID of an AP."
+    ::= { ibWlanModuleInfoEntry 1 }
+
+ibDot11IOTModuleID OBJECT-TYPE
+    SYNTAX      Integer32(1..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object represents a module."
+    ::= { ibWlanModuleInfoEntry 2 }
+
+ibDot11IOTModuleType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+          none(0),
+          company(1),
+          iot(2)
+        }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object represents the type of a module."
+    ::= { ibWlanModuleInfoEntry 3 }
+
+ibDot11IOTModuleModel OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object represents the model of a module."
+    ::= { ibWlanModuleInfoEntry 4 }
+
+ibDot11IOTModuleHwVersion OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object represents the hardware version of a module."
+    ::= { ibWlanModuleInfoEntry 5 }
+
+ibDot11IOTModuleSwVersion OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object represents the software version of a module."
+    ::= { ibWlanModuleInfoEntry 6 }
+
+ibDot11IOTModuleSerialId OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object represents the sequence ID of a module."
+    ::= { ibWlanModuleInfoEntry 7 }
+
+-- *****************************************************************************
+-- * End of ibDot11APModuleInfoTable Definition
+-- *****************************************************************************
+
+-- *****************************************************************************
+-- *  ibWlanIOTConfigTable Definition
+-- *****************************************************************************
+ibWlanIOTConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbWlanIOTConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Administrators must configure IOT parameters."
+    ::= { ibWlanIOTConfigGroup 1 }
+
+ibWlanIOTConfigEntry OBJECT-TYPE
+    SYNTAX      IbWlanIOTConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry contains module configuration information."
+    INDEX
+        {
+            ibWlanIOTAPSerialID
+        }
+    ::= { ibWlanIOTConfigTable 1 }
+
+IbWlanIOTConfigEntry ::= SEQUENCE
+    {
+        ibWlanIOTAPSerialID            OCTET STRING,
+        ibWlanIOTEngineAdd             IpAddress,
+        ibWlanIOTEnginePort            Integer32
+    }
+
+ibWlanIOTAPSerialID OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object represents the serial ID of an AP."
+    ::= { ibWlanIOTConfigEntry 1 }
+
+ibWlanIOTEngineAdd OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the IPv4 address of the location server."
+    ::= { ibWlanIOTConfigEntry 2 }
+
+ibWlanIOTEnginePort OBJECT-TYPE
+    SYNTAX      Integer32(0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the UDP port to listen for IOT messages from the server."
+    ::= { ibWlanIOTConfigEntry 3 }
+
+-- *****************************************************************************
+-- * End of ibWlanIOTConfigTable Definition
+-- *****************************************************************************
+
+-- *****************************************************************************
+-- *  ibWlanModuleTraps Definition
+-- *****************************************************************************
+-- AP Management Notification
+
+ibWlanModuleTraps OBJECT IDENTIFIER
+    ::= { ibWlanModuleNotifyGroup 0 }
+
+ibWlanModuleInsertTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibWlanTrapAPMacAddress,
+            ibWlanTrapModuleID,
+            ibWlanTrapModulePhyType,
+            ibWlanTrapModuleModel,
+            ibWlanTrapModuleHwVersion,
+            ibWlanTrapModuleSwVersion,
+            ibWlanTrapModuleSequenceId
+        }
+    STATUS current
+    DESCRIPTION
+        "This notification will be generated when an IOT module is inserted."
+    ::= { ibWlanModuleTraps 1 }
+
+ibWlanModuleRomveTrap NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibWlanTrapAPMacAddress,
+            ibWlanTrapModuleID,
+            ibWlanTrapModulePhyType,
+            ibWlanTrapModuleModel,
+            ibWlanTrapModuleHwVersion,
+            ibWlanTrapModuleSwVersion,
+            ibWlanTrapModuleSequenceId
+        }
+    STATUS current
+    DESCRIPTION
+        "This notification will be generated when an IOT module is removed."
+    ::= { ibWlanModuleTraps 2 }
+
+ibWlanModuleMissMatch NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibWlanTrapAPMacAddress,
+            ibWlanTrapModuleID,
+            ibWlanTrapModuleCfgType,
+            ibWlanTrapModulePhyType,
+            ibWlanTrapModuleModel
+        }
+    STATUS current
+    DESCRIPTION
+        "This notification will be generated when the configured
+         type doesn't match the module type."
+    ::= { ibWlanModuleTraps 3 }
+
+-- AP Management Notification variable object
+
+ibWlanModuleTrapVarObjects OBJECT IDENTIFIER
+    ::= { ibWlanModuleNotifyGroup 1 }
+
+ibWlanTrapAPMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "This object represents the MAC address of an AP."
+    ::= {ibWlanModuleTrapVarObjects 1 }
+
+ibWlanTrapModuleID OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "This object represents the ID of a module."
+    ::= { ibWlanModuleTrapVarObjects 2 }
+
+ibWlanTrapModuleCfgType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+          none(0),
+          ble(1),
+          rfid(2),
+          zigbee(3),
+          uwb(4)
+        }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "This object represents the configuration type of a module."
+    ::= { ibWlanModuleTrapVarObjects 3 }
+
+ibWlanTrapModulePhyType OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+          none(0),
+          company(1),
+          iot(2)
+        }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "This object represents the physical type of a module."
+    ::= { ibWlanModuleTrapVarObjects 4 }
+
+ibWlanTrapModuleModel OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "This object represents the model of a module."
+    ::= { ibWlanModuleTrapVarObjects 5 }
+
+ibWlanTrapModuleHwVersion OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "This object represents the hardware version of a module."
+    ::= { ibWlanModuleTrapVarObjects 6 }
+
+ibWlanTrapModuleSwVersion OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "This object represents the software version of a module."
+    ::= { ibWlanModuleTrapVarObjects 7 }
+
+ibWlanTrapModuleSequenceId OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "This object represents the sequence ID of a module."
+    ::= { ibWlanModuleTrapVarObjects 8 }
+
+-- *****************************************************************************
+-- * End of ibWlanModuleTraps Definition
+-- *****************************************************************************
+
+-- *****************************************************************************
+-- *  ibWlanBLEConfigTable Definition
+-- *****************************************************************************
+ibWlanBLEConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbWlanBLEConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Administrators must configure Bluetooth Low Energy (BLE) parameters."
+    ::= { ibWlanBLEConfigGroup 1 }
+
+ibWlanBLEConfigEntry OBJECT-TYPE
+    SYNTAX      IbWlanBLEConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry contains BLE location configuration information."
+    INDEX
+        {
+            ibWlanBLEAPSerialID
+        }
+    ::= { ibWlanBLEConfigTable 1 }
+
+IbWlanBLEConfigEntry ::= SEQUENCE
+    {
+        ibWlanBLEAPSerialID            OCTET STRING,
+        ibWlanBLEStatus                TruthValue,
+        ibWlanBLEEngineAdd             IpAddress,
+        ibWlanBLEEnginePort            Integer32,
+        ibWlanBLEVendorPort            Integer32,
+        ibWlanBLERssiStatus            TruthValue,
+        ibWlanBLERssiThreshold         Integer32,
+        ibWlanBLEConnectPassword       OCTET STRING,
+        ibWlanBLECommandPassword       OCTET STRING,
+        ibWlanBLEReportStatus          TruthValue,
+        ibWlanBLEReportInterval        Integer32,
+        ibWlanBLEAgingTime             Integer32,
+        ibWlanBLERealTimeReportStatus  TruthValue,
+        ibWlanBLERealTimePrefix        OCTET STRING
+    }
+
+ibWlanBLEAPSerialID OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object represents the serial ID of an AP."
+    ::= { ibWlanBLEConfigEntry 1 }
+
+ibWlanBLEStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of BLE location."
+    ::= { ibWlanBLEConfigEntry 2 }
+
+ibWlanBLEEngineAdd OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the server's IPv4 address to which BLE messages are sent."
+    ::= { ibWlanBLEConfigEntry 3 }
+
+ibWlanBLEEnginePort OBJECT-TYPE
+    SYNTAX      Integer32(0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the UDP port of the location server."
+    ::= { ibWlanBLEConfigEntry 4 }
+
+ibWlanBLEVendorPort OBJECT-TYPE
+    SYNTAX      Integer32(1..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the UDP port to listen for BLE messages from the server."
+    ::= { ibWlanBLEConfigEntry 5 }
+
+ibWlanBLERssiStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of BLE RSSI-based packet filtering."
+    ::= { ibWlanBLEConfigEntry 6 }
+
+ibWlanBLERssiThreshold OBJECT-TYPE
+    SYNTAX      Integer32(5..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the max RSSI value of clients' packets."
+    ::= { ibWlanBLEConfigEntry 7 }
+
+ibWlanBLEConnectPassword OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0|4))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the BLE module connection password."
+    ::= { ibWlanBLEConfigEntry 8 }
+
+ibWlanBLECommandPassword OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0|12))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the BLE module command password."
+    ::= { ibWlanBLEConfigEntry 9 }
+
+ibWlanBLEReportStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of BLE location reporting."
+    ::= { ibWlanBLEConfigEntry 10 }
+
+ibWlanBLEReportInterval OBJECT-TYPE
+    SYNTAX      Integer32(1..86400)
+    UNITS       "Second"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the interval at which an AP sends BLE messages to the server."
+    ::= { ibWlanBLEConfigEntry 11 }
+
+ibWlanBLEAgingTime OBJECT-TYPE
+    SYNTAX      Integer32(60..3600)
+    UNITS       "Second"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the aging time for iBeacon devices."
+    ::= { ibWlanBLEConfigEntry 12 }
+
+ibWlanBLERealTimeReportStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of BLE realtime reporting."
+    ::= { ibWlanBLEConfigEntry 13 }
+
+ibWlanBLERealTimePrefix OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0|8..18))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the manufacturer prefix of BLE devices to
+         be located.  The prefix must be an even number."
+    ::= { ibWlanBLEConfigEntry 14 }
+
+-- *****************************************************************************
+-- * End of ibWlanBLEConfigTable Definition
+-- *****************************************************************************
+
+-- *****************************************************************************
+-- *  ibWlanBLEModuleConfigTable Definition
+-- *****************************************************************************
+ibWlanBLEModuleConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbWlanBLEModuleConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Administrators must configure BLE module parameters."
+    ::= { ibWlanBLEConfigGroup 2 }
+
+ibWlanBLEModuleConfigEntry OBJECT-TYPE
+    SYNTAX      IbWlanBLEModuleConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry contains BLE module configuration information."
+    INDEX
+        {
+            ibWlanBLEModuleAPSerialID,
+            ibWlanBLEModuleID
+        }
+    ::= { ibWlanBLEModuleConfigTable 1 }
+
+IbWlanBLEModuleConfigEntry ::= SEQUENCE
+    {
+        ibWlanBLEModuleAPSerialID   OCTET STRING,
+        ibWlanBLEModuleID           Integer32,
+        ibWlanBLEAdvReportStatus    TruthValue,
+        ibWlanBLEAdvReportInterval  Integer32,
+        ibWlanBLEAdvUUID            OCTET STRING,
+        ibWlanBLEAdvMajorID         Integer32,
+        ibWlanBLEAdvMinorID         Integer32
+    }
+
+ibWlanBLEModuleAPSerialID OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object represents the serial ID of an AP."
+    ::= { ibWlanBLEModuleConfigEntry 1 }
+
+ibWlanBLEModuleID OBJECT-TYPE
+    SYNTAX      Integer32(1..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object represents the ID of a module."
+    ::= { ibWlanBLEModuleConfigEntry 2 }
+
+ibWlanBLEAdvReportStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of BLE advertisement reporting."
+    ::= { ibWlanBLEModuleConfigEntry 3 }
+
+ibWlanBLEAdvReportInterval OBJECT-TYPE
+    SYNTAX      Integer32(50..1000)
+    UNITS       "Second"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the interval at which a BLE module sends advertisement packets."
+    ::= { ibWlanBLEModuleConfigEntry 4 }
+
+ibWlanBLEAdvUUID OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0|32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the UUID of BLE advertisement packets."
+    ::= { ibWlanBLEModuleConfigEntry 5 }
+
+ibWlanBLEAdvMajorID OBJECT-TYPE
+    SYNTAX      Integer32(0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the major ID of BLE advertisement packets."
+    ::= { ibWlanBLEModuleConfigEntry 6 }
+
+ibWlanBLEAdvMinorID OBJECT-TYPE
+    SYNTAX      Integer32(0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the minor ID of BLE advertisement packets."
+    ::= { ibWlanBLEModuleConfigEntry 7 }
+
+-- *****************************************************************************
+-- * End of ibWlanBLEModuleConfigTable Definition
+-- *****************************************************************************
+
+-- *****************************************************************************
+-- *  ibWlanAEConfigTable Definition
+-- *****************************************************************************
+ibWlanAEConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbWlanAEConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Administrators must configure AeroScout (AE) parameters."
+    ::= { ibWlanAEConfigGroup 1 }
+
+ibWlanAEConfigEntry OBJECT-TYPE
+    SYNTAX      IbWlanAEConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry contains AE location configuration information."
+    INDEX
+        {
+            ibWlanAEAPSerialID
+        }
+    ::= { ibWlanAEConfigTable 1 }
+
+IbWlanAEConfigEntry ::= SEQUENCE
+    {
+        ibWlanAEAPSerialID          OCTET STRING,
+        ibWlanAEStatus              TruthValue,
+        ibWlanAEEngineAddr          IpAddress,
+        ibWlanAEEnginePort          Integer32,
+        ibWlanAEVendorPort          Integer32,
+        ibWlanAETimeStamp           INTEGER,
+        ibWlanAEVersion             INTEGER,
+        ibWlanAETagMultiAddr        MacAddress,
+        ibWlanAEEngineDetection     INTEGER,
+        ibWlanAEReportMode          INTEGER
+    }
+
+ibWlanAEAPSerialID OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object represents the serial ID of an AP."
+    ::= { ibWlanAEConfigEntry 1 }
+
+ibWlanAEStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of AE location."
+    ::= { ibWlanAEConfigEntry 2 }
+
+ibWlanAEEngineAddr OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the server's IPv4 address to which AE messages are sent."
+    ::= { ibWlanAEConfigEntry 3 }
+
+ibWlanAEEnginePort OBJECT-TYPE
+    SYNTAX      Integer32(0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the UDP port of the location server."
+    ::= { ibWlanAEConfigEntry 4 }
+
+ibWlanAEVendorPort OBJECT-TYPE
+    SYNTAX      Integer32(1..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the UDP port to listen for AE messages from the server."
+    ::= { ibWlanAEConfigEntry 5 }
+
+ibWlanAETimeStamp OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+          absolute(1),
+          relative(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of timestamp."
+    ::= { ibWlanAEConfigEntry 6 }
+
+ibWlanAEVersion OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+          v2(2),
+          v3(3)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the version of the AE protocol."
+    ::= { ibWlanAEConfigEntry 7 }
+
+ibWlanAETagMultiAddr OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents Tag's multicast MAC address."
+    ::= { ibWlanAEConfigEntry 8 }
+ibWlanAEEngineDetection OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+          static(1),
+          dynamic(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the location mode."
+    ::= { ibWlanAEConfigEntry 9 }
+ibWlanAEReportMode OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+          local(1),
+          central(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the report mode."
+    ::= { ibWlanAEConfigEntry 10 }
+
+-- *****************************************************************************
+-- * End of ibWlanAEConfigTable Definition
+-- *****************************************************************************
+
+-- *****************************************************************************
+-- *  ibWlanAERadioConfigTable Definition
+-- *****************************************************************************
+ibWlanAERadioConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbWlanAERadioConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Administrators must configure AE parameters."
+    ::= { ibWlanAEConfigGroup 2 }
+
+ibWlanAERadioConfigEntry OBJECT-TYPE
+    SYNTAX      IbWlanAERadioConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry contains AE location configuration information."
+    INDEX
+        {
+            ibWlanAERadioAPSerialID,
+            ibWlanAEAPRadioID
+        }
+    ::= { ibWlanAERadioConfigTable 1 }
+
+IbWlanAERadioConfigEntry ::= SEQUENCE
+    {
+        ibWlanAERadioAPSerialID     OCTET STRING,
+        ibWlanAEAPRadioID           Integer32,
+        ibWlanAERadioStatus         TruthValue,
+        ibWlanAEMUStatus            TruthValue,
+        ibWlanAETagStatus           TruthValue
+    }
+
+ibWlanAERadioAPSerialID OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object represents the serial ID of an AP."
+    ::= { ibWlanAERadioConfigEntry 1 }
+
+ibWlanAEAPRadioID OBJECT-TYPE
+    SYNTAX      Integer32(1..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object represents the ID of a radio."
+    ::= { ibWlanAERadioConfigEntry 2 }
+
+ibWlanAERadioStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of radio-based location."
+    ::= { ibWlanAERadioConfigEntry 3 }
+
+ibWlanAEMUStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the status of MU message reporting."
+    ::= { ibWlanAERadioConfigEntry 4 }
+
+ibWlanAETagStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the status of Tag message reporting."
+    ::= { ibWlanAERadioConfigEntry 5 }
+
+-- *****************************************************************************
+-- * End of ibWlanAERadioConfigTable Definition
+-- *****************************************************************************
+
+-- *****************************************************************************
+-- *  ibWlanCommonConfigTable Definition
+-- *****************************************************************************
+ibWlanCommonConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbWlanCommonConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Administrators must configure common parameters."
+    ::= { ibWlanCommonConfigGroup 1 }
+
+ibWlanCommonConfigEntry OBJECT-TYPE
+    SYNTAX      IbWlanCommonConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry contains common configuration information."
+    INDEX
+        {
+            ibWlanCommonAPSerialID
+        }
+    ::= { ibWlanCommonConfigTable 1 }
+
+IbWlanCommonConfigEntry ::= SEQUENCE
+    {
+        ibWlanCommonAPSerialID                 OCTET STRING,
+        ibWlanDilutionStatus                   TruthValue,
+        ibWlanDilutionFactor                   Integer32,
+        ibWlanDilutionTimeout                  Integer32,
+        ibWlanIgnoreBeacon                     TruthValue,
+        ibWlanRateLimitStatus                  TruthValue,
+        ibWlanRateLimitCir                     Integer32,
+        ibWlanRateLimitCbs                     Integer32,
+        ibWlanClientRateLimitStatus            TruthValue,
+        ibWlanClientRateLimitCir               Integer32,
+        ibWlanClientRateLimitCbs               Integer32,
+        ibWlanRssiStatus                       TruthValue,
+        ibWlanRssiThreshold                    Integer32,
+        ibWlanIgnoreApFrame                    TruthValue
+    }
+
+ibWlanCommonAPSerialID OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object represents the serial ID of an AP."
+    ::= { ibWlanCommonConfigEntry 1 }
+
+ibWlanDilutionStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of packet dilution."
+    ::= { ibWlanCommonConfigEntry 2 }
+
+ibWlanDilutionFactor OBJECT-TYPE
+    SYNTAX      Integer32(0..10000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the packet dilution factor."
+    ::= { ibWlanCommonConfigEntry 3 }
+
+ibWlanDilutionTimeout OBJECT-TYPE
+    SYNTAX      Integer32(0..60)
+    UNITS       "Second"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the packet dilution timeout."
+    ::= { ibWlanCommonConfigEntry 4 }
+
+ibWlanIgnoreBeacon OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of beacon ignoring."
+    ::= { ibWlanCommonConfigEntry 5 }
+
+ibWlanRateLimitStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of location packet rate limiting."
+    ::= { ibWlanCommonConfigEntry 6 }
+
+ibWlanRateLimitCir OBJECT-TYPE
+    SYNTAX      Integer32(0|8..1300000)
+    UNITS       "Kbps"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the CIR for sending location packets."
+    ::= { ibWlanCommonConfigEntry 7 }
+
+ibWlanRateLimitCbs OBJECT-TYPE
+    SYNTAX      Integer32(0|500..130000000)
+    UNITS       "Bytes"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the CBS for sending location packets."
+    ::= { ibWlanCommonConfigEntry 8 }
+
+ibWlanClientRateLimitStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of client packet rate limiting."
+    ::= { ibWlanCommonConfigEntry 9 }
+
+ibWlanClientRateLimitCir OBJECT-TYPE
+    SYNTAX      Integer32(0..1300000)
+    UNITS       "Kbps"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the CIR for receiving client packets."
+    ::= { ibWlanCommonConfigEntry 10 }
+
+ibWlanClientRateLimitCbs OBJECT-TYPE
+    SYNTAX      Integer32(0|80..130000000)
+    UNITS       "Bytes"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the CBS for receiving client packets."
+    ::= { ibWlanCommonConfigEntry 11 }
+
+ibWlanRssiStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of RSSI-based packet filtering."
+    ::= { ibWlanCommonConfigEntry 12 }
+
+ibWlanRssiThreshold OBJECT-TYPE
+    SYNTAX      Integer32(5..100)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the max RSSI value of clients' packets."
+    ::= { ibWlanCommonConfigEntry 13 }
+
+ibWlanIgnoreApFrame OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of AP packet ignoring."
+    ::= { ibWlanCommonConfigEntry 14 }
+
+-- *****************************************************************************
+-- * End of ibWlanCommonConfigTable Definition
+-- *****************************************************************************
+
+-- *****************************************************************************
+-- *  ibWlanRTTConfigTable Definition
+-- *****************************************************************************
+ibWlanRTTConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbWlanRTTConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Administrators must configure RTT parameters."
+    ::= { ibWlanRTTConfigGroup 1 }
+
+ibWlanRTTConfigEntry OBJECT-TYPE
+    SYNTAX      IbWlanRTTConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry contains RTT location configuration information."
+    INDEX
+        {
+            ibWlanRTTAPSerialID
+        }
+    ::= { ibWlanRTTConfigTable 1 }
+
+IbWlanRTTConfigEntry ::= SEQUENCE
+    {
+        ibWlanRTTAPSerialID             OCTET STRING,
+        ibWlanRTTStatus                 TruthValue,
+        ibWlanRTTEngineAddr             IpAddress,
+        ibWlanRTTEnginePort             Integer32,
+        ibWlanRTTVendorPort             Integer32,
+        ibWlanRTTReportStatus           TruthValue,
+        ibWlanRTTReportInterval         Integer32,
+        ibWlanRTTUnassSta               TruthValue,
+        ibWlanRTTUnassMeasureSta        TruthValue,
+        ibWlanRTTReportMode             INTEGER,
+        ibWlanRTTReportFormat           INTEGER
+    }
+
+ibWlanRTTAPSerialID OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object represents the serial ID of an AP."
+    ::= { ibWlanRTTConfigEntry 1 }
+
+ibWlanRTTStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the status of RTT location."
+    ::= { ibWlanRTTConfigEntry 2 }
+
+ibWlanRTTEngineAddr OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the IPv4 address of the RTT location server."
+    ::= { ibWlanRTTConfigEntry 3 }
+
+ibWlanRTTEnginePort OBJECT-TYPE
+    SYNTAX      Integer32(0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the UDP port of the RTT location server."
+    ::= { ibWlanRTTConfigEntry 4 }
+
+ibWlanRTTVendorPort OBJECT-TYPE
+    SYNTAX      Integer32(1..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the UDP port to listen for RTT messages from the server."
+    ::= { ibWlanRTTConfigEntry 5 }
+
+ibWlanRTTReportStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the status of RTT location reporting."
+    ::= { ibWlanRTTConfigEntry 6 }
+
+ibWlanRTTReportInterval OBJECT-TYPE
+    SYNTAX      Integer32(1..10)
+    UNITS       "Second"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the interval for sending RTT location packets."
+    ::= { ibWlanRTTConfigEntry 7 }
+
+ibWlanRTTUnassSta OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the status of unassociated client information
+         reporting for RTT location."
+    ::= { ibWlanRTTConfigEntry 8 }
+
+ibWlanRTTUnassMeasureSta OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the status of RTT location for unassociated clients."
+    ::= { ibWlanRTTConfigEntry 9 }
+
+ibWlanRTTReportMode OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+          local(1),
+          central(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the report mode."
+    ::= { ibWlanRTTConfigEntry 10 }
+
+ibWlanRTTReportFormat OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+          general(1),
+          lightweight(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the report format."
+    ::= { ibWlanRTTConfigEntry 11 }
+
+-- *****************************************************************************
+-- * End of ibWlanRTTConfigTable Definition
+-- *****************************************************************************
+
+-- *****************************************************************************
+-- *  ibWlanFPConfigTable Definition
+-- *****************************************************************************
+ibWlanFPConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbWlanFPConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Administrators must configure RF fingerprinting parameters."
+    ::= { ibWlanFPConfigGroup 1 }
+
+ibWlanFPConfigEntry OBJECT-TYPE
+    SYNTAX      IbWlanFPConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry contains RF fingerprinting configuration information."
+    INDEX
+        {
+            ibWlanFPAPSerialID
+        }
+    ::= { ibWlanFPConfigTable 1 }
+
+IbWlanFPConfigEntry ::= SEQUENCE
+    {
+        ibWlanFPAPSerialID         OCTET STRING,
+        ibWlanFPStatus             TruthValue,
+        ibWlanFPEngineAddr         IpAddress,
+        ibWlanFPEnginePort         Integer32,
+        ibWlanFPVendorPort         Integer32,
+        ibWlanFPRawFrameReport     TruthValue,
+        ibWlanFPMUReport           TruthValue,
+        ibWlanFPReportMode         INTEGER,
+        ibWlanFPReportFormat       INTEGER,
+        ibWlanFPTagMultiAddr       MacAddress
+    }
+
+ibWlanFPAPSerialID OBJECT-TYPE
+    SYNTAX      OCTET STRING(SIZE(0..127))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This object represents the serial ID of an AP."
+    ::= { ibWlanFPConfigEntry 1 }
+
+ibWlanFPStatus OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the enabled or disabled status of RF fingerprinting."
+    ::= { ibWlanFPConfigEntry 2 }
+
+ibWlanFPEngineAddr OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the IPv4 address of the RF fingerprinting server."
+    ::= { ibWlanFPConfigEntry 3 }
+
+ibWlanFPEnginePort OBJECT-TYPE
+    SYNTAX      Integer32(0..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the UDP port of the RF fingerprinting server."
+    ::= { ibWlanFPConfigEntry 4 }
+
+ibWlanFPVendorPort OBJECT-TYPE
+    SYNTAX      Integer32(1..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the UDP port to listen for RF fingerprinting
+         packets from the server."
+    ::= { ibWlanFPConfigEntry 5 }
+
+ibWlanFPRawFrameReport OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the status of raw frame reporting for RF fingerprinting."
+    ::= { ibWlanFPConfigEntry 6 }
+
+ibWlanFPMUReport OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the status of MU information reporting for RF fingerprinting."
+    ::= { ibWlanFPConfigEntry 7 }
+
+ibWlanFPReportMode OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+          local(1),
+          central(2)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the report mode."
+    ::= { ibWlanFPConfigEntry 8 }
+
+ibWlanFPReportFormat OBJECT-TYPE
+    SYNTAX      INTEGER
+        {
+          general(1),
+          lightweight(2),
+          rtthybrid(3)
+        }
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents the report format."
+    ::= { ibWlanFPConfigEntry 9 }
+
+ibWlanFPTagMultiAddr OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This object represents Tag's multicast MAC address."
+    ::= { ibWlanFPConfigEntry 10 }
+-- *****************************************************************************
+-- * End of ibWlanFPConfigTable Definition
+-- *****************************************************************************
+
+END

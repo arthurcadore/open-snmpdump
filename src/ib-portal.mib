@@ -1,0 +1,2163 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: Description Of Portal
+-- Reference:
+-- Version: V1.8
+-- History:
+--   V1.0 2008-12-30, Created by d04528
+--   V1.1 2009-4-30, Modified by h02978
+--        Added node ibPortalServerPort
+--        Added table ibPortalIfInfoTable, including the following nodes:
+--            ibPortalAuthReqNumber
+--            ibPortalAuthSuccNumber
+--            ibPortalAuthFailNumber
+--        Added trap node ibPortalServerGet
+--   V1.2 2010-5-31, Modified by y07111
+--        Added table ibPortalIfServerTable, including the following nodes:
+--            ibPortalIfServerIndex
+--            ibPortalIfServerUrl
+--            ibPortalIfServerRowStatus
+--        Added ibPortalNasId
+--   V1.3 2010-11-8, Modified by y07111
+--        Added table ibPortalStatistic,including the following nodes:
+--        ibPortalStatAuthReq
+--        ibPortalStatAckLogout
+--        ibPortalStatNotifyLogout
+--        ibPortalStatChallengeTimeout
+--        ibPortalStatChallengeBusy
+--        ibPortalStatChallengeFail
+--        ibPortalStatAuthTimeout
+--        ibPortalStatAuthFail
+--        ibPortalStatPwdError
+--        ibPortalStatAuthBusy
+--        ibPortalStatAuthDisordered
+--        ibPortalStatAuthUnknownError
+--   V1.4 2011-08-18, Added by liqian 04379
+--        Added table ibPortalIfVlanNasIDTable, including the following nodes:
+--        ibPortalIfVlanNasIDIfIndex
+--        ibPortalIfVlanNasIDVlanID
+--        ibPortalIfVlanNasIDNasID
+--        Added table ibPortalSSIDFreeRuleTable, including the following nodes:
+--        ibPortalSSIDFreeRuleIndex
+--        ibPortalSSIDFreeRuleSrcSSID
+--        ibPortalSSIDFreeRuleRowStatus
+--        Added table ibPortalMacTriggerSrvTable, including the following nodes:
+--        ibPortalMacTriggerSrvIndex
+--        ibPortalMacTriggerSrvIPAddrType
+--        ibPortalMacTriggerSrvIP
+--        ibPortalMacTriggerSrvPort
+--        ibPortalMacTriggerSrvRowStatus
+--        Added table ibPortalMacTriggerOnIfTable, including the following nodes:
+--        ibPortalMacTriggerOnIfIfIndex
+--        ibPortalMacTriggerOnIfDetctFlowPeriod
+--        ibPortalMacTriggerOnIfThresholdFlow
+--        ibPortalMacTriggerOnIfRowStatus
+--        Added table ibPortalPktStatistic ,including the following nodes:
+--        ibPortalPktStaReqAuthNum
+--        ibPortalPktStaAckAuthSuccess
+--        ibPortalPktStaAckAuthReject
+--        ibPortalPktStaAckAuthEstablish
+--        ibPortalPktStaAckAuthBusy
+--        ibPortalPktStaAckAuthAuthFail
+--        ibPortalPktStaReqChallengeNum
+--        ibPortalPktStaAckChallengeSuccess
+--        ibPortalPktStaAckChallengeReject
+--        ibPortalPktStaAckChallengeEstablish
+--        ibPortalPktStaAckChallengeBusy
+--        ibPortalPktStaAckChallengeAuthFail
+--        2011-11-8, Added by q04356
+--        Added table ibPortalTrapVarObjects, including the following nodes:
+--        ibPortalFirstTrapTime
+--        Added table ibPortalFreeRuleTable, including the following nodes:
+--        ibPortalFreeRuleIndex
+--        ibPortalFreeRuleSrcIfIndex
+--        ibPortalFreeRuleSrcVlanID
+--        ibPortalFreeRuleSrcMac
+--        ibPortalFreeRuleAddrType
+--        ibPortalFreeRuleSrcAddr
+--        ibPortalFreeRuleSrcPrefix
+--        ibPortalFreeRuleDstAddr
+--        ibPortalFreeRuleDstPrefix
+--        ibPortalFreeRuleProtocol
+--        ibPortalFreeRuleSrcPort
+--        ibPortalFreeRuleDstPort
+--        ibPortalFreeRuleRowStatus
+--        Added table ibPortalForbiddenRuleTable, including the following nodes:
+--        ibPortalForbiddenRuleIndex
+--        ibPortalForbiddenRuleSrcIfIndex
+--        ibPortalForbiddenRuleSrcVlanID
+--        ibPortalForbiddenRuleSrcMac
+--        ibPortalForbiddenRuleAddrType
+--        ibPortalForbiddenRuleSrcAddr
+--        ibPortalForbiddenRuleSrcPrefix
+--        ibPortalForbiddenRuleDstAddr
+--        ibPortalForbiddenRuleDstPrefix
+--        ibPortalForbiddenRuleProtocol
+--        ibPortalForbiddenRuleSrcPort
+--        ibPortalForbiddenRuleDstPort
+--        ibPortalForbiddenRuleRowStatus
+--        Added node in table ibPortalStatistic
+--        ibPortalStatAuthResp
+--        ibPortalStatChallengeReq
+--        ibPortalStatChallengeResp
+--   V1.5 2012-11-21, Added by l09300
+--        Added node in table ibPortalSSIDFreeRuleTable
+--        ibPortalSSIDFreeRuleSrcSpot
+--   V1.6 2013-08-29, Added by q04356
+--        Added nodes in table ibPortalStatistic
+--        ibPortalStatHttpReq
+--        ibPortalStatHttpResp
+--        Added node in table ibPortalTrapVarObjects
+--        ibPortalServerIP
+--        Added objects ibPortalServerPort and ibPortalServerIP in
+--        trap nodes ibPortalServerGet and ibPortalServerLost
+--   V1.7 2015-10-08, Added by zkf4839
+--        Added nodes in table ibPortalStatistic
+--        ibPortalStatHttpsReq
+--        ibPortalStatHttpsResp
+--        Added nodes in table ibPortalExtConfig, including the following nodes:
+--        ibPortalExtMaxUserNumber
+--        ibPortalExtCurrentUserNumber
+--        ibPortalExtStatus
+--        Added table ibPortalExtSrvTable, including the following nodes:
+--        ibPortalExtSrvName
+--        ibPortalExtSrvIPAddrType
+--        ibPortalExtSrvIP
+--        ibPortalExtSrvPort
+--        ibPortalExtSrvRowStatus
+--        Added table ibPortalExtWebSrvTable, including the following nodes:
+--        ibPortalExtWebSrvName
+--        ibPortalExtWebSrvUrl
+--        ibPortalExtWebSrvRowStatus
+--        Added table ibPortalExtMTSrvTable, including the following nodes:
+--        ibPortalExtMTSrvName
+--        ibPortalExtMTSrvIPAddrType
+--        ibPortalExtMTSrvIP
+--        ibPortalExtMTSrvPort
+--        ibPortalExtMTDetctFlowPeriod
+--        ibPortalExtMTThresholdFlow
+--        ibPortalExtMTSrvRowStatus
+--        Added table ibPortalExtIfConfigTable, including the following nodes:
+--        ibPortalExtIfIndex
+--        ibPortalExtIfWebSrvName
+--        ibPortalExtIfDomainName
+--        ibPortalExtIfAuthMethod
+--        ibPortalExtIfMTSrvName
+--        ibPortalExtIfMaxUser
+--        Added table ibPortalExtIfIpv6ConfigTable, including the following nodes:
+--        ibPortalExtIfIpv6Index
+--        ibPortalExtIfIpv6WebSrvName
+--        ibPortalExtIfIpv6DomainName
+--        ibPortalExtIfIpv6AuthMethod
+--        ibPortalExtIfIpv6MaxUser
+--        Added table ibPortalDot11SrvTable, including the following nodes:
+--        ibPortalDot11SrvTemName
+--        ibPortalDot11WebSrvName
+--        ibPortalDot11DomainName
+--        ibPortalDot11AuthMethod
+--        ibPortalDot11MTSrvName
+--        ibPortalDot11MaxUser
+--        Added table ibPortalDot11Ipv6SrvTable, including the following nodes:
+--        ibPortalDot11Ipv6SrvTemName
+--        ibPortalDot11Ipv6WebSrvName
+--        ibPortalDot11Ipv6DomainName
+--        ibPortalDot11Ipv6AuthMethod
+--        ibPortalDot11Ipv6MaxUser
+--        2016-07-14, Added by xkf6915
+--        Added nodes in table ibPortalForbiddenRuleTable
+--        ibPortalForbiddenRuleSsidName
+--   V1.8 2021-08-31, Added by dkf8574
+--        Added nodes in table ibPortalExtSrvTable
+--        ibPortalExtSrvVpnName
+--        ibPortalExtSrvKey
+-- =================================================================
+IB-PORTAL-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, NOTIFICATION-TYPE, MODULE-IDENTITY, Integer32, Counter64, Unsigned32,
+    TimeTicks
+        FROM SNMPv2-SMI
+    RowStatus, MacAddress, TEXTUAL-CONVENTION
+        FROM SNMPv2-TC
+    ifIndex, InterfaceIndex
+        FROM IF-MIB
+    InetAddressPrefixLength, InetAddressType, InetAddress, InetAddressIPv4
+        FROM INET-ADDRESS-MIB;
+
+ibPortal MODULE-IDENTITY
+    LAST-UPDATED "201607141020Z"        -- Jul 14, 2016 at 10:20 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB module is used for managing portal."
+    REVISION "201607141020Z"        -- Jul 14, 2016 at 10:20 GMT
+    DESCRIPTION
+        "Modified to add new node in table ibPortalForbiddenRuleTable."
+    REVISION "201510081020Z"        -- Oct 8, 2015 at 10:20 GMT
+    DESCRIPTION
+        "Modified to add new table."
+    ::= { ibCommon 99 }
+
+IbPortalAuthMethod ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+    "Specify the portal authentication method."
+    SYNTAX      INTEGER
+    {
+        invalid(1),
+        direct(2),
+        layer3(3),
+        redhcp(4)
+    }
+
+ibPortalConfig OBJECT IDENTIFIER ::= { ibPortal 1 }
+
+--
+-- PORTAL MAX USER NUMBER
+--
+
+ibPortalMaxUserNumber OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specify the maximum number of online users,
+        the value to be set should meet the following two conditions:
+        1. Less than or equal to ibPortalUserNumberUpperLimit.
+        2. Greater than or equal to one.
+
+        The default value is equal to ibPortalUserNumberUpperLimit."
+    ::= { ibPortalConfig 1 }
+
+--
+-- PORTAL CURRENT USER NUMBER
+--
+
+ibPortalCurrentUserNumber OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current number of users connecting to the portal."
+    ::= { ibPortalConfig 2 }
+
+--
+-- PORTAL STATUS
+--
+
+ibPortalStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+         enabled(1),
+         disabled(2)
+    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It indicates the portal status.
+         enabled:
+            Portal is enabled on one or more interfaces.
+         disabled:
+            Portal is not enabled on any interface."
+    ::= { ibPortalConfig 3 }
+
+--
+-- PORTAL USER NUMBER_UPPER_LIMIT
+--
+
+ibPortalUserNumberUpperLimit OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The upper limit of ibPortalMaxUserNumber."
+    ::= { ibPortalConfig 4 }
+
+--
+-- PORTAL NAS-ID Config
+--
+ibPortalNasId OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The nas id of this device."
+    ::= { ibPortalConfig 5 }
+
+--
+-- PORTAL TABLES
+--
+
+ibPortalTables OBJECT IDENTIFIER ::= { ibPortal 2 }
+
+
+--
+-- PORTAL server table
+--
+ibPortalServerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortalServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table defines the name and URL of portal server.
+        It can not be created and destroyed by MIB."
+    ::= { ibPortalTables 1 }
+
+ibPortalServerEntry OBJECT-TYPE
+    SYNTAX      IbPortalServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in this table for each name and URL of portal server.
+        It is indexed using the object ibPortalServerName."
+    INDEX
+        {
+            ibPortalServerName
+        }
+    ::= { ibPortalServerTable 1 }
+
+
+IbPortalServerEntry ::= SEQUENCE
+    {
+        ibPortalServerName               OCTET STRING,
+        ibPortalServerUrl                OCTET STRING,
+        ibPortalServerPort               Integer32
+    }
+
+ibPortalServerName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "It is the index of the table of ibPortalServerTable, it shows
+        the name of the portal server."
+    ::= { ibPortalServerEntry 1 }
+
+ibPortalServerUrl OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..127))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "It shows the uniform resource locator to the portal server.
+        Users which have not logon to portal will be redirected to the
+        portal server according to ibPortalServerUrl.
+
+        The value is consisted of protocol, IP address and relative path.
+        For example: HTTP://10.1.1.1/portal
+
+        It is not configurable when the portal server has been enabled."
+    ::= { ibPortalServerEntry 2 }
+
+ibPortalServerPort OBJECT-TYPE
+    SYNTAX      Integer32 (1..65534)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "It shows the UDP port of the portal server.
+
+        The port will be used when client sends packets to portal server.
+        Default value is 50100.
+
+        It is not configurable when the portal server has been enabled."
+    ::= { ibPortalServerEntry 3 }
+
+--
+-- PORTAL If Info Table
+--
+ibPortalIfInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortalIfInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes the portal information on some interface."
+    ::= { ibPortalTables 2 }
+
+ibPortalIfInfoEntry OBJECT-TYPE
+    SYNTAX      IbPortalIfInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in this table for a interface on which
+        portal has been enabled.
+        It is indexed using the object ifIndex."
+    INDEX
+        {
+            ifIndex
+        }
+    ::= { ibPortalIfInfoTable 1 }
+
+
+IbPortalIfInfoEntry ::= SEQUENCE
+    {
+        ibPortalAuthReqNumber            Integer32,
+        ibPortalAuthSuccNumber           Integer32,
+        ibPortalAuthFailNumber           Integer32
+    }
+
+ibPortalAuthReqNumber OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of authentication request messages
+        which are sent by portal module to AAA module."
+    ::= { ibPortalIfInfoEntry 1 }
+
+
+ibPortalAuthSuccNumber OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of authentication success response messages
+        which are sent by AAA module to portal module."
+    ::= { ibPortalIfInfoEntry 2 }
+
+ibPortalAuthFailNumber OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of authentication failure response messages
+        which are sent by AAA module to portal module."
+    ::= { ibPortalIfInfoEntry 3 }
+
+--
+-- PORTAL If Config Table
+--
+ibPortalIfServerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortalIfServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes the portal information on some interface."
+    ::= { ibPortalTables 3 }
+
+ibPortalIfServerEntry OBJECT-TYPE
+    SYNTAX      IbPortalIfServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in this table for a interface on which
+        portal has been enabled.
+        It is indexed using the object ifIndex."
+    INDEX
+        {
+            ibPortalIfServerIndex
+        }
+    ::= { ibPortalIfServerTable 1 }
+
+IbPortalIfServerEntry ::= SEQUENCE
+    {
+        ibPortalIfServerIndex                   Integer32,
+        ibPortalIfServerUrl                     OCTET STRING,
+        ibPortalIfServerRowStatus               RowStatus
+    }
+
+ibPortalIfServerIndex  OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "It is the index of the table of ibIfPtServerTable, it shows
+        the index of the portal server."
+    ::={ ibPortalIfServerEntry 1 }
+
+ibPortalIfServerUrl OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "It shows the uniform resource locator to the portal server.
+        Users which have not logon to portal will be redirected to the
+        portal server according to ibPortalServerIfUrl.
+        The value is consisted of protocol, IP address and relative path.
+        For example: HTTP://10.1.1.1/portal
+        It is not configurable when the portal server has been enabled."
+    ::= { ibPortalIfServerEntry 2 }
+
+ibPortalIfServerRowStatus OBJECT-TYPE
+    SYNTAX   RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object is responsible for managing the creation, deletion and
+        modification of rows, which support active status and CreateAndGo,
+        Destroy operation.  To create a new row, portal server must be specified.
+        To destroy an existent row, the portal server MUST NOT be referred by
+        interface."
+    ::= { ibPortalIfServerEntry 3 }
+
+-- PORTAL Vlan Not binding NAS ID Table
+ibPortalIfVlanNasIDTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortalIfVlanNasIDEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes the interface on which portal has been enabled,
+        the Vlan that the interface belongs to and the NAS ID to which the Vlan
+        is bound."
+    ::= { ibPortalTables 4 }
+
+ibPortalIfVlanNasIDEntry OBJECT-TYPE
+    SYNTAX      IbPortalIfVlanNasIDEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in this table for a interface on which portal has been
+        enabled, the Vlan that the interface belongs to and the NAS ID to which
+        the Vlan is bound.
+        It is indexed using the object ifIndex and Vlan that the interface
+        belongs to."
+    INDEX
+        {
+            ibPortalIfVlanNasIDIfIndex,
+            ibPortalIfVlanNasIDVlanID
+        }
+    ::= { ibPortalIfVlanNasIDTable 1 }
+
+IbPortalIfVlanNasIDEntry ::= SEQUENCE
+    {
+        ibPortalIfVlanNasIDIfIndex         InterfaceIndex,
+        ibPortalIfVlanNasIDVlanID          Integer32,
+        ibPortalIfVlanNasIDNasID           OCTET STRING
+    }
+
+ibPortalIfVlanNasIDIfIndex  OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "It is the index of the table of ibPortalIfVlanNasIDTable, it shows
+        the interface on which portal has been enabled."
+    ::={ ibPortalIfVlanNasIDEntry 1 }
+
+ibPortalIfVlanNasIDVlanID OBJECT-TYPE
+    SYNTAX      Integer32 (1..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "It is the index of the table of ibPortalIfVlanNasIDTable, it shows
+        the Vlan that the interface belongs to."
+    ::= { ibPortalIfVlanNasIDEntry 2 }
+
+ibPortalIfVlanNasIDNasID OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is the NAS ID to which the Vlan is bound to."
+    ::= { ibPortalIfVlanNasIDEntry 3 }
+
+--
+-- PORTAL SSID Free-rule Config Table
+--
+
+ibPortalSSIDFreeRuleTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortalSSIDFreeRuleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes SSID portal-free rule(s) allows specified users
+        to access specified external websites without portal authentication."
+    ::= { ibPortalTables 5 }
+
+ibPortalSSIDFreeRuleEntry OBJECT-TYPE
+    SYNTAX      IbPortalSSIDFreeRuleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in this table for SSID portal-free rule.
+        It is indexed using the object Index."
+    INDEX
+        {
+            ibPortalSSIDFreeRuleIndex
+        }
+    ::= { ibPortalSSIDFreeRuleTable 1 }
+
+IbPortalSSIDFreeRuleEntry ::= SEQUENCE
+    {
+        ibPortalSSIDFreeRuleIndex                   Integer32,
+        ibPortalSSIDFreeRuleSrcSSID                 OCTET STRING,
+        ibPortalSSIDFreeRuleRowStatus               RowStatus,
+        ibPortalSSIDFreeRuleSrcSpot                 OCTET STRING
+    }
+
+ibPortalSSIDFreeRuleIndex  OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "It is the index of the table of ibPortalSSIDFreeRuleTable, it shows
+        the index of the SSID portal-free rule."
+    ::={ ibPortalSSIDFreeRuleEntry 1 }
+
+ibPortalSSIDFreeRuleSrcSSID  OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(1..128))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The SSID match against the packet's source SSID."
+    ::={ ibPortalSSIDFreeRuleEntry 2 }
+
+ibPortalSSIDFreeRuleRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object is responsible for managing the creation, deletion and
+        modification of rows, which support active status and CreateAndGo,
+        Destroy operation."
+    ::= { ibPortalSSIDFreeRuleEntry 3 }
+
+ibPortalSSIDFreeRuleSrcSpot  OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..63))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The spot match against the packet's source spot."
+    ::={ ibPortalSSIDFreeRuleEntry 4 }
+
+--
+-- PORTAL MAC Trigger Server
+--
+
+ibPortalMacTriggerSrvTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortalMacTriggerSrvEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes the configration of MAC Trigger Portal server."
+    ::= { ibPortalTables 6 }
+
+ibPortalMacTriggerSrvEntry OBJECT-TYPE
+    SYNTAX      IbPortalMacTriggerSrvEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in the table for MAC Trigger Portal server.
+        It is indexed using the object Index."
+    INDEX
+        {
+            ibPortalMacTriggerSrvIndex
+        }
+    ::= { ibPortalMacTriggerSrvTable 1 }
+
+IbPortalMacTriggerSrvEntry ::= SEQUENCE
+    {
+        ibPortalMacTriggerSrvIndex              Integer32,
+        ibPortalMacTriggerSrvIPAddrType         InetAddressType,
+        ibPortalMacTriggerSrvIP                 InetAddress,
+        ibPortalMacTriggerSrvPort               Integer32,
+        ibPortalMacTriggerSrvRowStatus          RowStatus
+    }
+
+ibPortalMacTriggerSrvIndex  OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "It is the index of the table of ibPortalMacTriggerSrvTable, it shows
+        the index of the MAC Trigger Portal server."
+    ::={ ibPortalMacTriggerSrvEntry 1 }
+
+ibPortalMacTriggerSrvIPAddrType  OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The type of MAC Trigger Portal server IP address.  While
+       other types of addresses are defined in the InetAddressType
+       textual convention, and DNS names, a classifier can only look at
+       packets on the wire."
+    ::={ ibPortalMacTriggerSrvEntry 2 }
+
+ibPortalMacTriggerSrvIP OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "It shows the IP address of MAC Trigger Portal server."
+    ::= { ibPortalMacTriggerSrvEntry 3 }
+
+ibPortalMacTriggerSrvPort OBJECT-TYPE
+    SYNTAX      Integer32 (1..65534)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "It shows the UDP port of MAC Trigger Portal server.
+        The port will be used when client sends packets to MAC Trigger Portal server.
+        Default value is 50100."
+    ::= { ibPortalMacTriggerSrvEntry 4 }
+
+ibPortalMacTriggerSrvRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object is responsible for managing the creation, deletion and
+        modification of rows, which support active status and CreateAndGo,
+        Destroy operation."
+    ::= { ibPortalMacTriggerSrvEntry 5 }
+
+--
+-- PORTAL Eanble MAC Trigger on interface
+--
+
+ibPortalMacTriggerOnIfTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortalMacTriggerOnIfEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes the configration of Portal MAC Trigger on
+        interface."
+    ::= { ibPortalTables 7 }
+
+ibPortalMacTriggerOnIfEntry OBJECT-TYPE
+    SYNTAX      IbPortalMacTriggerOnIfEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in the table for Portal MAC Trigger configuration on
+        interface.  It is indexed using the object Index."
+    INDEX
+        {
+            ibPortalMacTriggerOnIfIfIndex
+        }
+    ::= { ibPortalMacTriggerOnIfTable 1 }
+
+IbPortalMacTriggerOnIfEntry ::= SEQUENCE
+    {
+        ibPortalMacTriggerOnIfIfIndex               InterfaceIndex,
+        ibPortalMacTriggerOnIfDetctFlowPeriod       Integer32,
+        ibPortalMacTriggerOnIfThresholdFlow         Unsigned32,
+        ibPortalMacTriggerOnIfRowStatus             RowStatus
+    }
+
+ibPortalMacTriggerOnIfIfIndex  OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "It is the interface index and the index of
+        ibPortalMacTriggerOnIfTable."
+    ::={ ibPortalMacTriggerOnIfEntry 1 }
+
+ibPortalMacTriggerOnIfDetctFlowPeriod  OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "seconds"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "It shows the user flow detection interval (in seconds) when
+        MAC Trigger and Portal are enabled.
+        Default value is 300."
+    DEFVAL { 300 }
+    ::={ ibPortalMacTriggerOnIfEntry 2 }
+
+ibPortalMacTriggerOnIfThresholdFlow  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "bytes"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "It shows the user traffic threshold (in bytes) that triggers authentication
+        when MAC Trigger and Portal are enabled.
+        Default value is 0."
+    DEFVAL { 0 }
+    ::={ ibPortalMacTriggerOnIfEntry 3 }
+
+ibPortalMacTriggerOnIfRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object is responsible for managing the creation, deletion and
+        modification of rows, which support active status and CreateAndGo,
+        Destroy operation."
+    ::= { ibPortalMacTriggerOnIfEntry 4 }
+
+--
+-- PORTAL Free-rule Config Table
+--
+
+ibPortalFreeRuleTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortalFreeRuleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes portal-free rule(s) allows specified users to
+         access specified external websites without portal authentication."
+    ::= { ibPortalTables 8 }
+
+ibPortalFreeRuleEntry OBJECT-TYPE
+    SYNTAX      IbPortalFreeRuleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in this table for portal-free rule.
+        It is indexed using the object Index."
+    INDEX
+        {
+            ibPortalFreeRuleIndex
+        }
+    ::= { ibPortalFreeRuleTable 1 }
+
+IbPortalFreeRuleEntry ::= SEQUENCE
+    {
+        ibPortalFreeRuleIndex                   Integer32,
+        ibPortalFreeRuleSrcIfIndex              InterfaceIndex,
+        ibPortalFreeRuleSrcVlanID               Integer32,
+        ibPortalFreeRuleSrcMac                  MacAddress,
+        ibPortalFreeRuleAddrType                InetAddressType,
+        ibPortalFreeRuleSrcAddr                 InetAddress,
+        ibPortalFreeRuleSrcPrefix               InetAddressPrefixLength,
+        ibPortalFreeRuleDstAddr                 InetAddress,
+        ibPortalFreeRuleDstPrefix               InetAddressPrefixLength,
+        ibPortalFreeRuleProtocol                INTEGER,
+        ibPortalFreeRuleSrcPort                 Integer32,
+        ibPortalFreeRuleDstPort                 Integer32,
+        ibPortalFreeRuleRowStatus               RowStatus
+    }
+
+ibPortalFreeRuleIndex  OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "It is the index of the table of ibPortalFreeRuleTable, it shows
+        the index of the portal-free rule."
+    ::={ ibPortalFreeRuleEntry 1 }
+
+ibPortalFreeRuleSrcIfIndex  OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The index of source interface."
+    ::={ ibPortalFreeRuleEntry 2 }
+
+ibPortalFreeRuleSrcVlanID  OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The identification of source vlan."
+    ::={ ibPortalFreeRuleEntry 3 }
+
+ibPortalFreeRuleSrcMac  OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The MAC address to match against the packet's source MAC address."
+    ::={ ibPortalFreeRuleEntry 4 }
+
+ibPortalFreeRuleAddrType  OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The type of IP address used by this classifier entry.  While
+       other types of addresses are defined in the InetAddressType
+       textual convention, and DNS names, a classifier can only look at
+       packets on the wire."
+    ::={ ibPortalFreeRuleEntry 5 }
+
+ibPortalFreeRuleSrcAddr  OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The IP address to match against the packet's source IP
+       address.  This may be a DNS name or an IPv4 or IPv6
+       prefix.  ibPortalFreeRuleSrcPrefix indicates the
+       number of bits that are relevant."
+    ::={ ibPortalFreeRuleEntry 6 }
+
+ibPortalFreeRuleSrcPrefix  OBJECT-TYPE
+    SYNTAX      InetAddressPrefixLength
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The length of the CIDR Prefix carried in
+       ibPortalFreeRuleSrcAddr.  In IPv4 addresses, a length of 0
+       indicates a match of any address; a length of 32 indicates a
+       match of a single host address, and a length between 0 and 32
+       indicates the use of a CIDR Prefix.  IPv6 is similar, except that
+       prefix lengths range from 0..128."
+    ::={ ibPortalFreeRuleEntry 7 }
+
+ibPortalFreeRuleDstAddr  OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The IP address to match against the packet's destination IP
+       address.  This may be a DNS name or an IPv4 or IPv6
+       prefix.  ibPortalFreeRuleDstPrefix indicates the
+       number of bits that are relevant."
+    ::={ ibPortalFreeRuleEntry 8 }
+
+ibPortalFreeRuleDstPrefix  OBJECT-TYPE
+    SYNTAX      InetAddressPrefixLength
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The length of the CIDR Prefix carried in
+       ibPortalFreeRuleDstAddr.  In IPv4 addresses, a length of 0
+       indicates a match of any address; a length of 32 indicates a
+       match of a single host address, and a length between 0 and 32
+       indicates the use of a CIDR Prefix.  IPv6 is similar, except that
+       prefix lengths range from 0..128."
+    ::={ ibPortalFreeRuleEntry 9 }
+
+ibPortalFreeRuleProtocol  OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        invalid(0),
+        tcp(6),
+        udp(17)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The protocol-type of port."
+    ::={ ibPortalFreeRuleEntry 10 }
+
+ibPortalFreeRuleSrcPort  OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The source port allows users to access."
+    ::={ ibPortalFreeRuleEntry 11 }
+
+ibPortalFreeRuleDstPort  OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The destination port allows users to access."
+    ::={ ibPortalFreeRuleEntry 12 }
+
+ibPortalFreeRuleRowStatus OBJECT-TYPE
+    SYNTAX   RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object is responsible for managing the creation, deletion and
+        modification of rows, which support active status and CreateAndGo,
+        Destroy operation."
+    ::= { ibPortalFreeRuleEntry 13 }
+
+--
+-- PORTAL Forbidden-rule Config Table
+--
+
+ibPortalForbiddenRuleTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortalForbiddenRuleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes a portal-forbidden rule does not allow specified
+         users to access specified external websites."
+    ::= { ibPortalTables 9 }
+
+ibPortalForbiddenRuleEntry OBJECT-TYPE
+    SYNTAX      IbPortalForbiddenRuleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in this table for portal-forbidden rule.
+         It is indexed using the object Index."
+    INDEX
+        {
+            ibPortalForbiddenRuleIndex
+        }
+    ::= { ibPortalForbiddenRuleTable 1 }
+
+IbPortalForbiddenRuleEntry ::= SEQUENCE
+    {
+        ibPortalForbiddenRuleIndex                   Integer32,
+        ibPortalForbiddenRuleSrcIfIndex              InterfaceIndex,
+        ibPortalForbiddenRuleSrcVlanID               Integer32,
+        ibPortalForbiddenRuleSrcMac                  MacAddress,
+        ibPortalForbiddenRuleAddrType                InetAddressType,
+        ibPortalForbiddenRuleSrcAddr                 InetAddress,
+        ibPortalForbiddenRuleSrcPrefix               InetAddressPrefixLength,
+        ibPortalForbiddenRuleDstAddr                 InetAddress,
+        ibPortalForbiddenRuleDstPrefix               InetAddressPrefixLength,
+        ibPortalForbiddenRuleProtocol                INTEGER,
+        ibPortalForbiddenRuleSrcPort                 Integer32,
+        ibPortalForbiddenRuleDstPort                 Integer32,
+        ibPortalForbiddenRuleRowStatus               RowStatus,
+        ibPortalForbiddenRuleSsidName                OCTET STRING
+    }
+
+ibPortalForbiddenRuleIndex  OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "It is the index of the table of ibPortalForbiddenRuleTable, it shows
+        the index of the portal-forbidden rule."
+    ::={ ibPortalForbiddenRuleEntry 1 }
+
+ibPortalForbiddenRuleSrcIfIndex  OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The index of source interface."
+    ::={ ibPortalForbiddenRuleEntry 2 }
+
+ibPortalForbiddenRuleSrcVlanID  OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The identification of source vlan."
+    ::={ ibPortalForbiddenRuleEntry 3 }
+
+ibPortalForbiddenRuleSrcMac  OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The MAC address to match against the packet's source MAC address."
+    ::={ ibPortalForbiddenRuleEntry 4 }
+
+ibPortalForbiddenRuleAddrType  OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The type of IP address used by this classifier entry.  While
+       other types of addresses are defined in the InetAddressType
+       textual convention, and DNS names, a classifier can only look at
+       packets on the wire."
+    ::={ ibPortalForbiddenRuleEntry 5 }
+
+ibPortalForbiddenRuleSrcAddr  OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The IP address to match against the packet's source IP
+       address.  This may be a DNS name or an IPv4 or IPv6
+       prefix.  ibPortalForbiddenRuleSrcPrefix indicates the
+       number of bits that are relevant."
+    ::={ ibPortalForbiddenRuleEntry 6 }
+
+ibPortalForbiddenRuleSrcPrefix  OBJECT-TYPE
+    SYNTAX      InetAddressPrefixLength
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The length of the CIDR Prefix carried in
+       ibPortalFreeRuleSrcAddr.  In IPv4 addresses, a length of 0
+       indicates a match of any address; a length of 32 indicates a
+       match of a single host address, and a length between 0 and 32
+       indicates the use of a CIDR Prefix.  IPv6 is similar, except that
+       prefix lengths range from 0..128."
+    ::={ ibPortalForbiddenRuleEntry 7 }
+
+ibPortalForbiddenRuleDstAddr  OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The IP address to match against the packet's destination IP
+       address.  This may be a DNS name or an IPv4 or IPv6
+       prefix.  ibPortalForbiddenRuleDstPrefix indicates the
+       number of bits that are relevant."
+    ::={ ibPortalForbiddenRuleEntry 8 }
+
+ibPortalForbiddenRuleDstPrefix  OBJECT-TYPE
+    SYNTAX      InetAddressPrefixLength
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The length of the CIDR Prefix carried in
+       ibPortalFreeRuleDstAddr.  In IPv4 addresses, a length of 0
+       indicates a match of any address; a length of 32 indicates a
+       match of a single host address, and a length between 0 and 32
+       indicates the use of a CIDR Prefix.  IPv6 is similar, except that
+       prefix lengths range from 0..128."
+    ::={ ibPortalForbiddenRuleEntry 9 }
+
+ibPortalForbiddenRuleProtocol  OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        invalid(0),
+        tcp(6),
+        udp(17)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The protocol-type of port."
+    ::={ ibPortalForbiddenRuleEntry 10 }
+
+ibPortalForbiddenRuleSrcPort  OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The source port does not allow users to access."
+    ::={ ibPortalForbiddenRuleEntry 11 }
+
+ibPortalForbiddenRuleDstPort  OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The destination port does not allow users to access."
+    ::={ ibPortalForbiddenRuleEntry 12 }
+
+ibPortalForbiddenRuleRowStatus OBJECT-TYPE
+    SYNTAX   RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object is responsible for managing the creation, deletion and
+        modification of rows, which support active status and CreateAndGo,
+        Destroy operation."
+    ::= { ibPortalForbiddenRuleEntry 13 }
+
+ibPortalForbiddenRuleSsidName OBJECT-TYPE
+    SYNTAX   OCTET STRING (SIZE(1..128))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object is used to match packet's source SSID."
+    ::= { ibPortalForbiddenRuleEntry 14 }
+--
+-- Define the portal Traps.
+--
+
+ibPortalTraps OBJECT IDENTIFIER ::= { ibPortal 3 }
+
+ibPortalTrapPrefix OBJECT IDENTIFIER ::= { ibPortalTraps 0 }
+
+ibPortalServerLost NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibPortalServerName,
+            ibPortalFirstTrapTime,
+            ibPortalServerIP,
+            ibPortalServerPort
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the device finds that the portal server
+        is unreachable, the portal server's name is ibPortalServerName, and
+        the portal server's IP is ibPortalServerIP, and the portal server's
+        port is ibPortalServerPort, and the portal server has been enabled."
+    ::= { ibPortalTrapPrefix 1 }
+
+ibPortalServerGet NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibPortalServerName,
+            ibPortalFirstTrapTime,
+            ibPortalServerIP,
+            ibPortalServerPort
+        }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the device finds that the state of portal
+        server changes from unreachable state to reachable,
+        the portal server's name is ibPortalServerName, and the portal server's
+        IP is ibPortalServerIP, and the portal server's port is ibPortalServerPort,
+        and the portal server has been enabled."
+    ::= { ibPortalTrapPrefix 2 }
+
+ibPortalTrapVarObjects OBJECT IDENTIFIER ::= { ibPortalTraps 1 }
+
+ibPortalFirstTrapTime OBJECT-TYPE
+    SYNTAX      TimeTicks
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Represents the first trap time."
+    ::= { ibPortalTrapVarObjects 1 }
+
+ibPortalServerIP OBJECT-TYPE
+    SYNTAX      InetAddressIPv4
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The portal server's IP."
+    ::= { ibPortalTrapVarObjects 2 }
+
+-- PORTAL STATISTIC
+
+ibPortalStatistic OBJECT IDENTIFIER ::= { ibPortal 4 }
+
+-- PORTAL AUTH REQ STATISTIC
+
+ibPortalStatAuthReq OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the total number of portal authentication requests from the
+        portal server."
+    ::= { ibPortalStatistic 1 }
+
+-- PORTAL ACK LOGOUT STATISTIC
+
+ibPortalStatAckLogout OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of logout requests from the portal server."
+    ::= { ibPortalStatistic 2 }
+
+-- PORTAL NOTIFY LOGOUT STATISTIC
+
+ibPortalStatNotifyLogout OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of logout requests from the access device."
+    ::= { ibPortalStatistic 3 }
+
+-- PORTAL CHALLENGE TIMEOUT STATISTIC
+
+ibPortalStatChallengeTimeout OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of challenge from the portal server without
+        response."
+    ::= { ibPortalStatistic 4 }
+
+-- PORTAL CHALLENGE BUSY STATISTIC
+
+ibPortalStatChallengeBusy OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of device-busy responses for challenges from
+        the portal server."
+    ::= { ibPortalStatistic 5 }
+
+-- PORTAL CHALLENGE FAIL STATISTIC
+
+ibPortalStatChallengeFail OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of challenges from the portal server with
+        failure response."
+    ::= { ibPortalStatistic 6 }
+
+-- PORTAL authenticate TIMEOUT STATISTIC
+
+ibPortalStatAuthTimeout OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of authentication requests from the portal
+        server without responses."
+    ::= { ibPortalStatistic 7 }
+
+-- PORTAL authenticate FAIL STATISTIC
+
+ibPortalStatAuthFail OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of authentication requests from the portal
+        server with failure responses."
+    ::= { ibPortalStatistic 8 }
+
+-- PORTAL PASSWORD ERROR STATISTIC
+
+ibPortalStatPwdError OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of password errors."
+    ::= { ibPortalStatistic 9 }
+
+-- PORTAL authenticate BUSY STATISTIC
+
+ibPortalStatAuthBusy OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of device-busy responses to authentication
+        requests from the portal server."
+    ::= { ibPortalStatistic 10 }
+
+-- PORTAL authenticate DISORDER STATISTIC
+
+ibPortalStatAuthDisordered OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of disordered authentication packets from
+        the portal server."
+    ::= { ibPortalStatistic 11 }
+
+-- PORTAL authenticate UNKNOWN ERROR STATISTIC
+
+ibPortalStatAuthUnknownError OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of unknown errors."
+    ::= { ibPortalStatistic 12 }
+-- PORTAL authenticate response STATISTIC
+
+ibPortalStatAuthResp OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of authentication response messages
+        which are sent by device to portal server."
+    ::= { ibPortalStatistic 13 }
+
+-- PORTAL authenticate challenge request STATISTIC
+
+ibPortalStatChallengeReq OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of challenge request messages
+        which are sent by portal server to device."
+    ::= { ibPortalStatistic 14 }
+
+-- PORTAL authenticate challenge response STATISTIC
+
+ibPortalStatChallengeResp OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of challenge response messages
+        which are sent by device to portal server."
+    ::= { ibPortalStatistic 15 }
+
+-- PORTAL http request statistic
+
+ibPortalStatHttpReq OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of http request messages
+        which are sent by portal user to device."
+    ::= { ibPortalStatistic 16 }
+
+-- PORTAL http response statistic
+
+ibPortalStatHttpResp OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of http response messages
+        which are sent by  device to portal user."
+    ::= { ibPortalStatistic 17 }
+
+-- PORTAL HTTPS  request statistic
+
+ibPortalStatHttpsReq OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of HTTPS request messages
+        sent from portal users to the device."
+    ::= { ibPortalStatistic 18 }
+
+-- PORTAL HTTPS response statistic
+
+ibPortalStatHttpsResp OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the number of HTTPS response messages
+         sent from the device to portal users."
+    ::= { ibPortalStatistic 19 }
+
+
+-- PORTAL PACKET STATISTIC BY ERROR CODE
+
+ibPortalPktStatistic OBJECT IDENTIFIER ::= { ibPortal 5 }
+
+-- PORTAL REQ AUTH STATISTIC
+
+ibPortalPktStaReqAuthNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the total number of portal authentication requests from the
+        portal server."
+    ::= { ibPortalPktStatistic 1 }
+
+ibPortalPktStaAckAuthSuccess OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the total number of the response to REQ-AUTH packet of
+        portal server including error code 0 in the packet, that is
+        authentication success."
+    ::= { ibPortalPktStatistic 2 }
+
+ibPortalPktStaAckAuthReject OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the total number of the response to REQ-AUTH packet of
+        portal server including error code 1 in the packet, that is rejected
+        by server."
+    ::= { ibPortalPktStatistic 3 }
+
+ibPortalPktStaAckAuthEstablish OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the total number of the response to REQ-AUTH packet of
+        portal server including error code 2 in the packet, that is the link
+        is already established."
+    ::= { ibPortalPktStatistic 4 }
+
+ibPortalPktStaAckAuthBusy OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the total number of the response to REQ-AUTH packet of
+        portal server including error code 3 in the packet, that is the
+        system is busy."
+    ::= { ibPortalPktStatistic 5 }
+
+ibPortalPktStaAckAuthAuthFail OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the total number of the response to REQ-AUTH packet of
+        portal server including error code 4 in the packet, that is
+        authentication fail."
+    ::= { ibPortalPktStatistic 6 }
+
+ibPortalPktStaReqChallengeNum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the total number of portal challenge requests from the
+        portal server."
+    ::= { ibPortalPktStatistic 7 }
+
+ibPortalPktStaAckChallengeSuccess OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the total number of the response to challenge packet of
+        portal server including error code 0 in the packet, that is
+        challenge is success."
+    ::= { ibPortalPktStatistic 8 }
+
+ibPortalPktStaAckChallengeReject OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the total number of the response to challenge packet of
+        portal server including error code 1 in the packet, that is
+        challenge is rejected by server."
+    ::= { ibPortalPktStatistic 9 }
+
+ibPortalPktStaAckChallengeEstablish OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the total number of the response to challenge packet of
+        portal server including error code 2 in the packet, that is the
+        link is alreadys established."
+    ::= { ibPortalPktStatistic 10 }
+
+ibPortalPktStaAckChallengeBusy OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the total number of the response to challenge packet of
+        portal server including error code 3 in the packet, that is the
+        system is busy."
+    ::= { ibPortalPktStatistic 11 }
+
+ibPortalPktStaAckChallengeAuthFail OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It shows the total number of the response to challenge packet of
+        portal server including error code 4 in the packet, that is
+        authentication fail."
+    ::= { ibPortalPktStatistic 12 }
+
+ibPortalExtConfig OBJECT IDENTIFIER ::= { ibPortal 6 }
+
+--
+-- PORTAL MAX USER NUMBER
+--
+
+ibPortalExtMaxUserNumber OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specify the maximum number of online users."
+    ::= { ibPortalExtConfig 1 }
+
+--
+-- PORTAL CURRENT USER NUMBER
+--
+
+ibPortalExtCurrentUserNumber OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current number of online portal users."
+    ::= { ibPortalExtConfig 2 }
+
+--
+-- PORTAL STATUS
+--
+
+ibPortalExtStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+         enabled(1),
+         disabled(2)
+    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It indicates the portal status.
+         enabled:
+            Portal is enabled on one or more interfaces.
+         disabled:
+            Portal is not enabled on any interface."
+    ::= { ibPortalExtConfig 3 }
+
+ibPortalExtTables OBJECT IDENTIFIER ::= { ibPortal 7 }
+
+--
+-- PORTAL server table
+--
+ibPortalExtSrvTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortalExtSrvEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table defines the name of the portal server.  It can be created
+        and destroyed by MIB."
+    ::= { ibPortalExtTables 1 }
+
+ibPortalExtSrvEntry OBJECT-TYPE
+    SYNTAX      IbPortalExtSrvEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in this table for each name and URL of the portal server.
+        It is indexed by using the object ibPortalExtSrvName."
+    INDEX
+        {
+            ibPortalExtSrvName
+        }
+    ::= { ibPortalExtSrvTable 1 }
+
+
+IbPortalExtSrvEntry ::= SEQUENCE
+    {
+        ibPortalExtSrvName          OCTET STRING,
+        ibPortalExtSrvIPAddrType    InetAddressType,
+        ibPortalExtSrvIP            InetAddress,
+        ibPortalExtSrvPort          Integer32,
+        ibPortalExtSrvRowStatus     RowStatus,
+        ibPortalExtSrvVpnName       OCTET STRING,
+        ibPortalExtSrvKey           OCTET STRING
+    }
+
+ibPortalExtSrvName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..32))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "It is the index of the table ibPortalExtSrvTable.  It shows
+        the name of the portal server."
+    ::= { ibPortalExtSrvEntry 1 }
+
+ibPortalExtSrvIPAddrType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The type of the portal server IP address."
+    ::={ ibPortalExtSrvEntry 2 }
+
+ibPortalExtSrvIP OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "It shows the IP address of the portal server."
+    ::= { ibPortalExtSrvEntry 3 }
+
+ibPortalExtSrvPort OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "It shows the UDP port of the portal server.
+        The port will be used when clients send packets to the portal server.
+        Default value is 50100.
+        It is not configurable when the portal server has been enabled."
+    ::= { ibPortalExtSrvEntry 4 }
+
+ibPortalExtSrvRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object is responsible for managing the creation, deletion and
+        modification of rows, which support active status and CreateAndGo and
+        Destroy operations.  To create a new row, the portal server must be
+        specified.
+        To destroy an existing row, the portal server MUST NOT be referenced by
+        an interface."
+    ::= { ibPortalExtSrvEntry 5 }
+
+ibPortalExtSrvVpnName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..31))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specifies the VPN instance to which the portal authentication
+        server belongs."
+    ::= { ibPortalExtSrvEntry 6 }
+
+ibPortalExtSrvKey OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..64))
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Specifies a shared key for securing communication between the device
+        and the portal authentication server.
+        When read, ibPortalExtSrvKey always returns a zero-length string."
+    ::= { ibPortalExtSrvEntry 7 }
+
+--
+-- PORTAL web server table
+--
+ibPortalExtWebSrvTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortalExtWebSrvEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table defines the name of the portal Web server.  It can be created
+         and destroyed by MIB."
+    ::= { ibPortalExtTables 2 }
+
+ibPortalExtWebSrvEntry OBJECT-TYPE
+    SYNTAX      IbPortalExtWebSrvEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in this table for each name and portal Web server.
+        It is indexed by using the object ibPortalExtWebSrvName."
+    INDEX
+        {
+            ibPortalExtWebSrvName
+        }
+    ::= { ibPortalExtWebSrvTable 1 }
+
+
+IbPortalExtWebSrvEntry ::= SEQUENCE
+    {
+        ibPortalExtWebSrvName         OCTET STRING,
+        ibPortalExtWebSrvUrl          OCTET STRING,
+        ibPortalExtWebSrvRowStatus    RowStatus
+    }
+
+ibPortalExtWebSrvName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..32))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "It is the index of the table ibPortalExtWebSrvTable.  It shows
+        the name of the portal Web server."
+    ::= { ibPortalExtWebSrvEntry 1 }
+
+ibPortalExtWebSrvUrl OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "It shows the URL to the portal Web server.
+        Users which have not logged on to portal will be redirected to the
+        portal server according to ibPortalServerIfUrl.
+        The value is consisted of protocol, IP address and relative path.
+        For example: http://10.1.1.1/portal."
+    ::= { ibPortalExtWebSrvEntry 2 }
+
+ibPortalExtWebSrvRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object is responsible for managing the creation, deletion and
+        modification of rows, which support active status and CreateAndGo and
+        Destroy operations.  To create a new row, the portal server must be specified.
+        To destroy an existing row, the portal Web server MUST NOT be referenced by an
+        interface."
+    ::= { ibPortalExtWebSrvEntry 3 }
+
+ibPortalExtMTSrvTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortalExtMTSrvEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes the configuration of the MAC Trigger server."
+    ::= { ibPortalExtTables 3 }
+
+ibPortalExtMTSrvEntry OBJECT-TYPE
+    SYNTAX      IbPortalExtMTSrvEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in the table for the MAC Trigger server.  It is indexed by using the object Index."
+    INDEX
+        {
+            ibPortalExtMTSrvName
+        }
+    ::= { ibPortalExtMTSrvTable 1 }
+
+IbPortalExtMTSrvEntry ::= SEQUENCE
+    {
+        ibPortalExtMTSrvName          OCTET STRING,
+        ibPortalExtMTSrvIPAddrType    InetAddressType,
+        ibPortalExtMTSrvIP            InetAddress,
+        ibPortalExtMTSrvPort          Integer32,
+        ibPortalExtMTDetctFlowPeriod  Integer32,
+        ibPortalExtMTThresholdFlow    Unsigned32,
+        ibPortalExtMTSrvRowStatus     RowStatus
+    }
+
+ibPortalExtMTSrvName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..32))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "It is the index of the table ibPortalExtMTSrvTable.  It shows
+         the name of the MAC Trigger server."
+    ::= { ibPortalExtMTSrvEntry 1 }
+
+ibPortalExtMTSrvIPAddrType OBJECT-TYPE
+    SYNTAX      InetAddressType
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "The type of the MAC Trigger server IP address."
+    ::={ ibPortalExtMTSrvEntry 2 }
+
+ibPortalExtMTSrvIP OBJECT-TYPE
+    SYNTAX      InetAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "It shows the IP address of the MAC Trigger server."
+    ::= { ibPortalExtMTSrvEntry 3 }
+
+ibPortalExtMTSrvPort OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "It shows the UDP port of the MAC Trigger server.
+        The port will be used when clients send packets to the MAC Trigger server.
+        Default value is 50100."
+    DEFVAL { 50100 }
+    ::= { ibPortalExtMTSrvEntry 4 }
+
+ibPortalExtMTDetctFlowPeriod  OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "seconds"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "It shows the user flow detection interval (in seconds) when
+        MAC Trigger and Portal are enabled.
+        Default value is 300."
+    DEFVAL { 300 }
+    ::= { ibPortalExtMTSrvEntry 5 }
+
+ibPortalExtMTThresholdFlow  OBJECT-TYPE
+    SYNTAX      Unsigned32
+    UNITS       "bytes"
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "It shows the user traffic threshold (in bytes) that triggers authentication
+        when MAC Trigger and Portal are enabled.
+        Default value is 0."
+    DEFVAL { 0 }
+    ::= { ibPortalExtMTSrvEntry 6 }
+
+ibPortalExtMTSrvRowStatus OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "This object is responsible for managing the creation, deletion and
+        modification of rows, which support active status and CreateAndGo and
+        Destroy operations."
+    ::= { ibPortalExtMTSrvEntry 7 }
+--
+-- PORTAL extend if table
+--
+ibPortalExtIfConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortalExtIfConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes portal information on interfaces."
+    ::= { ibPortalExtTables 4 }
+
+ibPortalExtIfConfigEntry OBJECT-TYPE
+    SYNTAX      IbPortalExtIfConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in this table for an interface on which
+        portal has been enabled.
+        It is indexed by using the object ifIndex."
+    INDEX
+        {
+            ibPortalExtIfIndex
+        }
+    ::= { ibPortalExtIfConfigTable 1 }
+
+IbPortalExtIfConfigEntry ::= SEQUENCE
+    {
+        ibPortalExtIfIndex            InterfaceIndex,
+        ibPortalExtIfWebSrvName       OCTET STRING,
+        ibPortalExtIfDomainName       OCTET STRING,
+        ibPortalExtIfAuthMethod       IbPortalAuthMethod,
+        ibPortalExtIfMTSrvName        OCTET STRING,
+        ibPortalExtIfMaxUser          Unsigned32
+    }
+
+ibPortalExtIfIndex OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "It is the interface index and the index of ibPortalExtIfConfigTable."
+    ::= { ibPortalExtIfConfigEntry 1 }
+
+ibPortalExtIfWebSrvName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The Portal Web server name must exist.  It references
+        ibPortalExtWebSrvName."
+    ::= { ibPortalExtIfConfigEntry 2 }
+
+ibPortalExtIfDomainName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Authentication domain."
+    ::= { ibPortalExtIfConfigEntry 3 }
+
+ibPortalExtIfAuthMethod OBJECT-TYPE
+    SYNTAX      IbPortalAuthMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specify the portal authentication method."
+    ::= { ibPortalExtIfConfigEntry 4 }
+
+ibPortalExtIfMTSrvName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The MAC trigger server name must exist.  It references ibPortalExtMTSrvName."
+    ::= { ibPortalExtIfConfigEntry 5 }
+
+ibPortalExtIfMaxUser OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of portal users."
+    ::= { ibPortalExtIfConfigEntry 6 }
+
+ibPortalExtIfIpv6ConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortalExtIfIpv6ConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes IPv6 portal information on interfaces."
+    ::= { ibPortalExtTables 5 }
+
+ibPortalExtIfIpv6ConfigEntry OBJECT-TYPE
+    SYNTAX      IbPortalExtIfIpv6ConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in this table for an interface on which
+        IPv6 portal has been enabled.
+        It is indexed by using the object ifIndex."
+    INDEX
+        {
+            ibPortalExtIfIpv6Index
+        }
+    ::= { ibPortalExtIfIpv6ConfigTable 1 }
+
+IbPortalExtIfIpv6ConfigEntry ::= SEQUENCE
+    {
+        ibPortalExtIfIpv6Index            InterfaceIndex,
+        ibPortalExtIfIpv6WebSrvName       OCTET STRING,
+        ibPortalExtIfIpv6DomainName       OCTET STRING,
+        ibPortalExtIfIpv6AuthMethod       IbPortalAuthMethod,
+        ibPortalExtIfIpv6MaxUser          Unsigned32
+    }
+
+ibPortalExtIfIpv6Index OBJECT-TYPE
+    SYNTAX      InterfaceIndex
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "It is the interface index and the index of ibPortalExtIfIpv6ConfigTable."
+    ::= { ibPortalExtIfIpv6ConfigEntry 1 }
+
+ibPortalExtIfIpv6WebSrvName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The Portal Web server name must exist.  It references ibPortalExtWebSrvName."
+    ::= { ibPortalExtIfIpv6ConfigEntry 2 }
+
+ibPortalExtIfIpv6DomainName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Authentication domain."
+    ::= { ibPortalExtIfIpv6ConfigEntry 3 }
+
+ibPortalExtIfIpv6AuthMethod  OBJECT-TYPE
+    SYNTAX      IbPortalAuthMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specify the portal authentication method."
+    ::= { ibPortalExtIfIpv6ConfigEntry 4 }
+
+
+ibPortalExtIfIpv6MaxUser OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of IPv6 portal users."
+    ::= { ibPortalExtIfIpv6ConfigEntry 5 }
+--
+-- PORTAL dot11 configuration table
+--
+ibPortalDot11SrvTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortalDot11SrvEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes the portal information on service templates."
+    ::= { ibPortalExtTables 6 }
+
+ibPortalDot11SrvEntry OBJECT-TYPE
+    SYNTAX      IbPortalDot11SrvEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in this table for a service template on which
+        portal has been enabled.
+        It is indexed by using the object wlan service-template name."
+    INDEX
+        {
+            ibPortalDot11SrvTemName
+        }
+    ::= { ibPortalDot11SrvTable 1 }
+
+IbPortalDot11SrvEntry ::= SEQUENCE
+    {
+        ibPortalDot11SrvTemName     OCTET STRING,
+        ibPortalDot11WebSrvName     OCTET STRING,
+        ibPortalDot11DomainName     OCTET STRING,
+        ibPortalDot11AuthMethod     IbPortalAuthMethod,
+        ibPortalDot11MTSrvName      OCTET STRING,
+        ibPortalDot11MaxUser        Unsigned32
+    }
+
+ibPortalDot11SrvTemName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..63))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "It is the index of the table ibPortalDot11SrvTable, it shows
+        the name of the wlan service-template."
+    ::= { ibPortalDot11SrvEntry 1 }
+
+ibPortalDot11WebSrvName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "It shows portal web-server name."
+    ::= { ibPortalDot11SrvEntry 2 }
+
+ibPortalDot11DomainName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "It shows portal authentication domain name."
+    ::= { ibPortalDot11SrvEntry 3 }
+
+ibPortalDot11AuthMethod  OBJECT-TYPE
+    SYNTAX      IbPortalAuthMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+     "Specify the portal authentication method on service templates."
+    ::= { ibPortalDot11SrvEntry 4 }
+
+ibPortalDot11MTSrvName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The MAC trigger server name must exist.  It references ibPortalExtMTSrvName."
+    ::= { ibPortalDot11SrvEntry 5 }
+
+ibPortalDot11MaxUser OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of portal users."
+    ::= { ibPortalDot11SrvEntry 6 }
+
+ibPortalDot11Ipv6SrvTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbPortalDot11Ipv6SrvEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table describes IPv6 portal information on service templates."
+    ::= { ibPortalExtTables 7 }
+
+ibPortalDot11Ipv6SrvEntry OBJECT-TYPE
+    SYNTAX      IbPortalDot11Ipv6SrvEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "There is a row in this table for a service template on which
+        IPv6 portal has been enabled.
+        It is indexed by using the object wlan service-template name."
+    INDEX
+        {
+            ibPortalDot11Ipv6SrvTemName
+        }
+    ::= { ibPortalDot11Ipv6SrvTable 1 }
+
+IbPortalDot11Ipv6SrvEntry ::= SEQUENCE
+    {
+        ibPortalDot11Ipv6SrvTemName     OCTET STRING,
+        ibPortalDot11Ipv6WebSrvName     OCTET STRING,
+        ibPortalDot11Ipv6DomainName     OCTET STRING,
+        ibPortalDot11Ipv6AuthMethod     IbPortalAuthMethod,
+        ibPortalDot11Ipv6MaxUser        Unsigned32
+    }
+
+ibPortalDot11Ipv6SrvTemName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..63))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "It is the index of the table ibPortalDot11Ipv6SrvTable.  It shows
+        the name of the IPv6 portal server."
+    ::= { ibPortalDot11Ipv6SrvEntry 1 }
+
+ibPortalDot11Ipv6WebSrvName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "It shows the IPv6 portal Web server name."
+    ::= { ibPortalDot11Ipv6SrvEntry 2 }
+
+ibPortalDot11Ipv6DomainName OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "IPv6 portal authentication domain name."
+    ::= { ibPortalDot11Ipv6SrvEntry 3 }
+
+ibPortalDot11Ipv6AuthMethod  OBJECT-TYPE
+    SYNTAX      IbPortalAuthMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+     "Specify the IPv6 portal authentication method on service templates."
+    ::= { ibPortalDot11Ipv6SrvEntry 4 }
+
+ibPortalDot11Ipv6MaxUser OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of IPv6 portal users."
+    ::= { ibPortalDot11Ipv6SrvEntry 5 }
+
+END
+

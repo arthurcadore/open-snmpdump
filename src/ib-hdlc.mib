@@ -1,0 +1,74 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: This MIB file is used for inquiring for HDLC(High-level
+--              Data Link Control) information.
+-- Reference:
+-- Version:     V1.0
+-- History:
+--   V1.0 Initial version by wangzhenjun
+-- =================================================================
+IB-HDLC-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC;
+
+
+
+ibHDLC MODULE-IDENTITY
+    LAST-UPDATED "202206140000Z"            -- June 14th, 2022 at 00:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "Supporting the loop detection trap for HDLC on an interface."
+    REVISION    "202206140000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { ibCommon 232 }
+
+--
+-- Node definitions
+--
+
+ibHDLCLoopbackDetectTrapOid OBJECT IDENTIFIER ::= { ibHDLC 1 }
+
+ibHDLCLoopbackDetectIfName OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (1..47))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The involved interface name of trap information."
+    ::= { ibHDLCLoopbackDetectTrapOid 1 }
+
+ibHDLCLoopbackDetectTrap OBJECT IDENTIFIER  ::= { ibHDLC 2 }
+
+ibHDLCLoopbackDetectTrapPrefix OBJECT IDENTIFIER  ::= { ibHDLCLoopbackDetectTrap 0 }
+
+ibHDLCLoopbackDetect NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibHDLCLoopbackDetectIfName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when a loop is detected."
+    ::= { ibHDLCLoopbackDetectTrapPrefix 1 }
+
+ibHDLCLoopbackDetectResume NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibHDLCLoopbackDetectIfName
+    }
+    STATUS      current
+    DESCRIPTION
+        "This trap is generated when the loopback is removed."
+    ::= { ibHDLCLoopbackDetectTrapPrefix 2 }
+
+END

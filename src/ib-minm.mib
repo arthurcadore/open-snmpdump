@@ -1,0 +1,320 @@
+-- =============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: 802.1ah MAC-in-MAC MIB
+-- Reference:
+-- Version: V1.0
+-- History:
+--   V1.0 2009-08-08 Initial version Created by Jianyong Song
+--        2010-08-05 Add 'ibMinmBmac' by Wei Zhang
+-- =============================================================================
+IB-MINM-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+        RowStatus,
+        TEXTUAL-CONVENTION,
+        MacAddress
+    FROM SNMPv2-TC
+        MODULE-IDENTITY,
+        OBJECT-TYPE,
+        Integer32,
+        Unsigned32
+    FROM SNMPv2-SMI
+        ifIndex
+    FROM RFC1213-MIB
+        ibCommon
+    FROM IB-OID-MIB
+        ibVsiIndex
+    FROM IB-VSI-MIB;
+
+-- =============================================================================
+-- module identity part
+-- =============================================================================
+ibMinm MODULE-IDENTITY
+    LAST-UPDATED
+        "200908081000Z"        -- Aug 08, 2009 at 10:00 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "802.1ah MAC-in-MAC MIB"
+    REVISION
+        "200908081000Z"   -- Aug 08, 2009 at 10:00 GMT
+    DESCRIPTION
+        "The initial version of this MIB."
+    ::= { ibCommon 107 }
+
+-- =============================================================================
+-- Textual Conventions
+-- =============================================================================
+IbMinmEnabledStatus ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "A enumerated value which indicates the state of object."
+    SYNTAX  INTEGER
+    {
+        enabled(1),
+        disabled(2)
+    }
+
+-- =============================================================================
+-- object definition begin
+-- =============================================================================
+
+ibMinmObjects      OBJECT IDENTIFIER ::= { ibMinm 1 }
+
+ibMinmScalarGroup OBJECT IDENTIFIER ::= { ibMinmObjects 1 }
+
+ibMinmCapabilities    OBJECT-TYPE
+    SYNTAX      BITS
+    {
+        reEncapsulation(0),
+        uplink(1),
+        vsiShareConnection(2)
+    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This object displays the MAC-in-MAC capabilities with respect to
+         certain fields. The following values may be supported:
+         reEncapsulation:     Support for configuring re-encapsulation (denoted
+                              by ibMinmVsiReEncapsulation).
+         uplink:              Support for configuring uplink (denoted
+                              by ibMinmUplinkTable).
+         vsiShareConnection:  It indicates that connection entry is shared in
+                              all VSIs. ibVsiIndex is meaningless and must
+                              be value 1 in ibMinmConnectionTable."
+    ::= { ibMinmScalarGroup 1 }
+
+ibMinmBmac  OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A MAC address used in creating the MAC header of I-tagged frames
+        transmitted across a Provider Backbone Bridged Network. The invalid
+        value FF:FF:FF:FF:FF:FF indicates that this node is not supported by
+        the device."
+    ::= { ibMinmScalarGroup 2 }
+
+-- =============================================================================
+-- ibMinmVsiTable Definition
+-- =============================================================================
+ibMinmVsiTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMinmVsiEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for configuring MAC-in-MAC service instance parameter."
+    ::= { ibMinmObjects 2 }
+
+ibMinmVsiEntry  OBJECT-TYPE
+    SYNTAX      IbMinmVsiEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for configuring MAC-in-MAC service instance parameter."
+    INDEX
+    {
+        ibVsiIndex
+    }
+    ::= { ibMinmVsiTable 1 }
+
+IbMinmVsiEntry ::=
+    SEQUENCE
+    {
+        ibMinmVsiBvlan               Integer32,
+        ibMinmVsiReEncapsulation     IbMinmEnabledStatus,
+        ibMinmVsiNextAvailableLinkId Unsigned32
+    }
+
+ibMinmVsiBvlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..4094 | 65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "BVLAN ID. The value 65535 indicates the BVLAN has not been configured
+        for get operation, and it indicates deleting the BVLAN configration
+        for set operation."
+    ::= { ibMinmVsiEntry 1 }
+
+ibMinmVsiReEncapsulation    OBJECT-TYPE
+    SYNTAX      IbMinmEnabledStatus
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Whether the re-encapsulation is enabled. The reEncapsulation field of
+        ibMinmCapabilities denotes whether this node is supported."
+    ::= { ibMinmVsiEntry 2 }
+
+ibMinmVsiNextAvailableLinkId    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Next available connection entry index for creating a connection entry.
+        Its value ranges from 0x1 to 0xFFFFFFFF.The invalid value 0xFFFFFFFF
+        indicates that connection entry can not be created. When the
+        vsiShareConnection field of ibMinmCapabilities is set, this node
+        returns an invalid value if the value of ibVsiIndex is not 1."
+    ::= { ibMinmVsiEntry 3 }
+
+-- =============================================================================
+-- End of ibMinmVsiTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibMinmUplinkTable Definition
+-- =============================================================================
+ibMinmUplinkTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMinmUplinkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for uplink ports of the VSI in MAC-in-MAC. The uplink field of
+        ibMinmCapabilities denotes whether this table is supported."
+    ::= { ibMinmObjects 3 }
+
+ibMinmUplinkEntry  OBJECT-TYPE
+    SYNTAX      IbMinmUplinkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for uplink ports of the VSI in MAC-in-MAC."
+    INDEX
+    {
+        ibVsiIndex,
+        ifIndex
+    }
+    ::= { ibMinmUplinkTable 1 }
+
+IbMinmUplinkEntry ::=
+    SEQUENCE
+    {
+        ibMinmUplinkRowStatus      RowStatus
+    }
+
+ibMinmUplinkRowStatus     OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibMinmUplinkEntry 1 }
+-- =============================================================================
+-- End of ibMinmUplinkTable Definition
+-- =============================================================================
+
+-- =============================================================================
+-- ibMinmConnectionTable Definition
+-- =============================================================================
+ibMinmConnectionTable  OBJECT-TYPE
+    SYNTAX      SEQUENCE OF IbMinmConnectionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A table for the connection information of BMAC."
+    ::= { ibMinmObjects 4 }
+
+ibMinmConnectionEntry  OBJECT-TYPE
+    SYNTAX      IbMinmConnectionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry for the connection information of BMAC.
+        When the vsiShareConnection field of ibMinmCapabilities is set,
+        connection entry is shared in all VSIs. ibVsiIndex is meaningless
+        and must be value 1 in ibMinmConnectionTable."
+    INDEX
+    {
+        ibVsiIndex,
+        ibMinmConnectionLinkId
+    }
+    ::= { ibMinmConnectionTable 1 }
+
+IbMinmConnectionEntry ::=
+    SEQUENCE
+    {
+        ibMinmConnectionLinkId       Unsigned32,
+        ibMinmConnectionBmac         MacAddress,
+        ibMinmConnectionBvlan        Integer32,
+        ibMinmConnectionPort         Integer32,
+        ibMinmConnectionStatus       INTEGER,
+        ibMinmConnectionAgingStatus  INTEGER,
+        ibMinmConnectionRowStatus    RowStatus
+    }
+
+ibMinmConnectionLinkId    OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Entry index when the vsiShareConnection bit of ibMinmCapabilities
+        is set(ibVsiIndex is meaningless and must be value 1),
+        else entry index in the VSI of ibVsiIndex.Its value ranges
+        from 0x1 to 0xFFFFFFFE. It should be obtained from
+        ibMinmVsiNextAvailableLinkId for create operation."
+    ::= { ibMinmConnectionEntry 1 }
+
+ibMinmConnectionBmac    OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "BMAC of an connection entry."
+    ::= { ibMinmConnectionEntry 2 }
+
+ibMinmConnectionBvlan    OBJECT-TYPE
+    SYNTAX      Integer32 (1..4094)
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "BVLAN of an connection entry."
+    ::= { ibMinmConnectionEntry 3 }
+
+ibMinmConnectionPort   OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Port ifindex of an connection entry."
+    ::= { ibMinmConnectionEntry 4 }
+
+ibMinmConnectionStatus   OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        learned(1),
+        configDynamic(2),
+        configStatic(3),
+        blackhole(4)
+    }
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "State of an connection entry."
+    ::= { ibMinmConnectionEntry 5 }
+
+ibMinmConnectionAgingStatus   OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+        aging(1),
+        noAged(2)
+    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Aging time of an connection entry."
+    ::= { ibMinmConnectionEntry 6 }
+
+ibMinmConnectionRowStatus  OBJECT-TYPE
+    SYNTAX      RowStatus
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+        "Operation status of this table entry."
+    ::= { ibMinmConnectionEntry 7 }
+-- =============================================================================
+-- End of ibMinmConnectionTable Definition
+-- =============================================================================
+
+END

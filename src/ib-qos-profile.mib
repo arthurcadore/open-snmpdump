@@ -1,0 +1,1177 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: QOS Profile MIB
+-- Version: V2.1
+-- History:
+--   V1.0(Initial version) 6th Jul 2004
+--     V2.0 2004-10-12 updated by gaolong
+--        Import Integer32.
+--        Modify ibQoSProfile to ibQosProfile
+--        Replace INTEGER with Integer32.
+--        Change value of ibQoSTrafPrioPolicedServiceType from underscores to hyphens.
+--        Fix a default value error of ibQoSTrafPrioPolicedServiceType.
+--        Add MODULE clause for ibQoSProfMibCompliance.
+--   v2.1 2004-12-23 changed by zhuangyu
+--        1 Add an enumeration in ibQoSTrafLmtConformActionType
+--        2 Add ibQoSTrafLmtConformCos and ibQoSTrafLmtConformDscp in ibQoSTrafficLimitTable
+--
+-- =================================================================
+IB-QOS-PROFILE-MIB DEFINITIONS ::= BEGIN
+
+        IMPORTS
+            ibCommon
+                FROM IB-OID-MIB
+            OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP
+                FROM SNMPv2-CONF
+            IpAddress, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE, Integer32
+                FROM SNMPv2-SMI
+            RowStatus, TruthValue, MacAddress, TEXTUAL-CONVENTION
+                FROM SNMPv2-TC;
+
+
+        ibQosProfile MODULE-IDENTITY
+            LAST-UPDATED "200407060000Z"
+            ORGANIZATION
+                "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+            CONTACT-INFO
+                ""
+            DESCRIPTION
+                "The private MIB file includes the general information QoS profile."
+            ::= { ibCommon 17 }
+
+
+--
+-- Textual conventions
+--
+        IbQoSDirection ::= TEXTUAL-CONVENTION
+            STATUS current
+            DESCRIPTION
+                "Description."
+            SYNTAX INTEGER
+                {
+                invalid(0),
+                input(1),
+                ouput(2)
+                }
+
+
+--
+-- Node definitions
+--
+        ibQoSProfObjects OBJECT IDENTIFIER ::= { ibQosProfile 1 }
+
+        ibQoSProf OBJECT IDENTIFIER ::= { ibQoSProfObjects 1 }
+
+        ibQoSProfTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbQoSProfEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "QoS profile table is used to config the qos profiles."
+            ::= { ibQoSProf 1 }
+
+        ibQoSProfEntry OBJECT-TYPE
+            SYNTAX IbQoSProfEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION             " "
+            INDEX { ibQoSProfIndex }
+            ::= { ibQoSProfTable 1 }
+
+        IbQoSProfEntry ::=
+            SEQUENCE {
+                ibQoSProfIndex
+                    Integer32,
+                ibQoSProfName
+                    OCTET STRING,
+                ibQoSProfActionNumber
+                    Integer32,
+                ibQoSProfRowStatus
+                    RowStatus
+             }
+
+        ibQoSProfIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..65535)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "QoS profile table index."
+            ::= { ibQoSProfEntry 1 }
+
+        ibQoSProfName OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE (1..32))
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "QoS profile name."
+            ::= { ibQoSProfEntry 2 }
+
+        ibQoSProfActionNumber OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Total number of actions of a QoS profile."
+            ::= { ibQoSProfEntry 3 }
+
+        ibQoSProfRowStatus OBJECT-TYPE
+            SYNTAX RowStatus
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "RowStatus,Now support three state:CreateAndGo,Active,Destroy."
+            ::= { ibQoSProfEntry 4 }
+
+        ibQoSAction OBJECT IDENTIFIER ::= { ibQoSProfObjects 2 }
+
+        ibQoSTrafficLimitTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbQoSTrafficLimitEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Traffic limit table is used to set the average rate or peak rate of the flow.
+                IP and Link ACL rules can be applied simultaneously,
+                IP and User based ACL rules can not be applied simultaneously,
+                Link and User based ACL rules can not be applied simultaneously.
+                Unused ones is represented with default values."
+            ::= { ibQoSAction 1 }
+
+        ibQoSTrafficLimitEntry OBJECT-TYPE
+            SYNTAX IbQoSTrafficLimitEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION             " "
+            INDEX { ibQoSTrafLmtProfIndex, ibQoSTrafLmtActionIndex }
+            ::= { ibQoSTrafficLimitTable 1 }
+
+        IbQoSTrafficLimitEntry ::=
+            SEQUENCE {
+                ibQoSTrafLmtProfIndex
+                    Integer32,
+                ibQoSTrafLmtActionIndex
+                    Integer32,
+                ibQoSTrafLmtDirection
+                    IbQoSDirection,
+                ibQoSTrafLmtUserAclNum
+                    Integer32,
+                ibQoSTrafLmtUserAclRule
+                    Integer32,
+                ibQoSTrafLmtIpAclNum
+                    Integer32,
+                ibQoSTrafLmtIpAclRule
+                    Integer32,
+                ibQoSTrafLmtLinkAclNum
+                    Integer32,
+                ibQoSTrafLmtLinkAclRule
+                    Integer32,
+                ibQoSTrafLmtTargetRateMbps
+                    Integer32,
+                ibQoSTrafLmtTargetRateKbps
+                    Integer32,
+                ibQoSTrafLmtPeakRate
+                    Integer32,
+                ibQoSTrafLmtCIR
+                    Integer32,
+                ibQoSTrafLmtCBS
+                    Integer32,
+                ibQoSTrafLmtEBS
+                    Integer32,
+                ibQoSTrafLmtPIR
+                    Integer32,
+                ibQoSTrafLmtConformLocalPre
+                    Integer32,
+                ibQoSTrafLmtConformActionType
+                    INTEGER,
+                ibQoSTrafLmtExceedActionType
+                    INTEGER,
+                ibQoSTrafLmtExceedDscp
+                    Integer32,
+                ibQoSTrafLmtExceedCos
+                    Integer32,
+                ibQoSTrafLmtRowStatus
+                    RowStatus,
+                ibQoSTrafLmtConformCos
+                    Integer32,
+                ibQoSTrafLmtConformDscp
+                    Integer32
+             }
+
+        ibQoSTrafLmtProfIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..65535)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The index of QoS profile which the traffic-limit action belongs to."
+            ::= { ibQoSTrafficLimitEntry 1 }
+
+        ibQoSTrafLmtActionIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..65535)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The index of traffic-limit action."
+            ::= { ibQoSTrafficLimitEntry 2 }
+
+        ibQoSTrafLmtDirection OBJECT-TYPE
+            SYNTAX IbQoSDirection
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The direction of traffic-limit action."
+            ::= { ibQoSTrafficLimitEntry 3 }
+
+        ibQoSTrafLmtUserAclNum OBJECT-TYPE
+            SYNTAX Integer32 (0 | 5000..5999)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The number of user-based acl group."
+            DEFVAL { 0 }
+            ::= { ibQoSTrafficLimitEntry 4 }
+
+        ibQoSTrafLmtUserAclRule OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The subitem of user-based acl rule."
+            DEFVAL { 65535 }
+            ::= { ibQoSTrafficLimitEntry 5 }
+
+        ibQoSTrafLmtIpAclNum OBJECT-TYPE
+            SYNTAX Integer32 (0 | 2000..3999)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The number of Ip-based acl group."
+            DEFVAL { 0 }
+            ::= { ibQoSTrafficLimitEntry 6 }
+
+        ibQoSTrafLmtIpAclRule OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The subitem of IP-based acl rule."
+            DEFVAL { 65535 }
+            ::= { ibQoSTrafficLimitEntry 7 }
+
+        ibQoSTrafLmtLinkAclNum OBJECT-TYPE
+            SYNTAX Integer32 (0 | 4000..4999)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The number of Link-based acl group"
+            DEFVAL { 0 }
+            ::= { ibQoSTrafficLimitEntry 8 }
+
+        ibQoSTrafLmtLinkAclRule OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The subitem of Link-based acl rule."
+            DEFVAL { 65535 }
+            ::= { ibQoSTrafficLimitEntry 9 }
+
+        ibQoSTrafLmtTargetRateMbps OBJECT-TYPE
+            SYNTAX Integer32 (0..10000)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Target rate:Mbps
+                Some products only support Mbps,but others support Kbps,so
+                Kbps and Mbps should be supportted mutually exclusively on the same
+                product."
+            ::= { ibQoSTrafficLimitEntry 10 }
+
+        ibQoSTrafLmtTargetRateKbps OBJECT-TYPE
+            SYNTAX Integer32 (0..10000000)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Target rate:Kbps.
+                Some products only support Kbps,but others support Mbps,so
+                Kbps and Mbps should be supportted mutually exclusively on the same
+                product."
+            ::= { ibQoSTrafficLimitEntry 11 }
+
+        ibQoSTrafLmtPeakRate OBJECT-TYPE
+            SYNTAX Integer32 (0 | 64..8388608)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Peak rate"
+            ::= { ibQoSTrafficLimitEntry 12 }
+
+        ibQoSTrafLmtCIR OBJECT-TYPE
+            SYNTAX Integer32 (0..34120000)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Committed Information Rate.
+                unit:kbps."
+            ::= { ibQoSTrafficLimitEntry 13 }
+
+        ibQoSTrafLmtCBS OBJECT-TYPE
+            SYNTAX Integer32 (0..1048575)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Committed Burst Size.
+                unit:byte."
+            ::= { ibQoSTrafficLimitEntry 14 }
+
+        ibQoSTrafLmtEBS OBJECT-TYPE
+            SYNTAX Integer32 (0..268435455)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Excess Burst Size.
+                unit:byte."
+            ::= { ibQoSTrafficLimitEntry 15 }
+
+        ibQoSTrafLmtPIR OBJECT-TYPE
+            SYNTAX Integer32 (0..34120000)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Peak Information Rate.
+                unit:kbps."
+            ::= { ibQoSTrafficLimitEntry 16 }
+
+        ibQoSTrafLmtConformLocalPre OBJECT-TYPE
+            SYNTAX Integer32 (0..7)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The local precedence of conformed flow."
+            ::= { ibQoSTrafficLimitEntry 17 }
+
+        ibQoSTrafLmtConformActionType OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                invalid(0),
+                remark-cos(1),
+                remark-drop-priority(2),
+                remark-cos-drop-priority(3),
+                remark-policed-service(4),
+                remark-dscp(5)
+                }
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The action type of conformed flow."
+            DEFVAL { 1 }
+            ::= { ibQoSTrafficLimitEntry 18 }
+
+        ibQoSTrafLmtExceedActionType OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                invalid(0),
+                forward(1),
+                drop(2),
+                remarkdscp(3),
+                exceed-cos(4)
+                }
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The action type of non-conformed flow."
+            DEFVAL { 1 }
+            ::= { ibQoSTrafficLimitEntry 19 }
+
+        ibQoSTrafLmtExceedDscp OBJECT-TYPE
+            SYNTAX Integer32 (0..63 | 255)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The remarked DSCP value of non-conformed flow.
+                DSCP 255 is used as default value and for get/get-next operation of this
+                node. If the user does not set exceeding action as remarking DSCP, then value 255
+                is returned for get/get-next operation.
+                "
+            DEFVAL { 255 }
+            ::= { ibQoSTrafficLimitEntry 20 }
+
+        ibQoSTrafLmtExceedCos OBJECT-TYPE
+            SYNTAX Integer32 (0..7 | 255)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The remarked COS value of non-conformed flow.
+                COS 255 is used as default value and for get/get-next operation of this
+                node. If the user does not set exceeding action as remarking COS, then value 255
+                is returned for get/get-next operation.
+                "
+            DEFVAL { 255 }
+            ::= { ibQoSTrafficLimitEntry 21 }
+
+        ibQoSTrafLmtRowStatus OBJECT-TYPE
+            SYNTAX RowStatus
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "RowStatus,Now support three state:CreateAndGo,Active,Destroy."
+            ::= { ibQoSTrafficLimitEntry 22 }
+
+        ibQoSTrafLmtConformCos OBJECT-TYPE
+            SYNTAX Integer32 (0..7|255)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "If the user chooses remark-cos value of the ibQoSTrafLmtConformActionType,
+                this object can be used to set the conform cos value.
+                There are some enumerations as follows:
+                best-effort         Specify best-effort priority(0)
+                background          Specify background priority(1)
+                spare               Specify spare priority(2)
+                excellent-effort    Specify excellent-effort priority(3)
+                controlled-load     Specify controlled-load priority(4)
+                video               Specify video priority(5)
+                voice               Specify voice priority(6)
+                network-management  Specify network-management priority(7)
+                255 indicates invalid value. "
+              DEFVAL      { 255 }
+            ::= { ibQoSTrafficLimitEntry 23 }
+
+        ibQoSTrafLmtConformDscp OBJECT-TYPE
+            SYNTAX Integer32 (0..63|255)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "If the user chooses remark-dscp value of the ibQoSTrafLmtConformActionType,
+                this object can be used to set the conform dscp value.
+                There are some enumerations as follows:
+                <0-63>  Value of DSCP
+                af11    Specify Assured Forwarding 11 service(10)
+                af12    Specify Assured Forwarding 12 service(12)
+                af13    Specify Assured Forwarding 13 service(14)
+                af21    Specify Assured Forwarding 21 service(18)
+                af22    Specify Assured Forwarding 22 service(20)
+                af23    Specify Assured Forwarding 23 service(22)
+                af31    Specify Assured Forwarding 31 service(26)
+                af32    Specify Assured Forwarding 32 service(28)
+                af33    Specify Assured Forwarding 33 service(30)
+                af41    Specify Assured Forwarding 41 service(34)
+                af42    Specify Assured Forwarding 42 service(36)
+                af43    Specify Assured Forwarding 43 service(38)
+                be      Specify Best Effort service(0)
+                cs1     Specify Class Selector 1 service(8)
+                cs2     Specify Class Selector 2 service(16)
+                cs3     Specify Class Selector 3 service(24)
+                cs4     Specify Class Selector 4 service(32)
+                cs5     Specify Class Selector 5 service(40)
+                cs6     Specify Class Selector 6 service(48)
+                cs7     Specify Class Selector 7 service(56)
+                ef      Specify Expedited Forwarding service(46)
+                255 indicates invalid value. "
+              DEFVAL      { 255 }
+              ::= { ibQoSTrafficLimitEntry 24 }
+
+        ibQoSTrafficPriorityTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbQoSTrafficPriorityEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Traffic priority table is used to remark the IP-precedence, DSCP or COS priority of packets.
+                IP and Link ACL rules can be applied simultaneously,
+                IP and User based ACL rules can not be applied simultaneously,
+                Link and User based ACL rules can not be applied simultaneously.
+                Unused ones is represented with default values.
+                QOS policed service from DSCP mapping table is pre-defined in the ibDscpMapTable in the IB-LswQos-MIB.
+                Policed service can decide what kind of QOS service the flow should get by the DSCP vlaue in the packets.
+                Policed service includes remarking new DSCP,new EXP,new 802.1p priority,new local precedence and new drop priority.
+                "
+            ::= { ibQoSAction 2 }
+
+        ibQoSTrafficPriorityEntry OBJECT-TYPE
+            SYNTAX IbQoSTrafficPriorityEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION             " "
+            INDEX { ibQoSTrafPrioProfIndex, ibQoSTrafPrioActionIndex }
+            ::= { ibQoSTrafficPriorityTable 1 }
+
+        IbQoSTrafficPriorityEntry ::=
+            SEQUENCE {
+                ibQoSTrafPrioProfIndex
+                    Integer32,
+                ibQoSTrafPrioActionIndex
+                    Integer32,
+                ibQoSTrafPrioDirection
+                    IbQoSDirection,
+                ibQoSTrafPrioUserAclNum
+                    Integer32,
+                ibQoSTrafPrioUserAclRule
+                    Integer32,
+                ibQoSTrafPrioIpAclNum
+                    Integer32,
+                ibQoSTrafPrioIpAclRule
+                    Integer32,
+                ibQoSTrafPrioLinkAclNum
+                    Integer32,
+                ibQoSTrafPrioLinkAclRule
+                    Integer32,
+                ibQoSTrafPrioDscp
+                    Integer32,
+                ibQoSTrafPrioIpPre
+                    Integer32,
+                ibQoSTrafPrioIpPreFromCos
+                    TruthValue,
+                ibQoSTrafPrioCos
+                    Integer32,
+                ibQoSTrafPrioCosFromIpPre
+                    TruthValue,
+                ibQoSTrafPrioLocalPre
+                    Integer32,
+                ibQoSTrafPrioPolicedServiceType
+                    INTEGER,
+                ibQoSTrafPrioPolicedServiceDscp
+                    Integer32,
+                ibQoSTrafPrioPolicedServiceExp
+                    Integer32,
+                ibQoSTrafPrioPolicedServiceCos
+                    Integer32,
+                ibQoSTrafPrioPolicedServiceLoaclPre
+                    Integer32,
+                ibQoSTrafPrioPolicedServiceDropPriority
+                    Integer32,
+                ibQoSTrafPrioRowStatus
+                    RowStatus
+             }
+
+        ibQoSTrafPrioProfIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..65535)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The index of QoS profile which the traffic-priority action belongs to."
+            ::= { ibQoSTrafficPriorityEntry 1 }
+
+        ibQoSTrafPrioActionIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..65535)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The index of traffic-priority action."
+            ::= { ibQoSTrafficPriorityEntry 2 }
+
+        ibQoSTrafPrioDirection OBJECT-TYPE
+            SYNTAX IbQoSDirection
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The direction of traffic-priority action."
+            ::= { ibQoSTrafficPriorityEntry 3 }
+
+        ibQoSTrafPrioUserAclNum OBJECT-TYPE
+            SYNTAX Integer32 (0 | 5000..5999)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The number of user-based acl group."
+            DEFVAL { 0 }
+            ::= { ibQoSTrafficPriorityEntry 4 }
+
+        ibQoSTrafPrioUserAclRule OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The subitem of user-based acl rule."
+            DEFVAL { 65535 }
+            ::= { ibQoSTrafficPriorityEntry 5 }
+
+        ibQoSTrafPrioIpAclNum OBJECT-TYPE
+            SYNTAX Integer32 (0 | 2000..3999)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The number of Ip-based acl group."
+            DEFVAL { 0 }
+            ::= { ibQoSTrafficPriorityEntry 6 }
+
+        ibQoSTrafPrioIpAclRule OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The subitem of IP-based acl rule."
+            DEFVAL { 65535 }
+            ::= { ibQoSTrafficPriorityEntry 7 }
+
+        ibQoSTrafPrioLinkAclNum OBJECT-TYPE
+            SYNTAX Integer32 (0 | 4000..4999)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The number of Link-based acl group"
+            DEFVAL { 0 }
+            ::= { ibQoSTrafficPriorityEntry 8 }
+
+        ibQoSTrafPrioLinkAclRule OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The subitem of Link-based acl rule."
+            DEFVAL { 65535 }
+            ::= { ibQoSTrafficPriorityEntry 9 }
+
+        ibQoSTrafPrioDscp OBJECT-TYPE
+            SYNTAX Integer32 (0..63 | 255)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Set new DSCP value of specifed flow.
+                DSCP 255 is used as default value and for get/get-next operation of this
+                node. If the user does not set action as remarking DSCP, then value 255
+                is returned for get/get-next operation.
+                "
+            DEFVAL { 255 }
+            ::= { ibQoSTrafficPriorityEntry 10 }
+
+        ibQoSTrafPrioIpPre OBJECT-TYPE
+            SYNTAX Integer32 (0..7 | 255)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Set Ip precedence value of specifed flow.
+                Ip precedence 255 is used as default value and for get/get-next operation of this
+                node. If the user does not set action as remarking Ip precedence, then value 255
+                is returned for get/get-next operation.
+                "
+            DEFVAL { 255 }
+            ::= { ibQoSTrafficPriorityEntry 11 }
+
+        ibQoSTrafPrioIpPreFromCos OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Set Ip precedence according to vlan priority.
+                False(2)is used as default value and for get/get-next operation of this
+                node. If the user does not set action as remarking Ip precedence from COS, then value 2
+                is returned for get/get-next operation.
+                "
+            DEFVAL { 2 }
+            ::= { ibQoSTrafficPriorityEntry 12 }
+
+        ibQoSTrafPrioCos OBJECT-TYPE
+            SYNTAX Integer32 (0..7 | 255)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Set vlan priority of specifed flow.
+                COS 255 is used as default value and for get/get-next operation of this
+                node. If the user does not set action as remarking COS, then value 255
+                is returned for get/get-next operation.
+                "
+            DEFVAL { 255 }
+            ::= { ibQoSTrafficPriorityEntry 13 }
+
+        ibQoSTrafPrioCosFromIpPre OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Set vlan priority according to IP precedence.
+                False(2)is used as default value and for get/get-next operation of this
+                node. If the user does not set action as remarking COS from Ip precedence, then value 2
+                is returned for get/get-next operation.
+                "
+            DEFVAL { 2 }
+            ::= { ibQoSTrafficPriorityEntry 14 }
+
+        ibQoSTrafPrioLocalPre OBJECT-TYPE
+            SYNTAX Integer32 (0..7 | 255)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "Set local precedence of specifed flow.
+                Local precedence 255 is used as default value and for get/get-next operation of this
+                node. If the user does not set action as remarking local precedence, then value 255
+                is returned for get/get-next operation.
+                "
+            DEFVAL { 255 }
+            ::= { ibQoSTrafficPriorityEntry 15 }
+
+        ibQoSTrafPrioPolicedServiceType OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                invalid(0),
+                trust-dscp(2),
+                new-dscp(3),
+                untrusted(4)
+                }
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The service type of policed Priority.
+                Policed Service is not allowed to be set with remarking DSCP,IpPrecedence,IpPrecedenceFromCOS,COS,COSFromIpPrecedence and LocalPrecedence action simultaneously on the same product.
+                Policed service is user-predefined qos policy parameters.
+                trust-dscp(2) means to decide new police service parameters by the DSCP value in the packets.
+                new-dscp(3) means to decide new police service parameters by the new DSCP value set by the user.
+                And a DSCP mapping table should be pre-defined in the ibDscpMapTable in the IB-LswQos-MIB.
+                Untrusted(4) means to set all the new DSCP,EXP,COS,Local precedence and Drop priority by the user.
+
+                "
+            DEFVAL { invalid }
+            ::= { ibQoSTrafficPriorityEntry 16 }
+
+        ibQoSTrafPrioPolicedServiceDscp OBJECT-TYPE
+            SYNTAX Integer32 (0..63 | 255)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The service Dscp of policed Priority"
+            DEFVAL { 255 }
+            ::= { ibQoSTrafficPriorityEntry 17 }
+
+        ibQoSTrafPrioPolicedServiceExp OBJECT-TYPE
+            SYNTAX Integer32 (0..7 | 255)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The service Exp of policed Priority"
+            DEFVAL { 255 }
+            ::= { ibQoSTrafficPriorityEntry 18 }
+
+        ibQoSTrafPrioPolicedServiceCos OBJECT-TYPE
+            SYNTAX Integer32 (0..7 | 255)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The service cos of policed Priority"
+            DEFVAL { 255 }
+            ::= { ibQoSTrafficPriorityEntry 19 }
+
+        ibQoSTrafPrioPolicedServiceLoaclPre OBJECT-TYPE
+            SYNTAX Integer32 (0..7 | 255)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The service local pre of policed Priority"
+            DEFVAL { 255 }
+            ::= { ibQoSTrafficPriorityEntry 20 }
+
+        ibQoSTrafPrioPolicedServiceDropPriority OBJECT-TYPE
+            SYNTAX Integer32 (0..2 | 255)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The service drop priority of proliced Priority"
+            DEFVAL { 255 }
+            ::= { ibQoSTrafficPriorityEntry 21 }
+
+        ibQoSTrafPrioRowStatus OBJECT-TYPE
+            SYNTAX RowStatus
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "RowStatus,Now support three state:CreateAndGo,Active,Destroy."
+            ::= { ibQoSTrafficPriorityEntry 22 }
+
+        ibQoSTrafficFilterTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbQoSTrafficFilterEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Traffic filter table is used to deny or permit packets.
+                IP and Link ACL rules can be applied simultaneously,
+                IP and User based ACL rules can not be applied simultaneously,
+                Link and User based ACL rules can not be applied simultaneously.
+                Unused ones is represented with default values.
+                To deny or permit packets,the ACL rules should be defined in ibAcl table.
+                The 'deny' or 'permit' action should be defined with ACL rules.
+                In this table,a predefined ACL rules can be referenced in a specified QOS profile group.
+                'Direction' means the ACL rules can be applied to the inbound or outbound packets.
+
+                "
+            ::= { ibQoSAction 3 }
+
+        ibQoSTrafficFilterEntry OBJECT-TYPE
+            SYNTAX IbQoSTrafficFilterEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION             " "
+            INDEX { ibQoSTrafFilterProfIndex, ibQoSTrafFilterActionIndex }
+            ::= { ibQoSTrafficFilterTable 1 }
+
+        IbQoSTrafficFilterEntry ::=
+            SEQUENCE {
+                ibQoSTrafFilterProfIndex
+                    Integer32,
+                ibQoSTrafFilterActionIndex
+                    Integer32,
+                ibQoSTrafFilterDirection
+                    IbQoSDirection,
+                ibQoSTrafFilterUserAclNum
+                    Integer32,
+                ibQoSTrafFilterUserAclRule
+                    Integer32,
+                ibQoSTrafFilterIpAclNum
+                    Integer32,
+                ibQoSTrafFilterIpAclRule
+                    Integer32,
+                ibQoSTrafFilterLinkAclNum
+                    Integer32,
+                ibQoSTrafFilterLinkAclRule
+                    Integer32,
+                ibQoSTrafFilterRowStatus
+                    RowStatus
+             }
+
+        ibQoSTrafFilterProfIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..65535)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The index of QoS profile which the traffic-filter action belongs to."
+            ::= { ibQoSTrafficFilterEntry 1 }
+
+        ibQoSTrafFilterActionIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..65535)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The index of traffic-filter action."
+            ::= { ibQoSTrafficFilterEntry 2 }
+
+        ibQoSTrafFilterDirection OBJECT-TYPE
+            SYNTAX IbQoSDirection
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The direction of traffic-filter action."
+            ::= { ibQoSTrafficFilterEntry 3 }
+
+        ibQoSTrafFilterUserAclNum OBJECT-TYPE
+            SYNTAX Integer32 (0 | 5000..5999 )
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The number of user-based acl group."
+            DEFVAL { 0 }
+            ::= { ibQoSTrafficFilterEntry 4 }
+
+        ibQoSTrafFilterUserAclRule OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The subitem of user-based acl rule."
+            DEFVAL { 65535 }
+            ::= { ibQoSTrafficFilterEntry 5 }
+
+        ibQoSTrafFilterIpAclNum OBJECT-TYPE
+            SYNTAX Integer32 (0 | 2000..3999)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The number of Ip-based acl group."
+            DEFVAL { 0 }
+            ::= { ibQoSTrafficFilterEntry 6 }
+
+        ibQoSTrafFilterIpAclRule OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The subitem of IP-based acl rule."
+            DEFVAL { 65535 }
+            ::= { ibQoSTrafficFilterEntry 7 }
+
+        ibQoSTrafFilterLinkAclNum OBJECT-TYPE
+            SYNTAX Integer32 (0 | 4000..4999)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The number of Link-based acl group"
+            DEFVAL { 0 }
+            ::= { ibQoSTrafficFilterEntry 8 }
+
+        ibQoSTrafFilterLinkAclRule OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "The subitem of Link-based acl rule."
+            DEFVAL { 65535 }
+            ::= { ibQoSTrafficFilterEntry 9 }
+
+        ibQoSTrafFilterRowStatus OBJECT-TYPE
+            SYNTAX RowStatus
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "RowStatus,Now support three state:CreateAndGo,Active,Destroy."
+            ::= { ibQoSTrafficFilterEntry 10 }
+
+        ibQoSProfPortMapping OBJECT IDENTIFIER ::= { ibQoSProfObjects 3 }
+
+        ibQoSProfPortMappingTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbQoSProfPortMappingEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Port mapping table is used to apply the qos profile to the port.
+                If a qos profile is applied to the port,
+                then the port will have an entry in the table."
+            ::= { ibQoSProfPortMapping 1 }
+
+        ibQoSProfPortMappingEntry OBJECT-TYPE
+            SYNTAX IbQoSProfPortMappingEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION             " "
+            INDEX { ibQoSProfPortMappingIfIndex, ibQoSProfPortMappingProfIndex }
+            ::= { ibQoSProfPortMappingTable 1 }
+
+        IbQoSProfPortMappingEntry ::=
+            SEQUENCE {
+                ibQoSProfPortMappingIfIndex
+                    Integer32,
+                ibQoSProfPortMappingProfIndex
+                    Integer32,
+                ibQoSProfPortMappingRowStatus
+                    RowStatus
+             }
+
+        ibQoSProfPortMappingIfIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..2147483647)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The ifindex which the specified QoS profile group is applied to."
+            ::= { ibQoSProfPortMappingEntry 1 }
+
+        ibQoSProfPortMappingProfIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..65535)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The index of specified QoS profile group."
+            ::= { ibQoSProfPortMappingEntry 2 }
+
+        ibQoSProfPortMappingRowStatus OBJECT-TYPE
+            SYNTAX RowStatus
+            MAX-ACCESS read-create
+            STATUS current
+            DESCRIPTION
+                "RowStatus,Now support three state:CreateAndGo,Active,Destroy."
+            ::= { ibQoSProfPortMappingEntry 3 }
+
+        ibQoSProfPortMappingModeTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbQoSProfPortMappingModeEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Port mapping mode table is used to set mapping mode of the port.
+                When a qos profile is applied to a port, the profile can have two working ways:
+                1)The profile is the same for all the users connected to the port;
+                2)The profile can be different for different users connected to the port;
+                Port-based mode means the profile is the same for all the users.
+                User-based mode means the profile is different for different users.
+                Default value is port-based."
+            ::= { ibQoSProfPortMapping 2 }
+
+        ibQoSProfPortMappingModeEntry OBJECT-TYPE
+            SYNTAX IbQoSProfPortMappingModeEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION             " "
+            INDEX { ibQoSProfPortMappingModeIfIndex }
+            ::= { ibQoSProfPortMappingModeTable 1 }
+
+        IbQoSProfPortMappingModeEntry ::=
+            SEQUENCE {
+                ibQoSProfPortMappingModeIfIndex
+                    Integer32,
+                ibQoSProfPortMappingMode
+                    INTEGER
+             }
+
+        ibQoSProfPortMappingModeIfIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..2147483647)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The ifindex which the QoS profile mapping mode is applied to."
+            ::= { ibQoSProfPortMappingModeEntry 1 }
+
+        ibQoSProfPortMappingMode OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                user-based(1),
+                port-based(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The QoS profile mapping mode of specifed port."
+            DEFVAL { 2 }
+            ::= { ibQoSProfPortMappingModeEntry 2 }
+
+        ibQoSProfDynPortMappingTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IbQoSProfDynPortMappingEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Dynamic port mapping table is used to get user' port,MAC address,IP address,VLAN ID and user-specified qos profiles.
+                Network managers can allocate different QOS profile groups to different users.
+                Once the user is on line, then the user-specified QOS profiles will be dynamically applied to the port the user connects.
+                Each port can have different groups of users simultaneously connected.
+                Each group of users can have assiociation with multiple QOS profiles simultaneously.
+                So the user's port,MAC address,IP address and VLAN ID will replace the source information in the ACL rules refered in the QOS profiles.
+                Once the user is off line, then the user-specified QOS profiles will be dynamically deleted from the port the user connects."
+            ::= { ibQoSProfPortMapping 3 }
+
+        ibQoSProfDynPortMappingEntry OBJECT-TYPE
+            SYNTAX IbQoSProfDynPortMappingEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION             " "
+            INDEX { ibQoSProfDynPortMappingIfIndex, ibQoSProfDynPortMappingUserSrcMAC }
+            ::= { ibQoSProfDynPortMappingTable 1 }
+
+        IbQoSProfDynPortMappingEntry ::=
+            SEQUENCE {
+                ibQoSProfDynPortMappingIfIndex
+                    Integer32,
+                ibQoSProfDynPortMappingUserSrcMAC
+                    MacAddress,
+                ibQoSProfDynPortMappingUserName
+                    OCTET STRING,
+                ibQoSProfDynPortMappingUserIPAddr
+                    IpAddress,
+                ibQoSProfDynPortMappingUserVLANID
+                    Integer32,
+                ibQoSProfDynPortMappingUserProfName
+                    OCTET STRING
+             }
+
+        ibQoSProfDynPortMappingIfIndex OBJECT-TYPE
+            SYNTAX Integer32 (1..2147483647)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "if index of the port user profile is applied."
+            ::= { ibQoSProfDynPortMappingEntry 1 }
+
+        ibQoSProfDynPortMappingUserSrcMAC OBJECT-TYPE
+            SYNTAX MacAddress
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "User sourc MAC address."
+            ::= { ibQoSProfDynPortMappingEntry 2 }
+
+        ibQoSProfDynPortMappingUserName OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE (1..32))
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "User name."
+            ::= { ibQoSProfDynPortMappingEntry 3 }
+
+        ibQoSProfDynPortMappingUserIPAddr OBJECT-TYPE
+            SYNTAX IpAddress
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "User IP address"
+            ::= { ibQoSProfDynPortMappingEntry 4 }
+
+        ibQoSProfDynPortMappingUserVLANID OBJECT-TYPE
+            SYNTAX Integer32 (1..65535)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "User VLAN ID."
+            ::= { ibQoSProfDynPortMappingEntry 5 }
+
+        ibQoSProfDynPortMappingUserProfName OBJECT-TYPE
+            SYNTAX OCTET STRING (SIZE (1..32))
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "User profile name."
+            ::= { ibQoSProfDynPortMappingEntry 6 }
+
+        ibQoSProfPortMappingTraps OBJECT IDENTIFIER ::= { ibQosProfile 2 }
+
+        ibQoSProfPortMappingError NOTIFICATION-TYPE
+            STATUS current
+            DESCRIPTION
+                "An ibQoSProfPortMappingError notification is generated
+                when a qos profile fails to be applied on the port."
+            ::= { ibQoSProfPortMappingTraps 1 }
+
+        ibQoSProfMibConformance OBJECT IDENTIFIER ::= { ibQosProfile 3 }
+
+        ibQoSProfMibCompliances OBJECT IDENTIFIER ::= { ibQoSProfMibConformance 1 }
+
+        ibQoSProfMibCompliance MODULE-COMPLIANCE
+            STATUS current
+            DESCRIPTION
+                "The compliance statement for QoS Profile MIB."
+            MODULE -- this module
+                MANDATORY-GROUPS { ibQoSProfGroup, ibQoSActionGroup, ibQoSProfPortMappingGroup, ibQoSProfPortMappingTrapsGroup }
+            ::= { ibQoSProfMibCompliances 1 }
+
+        ibQoSProfMibGroups OBJECT IDENTIFIER ::= { ibQoSProfMibConformance 2 }
+
+        ibQoSProfGroup OBJECT-GROUP
+            OBJECTS { ibQoSProfName, ibQoSProfActionNumber, ibQoSProfRowStatus }
+            STATUS current
+            DESCRIPTION
+                "Included table:
+                ibQoSProfTable."
+            ::= { ibQoSProfMibGroups 1 }
+
+        ibQoSActionGroup OBJECT-GROUP
+            OBJECTS { ibQoSTrafLmtDirection, ibQoSTrafLmtUserAclNum, ibQoSTrafLmtUserAclRule, ibQoSTrafLmtIpAclNum, ibQoSTrafLmtIpAclRule,
+                ibQoSTrafLmtLinkAclNum, ibQoSTrafLmtLinkAclRule, ibQoSTrafLmtTargetRateMbps, ibQoSTrafLmtTargetRateKbps, ibQoSTrafLmtPeakRate,
+                ibQoSTrafLmtCIR, ibQoSTrafLmtCBS, ibQoSTrafLmtEBS, ibQoSTrafLmtPIR, ibQoSTrafLmtConformLocalPre,
+                ibQoSTrafLmtConformActionType, ibQoSTrafLmtExceedActionType, ibQoSTrafLmtExceedDscp, ibQoSTrafLmtExceedCos, ibQoSTrafLmtRowStatus,
+                ibQoSTrafLmtConformCos,ibQoSTrafLmtConformDscp,
+                ibQoSTrafPrioDirection, ibQoSTrafPrioUserAclNum, ibQoSTrafPrioUserAclRule, ibQoSTrafPrioIpAclNum, ibQoSTrafPrioIpAclRule,
+                ibQoSTrafPrioLinkAclNum, ibQoSTrafPrioLinkAclRule, ibQoSTrafPrioDscp, ibQoSTrafPrioIpPre, ibQoSTrafPrioIpPreFromCos,
+                ibQoSTrafPrioCos, ibQoSTrafPrioCosFromIpPre, ibQoSTrafPrioLocalPre, ibQoSTrafPrioPolicedServiceType, ibQoSTrafPrioPolicedServiceDscp,
+                ibQoSTrafPrioPolicedServiceExp, ibQoSTrafPrioPolicedServiceCos, ibQoSTrafPrioPolicedServiceLoaclPre, ibQoSTrafPrioPolicedServiceDropPriority, ibQoSTrafPrioRowStatus,
+                ibQoSTrafFilterDirection, ibQoSTrafFilterUserAclNum, ibQoSTrafFilterUserAclRule, ibQoSTrafFilterIpAclNum, ibQoSTrafFilterIpAclRule,
+                ibQoSTrafFilterLinkAclNum, ibQoSTrafFilterLinkAclRule, ibQoSTrafFilterRowStatus }
+            STATUS current
+            DESCRIPTION
+                "Included table:
+                1)ibQoSTrafficLimitTable.
+                2)ibQoSTrafficPriorityTable.
+                3)ibQoSTrafficFilterTable
+                "
+            ::= { ibQoSProfMibGroups 2 }
+
+        ibQoSProfPortMappingGroup OBJECT-GROUP
+            OBJECTS { ibQoSProfPortMappingRowStatus, ibQoSProfPortMappingMode, ibQoSProfDynPortMappingUserName, ibQoSProfDynPortMappingUserIPAddr, ibQoSProfDynPortMappingUserVLANID,
+                ibQoSProfDynPortMappingUserProfName }
+            STATUS current
+            DESCRIPTION
+                "Included tables:
+                1)ibQoSProfPortMappingTable.
+                2)ibQoSProfPortMappingModeTable.
+                3)ibQoSProfDynPortMappingTable.
+                "
+            ::= { ibQoSProfMibGroups 3 }
+
+        ibQoSProfPortMappingTrapsGroup NOTIFICATION-GROUP
+            NOTIFICATIONS { ibQoSProfPortMappingError }
+            STATUS current
+            DESCRIPTION
+                "Included:
+                ibQoSProfPortMappingTraps."
+            ::= { ibQoSProfMibGroups 4 }
+
+
+    END

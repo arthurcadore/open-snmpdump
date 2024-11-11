@@ -1,0 +1,514 @@
+-- ============================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+-- Description:  The purpose of this MIB file is to provide the definition of
+--               the SECDIAG(Security Diagnostic) trap.
+-- Reference:
+-- Version: V1.0
+-- History:
+-- V1.0 2022/07/15 created by suncao
+--      The initial revision of this MIB module.
+--      Add the ibSecDiagTrapConcurrencyExceed,
+--      ibSecDiagTrapConcurrencyBelow,
+--      ibSecDiagTrapConnectionExceed,
+--      ibSecDiagTrapConnectionBelow,
+--      ibSecDiagTrapSecpIpv4Exceed,
+--      ibSecDiagTrapSecpIpv4Below,
+--      ibSecDiagTrapSecpIpv6Exceed,
+--      ibSecDiagTrapSecpIpv6Below,
+--      ibSecDiagTrapContextExceed,
+--      ibSecDiagTrapContextBelow,
+--      ibSecDiagTrapNatExceed,
+--      ibSecDiagTrapNatBelow,
+--      ibSecDiagTrapBaggExceed,
+--      ibSecDiagTrapBaggBelow,
+--      ibSecDiagTrapRaggExceed,
+--      ibSecDiagTrapRaggBelow,
+--      ibSecDiagTrapThroughputExceed,
+--      ibSecDiagTrapThroughputBelow,
+--      ibSecDiagTrapQaclExceed,
+--      ibSecDiagTrapQaclBelow,
+--      ibSecDiagTrapBandwidthExceed,
+--      ibSecDiagTrapBandwidthBelow,
+--      ibSecDiagTrapBldContextExceed,
+--      ibSecDiagTrapBldContextBelow,
+--      ibSecDiagTrapBldContextClose,
+--      ibSecDiagTrapContextClose.
+-- ============================================================================
+IB-SECDIAG-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    ibCommon
+        FROM IB-OID-MIB
+    OBJECT-TYPE, Unsigned32, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI;
+
+ibSecDiag MODULE-IDENTITY
+    LAST-UPDATED "202207151011Z"             -- July 15, 2022 at 10:11 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The initial revision of this MIB module.
+        Add the ibSecDiagTrapConcurrencyExceed,
+        ibSecDiagTrapConcurrencyBelow,
+        ibSecDiagTrapConnectionExceed,
+        ibSecDiagTrapConnectionBelow,
+        ibSecDiagTrapSecpIpv4Exceed,
+        ibSecDiagTrapSecpIpv4Below,
+        ibSecDiagTrapSecpIpv6Exceed,
+        ibSecDiagTrapSecpIpv6Below,
+        ibSecDiagTrapContextExceed,
+        ibSecDiagTrapContextBelow,
+        ibSecDiagTrapNatExceed,
+        ibSecDiagTrapNatBelow,
+        ibSecDiagTrapBaggExceed,
+        ibSecDiagTrapBaggBelow,
+        ibSecDiagTrapRaggExceed,
+        ibSecDiagTrapRaggBelow,
+        ibSecDiagTrapThroughputExceed,
+        ibSecDiagTrapThroughputBelow,
+        ibSecDiagTrapQaclExceed,
+        ibSecDiagTrapQaclBelow,
+        ibSecDiagTrapBandwidthExceed,
+        ibSecDiagTrapBandwidthBelow,
+        ibSecDiagTrapBldContextExceed,
+        ibSecDiagTrapBldContextBelow,
+        ibSecDiagTrapBldContextClose,
+        ibSecDiagTrapContextClose."
+
+    REVISION "202207151011Z"                -- July 15, 2022 at 10:11 GMT
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 238 }
+
+--
+-- Node definitions
+--
+
+-- Global Variants
+ibSecDiagTraps OBJECT IDENTIFIER ::= { ibSecDiag 1 }
+
+--                     **************Global Variants***************
+-- Describe objects for secdiag trap
+ibSecDiagTrapsMonitorPrefix OBJECT IDENTIFIER ::= { ibSecDiagTraps 0 }
+ibSecDiagTrapConcurrencyExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagConcurrencyThreshold,
+            ibSecDiagConcurrencyDeviceId
+        }
+    STATUS    current
+    DESCRIPTION
+        "Send trap when the number of session connections reached
+        the alarm threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 1 }
+ibSecDiagTrapConcurrencyBelow NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagConcurrencyDeviceId
+        }
+    STATUS    current
+    DESCRIPTION
+        "Send trap when the number of session connections fell below
+        the threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 2 }
+ibSecDiagTrapConnectionExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagConnectionThreshold,
+            ibSecDiagConnectionDeviceId
+        }
+    STATUS    current
+    DESCRIPTION
+        "The new session creation rate reached the alarm threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 3 }
+ibSecDiagTrapConnectionBelow NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagConnectionDeviceId
+        }
+    STATUS    current
+    DESCRIPTION
+        "Session creation rate drops below the threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 4 }
+ibSecDiagTrapSecpIpv4Exceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagSecpIpv4Threshold
+        }
+    STATUS    current
+    DESCRIPTION
+        "The number of IPv4 security policy rules has reached the alarm threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 5 }
+ibSecDiagTrapSecpIpv4Below NOTIFICATION-TYPE
+    STATUS    current
+    DESCRIPTION
+        "The number of IPv4 security policy rules has fallen below the threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 6 }
+ibSecDiagTrapSecpIpv6Exceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagSecpIpv6Threshold
+        }
+    STATUS    current
+    DESCRIPTION
+        "The number of IPv6 security policy rules has reached the alarm threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 7 }
+ibSecDiagTrapSecpIpv6Below NOTIFICATION-TYPE
+    STATUS    current
+    DESCRIPTION
+        "The number of IPv6 security policy rules has fallen below the threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 8 }
+ibSecDiagTrapContextExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagContextThreshold
+        }
+    STATUS    current
+    DESCRIPTION
+        "The number of context has reached the alarm threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 9 }
+ibSecDiagTrapContextBelow NOTIFICATION-TYPE
+    STATUS    current
+    DESCRIPTION
+        "The number of contexts has fallen below the threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 10 }
+ibSecDiagTrapNatExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagNatThreshold
+        }
+    STATUS    current
+    DESCRIPTION
+        "The number of configured NAT entries has reached the alarm threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 11 }
+ibSecDiagTrapNatBelow NOTIFICATION-TYPE
+    STATUS    current
+    DESCRIPTION
+        "The number of NAT entries has fallen below the threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 12 }
+ibSecDiagTrapBaggExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagBaggThreshold
+        }
+    STATUS    current
+    DESCRIPTION
+        "The number of layer-2 aggregation interfaces has reached
+        the alarm threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 13 }
+ibSecDiagTrapBaggBelow NOTIFICATION-TYPE
+    STATUS    current
+    DESCRIPTION
+        "The number of layer-2 aggregation interfaces has fallen
+        below the threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 14 }
+ibSecDiagTrapRaggExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagRaggThreshold
+        }
+    STATUS    current
+    DESCRIPTION
+        "The number of three-layer aggregation interfaces has reached
+        the alarm threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 15 }
+ibSecDiagTrapRaggBelow NOTIFICATION-TYPE
+    STATUS    current
+    DESCRIPTION
+        "The number of three-layer aggregation interfaces has fallen
+        below the threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 16 }
+ibSecDiagTrapThroughputExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagThroughputThreshold,
+            ibSecDiagThroughputDeviceId
+        }
+    STATUS    current
+    DESCRIPTION
+        "The throughput of the internal interface has reached the alarm threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 17 }
+ibSecDiagTrapThroughputBelow NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagThroughputDeviceId
+        }
+    STATUS    current
+    DESCRIPTION
+        "The throughput of the internal interface drops below the threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 18 }
+ibSecDiagTrapQaclExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagQaclThreshold,
+            ibSecDiagQaclDeviceId,
+            ibSecDiagQaclTotalSlices,
+            ibSecDiagQaclSingleSlices,
+            ibSecDiagQaclDoubleSlices,
+            ibSecDiagQaclMQCEntries,
+            ibSecDiagQaclOpenFlowEntries
+        }
+    STATUS    current
+    DESCRIPTION
+        "The percentage of QACL resource utilization has reached
+        the alarm threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 19 }
+ibSecDiagTrapQaclBelow NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagQaclDeviceId
+        }
+    STATUS    current
+    DESCRIPTION
+        "The percentage of QACL resource utilization has fallen
+        below the threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 20 }
+ibSecDiagTrapBandwidthExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagBandwidthThreshold
+        }
+    STATUS    current
+    DESCRIPTION
+        "The incoming traffic is always greater than or equal to
+        the bandwidth alarm threshold within the duration."
+    ::= { ibSecDiagTrapsMonitorPrefix 21 }
+ibSecDiagTrapBandwidthBelow NOTIFICATION-TYPE
+    STATUS    current
+    DESCRIPTION
+        "The incoming traffic falls below the bandwidth alarm threshold
+        within the duration."
+    ::= { ibSecDiagTrapsMonitorPrefix 22 }
+ibSecDiagTrapBldContextExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagBladeEngineGroupId,
+            ibSecDiagBladeThresholdLevel,
+            ibSecDiagBladeThreshold
+        }
+    STATUS    current
+    DESCRIPTION
+        "The number of context in a security engine group reaches
+        the first threshold alarm or the second threshold alarm."
+    ::= { ibSecDiagTrapsMonitorPrefix 23 }
+ibSecDiagTrapBldContextBelow NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibSecDiagBladeEngineGroupId,
+            ibSecDiagBladeThresholdLevel,
+            ibSecDiagBladeThreshold
+        }
+    STATUS    current
+    DESCRIPTION
+        "The number of context on the engine group drops below
+        the first level threshold or below the second threshold."
+    ::= { ibSecDiagTrapsMonitorPrefix 24 }
+ibSecDiagTrapBldContextClose NOTIFICATION-TYPE
+    STATUS    current
+    DESCRIPTION
+        "Turn off the context monitoring alarm based on the engine group."
+    ::= { ibSecDiagTrapsMonitorPrefix 25 }
+ibSecDiagTrapContextClose NOTIFICATION-TYPE
+    STATUS    current
+    DESCRIPTION
+        "Close the context number monitoring alarm."
+    ::= { ibSecDiagTrapsMonitorPrefix 26 }
+
+ibSecDiagTrapsMonitorObjects OBJECT IDENTIFIER ::= { ibSecDiagTraps 1 }
+ibSecDiagConcurrencyThreshold OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Threshold value of session connections."
+    ::= { ibSecDiagTrapsMonitorObjects 1 }
+ibSecDiagConcurrencyDeviceId OBJECT-TYPE
+    SYNTAX    OCTET STRING(SIZE(0..64))
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "1.The slot number of the board, such as slot XX.
+        If the slot supports multiple CPUs, it is like slot XX CPU XX.
+        (Distributed device,independent operation mode).
+        2.The member number of the equipment in IRF, such as slot XX.
+        If the slot supports multiple CPUs, it is like slot XX CPU XX.
+        (Centralized IRF equipment).
+        3.The slot number of the board in the IRF, such as chassis XX slot XX.
+        If the slot supports multiple CPUs, the form is chassis XX slot XX CPU XX.
+        (Distributed device,IRF mode)."
+    ::= { ibSecDiagTrapsMonitorObjects 2 }
+ibSecDiagConnectionThreshold OBJECT-TYPE
+    SYNTAX    Unsigned32
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Threshold of session creation rate."
+    ::= { ibSecDiagTrapsMonitorObjects 3 }
+ibSecDiagConnectionDeviceId OBJECT-TYPE
+    SYNTAX    OCTET STRING(SIZE(0..64))
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "1.The slot number of the board, such as slot XX.
+        If the slot supports multiple CPUs, it is like slot XX CPU XX.
+        (Distributed device,independent operation mode).
+        2.The member number of the equipment in IRF, such as slot XX.
+        If the slot supports multiple CPUs, it is like slot XX CPU XX.
+        (Centralized IRF equipment).
+        3.The slot number of the board in the IRF, such as chassis XX slot XX.
+        If the slot supports multiple CPUs, the form is chassis XX slot XX CPU XX.
+        (Distributed device,IRF mode)."
+    ::= { ibSecDiagTrapsMonitorObjects 4 }
+ibSecDiagSecpIpv4Threshold OBJECT-TYPE
+    SYNTAX    Unsigned32
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Threshold value for the number of IPv4 security policy rules."
+    ::= { ibSecDiagTrapsMonitorObjects 5 }
+ibSecDiagSecpIpv6Threshold OBJECT-TYPE
+    SYNTAX    Unsigned32
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Threshold value for the number of IPv6 security policy rules."
+    ::= { ibSecDiagTrapsMonitorObjects 6 }
+ibSecDiagContextThreshold OBJECT-TYPE
+    SYNTAX    Unsigned32
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Context number alarm threshold."
+    ::= { ibSecDiagTrapsMonitorObjects 7 }
+ibSecDiagNatThreshold OBJECT-TYPE
+    SYNTAX    Unsigned32
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Threshold value of NAT entries."
+    ::= { ibSecDiagTrapsMonitorObjects 8 }
+ibSecDiagBaggThreshold OBJECT-TYPE
+    SYNTAX    Unsigned32
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Threshold value for the number of layer-2 aggregation interfaces."
+    ::= { ibSecDiagTrapsMonitorObjects 9 }
+ibSecDiagRaggThreshold OBJECT-TYPE
+    SYNTAX    Unsigned32
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Threshold value for the number of three-tier aggregation interfaces."
+    ::= { ibSecDiagTrapsMonitorObjects 10 }
+ibSecDiagThroughputThreshold OBJECT-TYPE
+    SYNTAX    Unsigned32
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Threshold value for the throughput of internal interface."
+    ::= { ibSecDiagTrapsMonitorObjects 11 }
+ibSecDiagThroughputDeviceId OBJECT-TYPE
+    SYNTAX    OCTET STRING(SIZE(0..64))
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "1.The slot number of the board, such as slot XX.
+        If the slot supports multiple CPUs, it is like slot XX CPU XX.
+        (Distributed device,independent operation mode).
+        2.The member number of the equipment in IRF, such as slot XX.
+        If the slot supports multiple CPUs, it is like slot XX CPU XX.
+        (Centralized IRF equipment).
+        3.The slot number of the board in the IRF, such as chassis XX slot XX.
+        If the slot supports multiple CPUs, the form is chassis XX slot XX CPU XX.
+        (Distributed device,IRF mode)."
+    ::= { ibSecDiagTrapsMonitorObjects 12 }
+ibSecDiagQaclThreshold OBJECT-TYPE
+    SYNTAX    Unsigned32
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "QACL resource usage threshold."
+    ::= { ibSecDiagTrapsMonitorObjects 13 }
+ibSecDiagQaclDeviceId OBJECT-TYPE
+    SYNTAX    OCTET STRING(SIZE(0..64))
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "1.The slot number of the board, such as slot XX.
+        If the slot supports multiple CPUs, it is like slot XX CPU XX.
+        (Distributed device,independent operation mode).
+        2.The member number of the equipment in IRF, such as slot XX.
+        If the slot supports multiple CPUs, it is like slot XX CPU XX.
+        (Centralized IRF equipment).
+        3.The slot number of the board in the IRF, such as chassis XX slot XX.
+        If the slot supports multiple CPUs, the form is chassis XX slot XX CPU XX.
+        (Distributed device,IRF mode)."
+    ::= { ibSecDiagTrapsMonitorObjects 14 }
+ibSecDiagQaclTotalSlices OBJECT-TYPE
+    SYNTAX    Unsigned32
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Total slices value."
+    ::= { ibSecDiagTrapsMonitorObjects 15 }
+ibSecDiagQaclSingleSlices OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Number of single-slices remaining."
+    ::= { ibSecDiagTrapsMonitorObjects 16 }
+ibSecDiagQaclDoubleSlices OBJECT-TYPE
+    SYNTAX    Unsigned32
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Number of double-slices remaining."
+    ::= { ibSecDiagTrapsMonitorObjects 17 }
+ibSecDiagQaclMQCEntries OBJECT-TYPE
+    SYNTAX    Unsigned32
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Number of MQC-entries remaining."
+    ::= { ibSecDiagTrapsMonitorObjects 18 }
+ibSecDiagQaclOpenFlowEntries OBJECT-TYPE
+    SYNTAX    Unsigned32
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Number of OpenFlow-entries remaining."
+    ::= { ibSecDiagTrapsMonitorObjects 19 }
+ibSecDiagBandwidthThreshold OBJECT-TYPE
+    SYNTAX    Unsigned32
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Overall bandwidth threshold."
+    ::= { ibSecDiagTrapsMonitorObjects 20 }
+ibSecDiagBladeEngineGroupId OBJECT-TYPE
+    SYNTAX    OCTET STRING(SIZE(0..64))
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Engine group ID."
+    ::= { ibSecDiagTrapsMonitorObjects 21 }
+ibSecDiagBladeThresholdLevel OBJECT-TYPE
+    SYNTAX    Unsigned32
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Threshold level."
+    ::= { ibSecDiagTrapsMonitorObjects 22 }
+ibSecDiagBladeThreshold OBJECT-TYPE
+    SYNTAX    Unsigned32
+    MAX-ACCESS    accessible-for-notify
+    STATUS    current
+    DESCRIPTION
+        "Context number threshold."
+    ::= { ibSecDiagTrapsMonitorObjects 23 }
+
+END

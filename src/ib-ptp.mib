@@ -1,0 +1,596 @@
+-- =================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The MIB is designed to configure the Precision Time Protocol.
+-- Reference:
+-- Version: V1.5
+-- History:
+-- V1.0 2022-06-28, Du Wei, Initial version
+-- V1.1 2022-08-23, Du Wei, Add ibPTPTimeOffsetSumSec
+-- V1.2 2022-09-01, Du Wei,
+--    Add ibPTPInstanceID,ibPTPChassisID, ibPTPPortAttrMismatchReason
+--    Add ibPTPPortAttrMismatch, ibPTPPortAttrMismatchRecover for trap
+--    Add ibPTPInstanceID to trap objects for PTP instance.
+-- V1.3 2022-09-01, Du Wei,
+--    Add ibPTPSyncSuppress and ibPTPSyncSupressResume for trap
+--    Add ibPTPTimestampChange and ibPTPTimestampUnchange for trap
+--    Adds nodes ibPTPSyncTimeOffset and ibPTPSyncTimeOffsetThreshold
+-- V1.4 2023-02-20, Du Wei,
+--    Add ibPTPPortNonSupport and ibPTPPortNonSupportRecover for trap.
+--    Add node ibPTPPacketDomain.
+-- V1.5 2023-07-11, Du Wei,
+--    Add ibPTPSyncTimeOffsetCurrent object.
+-- =================================================================
+IB-PTP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    Unsigned32, Integer32, OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    TruthValue
+        FROM SNMPv2-TC
+    CounterBasedGauge64
+        FROM HCNUM-TC
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibPTP MODULE-IDENTITY
+    LAST-UPDATED "202307110000Z"
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The private MIB file includes the time information of the
+        device. It is to configure the Precision Time Protocol."
+    REVISION "202307110000Z"
+    DESCRIPTION
+        "Add ibPTPSyncTimeOffsetCurrent object."
+    REVISION "202302200000Z"
+    DESCRIPTION
+        "Add ibPTPPortNonSupport and ibPTPPortNonSupportRecover for trap.
+         Add node ibPTPPacketDomain."
+    REVISION "202212010000Z"
+    DESCRIPTION
+        "Add ibPTPSyncSuppress and ibPTPSyncSupressResume for trap
+         Add ibPTPTimestampChange and ibPTPTimestampUnchange for trap
+         Add nodes ibPTPSyncTimeOffset and ibPTPSyncTimeOffsetThreshold"
+    REVISION "202209010000Z"
+    DESCRIPTION
+        "Add ibPTPChassisID, ibPTPPortAttrMismatchReason.
+         Add ibPTPPortAttrMismatch, ibPTPPortAttrMismatchRecover for trap
+         Add ibPTPInstanceID to trap objects for PTP instance."
+    REVISION "202208230000Z"
+    DESCRIPTION
+        "Add ibPTPTimeOffsetSumSec."
+    REVISION "202206280000Z"
+    DESCRIPTION
+        "The initial revision of this MIB module."
+    ::= { ibCommon 235 }
+
+ibPTPNotifications OBJECT IDENTIFIER ::= { ibPTP 1 }
+
+ibPTPNotification OBJECT IDENTIFIER ::= { ibPTPNotifications 0 }
+
+ibPTPPortStateChange NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibPTPPortName,
+            ibPTPPortState,
+            ibPTPOldPortState,
+            ibPTPInstanceID
+        }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the PTP port status changes."
+    ::= { ibPTPNotification 1 }
+
+ibPTPClockSourceChange NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibPTPOldMasterClockId,
+            ibPTPMasterClockId,
+            ibPTPOldSourcePortNum,
+            ibPTPSourcePortNum,
+            ibPTPPortName,
+            ibPTPOldPortName,
+            ibPTPInstanceID
+        }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the PTP clock source property changes."
+    ::= { ibPTPNotification 2 }
+
+ibPTPTimeSyncFaulty NOTIFICATION-TYPE
+    OBJECTS { ibPTPTimeSyncStatus, ibPTPInstanceID }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the PTP clock loses synchronization."
+    ::= { ibPTPNotification 3 }
+
+ibPTPTimeSyncFaultyRecover NOTIFICATION-TYPE
+    OBJECTS { ibPTPTimeSyncStatus, ibPTPInstanceID }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the PTP clock recover synchronization."
+    ::= { ibPTPNotification 4 }
+
+ibPTPTimeLockFail NOTIFICATION-TYPE
+    OBJECTS { ibPTPTimeLockStatus }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the PTP time not in locked state."
+    ::= { ibPTPNotification 5 }
+
+ibPTPTimeLockFailRecover NOTIFICATION-TYPE
+    OBJECTS { ibPTPTimeLockStatus }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the PTP time recovered to locked state."
+    ::= { ibPTPNotification 6 }
+
+ibPTPExtTimePortLost NOTIFICATION-TYPE
+    OBJECTS { ibPTPExtTimePortStatus, ibPTPExtTimePortType }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the external time port became lost."
+    ::= { ibPTPNotification 7 }
+
+ibPTPExtTimePortLostRecover NOTIFICATION-TYPE
+    OBJECTS { ibPTPExtTimePortStatus, ibPTPExtTimePortType }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the external time port recovered."
+    ::= { ibPTPNotification 8 }
+
+ibPTPPortBmcInfoChange NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibPTPPortName,
+            ibPTPSourcePortClockId,
+            ibPTPSourcePortNum,
+            ibPTPSourceStepsRemoved,
+            ibPTPMasterClockId,
+            ibPTPInstanceID
+        }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the bmc information changed."
+    ::= { ibPTPNotification 9 }
+
+ibPTPSourceClockClassDecline NOTIFICATION-TYPE
+    OBJECTS { ibPTPInstanceID }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the clock source class fell below the threshold"
+    ::= { ibPTPNotification 10 }
+
+ibPTPSourceClockClassRecover NOTIFICATION-TYPE
+    OBJECTS { ibPTPInstanceID }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the clock source class crossed the threshold."
+    ::= { ibPTPNotification 11 }
+
+ibPTPPacketLoss NOTIFICATION-TYPE
+    OBJECTS { ibPTPPacketType, ibPTPInstanceID }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when PTP packets were lost. "
+    ::= { ibPTPNotification 12 }
+
+ibPTPPacketLossRecover NOTIFICATION-TYPE
+    OBJECTS { ibPTPPacketType, ibPTPInstanceID }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when PTP packets lost were recovered."
+    ::= { ibPTPNotification 13 }
+
+ibPTPTimeOffsetExceed NOTIFICATION-TYPE
+    OBJECTS { ibPTPTimeOffset, ibPTPTimeOffsetThreshold }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the ptp standard time offset is abnormal."
+    ::= { ibPTPNotification 14 }
+
+ibPTPTimeOffsetRecover NOTIFICATION-TYPE
+    OBJECTS { ibPTPTimeOffset, ibPTPTimeOffsetThreshold }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the ptp standard time offset is normal."
+    ::= { ibPTPNotification 15 }
+
+ibPTPTimeOffsetSumExceed NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibPTPTimeOffsetSum,
+            ibPTPTimeOffsetSumThrehold,
+            ibPTPTimeOffsetSumSec
+        }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the ptp time offset sum is abnormal."
+    ::= { ibPTPNotification 16 }
+
+ibPTPTimeOffsetSumRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibPTPTimeOffsetSum,
+            ibPTPTimeOffsetSumThrehold,
+            ibPTPTimeOffsetSumSec
+        }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the ptp time offset sum is normal."
+    ::= { ibPTPNotification 17 }
+
+ibPTPFrequencyLockFail NOTIFICATION-TYPE
+    OBJECTS { ibPTPFreqLockStatus }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the PTP frequency not in locked state."
+    ::= { ibPTPNotification 18 }
+
+ibPTPFrequencyLockRecover NOTIFICATION-TYPE
+    OBJECTS { ibPTPFreqLockStatus }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the PTP frequency recovered to locked state."
+    ::= { ibPTPNotification 19 }
+
+ibPTPPortAttrMismatch NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibPTPChassisID,
+            ibPTPPortName,
+            ibPTPPortAttrMismatchReason,
+            ibPTPInstanceID,
+            ibPTPPacketDomain
+        }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the peer PTP ports mismatch in attributes."
+    ::= { ibPTPNotification 20 }
+
+ibPTPPortAttrMismatchRecover NOTIFICATION-TYPE
+    OBJECTS
+        {
+            ibPTPChassisID,
+            ibPTPPortName,
+            ibPTPPortAttrMismatchReason,
+            ibPTPInstanceID,
+            ibPTPPacketDomain
+        }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the peer PTP ports mismatch in attributes."
+    ::= { ibPTPNotification 21 }
+
+ibPTPSyncSuppress NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPTPSyncTimeOffset,
+        ibPTPSyncTimeOffsetThreshold,
+        ibPTPInstanceID
+    }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when PTP time synchronization was suppressed because
+        the PTP time offset between the instance and the master exceeded the threshold."
+    ::= { ibPTPNotification 22 }
+
+ibPTPSyncSupressResume NOTIFICATION-TYPE
+    OBJECTS
+    {
+        ibPTPSyncTimeOffset,
+        ibPTPSyncTimeOffsetThreshold,
+        ibPTPInstanceID
+    }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when PTP time synchronization resumed
+        because the PTP time offset between the instance and the master
+        fell below the threshold or the maximum suppression counts were reached."
+    ::= { ibPTPNotification 23 }
+
+ibPTPTimestampUnchange NOTIFICATION-TYPE
+    OBJECTS { ibPTPInstanceID }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the timestamp carried in the received message
+         does not change, and the status of the timestamp is abnormal."
+    ::= { ibPTPNotification 24 }
+
+ibPTPTimestampChange NOTIFICATION-TYPE
+    OBJECTS { ibPTPInstanceID }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the timestamp carried in the received message
+        returns to continuous change, and the timestamp status is normal."
+    ::= { ibPTPNotification 25 }
+
+ibPTPPortNonSupport NOTIFICATION-TYPE
+    OBJECTS { ibPTPChassisID, ibPTPPortName }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the port does not support ptp clock synchronization."
+    ::= { ibPTPNotification 26 }
+
+ibPTPPortNonSupportRecover NOTIFICATION-TYPE
+    OBJECTS { ibPTPChassisID, ibPTPPortName }
+    STATUS current
+    DESCRIPTION
+        "The trap is generated when the port does not support ptp clock synchronization is recovered."
+    ::= { ibPTPNotification 27 }
+
+ibPTPNotificationObjects OBJECT IDENTIFIER ::= { ibPTPNotifications 1 }
+
+ibPTPPortName OBJECT-TYPE
+    SYNTAX OCTET STRING
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "PTP port name."
+    ::= { ibPTPNotificationObjects 1 }
+
+ibPTPOldPortName OBJECT-TYPE
+    SYNTAX OCTET STRING
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The history PTP port name."
+    ::= { ibPTPNotificationObjects 2 }
+
+ibPTPPortState OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        initializing(1),
+        faulty(2),
+        disabled(3),
+        listening(4),
+        premaster(5),
+        master(6),
+        passive(7),
+        uncalibrated(8),
+        slave(9)
+        }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "PTP port state."
+    ::= { ibPTPNotificationObjects 3 }
+
+ibPTPOldPortState OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        initializing(1),
+        faulty(2),
+        disabled(3),
+        listening(4),
+        premaster(5),
+        master(6),
+        passive(7),
+        uncalibrated(8),
+        slave(9)
+        }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The history PTP port state."
+    ::= { ibPTPNotificationObjects 4 }
+
+ibPTPMasterClockId OBJECT-TYPE
+    SYNTAX OCTET STRING
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "PTP master clock id."
+    ::= { ibPTPNotificationObjects 5 }
+
+ibPTPOldMasterClockId OBJECT-TYPE
+    SYNTAX OCTET STRING
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The history PTP master clock id."
+    ::= { ibPTPNotificationObjects 6 }
+
+ibPTPSourcePortNum OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "PTP source port number."
+    ::= { ibPTPNotificationObjects 7 }
+
+ibPTPOldSourcePortNum OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The history PTP source port number."
+    ::= { ibPTPNotificationObjects 8 }
+
+ibPTPTimeSyncStatus OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "PTP time synchronization status."
+    ::= { ibPTPNotificationObjects 9 }
+
+ibPTPTimeLockStatus OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "PTP time lock status."
+    ::= { ibPTPNotificationObjects 10 }
+
+ibPTPExtTimePortStatus OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        up(1),
+        down(2)
+        }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The external time port status."
+    ::= { ibPTPNotificationObjects 11 }
+
+ibPTPExtTimePortType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        tod0(1),
+        tod1(2)
+        }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The external time port type."
+    ::= { ibPTPNotificationObjects 12 }
+
+ibPTPSourcePortClockId OBJECT-TYPE
+    SYNTAX OCTET STRING
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "PTP source port clock id."
+    ::= { ibPTPNotificationObjects 13 }
+
+ibPTPSourceStepsRemoved OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Hops from the GM to the device."
+    ::= { ibPTPNotificationObjects 14 }
+
+ibPTPPacketType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        sync(1),
+        pDelayResp(3),
+        delayResp(9),
+        announce(11)
+        }
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "PTP packet type."
+    ::= { ibPTPNotificationObjects 15 }
+
+ibPTPTimeOffset OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "PTP standard time offset."
+    ::= { ibPTPNotificationObjects 16 }
+
+ibPTPTimeOffsetThreshold OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "PTP standard time offset threhold."
+    ::= { ibPTPNotificationObjects 17 }
+
+ibPTPTimeOffsetSum OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Nanosecond part of PTP standard time offset sum."
+    ::= { ibPTPNotificationObjects 18 }
+
+ibPTPTimeOffsetSumThrehold OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "PTP standard time offset sum threhold."
+    ::= { ibPTPNotificationObjects 19 }
+
+ibPTPFreqLockStatus OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "PTP frequency lock status."
+    ::= { ibPTPNotificationObjects 20 }
+
+ibPTPTimeOffsetSumSec OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Second part of PTP standard time offset sum."
+    ::= { ibPTPNotificationObjects 21 }
+
+ibPTPInstanceID OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "PTP instance ID."
+    ::= { ibPTPNotificationObjects 22 }
+
+ibPTPChassisID OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Chassis ID. If the value is 65535, the device is
+        not a device in an IRF fabric."
+    ::= { ibPTPNotificationObjects 23 }
+
+ibPTPPortAttrMismatchReason OBJECT-TYPE
+    SYNTAX Unsigned32
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Attribute in which the peer PTP ports mismatch. The values include:
+          0, unspecified
+          1, delay mechanism
+          2, packet encapsulation
+          3, domain number
+          4, source port ID"
+    ::= { ibPTPNotificationObjects 24 }
+
+ibPTPSyncTimeOffset OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "PTP time offset between the instance and the master."
+    ::= { ibPTPNotificationObjects 25 }
+
+
+ibPTPSyncTimeOffsetThreshold OBJECT-TYPE
+    SYNTAX CounterBasedGauge64
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Threshold of PTP time offset between instance and the master."
+    ::= { ibPTPNotificationObjects 26 }
+
+ibPTPPacketDomain OBJECT-TYPE
+    SYNTAX Integer32 (0..255)
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Domain number in the received ptp packet."
+    ::= { ibPTPNotificationObjects 27 }
+
+ibPTPObjects OBJECT IDENTIFIER ::= { ibPTP 2 }
+
+ibPTPSyncTimeOffsetCurrent OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (1..128))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The current value of the clock offset. The default value is 0, in ns."
+    ::= { ibPTPObjects 1 }
+
+END

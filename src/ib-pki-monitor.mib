@@ -1,0 +1,758 @@
+-- ====================================================================
+-- Copyright (C) 2023 Intelbras S.A. All rights reserved.
+--
+-- Description: The MIB is designed to get PKI trap information.
+-- Reference:
+-- Version: 1.2
+-- History:
+--   V1.0: The initial version created by Zhaoming.
+--   V1.1: Modified by Zhaoming Dec.30 2021
+--           1) 'ibPKICertUpdateTime' was added to the 'ibPKIGetLocalCertSucScep'
+--               and 'ibPKIGetLocalCertFailScep' traps.
+--   V1.2: Modified by skf9095 Sep.22 2022
+--           1) Added the 'ibPKICrlHasExpiredTrapCntl'
+--               and 'ibPKICrlHasExpired' traps.
+--           2) Added the 'ibPKIWriteToFlashFailTrapCntl'
+--               and 'ibPKIWriteToFlashFail' traps.
+-- =====================================================================
+IB-PKI-MONITOR-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    DisplayString, TruthValue, DateAndTime
+        FROM SNMPv2-TC
+    OBJECT-TYPE, MODULE-IDENTITY, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    MODULE-COMPLIANCE, OBJECT-GROUP, NOTIFICATION-GROUP
+        FROM SNMPv2-CONF
+    ibCommon
+        FROM IB-OID-MIB;
+
+ibPKIMonitor MODULE-IDENTITY
+    LAST-UPDATED "202209221725Z"             -- September 22, 2022 at 12:47 GMT
+    ORGANIZATION
+        "Intelbras S.A. Industria de Telecomunicacao Eletronica Brasileria."
+    CONTACT-INFO
+        ""
+    DESCRIPTION
+        "The MIB is designed to obtain the alarm information of the PKI module."
+    REVISION "202209221725Z"
+    DESCRIPTION
+        "Add ibPKICrlHasExpiredTrapCntl to ibPKITrapCntlGroup.
+         Add ibPKIWriteToFlashFailTrapCntl to ibPKITrapCntlGroup.
+         Add ibPKICrlHasExpired to ibPKITrapGroup.
+         Add ibPKIWriteToFlashFail to ibPKITrapGroup."
+    REVISION "202112301247Z"
+    DESCRIPTION
+        "This revision is about the trap ibPKIGetLocalCertSucScep and
+         ibPKIGetLocalCertFailScep ."
+    REVISION
+        "202109141347Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { ibCommon 209 }
+
+
+-- ========================================================================
+-- Node definitions
+-- ========================================================================
+-- Begin the node of ibPKIObjects.
+
+ibPKIObjects OBJECT IDENTIFIER ::= { ibPKIMonitor 1 }
+-- =======================================
+-- Begin the ibPKITrapObject.
+-- =======================================
+
+ibPKITrapObject OBJECT IDENTIFIER ::= { ibPKIObjects 1 }
+
+ibPKICACertIssuer   OBJECT-TYPE
+    SYNTAX DisplayString(SIZE(0..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The issuer of CA certificate with a trap."
+    ::= { ibPKITrapObject 1 }
+
+ibPKICACertSubject   OBJECT-TYPE
+    SYNTAX DisplayString(SIZE(0..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The subject of CA certificate with a trap."
+    ::= { ibPKITrapObject 2 }
+
+ibPKICACertStartTime   OBJECT-TYPE
+    SYNTAX DateAndTime(SIZE(8 | 11))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The time when the CA certificate becomes effective with a trap."
+    ::= { ibPKITrapObject 3 }
+
+ibPKICACertFinishTime   OBJECT-TYPE
+    SYNTAX DateAndTime(SIZE(8 | 11))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The time when the CA certificate expires with a trap."
+    ::= { ibPKITrapObject 4 }
+
+ibPKICrlIssuer   OBJECT-TYPE
+    SYNTAX DisplayString(SIZE(0..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The issuer of CRL with a trap."
+    ::= { ibPKITrapObject 5 }
+
+ibPKICrlStartTime   OBJECT-TYPE
+    SYNTAX DateAndTime(SIZE(8 | 11))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The time when the CRL becomes effective with a trap."
+    ::= { ibPKITrapObject 6 }
+
+ibPKICrlFinishTime   OBJECT-TYPE
+    SYNTAX DateAndTime(SIZE(8 | 11))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The time when CRL expires with a trap."
+    ::= { ibPKITrapObject 7 }
+
+ibPKIDomainName  OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(0..31))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The PKI domain name with a trap."
+    ::= { ibPKITrapObject 8 }
+
+ibPKICrlUrl   OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(0..1023))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The URL path of CRL with a trap."
+    ::= { ibPKITrapObject 9 }
+
+ibPKIVrfName   OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(0..31))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The VPN instance name with a trap."
+    ::= { ibPKITrapObject 10 }
+
+ibPKICertUrl   OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(0..1023))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The URL path of the certificate with a trap."
+    ::= { ibPKITrapObject 11 }
+
+ibPKILocalCertIssuer   OBJECT-TYPE
+    SYNTAX DisplayString(SIZE(0..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The issuer of local certificate with a trap."
+    ::= { ibPKITrapObject 12 }
+
+ibPKILocalCertSubject   OBJECT-TYPE
+    SYNTAX DisplayString(SIZE(0..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The subject of local certificate with a trap."
+    ::= { ibPKITrapObject 13 }
+
+ibPKILocalCertStartTime   OBJECT-TYPE
+    SYNTAX DateAndTime(SIZE(8 | 11))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The time when the local certificate becomes effective with a trap."
+    ::= { ibPKITrapObject 14 }
+
+ibPKILocalCertFinishTime   OBJECT-TYPE
+    SYNTAX DateAndTime(SIZE(8 | 11))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The time when the local certificate expires with a trap."
+    ::= { ibPKITrapObject 15 }
+
+ibPKIEntityName  OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE(0..31))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The entity name with a trap."
+    ::= { ibPKITrapObject 16 }
+
+ibPKICertSave   OBJECT-TYPE
+    SYNTAX DisplayString(SIZE(0..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "The certificate save file name with a trap."
+    ::= { ibPKITrapObject 17 }
+
+ibPKICertUpdateTime   OBJECT-TYPE
+    SYNTAX DateAndTime(SIZE(8 | 11))
+    MAX-ACCESS accessible-for-notify
+    STATUS current
+    DESCRIPTION
+        "Time when the certificate was updated with a trap."
+    ::= { ibPKITrapObject 18 }
+
+-- =======================================
+-- Begin the ibPKITrapCntl.
+-- =======================================
+
+ibPKITrapCntl OBJECT IDENTIFIER ::= { ibPKIObjects 2 }
+
+ibPKITrapGlobalCntl OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether all PKI traps should be generated."
+    ::= { ibPKITrapCntl 1 }
+
+ibPKICACertInvalidTrapCntl OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKICACertInvalid traps should be generated."
+    ::= { ibPKITrapCntl 2 }
+
+ibPKICACertValidTrapCntl OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKICACertValid traps should be generated."
+    ::= { ibPKITrapCntl 3 }
+
+ibPKICrlInvalidTrapCntl OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKICrlInvalid traps should be generated."
+    ::= { ibPKITrapCntl 4 }
+
+ibPKICrlValidTrapCntl OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKICrlValid traps should be generated."
+    ::= { ibPKITrapCntl 5 }
+
+ibPKIGetCrlSucHttpTrapCntl OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKIGetCrlSucHttp traps should be generated."
+    ::= { ibPKITrapCntl 6 }
+
+ibPKIGetCrlFailHttpTrapCntl OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKIGetCrlFailHttp traps should be generated."
+    ::= { ibPKITrapCntl 7 }
+
+ibPKIGetCrlSucLdapCntl OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKIGetCrlSucLdap traps should be generated."
+    ::= { ibPKITrapCntl 8 }
+
+ibPKIGetCrlFailLdapTrapCntl   OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKIGetCrlFailLdap traps should be generated."
+    ::= { ibPKITrapCntl 9 }
+
+ibPKIGetCrlSucScepTrapCntl OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKIGetCrlSucScep traps should be generated."
+    ::= { ibPKITrapCntl 10 }
+
+ibPKIGetCrlFailScepTrapCntl OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKIGetCrlFailScep traps should be generated."
+    ::= { ibPKITrapCntl 11 }
+
+ibPKILocCertInvalidTrapCntl OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKILocalCertInvalid traps should be generated."
+    ::= { ibPKITrapCntl 12 }
+
+ibPKILocCertValidTrapCntl OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKILocalCertValid traps should be generated."
+    ::= { ibPKITrapCntl 13 }
+
+ibPKIGetLocCertSucLdapTrapCntl OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKIGetLocalCertSucLdap traps should be generated."
+    ::= { ibPKITrapCntl 14 }
+
+ibPKIGetLocCertFailLdapTrapCntl OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKIGetLocalCertFailLdap traps should be generated."
+    ::= { ibPKITrapCntl 15 }
+
+ibPKIGetLocCeSucScepTrapCntl OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKIGetLocalCertSucScep traps should be generated."
+    ::= { ibPKITrapCntl 16 }
+
+ibPKIGetLocCeFailScepTrapCntl   OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKIGetLocalCertFailScep traps should be generated."
+    ::= { ibPKITrapCntl 17 }
+
+ibPKILocCertNearExpirTrapCntl OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKILocalCertNearlyExpired traps should be generated."
+    ::= { ibPKITrapCntl 18 }
+
+ibPKILocCertHasExpirTrapCntl   OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKILocalCertHasExpired traps should be generated."
+    ::= { ibPKITrapCntl 19 }
+
+ibPKICrlHasExpiredTrapCntl   OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKICrlHasExpired traps should be generated."
+    ::= { ibPKITrapCntl 20 }
+
+ibPKIWriteToFlashFailTrapCntl   OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+        "Indicates whether ibPKIWriteToFlashFail traps should be generated."
+    ::= { ibPKITrapCntl 21 }
+
+-- ================================================
+-- definition of traps.
+-- ================================================
+
+ibPKITrap OBJECT IDENTIFIER ::= { ibPKIObjects 3 }
+ibPKINotifications OBJECT IDENTIFIER ::= { ibPKITrap 0 }
+
+ibPKICACertInvalid NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKICACertIssuer,
+                ibPKICACertSubject,
+                ibPKICACertStartTime,
+                ibPKICACertFinishTime
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the CA
+         certificate is invalid."
+            ::= { ibPKINotifications 1 }
+
+ibPKICACertValid  NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKICACertIssuer,
+                ibPKICACertSubject,
+                ibPKICACertStartTime,
+                ibPKICACertFinishTime
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the CA
+         certificate is valid."
+            ::= { ibPKINotifications 2 }
+
+ibPKICrlInvalid NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKICrlIssuer,
+                ibPKICrlStartTime,
+                ibPKICrlFinishTime
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the CRL
+         is invalid."
+            ::= { ibPKINotifications 3 }
+
+ibPKICrlValid NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKICrlIssuer,
+                ibPKICrlStartTime,
+                ibPKICrlFinishTime
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the CRL
+         is valid."
+            ::= { ibPKINotifications 4 }
+
+ibPKIGetCrlSucHttp NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKIDomainName,
+                ibPKICrlUrl,
+                ibPKIVrfName
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the CRL is
+         successfully obtained through the HTTP protocol."
+            ::= { ibPKINotifications 5 }
+
+ibPKIGetCrlFailHttp NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKIDomainName,
+                ibPKICrlUrl,
+                ibPKIVrfName
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the CRL fails to
+         be obtained through the HTTP protocol."
+            ::= { ibPKINotifications 6 }
+
+ibPKIGetCrlSucLdap NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKIDomainName,
+                ibPKICrlUrl,
+                ibPKIVrfName
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the CRL is
+         successfully obtained through the LDAP protocol."
+            ::= { ibPKINotifications 7 }
+
+ibPKIGetCrlFailLdap NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKIDomainName,
+                ibPKICrlUrl,
+                ibPKIVrfName
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the CRL fails to
+         be obtained through the LDAP protocol."
+            ::= { ibPKINotifications 8 }
+
+ibPKIGetCrlSucScep NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKIDomainName,
+                ibPKIVrfName,
+                ibPKICertUrl
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the CRL
+         is successfully obtained through the SCEP protocol."
+            ::= { ibPKINotifications 9 }
+
+ibPKIGetCrlFailScep NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKIDomainName,
+                ibPKIVrfName,
+                ibPKICertUrl
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the CRL
+         fails to be obtained through the SCEP protocol."
+            ::= { ibPKINotifications 10 }
+
+ibPKILocalCertInvalid NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKIDomainName,
+                ibPKILocalCertIssuer,
+                ibPKILocalCertSubject,
+                ibPKILocalCertStartTime,
+                ibPKILocalCertFinishTime
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the local
+         certificate is invalid."
+            ::= { ibPKINotifications 11 }
+
+ibPKILocalCertValid NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKIDomainName,
+                ibPKILocalCertIssuer,
+                ibPKILocalCertSubject,
+                ibPKILocalCertStartTime,
+                ibPKILocalCertFinishTime
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the local
+         certificate is valid."
+            ::= { ibPKINotifications 12 }
+
+ibPKIGetLocalCertSucLdap NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKIDomainName,
+                ibPKIVrfName,
+                ibPKICertUrl,
+                ibPKIEntityName,
+                ibPKICertSave
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the local certificate
+         is successfully obtained through the LDAP protocol."
+            ::= { ibPKINotifications 13 }
+
+ibPKIGetLocalCertFailLdap NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKIDomainName,
+                ibPKIVrfName,
+                ibPKICertUrl,
+                ibPKIEntityName,
+                ibPKICertSave
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the local certificate
+         fails to be obtained through the LDAP protocol."
+            ::= { ibPKINotifications 14 }
+
+ibPKIGetLocalCertSucScep NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKIDomainName,
+                ibPKIVrfName,
+                ibPKICertUrl,
+                ibPKICertSave,
+                ibPKICertUpdateTime
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the local certificate
+         is successfully obtained through the SCEP protocol. When the local
+         certificate is not obtained through renewal, ibPKICertUpdateTime is
+         set to all zeros."
+            ::= { ibPKINotifications 15 }
+
+ibPKIGetLocalCertFailScep NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKIDomainName,
+                ibPKIVrfName,
+                ibPKICertUrl,
+                ibPKICertSave,
+                ibPKICertUpdateTime
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the local certificate
+         fails to be obtained through the SCEP protocol. When the local
+         certificate is not obtained through renewal, ibPKICertUpdateTime is
+         set to all zeros."
+            ::= { ibPKINotifications 16 }
+
+ibPKILocalCertNearlyExpired NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKIDomainName,
+                ibPKILocalCertIssuer,
+                ibPKILocalCertSubject,
+                ibPKILocalCertStartTime,
+                ibPKILocalCertFinishTime
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the local
+         certificate is about to expire."
+            ::= { ibPKINotifications 17 }
+
+ibPKILocalCertHasExpired NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKIDomainName,
+                ibPKILocalCertIssuer,
+                ibPKILocalCertSubject,
+                ibPKILocalCertStartTime,
+                ibPKILocalCertFinishTime
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the
+         local certificate has expired."
+            ::= { ibPKINotifications 18 }
+
+ibPKICrlHasExpired NOTIFICATION-TYPE
+    OBJECTS {
+                ibPKICrlIssuer,
+                ibPKICrlStartTime,
+                ibPKICrlFinishTime
+            }
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated when the
+         CRL expires."
+            ::= { ibPKINotifications 19 }
+
+ibPKIWriteToFlashFail NOTIFICATION-TYPE
+    STATUS     current
+    DESCRIPTION
+        "This notification is generated in case of failure to write CRL or certificate to flash."
+            ::= { ibPKINotifications 20 }
+
+-- =======================================
+-- Conformance Information
+-- =======================================
+ibPKIConformance   OBJECT IDENTIFIER
+                         ::= { ibPKIMonitor 2 }
+ibPKICompliances   OBJECT IDENTIFIER
+                         ::= { ibPKIConformance 1 }
+ibPKIGroups        OBJECT IDENTIFIER
+                         ::= { ibPKIConformance 2 }
+
+-- =======================================
+-- Compliance Statements
+-- =======================================
+ibPKICompliance MODULE-COMPLIANCE
+    STATUS current
+    DESCRIPTION
+        " "
+    MODULE -- this module
+    MANDATORY-GROUPS
+        {
+            ibPKITrapObjectGroup,
+            ibPKITrapCntlGroup,
+            ibPKITrapGroup
+        }
+    ::= { ibPKICompliances 1 }
+
+ibPKITrapObjectGroup OBJECT-GROUP
+    OBJECTS {
+                ibPKICACertIssuer,
+                ibPKICACertSubject,
+                ibPKICACertStartTime,
+                ibPKICACertFinishTime,
+                ibPKICrlIssuer,
+                ibPKICrlStartTime,
+                ibPKICrlFinishTime,
+                ibPKIDomainName,
+                ibPKICrlUrl,
+                ibPKIVrfName,
+                ibPKICertUrl,
+                ibPKILocalCertIssuer,
+                ibPKILocalCertSubject,
+                ibPKILocalCertStartTime,
+                ibPKILocalCertFinishTime,
+                ibPKIEntityName,
+                ibPKICertSave,
+                ibPKICertUpdateTime
+            }
+    STATUS current
+    DESCRIPTION
+        "The group contains all of trap objects of PKI module."
+    ::= { ibPKIGroups 1 }
+
+ibPKITrapCntlGroup OBJECT-GROUP
+    OBJECTS {
+                ibPKITrapGlobalCntl,
+                ibPKICACertInvalidTrapCntl,
+                ibPKICACertValidTrapCntl,
+                ibPKICrlInvalidTrapCntl,
+                ibPKICrlValidTrapCntl,
+                ibPKIGetCrlSucHttpTrapCntl,
+                ibPKIGetCrlFailHttpTrapCntl,
+                ibPKIGetCrlSucLdapCntl,
+                ibPKIGetCrlFailLdapTrapCntl,
+                ibPKIGetCrlSucScepTrapCntl,
+                ibPKIGetCrlFailScepTrapCntl,
+                ibPKILocCertInvalidTrapCntl,
+                ibPKILocCertValidTrapCntl,
+                ibPKIGetLocCertSucLdapTrapCntl,
+                ibPKIGetLocCertFailLdapTrapCntl,
+                ibPKIGetLocCeSucScepTrapCntl,
+                ibPKIGetLocCeFailScepTrapCntl,
+                ibPKILocCertNearExpirTrapCntl,
+                ibPKILocCertHasExpirTrapCntl,
+                ibPKICrlHasExpiredTrapCntl,
+                ibPKIWriteToFlashFailTrapCntl
+            }
+    STATUS current
+    DESCRIPTION
+        "The group contains all of trap switches of PKI module."
+    ::= { ibPKIGroups 2 }
+
+ibPKITrapGroup  NOTIFICATION-GROUP
+    NOTIFICATIONS {
+                ibPKICACertInvalid,
+                ibPKICACertValid,
+                ibPKICrlInvalid,
+                ibPKICrlValid,
+                ibPKIGetCrlSucHttp,
+                ibPKIGetCrlFailHttp,
+                ibPKIGetCrlSucLdap,
+                ibPKIGetCrlFailLdap,
+                ibPKIGetCrlSucScep,
+                ibPKIGetCrlFailScep,
+                ibPKILocalCertInvalid,
+                ibPKILocalCertValid,
+                ibPKIGetLocalCertSucLdap,
+                ibPKIGetLocalCertFailLdap,
+                ibPKIGetLocalCertSucScep,
+                ibPKIGetLocalCertFailScep,
+                ibPKILocalCertNearlyExpired,
+                ibPKILocalCertHasExpired,
+                ibPKICrlHasExpired,
+                ibPKIWriteToFlashFail
+                  }
+    STATUS current
+    DESCRIPTION
+        "The group contains all of trap of PKI module."
+    ::= { ibPKIGroups 3 }
+
+END
+
